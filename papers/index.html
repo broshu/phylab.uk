@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Research — PhyLab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+
+    :root {
+      --ink:    #1c2b25;
+      --green:  #2f5d4f;
+      --green-2:#3f7060;
+      --accent: #8a9a5b;
+      --paper:  #f4f1e8;
+      --card:   #faf8f1;
+      --line:   #d8d2c0;
+      --soft-line: #e5e0d2;
+      --muted:  #6b7269;
+      --shadow: 0 1px 2px rgba(28,43,37,.05), 0 12px 32px -16px rgba(28,43,37,.28);
+    }
+
+    body {
+      margin: 0;
+      font-family: "Inter", sans-serif;
+      background: var(--paper);
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body::before {
+      content: "";
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(circle at 20% 15%, rgba(47,93,79,.05), transparent 45%),
+        radial-gradient(circle at 85% 80%, rgba(138,154,91,.06), transparent 50%);
+      pointer-events: none; z-index: 0;
+    }
+
+    main {
+      position: relative;
+      z-index: 1;
+      width: min(1080px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 42px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    h1 {
+      margin: 0;
+      font-family: "Cormorant Garamond", serif;
+      font-size: 38px;
+      line-height: 1.15;
+      font-weight: 600;
+      letter-spacing: .5px;
+      color: var(--green);
+    }
+
+    .home-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      color: var(--green);
+      background: var(--card);
+      box-shadow: var(--shadow);
+      text-decoration: none;
+      flex: 0 0 auto;
+      transition: transform .2s ease, border-color .2s ease;
+    }
+
+    .home-link:hover,
+    .home-link:focus-visible {
+      border-color: var(--accent);
+      color: var(--green-2);
+      transform: translateY(-2px);
+      outline: none;
+    }
+
+    .home-link svg { display: block; }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--card);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .item-list {
+      display: grid;
+      margin: 0;
+      padding: 0 22px;
+      list-style: none;
+    }
+
+    .item-row {
+      padding: 16px 0;
+      border-top: 1px solid var(--soft-line);
+    }
+
+    .item-row:first-child { border-top: 0; }
+
+    .item-link {
+      display: block;
+      color: var(--ink);
+      text-decoration: none;
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+
+    .paper-title {
+      font-family: "Cormorant Garamond", serif;
+      font-size: 26px;
+      font-weight: 600;
+      line-height: 1.3;
+      letter-spacing: .3px;
+      color: var(--green);
+    }
+
+    .item-link:hover .paper-title,
+    .item-link:focus-visible .paper-title {
+      text-decoration: underline;
+      color: var(--green-2);
+    }
+
+    .item-link:focus-visible { outline: none; }
+
+    .paper-meta {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 400;
+      line-height: 1.4;
+    }
+
+    .paper-abstract {
+      margin: 10px 0 0;
+      color: #3a463f;
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 1.6;
+    }
+
+    .paper-figures {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .paper-figures img {
+      height: 128px;
+      width: auto;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fff;
+      object-fit: contain;
+    }
+
+    @media (max-width: 560px) {
+      main {
+        width: min(100% - 24px, 1080px);
+        padding: 22px 0 32px;
+      }
+      h1 { font-size: 32px; }
+      .item-list { padding: 0 18px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="topbar">
+      <h1>Research</h1>
+      <a class="home-link" href="/" title="Home" aria-label="Home">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="1.8"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 10.5 12 3l9 7.5"></path>
+          <path d="M5 9.5V21h14V9.5"></path>
+          <path d="M9.5 21v-6h5v6"></path>
+        </svg>
+      </a>
+    </div>
+
+    <section class="panel">
+      <ul class="item-list">
+        <li class="item-row">
+          <a class="item-link" href="When_the_Pattern_Comes_Too_Easily.pdf" target="_blank" rel="noopener">
+            <span class="paper-title">When the Pattern Comes Too Easily: What an AI Simulation Takes Away in the Optics Lab</span>
+            <span class="paper-meta">Xingyu Shu</span>
+          </a>
+          <p class="paper-abstract">A classroom study of 96 students compares learning Young's double-slit interference via physical apparatus versus an AI-generated simulation. The AI group scored higher on the written test but struggled badly on an unscripted diffraction task. AI aids test readiness, but removing too much experimental friction can erode the empirical judgment real inquiry needs.</p>
+          <div class="paper-figures">
+            <img src="When_the_Pattern_Comes_Too_Easily/apparatus.jpeg" alt="Apparatus" loading="lazy">
+            <img src="When_the_Pattern_Comes_Too_Easily/simulation.png" alt="AI simulation" loading="lazy">
+            <img src="When_the_Pattern_Comes_Too_Easily/single-slit-provided-materials.jpeg" alt="Single-slit provided materials" loading="lazy">
+            <img src="When_the_Pattern_Comes_Too_Easily/single-slit-student-built-optical-path.jpeg" alt="Student-built optical path" loading="lazy">
+            <img src="When_the_Pattern_Comes_Too_Easily/24.jpeg" alt="Result 24" loading="lazy">
+            <img src="When_the_Pattern_Comes_Too_Easily/34.png" alt="Result 34" loading="lazy">
+            <img src="When_the_Pattern_Comes_Too_Easily/filtered.jpeg" alt="Filtered interference image" loading="lazy">
+            <img src="When_the_Pattern_Comes_Too_Easily/white-light.jpeg" alt="White-light fringes" loading="lazy">
+          </div>
+        </li>
+        <li class="item-row">
+          <a class="item-link" href="Letting_Time_Lie_Down.pdf" target="_blank" rel="noopener">
+            <span class="paper-title">Letting Time Lie Down: Visualizing and Quantifying Simple Harmonic Motion</span>
+            <span class="paper-meta">Xingyu Shu, Lizhi Fang, Shuai Wang, Yiting Sheng</span>
+          </a>
+          <p class="paper-abstract">A three-step sequence makes simple harmonic motion visible by unfolding its time axis into space. A laser on a spring–mass oscillator draws a glowing sinusoid; a free browser tool fits smartphone video to a sinusoid in seconds; pooled student data confirm T² ∝ m/k_eff to within 1%. It runs on equipment a school already owns.</p>
+          <div class="paper-figures">
+            <img src="Letting_Time_Lie_Down/analog_apparatus.png" alt="Analog apparatus" loading="lazy">
+            <img src="Letting_Time_Lie_Down/k_400g.png" alt="Sinusoidal fit (400 g)" loading="lazy">
+            <img src="Letting_Time_Lie_Down/Tsq_vs_m_with_theory.png" alt="T² vs m with theory" loading="lazy">
+          </div>
+        </li>
+        <li class="item-row">
+          <a class="item-link" href="No_Left-Hander_Left_Behind.pdf" target="_blank" rel="noopener">
+            <span class="paper-title">No Left-Hander Left Behind: Finding the Right Way in the Physics Laboratory</span>
+            <span class="paper-meta">Xingyu Shu</span>
+          </a>
+          <p class="paper-abstract">Physics lab tools and safety procedures assume right-handed use. Across a 4,226-student survey, caliper tests, and video coding, left-handed students showed higher measurement errors, slower times, and riskier circular-saw positioning—despite equal academic performance. The paper offers inclusive fixes like handedness audits and symmetric instruments.</p>
+          <div class="paper-figures">
+            <img src="No_Left-Hander_Left_Behind/front_view_cropped.png" alt="Front view" loading="lazy">
+            <img src="No_Left-Hander_Left_Behind/top_view_cropped.png" alt="Top view" loading="lazy">
+            <img src="No_Left-Hander_Left_Behind/thermal_left.jpeg" alt="Thermal grip (left-handed)" loading="lazy">
+            <img src="No_Left-Hander_Left_Behind/thermal_right.jpeg" alt="Thermal grip (right-handed)" loading="lazy">
+            <img src="No_Left-Hander_Left_Behind/heat_map.jpg" alt="Grip heat map" loading="lazy">
+            <img src="No_Left-Hander_Left_Behind/accuracy_ratios.png" alt="Accuracy ratios" loading="lazy">
+            <img src="No_Left-Hander_Left_Behind/deviation_raincloud.png" alt="Deviation raincloud plot" loading="lazy">
+            <img src="No_Left-Hander_Left_Behind/operate_time_boxplot.png" alt="Operation time boxplot" loading="lazy">
+          </div>
+        </li>
+        <li class="item-row">
+          <a class="item-link" href="https://www.sciencedirect.com/science/article/abs/pii/S016943322300973X" target="_blank" rel="noopener">
+            <span class="paper-title">Conversion of P-Type SnO to N-Type SnO₂ Via Oxidation and the Band Offset and Rectification of an All-Tin Oxide P-N Junction Structure</span>
+            <span class="paper-meta">Cheuk Kai Gary Kwok, Ying Wang, Xingyu Shu, Kin Man Yu</span>
+          </a>
+          <p class="paper-abstract">p-Type Tin monoxide (SnO) is a metastable phase and can be oxidized into n-type SnO₂ in an O₂ environment during growth and post-growth annealing. Here we first grow SnO thin films by RF magnetron sputtering with different oxygen partial pressure in the sputtering gas followed by rapid thermal annealing (RTA) in O₂ to obtain n-type conducting SnO₂ films. We found that while after RTA in N₂ stoichiometric SnO film is p-type conducting, films sputtered with excess O and RTA in O₂ crystallize in rutile SnO₂ structure and exhibit n-type conductivity. Exploiting the transformation of p-SnO to n-SnO₂ through oxidation, we fabricate an all-Tin Oxide transparent p-n quasi-homojunction (p-SnO/n-SnO₂) and compare it to a p-SnO/n-ZnO heterojunction structure in term of their rectification behavior. XPS measurements reveal that both SnO₂ and ZnO at the Γ point exhibit a type II band offset with SnO with their respective valence band (conduction band) offset of 2.8 eV (1.9 eV) and 2.4 eV (1.33 eV). On the other hand, the indirect conduction band minimum of SnO shows a type I band offset in both junctions with a small conduction band offset of ∼0.1–0.17 eV. The SnO/SnO₂ p-n structure shows a reasonable rectification with an ideality factor of ∼12.3, which can be potentially useful in many transparent p-n junction based devices.</p>
+        </li>
+        <li class="item-row">
+          <a class="item-link" href="https://www.sciencedirect.com/science/article/abs/pii/S0169433222006146" target="_blank" rel="noopener">
+            <span class="paper-title">Improving the p–type conductivity of Cu₂O thin films by Ni doping and their heterojunction with n–ZnO</span>
+            <span class="paper-meta">Ying Wang, Cheuk Kai Gary Kwok, Dezhi Xiao, Jiuzhou Zhu, Xingyu Shu, Chao Ping Liu, Kin Man Yu</span>
+          </a>
+          <p class="paper-abstract">Cu₂O is one of the few transition metal oxides which can exhibit p–type conductivity due to native acceptor defects. Further improvements in the p–type conductivity of Cu₂O can be achieved via extrinsic doping and post–growth processing. In this work, we investigate the effects of Ni doping in Cu₂O with Ni content up to ∼11%. A variety of analytical techniques were utilized to investigate the structural, optical and electrical properties of these alloy thin films. We find that the incorporation of Ni improves the p–type conductivity of the films without altering the Cu₂O crystallographic structure and maintains a wide bandgap of ∼2.5 eV. X–ray photoelectron spectroscopy (XPS) measurements reveal that the Fermi level moves closer to the valence band with increasing x, in agreement with the increasing hole concentration. Significant improvement in the crystallinity as well as the p–type conductivity of the alloy films can be observed after rapid thermal annealing (RTA). In particular, alloys with x≥0.005 exhibit a high hole mobility µ∼12–22 cm²/V-s with low resistivity of ρ∼30–60 Ω-cm and free hole concentration N∼1×10¹⁶ cm⁻³ after RTA in air–N₂ ambient at 700°C. Such improvement can be attributed to the formation of Cu vacancies which promotes Ni substitution in the presence of small amount O₂ in the air–N₂ annealing environment. Finally, we fabricated a transparent p–(NiₓCu₁₋ₓ)₂O/n–ZnO heterojunction and evaluated its junction performance. XPS measurements reveal a type II band offset of this heterojunction with valence band and conduction band offsets of 2.81 eV and 2.07 eV, respectively. The heterojunction exhibits both rectification and photovoltaic response, demonstrating its potential for p–n junction and photodetection devices.</p>
+        </li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>
