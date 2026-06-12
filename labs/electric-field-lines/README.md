@@ -1,28 +1,28 @@
-# 电场线可视化
+# Electric Field Lines Visualization
 
-纯前端实现的双点电荷电场线演示，可拖拽电荷、切换正负极、调节电量，并可选显示等势线。
+A pure front-end demo of the electric field lines of two point charges. Drag charges, flip polarity, adjust magnitude, and optionally display equipotential lines.
 
-## 功能
-- 拖动画布中的两个电荷，画布尺寸变化时位置同比例缩放
-- 按钮一键新增更多电荷，实时叠加电场
-- 滑杆调节电量强度，按钮切换极性
-- 可选显示等势线（Marching Squares 算法）
-- 电场线颜色渐变，带箭头指示方向
-- 桌面与移动端响应式布局
-- 新增「M 点射入」试探电荷运动卡片：可切换正负电荷，设定初速度大小/方向，实时展示速度矢量、受力矢量与轨迹
+## Features
+- Drag the two charges on the canvas; positions scale proportionally when the canvas resizes
+- Add more charges with one click, with the field superposed in real time
+- Sliders adjust charge magnitude; buttons toggle polarity
+- Optional equipotential lines (Marching Squares algorithm)
+- Field lines with color gradient and direction arrows
+- Responsive layout for desktop and mobile
+- "Launch from Point M" test-charge motion card: switch charge polarity, set initial speed/direction, and view velocity vector, force vector, and trajectory in real time
 
-## 使用
-直接在浏览器中打开 `index.html` 即可，无需构建或安装依赖。
+## Usage
+Open `index.html` directly in a browser — no build step or dependencies required.
 
-## 交互说明
-- 电量滑杆：调整每个电荷的强度
-- 极性按钮：在正/负极之间切换
-- 重置按钮：恢复默认位置与电量
-- 添加电荷：点击后新增一个默认正电荷，支持拖拽和参数调节
-- 显示等势线：勾选后渲染等势线，便于观察等势面形状
+## Interactions
+- Magnitude slider: adjust each charge's strength
+- Polarity button: toggle between positive and negative
+- Reset button: restore default positions and magnitudes
+- Add Charge: adds a default positive charge, draggable and adjustable
+- Show equipotential lines: renders equipotential lines to visualize equipotential surfaces
 
-## 技术要点
-- Canvas 2D 绘制
-- 场叠加计算并加入软化项避免奇点爆炸
-- Marching Squares 等势线提取
-- 响应式布局与拖拽交互
+## Technical Notes
+- Canvas 2D rendering
+- Field superposition with a softening term to avoid singularities
+- Marching Squares equipotential extraction
+- Responsive layout and drag interactions

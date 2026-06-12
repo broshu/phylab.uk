@@ -77,7 +77,7 @@
         if (!c || !v) return;
         v.slider.value = Math.abs(c.q).toFixed(1);
         v.val.textContent = fmtQ(c.q);
-        v.pol.textContent = c.q >= 0 ? "正极" : "负极";
+        v.pol.textContent = c.q >= 0 ? "Positive" : "Negative";
         v.pol.classList.toggle("negative", c.q < 0);
         v.dot.classList.toggle("positive", c.q >= 0);
         v.dot.classList.toggle("negative", c.q < 0);
@@ -90,11 +90,11 @@
         el.innerHTML = `
             <div class="panel-header">
                 <span class="dot"></span>
-                <div><p class="label">电荷 ${c.id}</p><p class="small">拖拽画布中的圆点</p></div>
+                <div><p class="label">Charge ${c.id}</p><p class="small">Drag the dot on the canvas</p></div>
                 <button class="polarity-button"></button>
             </div>
             <label class="slider-row">
-                <span>电量强度</span>
+                <span>Charge magnitude</span>
                 <input type="range" min="0.2" max="3" step="0.1">
                 <span class="value"></span>
             </label>`;

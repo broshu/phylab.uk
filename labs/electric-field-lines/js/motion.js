@@ -28,14 +28,14 @@
     // Each field type defines: fieldAt(x,y), drawFieldBg(), sourceCharges (for display)
     const fieldTypes = {
         uniform: {
-            label: "匀强电场",
+            label: "Uniform field",
             E: { x: 28, y: 0 },
             fieldAt(x, y) { return { x: this.E.x, y: this.E.y }; },
             drawBg() { drawUniformField(this.E); },
             srcCharges() { return []; }
         },
         same: {
-            label: "等量同种电荷",
+            label: "Equal like charges",
             q1: 1, q2: 1,
             pos1() { return { x: canvas.width * 0.35, y: canvas.height * 0.5 }; },
             pos2() { return { x: canvas.width * 0.65, y: canvas.height * 0.5 }; },
@@ -49,7 +49,7 @@
             }
         },
         opposite: {
-            label: "等量异种电荷",
+            label: "Equal unlike charges",
             q1: 1, q2: -1,
             pos1() { return { x: canvas.width * 0.3, y: canvas.height * 0.5 }; },
             pos2() { return { x: canvas.width * 0.7, y: canvas.height * 0.5 }; },
@@ -63,7 +63,7 @@
             }
         },
         pointPos: {
-            label: "正点电荷",
+            label: "Positive point charge",
             q: 1,
             center() { return { x: canvas.width * 0.5, y: canvas.height * 0.5 }; },
             srcCharges() { return [{ ...this.center(), q: this.q }]; },
@@ -75,7 +75,7 @@
             }
         },
         pointNeg: {
-            label: "负点电荷",
+            label: "Negative point charge",
             q: -1,
             center() { return { x: canvas.width * 0.5, y: canvas.height * 0.5 }; },
             srcCharges() { return [{ ...this.center(), q: this.q }]; },
@@ -155,7 +155,7 @@
         s.angleDeg = parseFloat(ui.angle.value) || 0;
         ui.speedLbl.textContent = s.speed.toFixed(0);
         ui.angleLbl.textContent = `${s.angleDeg.toFixed(0)}°`;
-        ui.polarity.textContent = s.q >= 0 ? "正电荷" : "负电荷";
+        ui.polarity.textContent = s.q >= 0 ? "Positive charge" : "Negative charge";
     }
 
     function resetMotion() {
@@ -164,7 +164,7 @@
         const rad = s.angleDeg * Math.PI / 180;
         s.vel = { x: s.speed * Math.cos(rad), y: -s.speed * Math.sin(rad) };
         s.path = [{ ...s.mPos }];
-        ui.start.textContent = "开始";
+        ui.start.textContent = "Start";
         draw(); updateStats();
     }
 
@@ -373,7 +373,7 @@
             if (dist < COLLIDE_R) {
                 s.running = false;
                 s.explosion = spawnExplosion((s.pos.x + c.x) / 2, (s.pos.y + c.y) / 2);
-                ui.start.textContent = "重新开始";
+                ui.start.textContent = "Restart";
                 requestAnimationFrame(explosionLoop);
                 return true;
             }
@@ -647,7 +647,7 @@
         s.path.push({ ...s.pos });
         if (s.path.length > C.pathMax) s.path.shift();
         if (checkCollision()) return;
-        if (!inBounds(s.pos)) { s.running = false; ui.start.textContent = "重新开始"; }
+        if (!inBounds(s.pos)) { s.running = false; ui.start.textContent = "Restart"; }
     }
 
     function loop(ts) {
@@ -660,10 +660,10 @@
     }
 
     function toggleRun() {
-        if (!inBounds(s.pos) || ui.start.textContent === "重新开始") resetMotion();
-        if (s.running) { s.running = false; ui.start.textContent = "继续"; return; }
+        if (!inBounds(s.pos) || ui.start.textContent === "Restart") resetMotion();
+        if (s.running) { s.running = false; ui.start.textContent = "Resume"; return; }
         s.running = true; s.lastT = null;
-        ui.start.textContent = "暂停";
+        ui.start.textContent = "Pause";
         requestAnimationFrame(loop);
     }
 

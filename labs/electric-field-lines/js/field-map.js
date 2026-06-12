@@ -256,7 +256,7 @@
         // Label
         ctx.fillStyle = "rgba(15,44,86,0.45)"; ctx.font = "11px sans-serif";
         ctx.textAlign = "center"; ctx.textBaseline = "top";
-        ctx.fillText("旋转视角", hc.x, hc.y + CFG.handleRing + 5);
+        ctx.fillText("Rotate view", hc.x, hc.y + CFG.handleRing + 5);
         ctx.restore();
     }
 
