@@ -88,11 +88,9 @@
     position: relative;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    min-height: 200px;
-    padding: 32px;
+    align-items: stretch;
+    gap: 14px;
+    padding: 20px 20px 16px;
     text-decoration: none;
     background: var(--card);
     border: 1px solid var(--line);
@@ -110,21 +108,22 @@
 
   .block h2 {
     font-family: "Cormorant Garamond", serif;
-    font-size: 2rem; font-weight: 600; color: var(--green);
+    font-size: 1.6rem; font-weight: 600; color: var(--green);
     letter-spacing: .5px; line-height: 1.1; text-align: center;
   }
 
-  .block p {
-    color: var(--muted);
-    font-size: .92rem;
-    line-height: 1.5;
-    text-align: center;
-    max-width: 30ch;
+  .block img {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    object-fit: cover;
+    object-position: top;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #fff;
   }
 
   @media (max-width: 640px) {
     .blocks { grid-template-columns: 1fr; gap: 18px; }
-    .block { min-height: 160px; }
   }
 </style>
 </head>
@@ -137,31 +136,31 @@
     <div class="blocks">
       <a class="block" href="/labs/electric-field-lines/">
         <h2>Electric Field Lines</h2>
-        <p>Drag two charges around and watch the field lines reshape in real time.</p>
+        <img src="electric-field-lines/screenshot.png" alt="Electric Field Lines preview" loading="lazy">
       </a>
       <a class="block" href="/labs/potential_3d_visualization/">
         <h2>Electric Potential in 3D</h2>
-        <p>Compare a 2D field map with its 3D potential surface, side by side.</p>
+        <img src="potential_3d_visualization/screenshot.png" alt="Electric Potential in 3D preview" loading="lazy">
       </a>
       <a class="block" href="/labs/plate-voltage-particle-stream/">
         <h2>Particle Between Plates</h2>
-        <p>Watch a stream of charged particles respond to the voltage across parallel plates.</p>
+        <img src="plate-voltage-particle-stream/screenshot.png" alt="Particle Between Plates preview" loading="lazy">
       </a>
       <a class="block" href="/labs/alternating-field-release/">
         <h2>Alternating Field Release</h2>
-        <p>Release a charged particle into an alternating field and follow its motion.</p>
+        <img src="alternating-field-release/screenshot.png" alt="Alternating Field Release preview" loading="lazy">
       </a>
       <a class="block" href="/labs/microscopic-current/">
         <h2>Microscopic Current</h2>
-        <p>See how electron drift inside a metal gives rise to an electric current.</p>
+        <img src="microscopic-current/screenshot.png" alt="Microscopic Current preview" loading="lazy">
       </a>
       <a class="block" href="/labs/oscilloscope-principle/">
         <h2>Oscilloscope Principle</h2>
-        <p>Explore how deflecting voltages trace a waveform on an oscilloscope screen.</p>
+        <img src="oscilloscope-principle/screenshot.png" alt="Oscilloscope Principle preview" loading="lazy">
       </a>
       <a class="block" href="/labs/vernier-caliper/">
         <h2>Vernier Caliper</h2>
-        <p>Practise reading a vernier caliper with randomly generated measurements.</p>
+        <img src="vernier-caliper/screenshot.png" alt="Vernier Caliper preview" loading="lazy">
       </a>
     </div>
   </main>
