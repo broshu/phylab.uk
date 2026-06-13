@@ -43,7 +43,7 @@
     pointer-events: none; z-index: 0;
   }
 
-  .wrap { position: relative; z-index: 1; width: 100%; max-width: 720px; }
+  .wrap { position: relative; z-index: 1; width: 100%; max-width: 1332px; }
 
   .page-title {
     font-family: "Cormorant Garamond", serif;
@@ -55,41 +55,81 @@
 
   .home-link {
     position: fixed;
-    top: 20px; right: 20px;
-    z-index: 10;
+    top: 20px;
+    right: 20px;
+    z-index: 100;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 44px; height: 44px;
-    border: 1px solid var(--line);
+    width: 44px;
+    height: 44px;
+    border: 1px solid #d8d2c0;
     border-radius: 50%;
-    color: var(--green);
-    background: var(--card);
-    box-shadow: var(--shadow);
+    color: #2f5d4f;
+    background: #faf8f1;
+    box-shadow: 0 1px 2px rgba(28,43,37,.05), 0 12px 32px -16px rgba(28,43,37,.28);
     text-decoration: none;
     transition: transform .2s ease, border-color .2s ease;
   }
   .home-link:hover,
   .home-link:focus-visible {
-    border-color: var(--accent);
-    color: var(--green-2);
+    border-color: #8a9a5b;
+    color: #3f7060;
     transform: translateY(-2px);
     outline: none;
   }
   .home-link svg { display: block; }
 
-  .placeholder {
-    background: var(--card);
-    border: 2px dashed var(--line);
-    border-radius: 16px;
-    padding: 72px 32px;
-    text-align: center;
-    color: var(--muted);
+  .blocks {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
   }
 
-  a:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
+  .block {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    padding: 20px 20px 16px;
+    text-decoration: none;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    color: var(--ink);
+    overflow: hidden;
+    transition: transform .3s ease, box-shadow .3s ease, border-color .3s;
+  }
+  .block:hover {
+    transform: translateY(-5px);
+    border-color: var(--accent);
+    box-shadow: 0 22px 48px -20px rgba(28,43,37,.45);
+  }
+
+  .block h2 {
+    font-family: "Cormorant Garamond", serif;
+    font-size: 1.6rem; font-weight: 600; color: var(--green);
+    letter-spacing: .5px; line-height: 1.1; text-align: center;
+  }
+
+  .block img {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    object-position: top;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #fff;
+  }
+
+  @media (max-width: 1000px) {
+    .blocks { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (max-width: 640px) {
+    .blocks { grid-template-columns: 1fr; gap: 18px; }
   }
 </style>
 </head>
@@ -99,8 +139,23 @@
   </a>
   <main class="wrap">
     <h1 class="page-title">Resources</h1>
-    <div class="placeholder">
-      <p>Worksheets, apparatus guides and other classroom materials — coming soon.</p>
+    <div class="blocks">
+      <a class="block" href="Capacitance%20(EN).pdf" target="_blank" rel="noopener">
+        <h2>Capacitance (EN)</h2>
+        <img src="thumbs/capacitance-en.jpg" alt="Capacitance (EN) — first page preview" loading="lazy">
+      </a>
+      <a class="block" href="Ohm's%20Law%20for%20Closed%20Circuits%20(EN).pdf" target="_blank" rel="noopener">
+        <h2>Ohm's Law for Closed Circuits (EN)</h2>
+        <img src="thumbs/ohms-law-for-closed-circuits-en.jpg" alt="Ohm's Law for Closed Circuits (EN) — first page preview" loading="lazy">
+      </a>
+      <a class="block" href="Ohm's%20Law%20for%20Closed%20Circuits%20(EN,%20redesigned).pdf" target="_blank" rel="noopener">
+        <h2>Ohm's Law for Closed Circuits (EN, redesigned)</h2>
+        <img src="thumbs/ohms-law-for-closed-circuits-en-redesigned.jpg" alt="Ohm's Law for Closed Circuits (EN, redesigned) — first page preview" loading="lazy">
+      </a>
+      <a class="block" href="Resistance%20of%20a%20Conductor%20(EN).pdf" target="_blank" rel="noopener">
+        <h2>Resistance of a Conductor (EN)</h2>
+        <img src="thumbs/resistance-of-a-conductor-en.jpg" alt="Resistance of a Conductor (EN) — first page preview" loading="lazy">
+      </a>
     </div>
   </main>
 </body>
