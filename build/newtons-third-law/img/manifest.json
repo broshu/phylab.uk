@@ -1,0 +1,107 @@
+[
+  {
+    "file": "slide1_pic1.png",
+    "slide": 1,
+    "w_emu": 3032946,
+    "h_emu": 2559050,
+    "duplicate_of": null
+  },
+  {
+    "file": "slide2_pic1.png",
+    "slide": 2,
+    "w_emu": 2393950,
+    "h_emu": 633984,
+    "duplicate_of": null
+  },
+  {
+    "file": "slide3_pic1.png",
+    "slide": 3,
+    "w_emu": 2257080,
+    "h_emu": 2296541,
+    "duplicate_of": null
+  },
+  {
+    "file": "slide3_pic2.png",
+    "slide": 3,
+    "w_emu": 2393950,
+    "h_emu": 633984,
+    "duplicate_of": null
+  },
+  {
+    "file": "slide4_pic1.png",
+    "slide": 4,
+    "w_emu": 7454961,
+    "h_emu": 1956434,
+    "duplicate_of": null
+  },
+  {
+    "file": "slide5_pic1.png",
+    "slide": 5,
+    "w_emu": 3150128,
+    "h_emu": 886586,
+    "duplicate_of": null
+  },
+  {
+    "file": "slide7_pic1.png",
+    "slide": 7,
+    "w_emu": 2932691,
+    "h_emu": 2109978,
+    "duplicate_of": null
+  },
+  {
+    "file": "slide10_pic1.png",
+    "slide": 10,
+    "w_emu": 5598730,
+    "h_emu": 2157531,
+    "duplicate_of": null
+  },
+  {
+    "file": "slide11_pic1.png",
+    "slide": 11,
+    "w_emu": 2426822,
+    "h_emu": 928116,
+    "duplicate_of": null
+  },
+  {
+    "file": "slide11_pic2.png",
+    "slide": 11,
+    "w_emu": 4873178,
+    "h_emu": 2354580,
+    "duplicate_of": null
+  },
+  {
+    "file": "slide11_pic3.png",
+    "slide": 11,
+    "w_emu": 4864862,
+    "h_emu": 2281428,
+    "duplicate_of": null
+  },
+  {
+    "file": "slide13_pic1.jpg",
+    "slide": 13,
+    "w_emu": 6552198,
+    "h_emu": 3690791,
+    "duplicate_of": null
+  },
+  {
+    "file": "slide13_pic2.png",
+    "slide": 13,
+    "w_emu": 0,
+    "h_emu": 0,
+    "duplicate_of": null
+  },
+  {
+    "file": "slide15_pic1.png",
+    "slide": 15,
+    "w_emu": 4309992,
+    "h_emu": 2383116,
+    "duplicate_of": null
+  },
+  {
+    "file": "slide25_pic1.png",
+    "slide": 25,
+    "w_emu": 1915085,
+    "h_emu": 1963064,
+    "duplicate_of": null
+  }
+]
