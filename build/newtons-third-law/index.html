@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<style>
+  :root{--ink:#1c2b25;--paper:#f4f1e8;--card:#faf8f1;--line:#d8d2c0;--muted:#6b7269;--teal:#2f5d4f;--orange:#d2552f;--amber:#e8a33d;--olive:#8a9a5b;--head:"Avenir Next","Manrope",system-ui,sans-serif;--body:"Inter",Arial,sans-serif;--shadow:0 12px 32px -16px rgba(28,43,37,.28)}
+  @page{size:1280px 720px;margin:0}*{box-sizing:border-box;margin:0;padding:0}html,body{background:var(--paper)}body{font-family:var(--body);color:var(--ink)}
+  .slide{position:relative;width:1280px;height:720px;background:var(--paper);padding:58px 80px 82px;overflow:hidden;page-break-after:always}.slide:last-child{page-break-after:auto}
+  .kicker{font-family:var(--head);font-weight:700;font-size:17px;letter-spacing:2px;text-transform:uppercase;color:var(--orange);display:flex;align-items:center;gap:10px}.kicker.teal{color:var(--teal)}.kicker.amber{color:var(--amber)}.dot{width:9px;height:9px;border-radius:50%;background:currentColor}
+  h1{font-family:var(--head);font-weight:800;font-size:56px;line-height:1.05;margin:13px 0 8px;letter-spacing:-.5px;max-width:1080px}.sub{font-size:22px;color:var(--muted);max-width:980px;line-height:1.35}
+  .foot{position:absolute;left:80px;right:80px;bottom:30px;display:flex;justify-content:space-between;border-top:1px solid var(--line);padding-top:11px;font-size:13px;letter-spacing:1px;color:var(--muted);text-transform:uppercase}
+  .row{display:flex;gap:30px}.grow{flex:1}.card{border:1px solid var(--line);border-radius:14px;background:var(--card);padding:25px;box-shadow:var(--shadow)}.center{display:flex;align-items:center;justify-content:center}
+  .pill{display:inline-block;border:1.5px solid var(--orange);border-radius:30px;padding:7px 16px;font-family:var(--head);font-weight:700;font-size:14px;letter-spacing:2px;text-transform:uppercase;color:var(--orange)}
+  .callout{border:1.5px solid var(--teal);border-radius:12px;background:var(--card);padding:18px 22px}.lbl,.cat{font-family:var(--head);font-weight:700;font-size:14px;letter-spacing:1.5px;text-transform:uppercase}.lbl{color:var(--teal);margin-bottom:6px}.q{font-weight:600;font-size:20px;line-height:1.3}
+  .map{position:relative;margin-top:62px}.axis{position:absolute;left:7%;right:7%;top:38px;height:2px;background:var(--line)}.stops{display:flex;justify-content:space-between;position:relative}.stop{width:23%;text-align:center}.bub{width:58px;height:58px;border-radius:50%;margin:9px auto 15px;color:#fff;font-family:var(--head);font-weight:800;font-size:21px;display:flex;align-items:center;justify-content:center}.stop h3{font-family:var(--head);font-size:16px;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px}.stop p{font-size:15px;color:var(--muted);line-height:1.35}
+  .bg-teal{background:var(--teal)}.bg-orange{background:var(--orange)}.bg-amber{background:var(--amber)}.bg-ink{background:var(--ink)}.c-teal{color:var(--teal)}.c-orange{color:var(--orange)}.c-amber{color:var(--amber)}
+  .photo{width:100%;height:100%;object-fit:cover;border-radius:11px}.photo-crop{overflow:hidden;padding:0}
+  .terms{display:flex;flex-direction:column;gap:19px}.term{display:flex;gap:15px;align-items:flex-start}.badge{width:42px;height:42px;border-radius:50%;color:#fff;font-family:var(--head);font-weight:800;display:flex;align-items:center;justify-content:center;flex:none}.term b{font-family:var(--head);font-size:20px}.term p{color:var(--muted);font-size:16px;line-height:1.35;margin-top:3px}
+  .bar{border:1.5px solid var(--orange);border-radius:30px;padding:13px 24px;text-align:center;color:var(--orange);font-weight:700;font-size:19px}.formula{font-family:var(--head);text-align:center;margin:16px 0}.formula svg.math-display{height:52px}.small svg.math-display{height:38px}
+  .compare{display:grid;grid-template-columns:1fr 1fr;gap:34px;margin-top:30px}.compare .card{height:330px}.compare h2,.three h2{font-family:var(--head);font-size:24px;margin:8px 0 12px}.compare p,.three p{font-size:17px;line-height:1.4;color:var(--muted)}
+  .three{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:30px}.three .card{min-height:285px}.num{font-family:var(--head);font-size:38px;font-weight:800}.check{font-size:19px;line-height:1.5}.check b{color:var(--teal)}
+  .big-take{font-family:var(--head);font-weight:800;font-size:46px;line-height:1.17;max-width:1050px;margin-top:35px}
+  svg .wire{stroke:#1c2b25;stroke-width:4;fill:none;stroke-linecap:round}svg .thin{stroke:#d8d2c0;stroke-width:2;fill:none}svg text{font-family:Manrope,Arial,sans-serif}
+  svg.math-inline{height:.92em;vertical-align:-.18em}svg.math-display{height:44px}h1 svg.math-inline{height:.86em;vertical-align:-.12em}
+</style>
+</head>
+<body>
+
+<section class="slide">
+  <span class="pill">Forces &amp; Motion</span>
+  <div class="row" style="margin-top:26px;align-items:flex-start">
+    <div class="grow">
+      <h1 style="font-size:72px;margin-top:15px">Newton's Third Law</h1>
+      <p class="sub" style="margin-top:17px">Every force belongs to an interaction between two objects.</p>
+      <div class="callout" style="max-width:555px;margin-top:42px"><div class="lbl">Essential question</div><div class="q">If interaction forces are equal and opposite, how can either object accelerate?</div></div>
+    </div>
+    <div class="card center" style="width:430px;height:340px;margin-top:12px">
+      <svg width="370" height="245" viewBox="0 0 370 245">
+        <rect x="45" y="87" width="82" height="72" rx="14" fill="#faf8f1" stroke="#2f5d4f" stroke-width="4"/><rect x="243" y="87" width="82" height="72" rx="14" fill="#faf8f1" stroke="#d2552f" stroke-width="4"/>
+        <text x="86" y="130" text-anchor="middle" font-size="25" font-weight="800" fill="#2f5d4f">A</text><text x="284" y="130" text-anchor="middle" font-size="25" font-weight="800" fill="#d2552f">B</text>
+        <line x1="169" y1="104" x2="232" y2="104" stroke="#d2552f" stroke-width="5"/><polygon points="232,104 215,95 215,113" fill="#d2552f"/>
+        <line x1="201" y1="142" x2="138" y2="142" stroke="#2f5d4f" stroke-width="5"/><polygon points="138,142 155,133 155,151" fill="#2f5d4f"/>
+        <text x="200" y="78" text-anchor="middle" font-size="16" font-weight="700" fill="#d2552f">force on B by A</text><text x="184" y="184" text-anchor="middle" font-size="16" font-weight="700" fill="#2f5d4f">force on A by B</text>
+      </svg>
+    </div>
+  </div>
+  <div class="foot"><span>Newton's Third Law</span><span>01</span></div>
+</section>
+
+<section class="slide">
+  <div class="kicker teal"><span class="dot"></span>Lesson map</div><h1>Build the idea in four moves.</h1>
+  <div class="map"><div class="axis"></div><div class="stops">
+    <div class="stop"><div class="bub bg-orange">01</div><h3 class="c-orange">Observe</h3><p>A force never appears alone.</p></div>
+    <div class="stop"><div class="bub bg-teal">02</div><h3 class="c-teal">Pair</h3><p>Name both objects and both forces.</p></div>
+    <div class="stop"><div class="bub bg-amber">03</div><h3 class="c-amber">Separate</h3><p>Do not confuse pairs with balance.</p></div>
+    <div class="stop"><div class="bub bg-ink">04</div><h3>Apply</h3><p>Use one free-body diagram at a time.</p></div>
+  </div></div>
+  <div class="callout" style="max-width:780px;margin:48px auto 0"><div class="lbl">The habit</div><div class="q">For every force, ask: “Which object exerts it, and which object receives it?”</div></div>
+  <div class="foot"><span>Newton's Third Law</span><span>02</span></div>
+</section>
+
+<section class="slide">
+  <div class="kicker">Observe</div><h1>The rower moves because the water pushes back.</h1><p class="sub">The oar pushes water backwards; the water pushes the oar and boat forwards.</p>
+  <div class="row" style="margin-top:28px">
+    <div class="card photo-crop" style="width:650px;height:330px"><img class="photo" src="img/slide13_pic1.jpg" style="object-position:center 43%"></div>
+    <div class="grow" style="padding-top:12px"><div class="terms">
+      <div class="term"><div class="badge bg-orange">1</div><div><b>Boat acts on water</b><p>The oars accelerate water backwards.</p></div></div>
+      <div class="term"><div class="badge bg-teal">2</div><div><b>Water acts on boat</b><p>The water accelerates the boat forwards.</p></div></div>
+      <div class="term"><div class="badge bg-ink">3</div><div><b>One interaction</b><p>The two forces exist together.</p></div></div>
+    </div></div>
+  </div>
+  <div class="foot"><span>Newton's Third Law</span><span>03</span></div>
+</section>
+
+<section class="slide">
+  <div class="kicker amber">Observe</div><h1>Contact is not required for an interaction.</h1><p class="sub">Magnets, charged particles, and gravitating masses exert forces across space.</p>
+  <div class="card center" style="margin-top:32px;height:330px">
+    <svg width="880" height="250" viewBox="0 0 880 250">
+      <rect x="105" y="83" width="210" height="80" rx="10" fill="#faf8f1" stroke="#2f5d4f" stroke-width="4"/><rect x="565" y="83" width="210" height="80" rx="10" fill="#faf8f1" stroke="#d2552f" stroke-width="4"/>
+      <rect x="105" y="83" width="105" height="80" rx="8" fill="#2f5d4f"/><rect x="670" y="83" width="105" height="80" rx="8" fill="#d2552f"/>
+      <text x="158" y="133" text-anchor="middle" font-size="28" font-weight="800" fill="#fff">S</text><text x="263" y="133" text-anchor="middle" font-size="28" font-weight="800" fill="#d2552f">N</text><text x="618" y="133" text-anchor="middle" font-size="28" font-weight="800" fill="#2f5d4f">S</text><text x="723" y="133" text-anchor="middle" font-size="28" font-weight="800" fill="#fff">N</text>
+      <line x1="350" y1="105" x2="510" y2="105" stroke="#d2552f" stroke-width="5"/><polygon points="510,105 492,96 492,114" fill="#d2552f"/><line x1="530" y1="145" x2="370" y2="145" stroke="#2f5d4f" stroke-width="5"/><polygon points="370,145 388,136 388,154" fill="#2f5d4f"/>
+      <text x="430" y="47" text-anchor="middle" font-size="19" font-weight="700" fill="#1c2b25">equal attraction, opposite directions</text>
+      <line x1="65" y1="190" x2="335" y2="190" stroke="#1c2b25" stroke-width="4"/><circle cx="200" cy="180" r="20" fill="#faf8f1" stroke="#1c2b25" stroke-width="4"/><line x1="545" y1="190" x2="815" y2="190" stroke="#1c2b25" stroke-width="4"/><circle cx="680" cy="180" r="20" fill="#faf8f1" stroke="#1c2b25" stroke-width="4"/>
+    </svg>
+  </div>
+  <div class="bar" style="max-width:700px;margin:25px auto 0">Forces reveal interactions, not necessarily touching.</div>
+  <div class="foot"><span>Newton's Third Law</span><span>04</span></div>
+</section>
+
+<section class="slide">
+  <div class="kicker teal">Model</div><h1>Every interaction produces a matched pair.</h1><p class="sub">The force on A by B is equal in magnitude and opposite in direction to the force on B by A.</p>
+  <div class="card center" style="margin-top:34px;padding:35px">
+    <div><div class="formula"><md>\vec{F}_{A\leftarrow B}=-\vec{F}_{B\leftarrow A}</md></div>
+      <div class="row" style="margin-top:28px;width:900px">
+        <div class="grow"><div class="cat c-teal">Same magnitude</div><div class="formula small" style="text-align:left;margin-top:12px"><md>|\vec{F}_{A\leftarrow B}|=|\vec{F}_{B\leftarrow A}|</md></div></div>
+        <div class="grow"><div class="cat c-orange">Opposite direction</div><p style="font-size:19px;margin-top:8px">The minus sign records opposite vectors.</p></div>
+        <div class="grow"><div class="cat c-amber">Different objects</div><p style="font-size:19px;margin-top:8px">One force acts on A; the other acts on B.</p></div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Newton's Third Law</span><span>05</span></div>
+</section>
+
+<section class="slide">
+  <div class="kicker">Check</div><h1>A true third-law pair passes four tests.</h1><p class="sub">Use these tests before calling two forces an action–reaction pair.</p>
+  <div class="three" style="grid-template-columns:repeat(4,1fr)">
+    <div class="card"><div class="num c-orange">01</div><h2>Same interaction</h2><p>Both forces have the same physical type: contact, gravity, electric, and so on.</p></div>
+    <div class="card"><div class="num c-teal">02</div><h2>Different objects</h2><p>The forces act on the two partners, never on one object.</p></div>
+    <div class="card"><div class="num c-amber">03</div><h2>Equal &amp; opposite</h2><p>The vectors have equal magnitude and opposite direction.</p></div>
+    <div class="card"><div class="num">04</div><h2>Simultaneous</h2><p>They begin, change, and disappear together.</p></div>
+  </div>
+  <div class="foot"><span>Newton's Third Law</span><span>06</span></div>
+</section>
+
+<section class="slide">
+  <div class="kicker amber">Compare</div><h1>Third-law pairs are not balanced forces.</h1><p class="sub">The difference is not size or direction. It is which object receives each force.</p>
+  <div class="compare">
+    <div class="card"><div class="cat c-teal">Interaction pair</div><h2>Forces act on different objects</h2>
+      <svg width="100%" height="140" viewBox="0 0 480 140"><rect x="45" y="45" width="80" height="60" rx="10" fill="none" stroke="#2f5d4f" stroke-width="4"/><rect x="355" y="45" width="80" height="60" rx="10" fill="none" stroke="#d2552f" stroke-width="4"/><line x1="155" y1="57" x2="325" y2="57" stroke="#d2552f" stroke-width="5"/><polygon points="325,57 307,48 307,66" fill="#d2552f"/><line x1="325" y1="94" x2="155" y2="94" stroke="#2f5d4f" stroke-width="5"/><polygon points="155,94 173,85 173,103" fill="#2f5d4f"/></svg>
+      <p>They cannot cancel on a single free-body diagram.</p>
+    </div>
+    <div class="card"><div class="cat c-orange">Balanced forces</div><h2>Forces act on the same object</h2>
+      <svg width="100%" height="140" viewBox="0 0 480 140"><rect x="190" y="40" width="100" height="70" rx="10" fill="none" stroke="#1c2b25" stroke-width="4"/><line x1="240" y1="38" x2="240" y2="2" stroke="#2f5d4f" stroke-width="5"/><polygon points="240,2 231,20 249,20" fill="#2f5d4f"/><line x1="240" y1="112" x2="240" y2="138" stroke="#d2552f" stroke-width="5"/><polygon points="240,138 231,120 249,120" fill="#d2552f"/></svg>
+      <p>They may add to zero, giving zero acceleration.</p>
+    </div>
+  </div>
+  <div class="foot"><span>Newton's Third Law</span><span>07</span></div>
+</section>
+
+<section class="slide">
+  <div class="kicker teal">Free-body diagrams</div><h1>Draw one object at a time.</h1><p class="sub">Only forces acting on the chosen object belong on its diagram.</p>
+  <div class="row" style="margin-top:30px">
+    <div class="card center" style="width:560px;height:335px">
+      <svg width="470" height="255" viewBox="0 0 470 255">
+        <line x1="25" y1="205" x2="445" y2="205" stroke="#1c2b25" stroke-width="4"/><rect x="175" y="120" width="120" height="85" rx="8" fill="#faf8f1" stroke="#1c2b25" stroke-width="4"/>
+        <line x1="235" y1="118" x2="235" y2="40" stroke="#2f5d4f" stroke-width="5"/><polygon points="235,40 226,58 244,58" fill="#2f5d4f"/><text x="255" y="68" font-size="18" font-weight="700" fill="#2f5d4f">normal on box</text>
+        <line x1="235" y1="207" x2="235" y2="250" stroke="#d2552f" stroke-width="5"/><polygon points="235,250 226,232 244,232" fill="#d2552f"/><text x="255" y="243" font-size="18" font-weight="700" fill="#d2552f">Earth on box</text>
+      </svg>
+    </div>
+    <div class="grow" style="padding-top:8px"><div class="terms">
+      <div class="term"><div class="badge bg-teal">1</div><div><b>Choose the object</b><p>Here, the box is the system.</p></div></div>
+      <div class="term"><div class="badge bg-orange">2</div><div><b>List forces on it</b><p>The table's normal force and Earth's gravitational force act on the box.</p></div></div>
+      <div class="term"><div class="badge bg-ink">3</div><div><b>Keep partners elsewhere</b><p>The box-on-table and box-on-Earth forces belong to other diagrams.</p></div></div>
+    </div></div>
+  </div>
+  <div class="foot"><span>Newton's Third Law</span><span>08</span></div>
+</section>
+
+<section class="slide">
+  <div class="kicker">Derive</div><h1>Equal forces can produce unequal accelerations.</h1><p class="sub">The third law fixes the force pair; the second law connects each force to its object's mass.</p>
+  <div class="card center" style="margin-top:34px;height:345px"><div>
+    <div class="row" style="width:920px;text-align:center">
+      <div class="grow"><div class="cat c-teal">Object A</div><div class="formula small"><md>a_A=\dfrac{F}{m_A}</md></div></div>
+      <div class="grow"><div class="cat c-orange">Object B</div><div class="formula small"><md>a_B=\dfrac{F}{m_B}</md></div></div>
+    </div>
+    <div class="formula" style="margin-top:32px"><md>\dfrac{a_A}{a_B}=\dfrac{m_B}{m_A}</md></div>
+    <p style="text-align:center;color:var(--muted);font-size:18px;margin-top:22px">The lighter object accelerates more, even though both experience the same force magnitude.</p>
+  </div></div>
+  <div class="foot"><span>Newton's Third Law</span><span>09</span></div>
+</section>
+
+<section class="slide">
+  <div class="kicker amber">Apply</div><h1>Motion follows from pushing on something else.</h1><p class="sub">Walking, rowing, and rockets use the same interaction logic.</p>
+  <div class="three">
+    <div class="card"><div class="num c-orange">01</div><h2>Walking</h2><svg width="100%" height="105" viewBox="0 0 300 105"><line x1="20" y1="85" x2="280" y2="85" stroke="#1c2b25" stroke-width="4"/><circle cx="145" cy="20" r="12" fill="#faf8f1" stroke="#1c2b25" stroke-width="4"/><path d="M145 32 L145 63 L118 82 M145 63 L175 82 M145 43 L178 54" fill="none" stroke="#1c2b25" stroke-width="4" stroke-linecap="round"/><line x1="118" y1="83" x2="50" y2="83" stroke="#d2552f" stroke-width="5"/><polygon points="50,83 68,74 68,92" fill="#d2552f"/></svg><p>You push the ground backwards; static friction pushes you forwards.</p></div>
+    <div class="card"><div class="num c-teal">02</div><h2>Rowing</h2><svg width="100%" height="105" viewBox="0 0 300 105"><path d="M55 58 Q150 92 245 58 L225 82 H75 Z" fill="#faf8f1" stroke="#1c2b25" stroke-width="4"/><line x1="120" y1="48" x2="38" y2="83" stroke="#1c2b25" stroke-width="5"/><line x1="172" y1="45" x2="260" y2="80" stroke="#1c2b25" stroke-width="5"/><line x1="80" y1="95" x2="30" y2="95" stroke="#d2552f" stroke-width="5"/><polygon points="30,95 48,86 48,104" fill="#d2552f"/></svg><p>The oars push water backwards; water pushes the boat forwards.</p></div>
+    <div class="card"><div class="num c-amber">03</div><h2>Rocket</h2><svg width="100%" height="105" viewBox="0 0 300 105"><path d="M130 20 Q150 2 170 20 L170 69 L130 69 Z" fill="#faf8f1" stroke="#1c2b25" stroke-width="4"/><path d="M140 70 L150 102 L160 70" fill="#e8a33d"/><line x1="195" y1="48" x2="260" y2="48" stroke="#2f5d4f" stroke-width="5"/><polygon points="260,48 242,39 242,57" fill="#2f5d4f"/></svg><p>The engine pushes exhaust backwards; exhaust pushes the rocket forwards.</p></div>
+  </div>
+  <div class="foot"><span>Newton's Third Law</span><span>10</span></div>
+</section>
+
+<section class="slide">
+  <div class="kicker teal">Worked example</div><h1>Buoyancy transfers a force to the scale.</h1><p class="sub">A suspended 10 N block is partly immersed. The spring scale now reads 6 N.</p>
+  <div class="row" style="margin-top:27px">
+    <div class="card center" style="width:480px;height:350px">
+      <svg width="360" height="300" viewBox="0 0 360 300">
+        <line x1="25" y1="265" x2="335" y2="265" stroke="#1c2b25" stroke-width="4"/><rect x="70" y="172" width="220" height="92" rx="5" fill="none" stroke="#1c2b25" stroke-width="4"/><path d="M72 195 Q115 185 150 195 T228 195 T288 195" fill="none" stroke="#2f5d4f" stroke-width="4"/>
+        <rect x="145" y="135" width="70" height="85" rx="5" fill="#faf8f1" stroke="#1c2b25" stroke-width="4"/><line x1="180" y1="135" x2="180" y2="50" stroke="#1c2b25" stroke-width="4"/><path d="M180 50 q-25 12 0 24 q25 12 0 24 q-25 12 0 24" fill="none" stroke="#d2552f" stroke-width="4"/><line x1="180" y1="50" x2="180" y2="18" stroke="#1c2b25" stroke-width="4"/>
+        <line x1="125" y1="218" x2="125" y2="150" stroke="#2f5d4f" stroke-width="5"/><polygon points="125,150 116,168 134,168" fill="#2f5d4f"/><text x="78" y="145" font-size="18" font-weight="700" fill="#2f5d4f">buoyancy</text>
+        <line x1="235" y1="160" x2="235" y2="230" stroke="#d2552f" stroke-width="5"/><polygon points="235,230 226,212 244,212" fill="#d2552f"/><text x="248" y="221" font-size="18" font-weight="700" fill="#d2552f">reaction</text>
+      </svg>
+    </div>
+    <div class="grow" style="padding-top:5px">
+      <div class="card" style="margin-bottom:18px"><div class="cat c-teal">1. Find the buoyant force</div><div class="formula small"><md>F_B=10\,\mathrm{N}-6\,\mathrm{N}=4\,\mathrm{N}</md></div></div>
+      <div class="card"><div class="cat c-orange">2. Use the third law</div><div class="formula small"><md>F_{\mathrm{block\ on\ water}}=F_B=4\,\mathrm{N}</md></div><p style="font-size:17px;color:var(--muted);text-align:center">The scale reading increases by <m>4\,\mathrm{N}</m>.</p></div>
+    </div>
+  </div>
+  <div class="foot"><span>Newton's Third Law</span><span>11</span></div>
+</section>
+
+<section class="slide">
+  <div class="kicker">Common traps</div><h1>Three tempting statements are wrong.</h1><p class="sub">Repair each statement by naming the objects carefully.</p>
+  <div class="three">
+    <div class="card"><div class="num c-orange">01</div><h2>“The bigger object exerts more force.”</h2><p>Wrong. Interaction forces are equal. The smaller mass usually accelerates more.</p></div>
+    <div class="card"><div class="num c-teal">02</div><h2>“The reaction happens afterwards.”</h2><p>Wrong. Both forces exist and change at the same time.</p></div>
+    <div class="card"><div class="num c-amber">03</div><h2>“The pair cancels.”</h2><p>Wrong for one object. The two forces act on different objects.</p></div>
+  </div>
+  <div class="foot"><span>Newton's Third Law</span><span>12</span></div>
+</section>
+
+<section class="slide">
+  <div class="kicker amber">Problem route</div><h1>Use a reliable four-step method.</h1><p class="sub">This route prevents nearly every action–reaction mistake.</p>
+  <div class="row" style="margin-top:34px">
+    <div class="card grow check"><div class="num c-orange">01</div><b>Name the interaction.</b><br>Contact? Gravity? Electric? Magnetic?</div>
+    <div class="card grow check"><div class="num c-teal">02</div><b>Name both forces.</b><br>“Force on A by B” and “force on B by A”.</div>
+    <div class="card grow check"><div class="num c-amber">03</div><b>Choose one object.</b><br>Draw only the forces acting on that object.</div>
+    <div class="card grow check"><div class="num">04</div><b>Apply the second law.</b><br>Use the net force on the chosen object.</div>
+  </div>
+  <div class="bar" style="max-width:760px;margin:35px auto 0">Third law identifies the pair. Second law predicts each object's motion.</div>
+  <div class="foot"><span>Newton's Third Law</span><span>13</span></div>
+</section>
+
+<section class="slide">
+  <div class="kicker teal"><span class="dot"></span>Summary</div>
+  <div class="big-take">A force is one half of an interaction. Its partner is equal and opposite, acts on the other object, and appears at the same time. Separate the objects before analysing motion.</div>
+  <div class="callout" style="max-width:800px;margin-top:48px"><div class="lbl">Answer to the essential question</div><div class="q">Equal and opposite forces do not cancel on either object because they act on different objects.</div></div>
+  <div class="foot"><span>Newton's Third Law</span><span>14</span></div>
+</section>
+
+</body>
+</html>
