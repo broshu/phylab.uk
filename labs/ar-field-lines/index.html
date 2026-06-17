@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>AR Electric Field Lines</title>
+
+  <!-- A-Frame + AR.js (marker based) -->
+  <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.js"></script>
+
+  <style>
+    html, body { margin: 0; padding: 0; overflow: hidden; width: 100%; height: 100%; }
+
+    /* On-screen UI overlay (does not block the camera) */
+    #ui {
+      position: fixed; left: 0; top: 0; width: 100%;
+      pointer-events: none;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      z-index: 10;
+    }
+    #status {
+      margin: 12px auto 0; max-width: 92%;
+      background: rgba(20,22,30,0.72); color: #fff;
+      padding: 10px 16px; border-radius: 999px;
+      text-align: center; font-size: 15px; font-weight: 600;
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      box-shadow: 0 4px 18px rgba(0,0,0,0.35);
+    }
+    #legend {
+      position: fixed; left: 12px; bottom: 12px;
+      background: rgba(20,22,30,0.72); color: #fff;
+      padding: 10px 14px; border-radius: 14px; font-size: 13px; line-height: 1.6;
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    }
+    #legend .dot { display:inline-block; width:11px; height:11px; border-radius:50%; margin-right:7px; vertical-align: middle; }
+    .pos { background:#ff3b30; }
+    .neg { background:#3b82f6; }
+    #hint {
+      position: fixed; right: 12px; bottom: 12px;
+      background: rgba(20,22,30,0.72); color:#cfd6e4;
+      padding: 8px 12px; border-radius: 12px; font-size: 12px; max-width: 46%;
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    }
+    /* Gate / loading screen shown before camera permission */
+    #gate {
+      position: fixed; inset: 0; z-index: 50; background: #0b0e16; color:#e8ecf5;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      text-align:center; padding: 24px;
+    }
+    #gate h1 { font-size: 22px; margin: 0 0 8px; }
+    #gate p { color:#9aa6bd; max-width: 420px; line-height:1.5; margin: 6px 0; font-size:14px;}
+    #startBtn {
+      margin-top: 22px; pointer-events:auto; cursor:pointer;
+      background: linear-gradient(135deg,#ff5b4f,#3b82f6);
+      color:#fff; border:none; border-radius: 14px; padding: 14px 30px;
+      font-size: 17px; font-weight: 700;
+    }
+    .hidden { display:none !important; }
+  </style>
+</head>
+<body>
+
+  <!-- Loading / start gate -->
+  <div id="gate">
+    <h1>AR Electric Field Lines</h1>
+    <p>Point your iPad camera at the printed <b>+</b> or <b>&minus;</b> charge marker to see its 3D electric field. Show <b>both</b> markers together to see a dipole field.</p>
+    <p style="font-size:12px;color:#6f7c95">Requires camera access. Best in Safari over HTTPS.</p>
+    <button id="startBtn">Start camera</button>
+    <p style="margin-top:18px"><a href="print-markers.html" style="color:#9fb0d0;font-size:13px">Print the + / &minus; markers &#8599;</a></p>
+    <p><a href="/labs/" style="color:#6f7c95;font-size:12px">&larr; Back to Labs</a></p>
+  </div>
+
+  <!-- UI overlay -->
+  <div id="ui">
+    <a href="/labs/" style="position:fixed;left:12px;top:12px;pointer-events:auto;background:rgba(20,22,30,0.72);color:#fff;text-decoration:none;padding:8px 14px;border-radius:999px;font-size:13px;font-weight:600;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)">&larr; Labs</a>
+    <div id="status">Searching for markers&hellip;</div>
+    <div id="legend">
+      <div><span class="dot pos"></span>Positive charge (+)</div>
+      <div><span class="dot neg"></span>Negative charge (&minus;)</div>
+    </div>
+    <div id="hint">Arrows show field direction: out of + , into &minus;</div>
+  </div>
+
+  <!-- AR Scene -->
+  <a-scene
+    embedded
+    vr-mode-ui="enabled: false"
+    renderer="logarithmicDepthBuffer: true; precision: medium; antialias: true; alpha: true"
+    arjs="sourceType: webcam; detectionMode: mono_and_matrix; matrixCodeType: 3x3; patternRatio: 0.5; debugUIEnabled: false;"
+    efield-controller>
+
+    <!-- POSITIVE charge marker (barcode value 0) -->
+    <a-marker id="pos" type="barcode" value="0" smooth="true" smoothCount="8" smoothTolerance="0.01" smoothThreshold="2">
+      <a-sphere radius="0.16" position="0 0.16 0"
+                material="shader: standard; color: #ff3b30; emissive: #ff3b30; emissiveIntensity: 0.6; metalness:0.1; roughness:0.4"></a-sphere>
+      <a-entity text="value: +; align: center; color: #ffffff; width: 4"
+                position="0 0.16 0" scale="1.2 1.2 1.2"
+                look-at="[camera]"></a-entity>
+    </a-marker>
+
+    <!-- NEGATIVE charge marker (barcode value 1) -->
+    <a-marker id="neg" type="barcode" value="1" smooth="true" smoothCount="8" smoothTolerance="0.01" smoothThreshold="2">
+      <a-sphere radius="0.16" position="0 0.16 0"
+                material="shader: standard; color: #3b82f6; emissive: #3b82f6; emissiveIntensity: 0.6; metalness:0.1; roughness:0.4"></a-sphere>
+      <a-entity text="value: −; align: center; color: #ffffff; width: 6"
+                position="0 0.16 0" scale="1.2 1.2 1.2"
+                look-at="[camera]"></a-entity>
+    </a-marker>
+
+    <a-entity camera></a-entity>
+  </a-scene>
+
+  <script>
+  /* ============================================================
+     Electric field visualisation controller
+     - Reads world positions of the +/- markers each frame
+     - Builds 3D field-line tubes in world space:
+         both markers visible -> dipole field
+         only + visible       -> radial outward field
+         only - visible       -> radial inward field
+     ============================================================ */
+  AFRAME.registerComponent('efield-controller', {
+    init: function () {
+      this.posEl = document.querySelector('#pos');
+      this.negEl = document.querySelector('#neg');
+      this.statusEl = document.querySelector('#status');
+
+      // World-space group that holds all generated field geometry.
+      this.group = new THREE.Group();
+      this.el.object3D.add(this.group);
+
+      this.tmpP = new THREE.Vector3();
+      this.tmpN = new THREE.Vector3();
+      this.lastKey = '';          // describes current state to avoid needless rebuilds
+      this.lastBuild = 0;
+      this.lastPos = new THREE.Vector3();
+      this.lastNeg = new THREE.Vector3();
+    },
+
+    /* ---- Physics: E field from a set of point charges ---- */
+    fieldAt: function (p, charges) {
+      const E = new THREE.Vector3();
+      const d = new THREE.Vector3();
+      for (let i = 0; i < charges.length; i++) {
+        const c = charges[i];
+        d.subVectors(p, c.pos);
+        const r2 = d.lengthSq();
+        if (r2 < 1e-5) continue;
+        const r = Math.sqrt(r2);
+        E.addScaledVector(d, c.q / (r2 * r)); // q * d / r^3
+      }
+      return E;
+    },
+
+    /* Trace one field line from `seed`. dir=+1 follows the field, -1 reverses it. */
+    traceLine: function (seed, charges, dir, opts) {
+      const pts = [];
+      const p = seed.clone();
+      const E = new THREE.Vector3();
+      for (let i = 0; i < opts.maxSteps; i++) {
+        pts.push(p.clone());
+        E.copy(this.fieldAt(p, charges));
+        const len = E.length();
+        if (len < 1e-7) break;
+        E.multiplyScalar((dir * opts.step) / len);
+        p.add(E);
+        // terminate near a sink charge
+        let done = false;
+        for (let j = 0; j < charges.length; j++) {
+          if (p.distanceTo(charges[j].pos) < opts.minR) { pts.push(p.clone()); done = true; break; }
+        }
+        if (done) break;
+        if (p.distanceTo(opts.center) > opts.maxR) { pts.push(p.clone()); break; }
+      }
+      return pts;
+    },
+
+    /* Evenly distributed seed points on a sphere (Fibonacci sphere). */
+    seedSphere: function (center, radius, n) {
+      const seeds = [];
+      const phi = Math.PI * (3 - Math.sqrt(5));
+      for (let i = 0; i < n; i++) {
+        const y = 1 - (i / (n - 1)) * 2;
+        const r = Math.sqrt(Math.max(0, 1 - y * y));
+        const t = phi * i;
+        seeds.push(new THREE.Vector3(
+          center.x + radius * Math.cos(t) * r,
+          center.y + radius * y,
+          center.z + radius * Math.sin(t) * r
+        ));
+      }
+      return seeds;
+    },
+
+    /* Build a coloured tube mesh from a list of points. cFrom/cTo are hex colours. */
+    addTube: function (points, cFrom, cTo) {
+      if (points.length < 2) return;
+      const curve = new THREE.CatmullRomCurve3(points);
+      const seg = Math.min(120, Math.max(8, points.length * 2));
+      const geo = new THREE.TubeGeometry(curve, seg, 0.012, 5, false);
+      // per-vertex colour gradient along the tube length
+      const colA = new THREE.Color(cFrom), colB = new THREE.Color(cTo);
+      const pos = geo.attributes.position;
+      const colors = new Float32Array(pos.count * 3);
+      const ring = 6; // radialSegments(5)+1
+      for (let i = 0; i < pos.count; i++) {
+        const t = Math.floor(i / ring) / Math.max(1, (pos.count / ring));
+        const c = colA.clone().lerp(colB, Math.min(1, t));
+        colors[i*3] = c.r; colors[i*3+1] = c.g; colors[i*3+2] = c.b;
+      }
+      geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+      const mat = new THREE.MeshBasicMaterial({ vertexColors: true });
+      this.group.add(new THREE.Mesh(geo, mat));
+    },
+
+    /* Add an arrow cone at point p oriented along direction dir (unit). */
+    addArrow: function (p, dir, colorHex) {
+      const len = dir.length();
+      if (len < 1e-6) return;
+      const geo = new THREE.ConeGeometry(0.045, 0.11, 10);
+      const mat = new THREE.MeshBasicMaterial({ color: new THREE.Color(colorHex) });
+      const cone = new THREE.Mesh(geo, mat);
+      cone.position.copy(p);
+      const up = new THREE.Vector3(0, 1, 0);
+      const d = dir.clone().normalize();
+      cone.quaternion.setFromUnitVectors(up, d);
+      this.group.add(cone);
+    },
+
+    clearGroup: function () {
+      for (let i = this.group.children.length - 1; i >= 0; i--) {
+        const o = this.group.children[i];
+        if (o.geometry) o.geometry.dispose();
+        if (o.material) o.material.dispose();
+        this.group.remove(o);
+      }
+    },
+
+    /* Place arrowheads along a traced line. fieldDir = which way the field points. */
+    decorateArrows: function (pts, colorHex, fieldForward) {
+      const every = Math.max(8, Math.floor(pts.length / 3));
+      for (let i = every; i < pts.length - 1; i += every) {
+        const a = pts[i], b = pts[i + 1];
+        const dir = new THREE.Vector3().subVectors(b, a);
+        if (!fieldForward) dir.multiplyScalar(-1);
+        this.addArrow(a, dir, colorHex);
+      }
+    },
+
+    build: function (state, posW, negW) {
+      this.clearGroup();
+      const RED = '#ff5b4f', BLUE = '#4f93ff';
+
+      if (state === 'dipole') {
+        const charges = [{ pos: posW, q: 1 }, { pos: negW, q: -1 }];
+        const center = new THREE.Vector3().addVectors(posW, negW).multiplyScalar(0.5);
+        const maxR = posW.distanceTo(negW) * 1.6 + 1.0;
+        const seeds = this.seedSphere(posW, 0.22, 18);
+        const opts = { step: 0.035, maxSteps: 300, minR: 0.14, maxR: maxR, center: center };
+        for (let i = 0; i < seeds.length; i++) {
+          const pts = this.traceLine(seeds[i], charges, +1, opts);
+          this.addTube(pts, RED, BLUE);
+          this.decorateArrows(pts, '#ffd34f', true);
+        }
+      } else if (state === 'pos' || state === 'neg') {
+        const c = (state === 'pos') ? posW : negW;
+        const q = (state === 'pos') ? 1 : -1;
+        const charges = [{ pos: c, q: q }];
+        const seeds = this.seedSphere(c, 0.20, 16);
+        const opts = { step: 0.045, maxSteps: 70, minR: 0.05, maxR: 1.7, center: c };
+        const col = (state === 'pos') ? RED : BLUE;
+        for (let i = 0; i < seeds.length; i++) {
+          // dir=+1 traces outward for +, and outward (against inward field) for -
+          const pts = this.traceLine(seeds[i], charges, +1, opts);
+          this.addTube(pts, col, col);
+          // field points outward for +, inward for - -> arrows reflect that
+          this.decorateArrows(pts, '#ffd34f', state === 'pos');
+        }
+      }
+    },
+
+    tick: function (time) {
+      const pos = this.posEl, neg = this.negEl;
+      const pV = pos.object3D.visible, nV = neg.object3D.visible;
+
+      let state = 'none';
+      if (pV && nV) state = 'dipole';
+      else if (pV) state = 'pos';
+      else if (nV) state = 'neg';
+
+      // status text
+      const msg = {
+        dipole: 'Dipole field — lines flow from + to −',
+        pos: 'Positive charge — field points outward',
+        neg: 'Negative charge — field points inward',
+        none: 'Searching for markers…'
+      };
+      if (this.statusEl.textContent !== msg[state]) this.statusEl.textContent = msg[state];
+
+      if (state === 'none') {
+        if (this.group.children.length) this.clearGroup();
+        this.lastKey = 'none';
+        return;
+      }
+
+      // current world positions
+      if (pV) pos.object3D.getWorldPosition(this.tmpP);
+      if (nV) neg.object3D.getWorldPosition(this.tmpN);
+
+      // rebuild only on state change, meaningful movement, or every 250ms
+      const moved =
+        (pV && this.tmpP.distanceTo(this.lastPos) > 0.03) ||
+        (nV && this.tmpN.distanceTo(this.lastNeg) > 0.03);
+      const stale = (time - this.lastBuild) > 250;
+
+      if (state !== this.lastKey || moved || stale) {
+        const posW = pV ? this.tmpP.clone() : null;
+        const negW = nV ? this.tmpN.clone() : null;
+        this.build(state, posW, negW);
+        this.lastKey = state;
+        this.lastBuild = time;
+        if (pV) this.lastPos.copy(this.tmpP);
+        if (nV) this.lastNeg.copy(this.tmpN);
+      }
+    }
+  });
+
+  // Start gate: A-Frame/AR.js requests the camera as soon as the scene plays.
+  (function () {
+    const gate = document.getElementById('gate');
+    const btn = document.getElementById('startBtn');
+    const scene = document.querySelector('a-scene');
+
+    function reveal() { gate.classList.add('hidden'); }
+    btn.addEventListener('click', function () {
+      // hide gate; AR.js handles getUserMedia on scene load
+      setTimeout(reveal, 400);
+    });
+    if (scene.hasLoaded) { /* nothing */ }
+    scene.addEventListener('arjs-video-loaded', reveal);
+    scene.addEventListener('camera-error', function () {
+      document.getElementById('status').textContent = 'Camera unavailable — check permissions & HTTPS';
+    });
+  })();
+  </script>
+</body>
+</html>
