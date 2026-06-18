@@ -43,6 +43,7 @@
 </head>
 <body>
   <div class="noprint">
+    <button id="dlpdf">⬇︎ 下载 PDF（A4 · 正负两页）· Download A4 PDF</button>
     <button onclick="window.print()">打印折纸图纸 · Print cube nets</button>
     <a href="print-cube.html">← 贴方块版 Sticker version</a>
     <a href="print-flat.html">平面方案 Flat →</a>
@@ -61,6 +62,7 @@
     <div class="legend">
       <span class="k"><svg width="34" height="10"><line x1="2" y1="5" x2="32" y2="5" stroke="#1b2030" stroke-width="2"/></svg> 实线 = 剪 Cut</span>
       <span class="k"><svg width="34" height="10"><line x1="2" y1="5" x2="32" y2="5" stroke="#9aa6bd" stroke-width="2" stroke-dasharray="5 4"/></svg> 虚线 = 折 Fold</span>
+      <span class="k"><svg width="16" height="10"><rect x="1" y="1" width="14" height="8" fill="#e9eef8" stroke="#9aa6bd" stroke-width="0.6"/></svg> 灰块 = 粘贴区涂胶 Glue tab</span>
       <span class="k">5 面各不相同 · 底面留空</span>
     </div>
 
@@ -90,16 +92,34 @@
           <!-- bottom blank label -->
           <text x="67.5" y="114" text-anchor="middle" font-size="6" fill="#aab2c2">底面 bottom</text>
           <text x="67.5" y="121" text-anchor="middle" font-size="5" fill="#c4ccda">（不印·朝下）</text>
-          <!-- fold lines (dashed) -->
+          <!-- glue tabs (粘贴区): one per open cube edge -->
+          <g fill="#e9eef8">
+            <polygon points="45,0 48,-6 87,-6 90,0"/>       <!-- Top · top -->
+            <polygon points="90,0 96,3 96,42 90,45"/>        <!-- Top · right -->
+            <polygon points="45,45 39,42 39,3 45,0"/>        <!-- Top · left -->
+            <polygon points="135,90 132,96 93,96 90,90"/>    <!-- Right · bottom -->
+            <polygon points="90,135 96,138 96,177 90,180"/>  <!-- Back · right -->
+            <polygon points="45,180 39,177 39,138 45,135"/>  <!-- Back · left -->
+            <polygon points="45,90 42,96 3,96 0,90"/>        <!-- Left · bottom -->
+          </g>
+          <text x="67.5" y="-2" text-anchor="middle" font-size="4.5" fill="#8a93a6">粘贴区涂胶 glue tabs</text>
+          <!-- fold lines (dashed): 5 face folds + 7 tab bases -->
           <g stroke="#9aa6bd" stroke-width="0.5" stroke-dasharray="3 2.4" fill="none">
             <line x1="45" y1="45"  x2="90" y2="45"/>
             <line x1="45" y1="45"  x2="45" y2="90"/>
             <line x1="90" y1="45"  x2="90" y2="90"/>
             <line x1="45" y1="90"  x2="90" y2="90"/>
             <line x1="45" y1="135" x2="90" y2="135"/>
+            <line x1="45" y1="0"   x2="90" y2="0"/>
+            <line x1="90" y1="0"   x2="90" y2="45"/>
+            <line x1="45" y1="0"   x2="45" y2="45"/>
+            <line x1="90" y1="90"  x2="135" y2="90"/>
+            <line x1="90" y1="135" x2="90" y2="180"/>
+            <line x1="45" y1="135" x2="45" y2="180"/>
+            <line x1="0"  y1="90"  x2="45" y2="90"/>
           </g>
-          <!-- cut outline (solid) -->
-          <polygon points="45,0 90,0 90,45 135,45 135,90 90,90 90,180 45,180 45,90 0,90 0,45 45,45"
+          <!-- cut outline (solid), routed around the tabs -->
+          <polygon points="45,0 48,-6 87,-6 90,0 96,3 96,42 90,45 135,45 135,90 132,96 93,96 90,90 90,135 96,138 96,177 90,180 45,180 39,177 39,138 45,135 45,90 42,96 3,96 0,90 0,45 45,45 39,42 39,3 45,0"
                    fill="none" stroke="#1b2030" stroke-width="0.7" stroke-linejoin="round"/>
         </g>
       </svg>
@@ -125,6 +145,7 @@
     <div class="legend">
       <span class="k"><svg width="34" height="10"><line x1="2" y1="5" x2="32" y2="5" stroke="#1b2030" stroke-width="2"/></svg> 实线 = 剪 Cut</span>
       <span class="k"><svg width="34" height="10"><line x1="2" y1="5" x2="32" y2="5" stroke="#9aa6bd" stroke-width="2" stroke-dasharray="5 4"/></svg> 虚线 = 折 Fold</span>
+      <span class="k"><svg width="16" height="10"><rect x="1" y="1" width="14" height="8" fill="#e9eef8" stroke="#9aa6bd" stroke-width="0.6"/></svg> 灰块 = 粘贴区涂胶 Glue tab</span>
       <span class="k">5 面各不相同 · 底面留空</span>
     </div>
 
@@ -150,14 +171,33 @@
           </g>
           <text x="67.5" y="114" text-anchor="middle" font-size="6" fill="#aab2c2">底面 bottom</text>
           <text x="67.5" y="121" text-anchor="middle" font-size="5" fill="#c4ccda">（不印·朝下）</text>
+          <!-- glue tabs (粘贴区): one per open cube edge -->
+          <g fill="#e9eef8">
+            <polygon points="45,0 48,-6 87,-6 90,0"/>
+            <polygon points="90,0 96,3 96,42 90,45"/>
+            <polygon points="45,45 39,42 39,3 45,0"/>
+            <polygon points="135,90 132,96 93,96 90,90"/>
+            <polygon points="90,135 96,138 96,177 90,180"/>
+            <polygon points="45,180 39,177 39,138 45,135"/>
+            <polygon points="45,90 42,96 3,96 0,90"/>
+          </g>
+          <text x="67.5" y="-2" text-anchor="middle" font-size="4.5" fill="#8a93a6">粘贴区涂胶 glue tabs</text>
+          <!-- fold lines (dashed): 5 face folds + 7 tab bases -->
           <g stroke="#9aa6bd" stroke-width="0.5" stroke-dasharray="3 2.4" fill="none">
             <line x1="45" y1="45"  x2="90" y2="45"/>
             <line x1="45" y1="45"  x2="45" y2="90"/>
             <line x1="90" y1="45"  x2="90" y2="90"/>
             <line x1="45" y1="90"  x2="90" y2="90"/>
             <line x1="45" y1="135" x2="90" y2="135"/>
+            <line x1="45" y1="0"   x2="90" y2="0"/>
+            <line x1="90" y1="0"   x2="90" y2="45"/>
+            <line x1="45" y1="0"   x2="45" y2="45"/>
+            <line x1="90" y1="90"  x2="135" y2="90"/>
+            <line x1="90" y1="135" x2="90" y2="180"/>
+            <line x1="45" y1="135" x2="45" y2="180"/>
+            <line x1="0"  y1="90"  x2="45" y2="90"/>
           </g>
-          <polygon points="45,0 90,0 90,45 135,45 135,90 90,90 90,180 45,180 45,90 0,90 0,45 45,45"
+          <polygon points="45,0 48,-6 87,-6 90,0 96,3 96,42 90,45 135,45 135,90 132,96 93,96 90,90 90,135 96,138 96,177 90,180 45,180 39,177 39,138 45,135 45,90 42,96 3,96 0,90 0,45 45,45 39,42 39,3 45,0"
                    fill="none" stroke="#1b2030" stroke-width="0.7" stroke-linejoin="round"/>
         </g>
       </svg>
@@ -168,5 +208,107 @@
       光线均匀、避免反光；立方体离 iPad 镜头约 20–50 cm 时追踪最稳。标记越大，识别距离越远。
     </div>
   </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script>
+/* Shared cube-net PDF builder. Pure geometry; works in Node and browser.
+   M = { value:int -> PNG data-URI string }. Returns a jsPDF doc. */
+function NETPDF_build(jsPDF, M) {
+  const s = 50 / 45;                 // mm per net-unit  (cube edge = 50mm)
+  const mX = (210 - 135 * s) / 2;    // = 30mm
+  const mY = (297 - 186 * s) / 2;    // ≈ 45.17mm
+  const X = u => mX + u * s;         // xmin = 0
+  const Y = v => mY + (v + 6) * s;   // ymin = -6
+
+  function poly(doc, pts, style) {
+    const d = pts.slice(1).map((p, i) => [(p[0] - pts[i][0]) * s, (p[1] - pts[i][1]) * s]);
+    doc.lines(d, X(pts[0][0]), Y(pts[0][1]), [1, 1], style, true);
+  }
+
+  const TABS = [
+    [[45,0],[48,-6],[87,-6],[90,0]],
+    [[90,0],[96,3],[96,42],[90,45]],
+    [[45,45],[39,42],[39,3],[45,0]],
+    [[135,90],[132,96],[93,96],[90,90]],
+    [[90,135],[96,138],[96,177],[90,180]],
+    [[45,180],[39,177],[39,138],[45,135]],
+    [[45,90],[42,96],[3,96],[0,90]],
+  ];
+  const FOLDS = [
+    [45,45,90,45],[45,45,45,90],[90,45,90,90],[45,90,90,90],[45,135,90,135],
+    [45,0,90,0],[90,0,90,45],[45,0,45,45],[90,90,135,90],
+    [90,135,90,180],[45,135,45,180],[0,90,45,90],
+  ];
+  const CUT = [
+    [45,0],[48,-6],[87,-6],[90,0],[96,3],[96,42],[90,45],[135,45],[135,90],
+    [132,96],[93,96],[90,90],[90,135],[96,138],[96,177],[90,180],[45,180],
+    [39,177],[39,138],[45,135],[45,90],[42,96],[3,96],[0,90],[0,45],[45,45],
+    [39,42],[39,3],[45,0],
+  ];
+  // marker centres (net units), order: top, left, front, right, back
+  const MK = [[56.25,11.25],[11.25,56.25],[56.25,56.25],[101.25,56.25],[56.25,146.25]];
+  const MKS = 22.5;                  // -> 25mm printed
+
+  function drawNet(doc, vals, title, sub) {
+    doc.setFillColor(233, 238, 248);
+    TABS.forEach(t => poly(doc, t, 'F'));
+
+    vals.forEach((v, i) =>
+      doc.addImage(M[v], 'PNG', X(MK[i][0]), Y(MK[i][1]), MKS * s, MKS * s, 'm' + v, 'NONE'));
+
+    doc.setDrawColor(154, 166, 189); doc.setLineWidth(0.2);
+    doc.setLineDashPattern([1.2, 1], 0);
+    FOLDS.forEach(f => doc.line(X(f[0]), Y(f[1]), X(f[2]), Y(f[3])));
+
+    doc.setLineDashPattern([], 0);
+    doc.setDrawColor(27, 32, 48); doc.setLineWidth(0.4);
+    poly(doc, CUT, 'S');
+
+    doc.setTextColor(27, 32, 48); doc.setFontSize(14);
+    doc.text(title, 105, 18, { align: 'center' });
+    doc.setTextColor(120, 130, 150); doc.setFontSize(8.5);
+    doc.text(sub, 105, 24, { align: 'center' });
+  }
+
+  const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+  drawNet(doc, [2,3,4,5,6], 'AR Electric Field  -  POSITIVE charge cube  (+)',
+    '5 faces = codes 2-6  |  grey = glue tabs  |  blank face = bottom  |  cube edge ~5 cm');
+  doc.addPage();
+  drawNet(doc, [7,8,9,10,11], 'AR Electric Field  -  NEGATIVE charge cube  (-)',
+    '5 faces = codes 7-11  |  grey = glue tabs  |  blank face = bottom  |  cube edge ~5 cm');
+  return doc;
+}
+
+  var NETPDF_MARKERS = {
+    2: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOIAAADiCAIAAADccoyAAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABtUlEQVR4nO3dMQ7DMAwEQSr//7NcpA5SxcoaMy9gsWB7MwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAw6/QB/2vvffqEn1urEcDr9AHwnUwJkCkBMiVApgTIlACZEiBTAmRKgEwJkCkBMiVApgTIlACZEiBTAmRKgEwJkCkBMiVApgTIlACZEiBTAmRKgEwJkCkBMiVApgTIlACZEiBTAmRKgEwJkCkBMiWgsRDw9vjNhspgw/18UwJkSoBMCZApATIlQKYEyJQAmRIgUwJkSoBMCZApATIlQKYEyJQAmRIgUwJkSoBMCZApATIlQKYEyJQAmRIgUwJkSoBMCZApATIlQKYEyJQAmRIgUwJkSoBMCZApATIlwHTGR48fTpnOdopvSoBMCZApATIlQKYEyJQAmRIgUwJkSoBMCZApATIlQKYEyJQAmRIgUwJkSoBMCZApATIlQKYEyJQAmRIgUwJkSoBMCZApATIlQKYEyJQAmRIgUwJkSoBMCZApATIlQKYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAzMwF7l8J4AJ+F+YAAAAASUVORK5CYII=',
+    3: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOIAAADiCAIAAADccoyAAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABtElEQVR4nO3dsRHDMAwEQdD990wHKsCRRZ1mtwIEN0h/BgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABmnT7gufbep0/4u7UaAXxOHwC/yZQAmRIgUwJkSoBMCZApATIlQKYEyJQAmRIgUwJkSoBMCZApATIlQKYEyJQAmRIgUwJkSoBMCZApATIlQKYEyJQAmRIgUwJkSoBMCZApATIlQKYEyJQAmRIgUwIaCwGX1282VAYb7uebEiBTAmRKgEwJkCkBMiVApgTIlACZEiBTAmRKgEwJkCkBMiVApgTIlACZEiBTAmRKgEwJkCkBMiVApgTIlACZEiBTAmRKgEwJkCkBMiVApgTIlACZEiBTAmRKgEwJkCkBpjMe5P6plsp2im9KgEwJkCkBMiVApgTIlACZEiBTAmRKgEwJkCkBMiVApgTIlACZEiBTAmRKgEwJkCkBMiVApgTIlACZEiBTAmRKgEwJkCkBMiVApgTIlACZEiBTAmRKgEwJkCkBMiVApgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADMzBeZpgng9XjFMQAAAABJRU5ErkJggg==',
+    4: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOIAAADiCAIAAADccoyAAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABvElEQVR4nO3dwQkDMRAEQck4/5TlEMwdWHJzVRHso9nvjAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAY54+4H+ttU6f8HNzNgJ4nT4AvpMpATIlQKYEyJQAmRIgUwJkSoBMCZApATIlQKYEyJQAmRIgUwJkSoBMCZApATIlQKYEyJQAmRIgUwJkSoBMCZApATIlQKYEyJQAmRIgUwJkSoBMCZApATIlQKYEvE8fcMHmzYb98wlPGKW4xzclQKYEyJQAmRIgUwJkSoBMCZApATIlQKYEyJQAmRIgUwJkSoBMCZApATIlQKYEyJQAmRIgUwJkSoBMCZApATIlQKYEyJQAmRIgUwJkSoBMCZApATIlQKYEyJQAmRIgUwJ2j3WEPGFXZP9ayz2+KQEyJUCmBMiUAJkSIFMCZEqATAmQKQEyJUCmBMiUAJkSIFMCZEqATAmQKQEyJUCmBMiUAJkSIFMCZEqATAmQKQEyJUCmBMiUAJkSIFMCZEqATAmQKQEyJUCmBMiUAJkCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMMb4ANupDOC0boMmAAAAAElFTkSuQmCC',
+    5: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOIAAADiCAIAAADccoyAAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABt0lEQVR4nO3dwQ0CQQwEQR8i/5SXEBBI7F6Lqgj8aPk7MwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAw1+kD7mutdfqEn7uuRgCP0wfAezIlQKYEyJQAmRIgUwJkSoBMCZApATIlQKYEyJQAmRIgUwJkSoBMCZApATIlQKYEyJQAmRIgUwJkSoBMCZApATIlQKYEyJQAmRIgUwJkSoBMCZApATIlQKYEyJSA5+kDPrB5s2H/fMI/jFJ8xzclQKYEyJQAmRIgUwJkSoBMCZApATIlQKYEyJQAmRIgUwJkSoBMCZApATIlQKYEyJQAmRIgUwJkSoBMCZApATIlQKYEyJQAmRIgUwJkSoBMCZApATIlQKYEyJQAmRIgUwJKSyb7p0W4Cd+UAJkSIFMCZEqATAmQKQEyJUCmBMiUAJkSIFMCZEqATAmQKQEyJUCmBMiUAJkSIFMCZEqATAmQKQEyJUCmBMiUAJkSIFMCZEqATAmQKQEyJUCmBMiUAJkSIFMCZEqATAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACYmRfm7QnmGs23OwAAAABJRU5ErkJggg==',
+    6: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOIAAADiCAIAAADccoyAAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABtklEQVR4nO3dMQ7DMAwEQSr//7NcpA5SxfIiMy9gsWB7MwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAw6/QBz7X3Pn3Cz63VCOB1+gD4TqYEyJQAmRIgUwJkSoBMCZApATIlQKYEyJQAmRIgUwJkSoBMCZApATIlQKYEyJQAmRIgUwJkSoBMCZApATIlQKYEyJQAmRIgUwJkSoBMCZApATIlQKYEyJQAmRLQWAh4u3mzoTKf8A98UwJkSoBMCZApATIlQKYEyJQAmRIgUwJkSoBMCZApATIlQKYEyJQAmRIgUwJkSoBMCZApATIlQKYEyJQAmRIgUwJkSoBMCZApATIlQKYEyJQAmRIgUwJkSoBMCZApATIlwFjHRzcPpxxRWWvxTQmQKQEyJUCmBMiUAJkSIFMCZEqATAmQKQEyJUCmBMiUAJkSIFMCZEqATAmQKQEyJUCmBMiUAJkSIFMCZEqATAmQKQEyJUCmBMiUAJkSIFMCZEqATAmQKQEyJUCmBMgUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgJm5AO+1CeDGEIIrAAAAAElFTkSuQmCC',
+    7: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOIAAADiCAIAAADccoyAAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABtUlEQVR4nO3dsRHDMAwEQdD990wHKsCRRd1otwIEN0h/BgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABmnT7gufbep0/4u7UaAXxOHwC/yZQAmRIgUwJkSoBMCZApATIlQKYEyJQAmRIgUwJkSoBMCZApATIlQKYEyJQAmRIgUwJkSoBMCZApATIlQKYEyJQAmRIgUwJkSoBMCZApATIlQKYEyJQAmRIgUwIaCwGXmzcbKvMJb+CbEiBTAmRKgEwJkCkBMiVApgTIlACZEiBTAmRKgEwJkCkBMiVApgTIlACZEiBTAmRKgEwJkCkBMiVApgTIlACZEiBTAmRKgEwJkCkBMiVApgTIlACZEiBTAmRKgEwJkCkBxjoe5OaplumstfimBMiUAJkSIFMCZEqATAmQKQEyJUCmBMiUAJkSIFMCZEqATAmQKQEyJUCmBMiUAJkSIFMCZEqATAmQKQEyJUCmBMiUAJkSIFMCZEqATAmQKQEyJUCmBMiUAJkSIFMCZAoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAzHwBmvwJ4Ct/eQkAAAAASUVORK5CYII=',
+    8: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOIAAADiCAIAAADccoyAAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABnklEQVR4nO3SwQ2AMBDAsCv771xG4IXaSPYEeWQGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGadDrjX3vt0wu/WagzwnA6AbzYlwKYE2JQAmxJgUwJsSoBNCbApATYlwKYE2JQAmxJgUwJsSoBNCbApATYlwKYE2JQAmxJgUwJsSoBNCbApATYlwKYE2JQAmxJgUwJsSoBNCbApATYlwKYE2JQAmxJgUwJsSoBNCbApATYlwKYE2JQAmxJgUwJsSoBNCbApATYlwKYE2JQAmxJgUwJsSoBNCbApATYlwKYE2JQAmxJgUwJsSoBNCbApATYlwKYE2JQAmxJgUwJsSoBNCbApATYlwKYE2JQAmxJgUwJsSoBNCbApATYlwKYE2JQAmxJgUwJsSoBNCbApATYlwKYE2JQAmxJgUwJsSoBNCbApATYlwKYE2JQAmxJgUwJsSoBNCbApATYlwKYE2JQAmxJgUwJsSoBNAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJiZF/MrA+KPInI+AAAAAElFTkSuQmCC',
+    9: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOIAAADiCAIAAADccoyAAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABqklEQVR4nO3UsQ1CQQwFwTP992xCQqLPsdJMA37ByucAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwJnbA/7X7t6e8LiZRgCv2wPgO5kSIFMCZEqATAmQKQEyJUCmBMiUAJkSIFMCZEqATAmQKQEyJUCmBMiUAJkSIFMCZEqATAmQKQEyJUCmBMiUAJkSIFMCZEqATAmQKQEyJUCmBMiUAJkSIFMCZEqATAmQKQEyJUCmBMiUAJkSIFMCZEqATAmQKQEyJUCmBMiUAJkSIFMCZEqATAmQKQEyJUCmBMiUAJkSIFMCZEqATAmQKQEyJUCmBMiUAJkSIFMCZEqATAmQKQEyJUCmBMiUAJkSMLcH8LG7P7440wjANyVApgTIlACZEiBTAmRKgEwJkCkBMiVApgTIlACZEiBTAmRKgEwJkCkBMiVApgTIlACZEiBTAmRKgEwJkCkBMiVApgTIlACZEiBTAmRKgEwJkCkBMiVApgTIlACZEiBTAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM45b3AMBuHu9ITqAAAAAElFTkSuQmCC',
+    10: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOIAAADiCAIAAADccoyAAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABs0lEQVR4nO3dsQ0CUQwFQR+i/5ZNSISIjs9KMxW8YOXUMwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAw1+kB/2t3T0+43XU1AnicHgDfyZQAmRIgUwJkSoBMCZApATIlQKYEyJQAmRIgUwJkSoBMCZApATIlQKYEyJQAmRIgUwJkSoBMCZApATIlQKYEyJQAmRIgUwJkSoBMCZApATIlQKYEyJQAmRIgUwKepwfwVnnY8HuuKQEyJUCmBMiUAJkSIFMCZEqATAmQKQEyJUCmBMiUAJkSIFMCZEqATAmQKQEyJUCmBMiUAJkSIFMCZEqATAmQKQEyJUCmBMiUAJkSIFMCZEqATAmQKQEyJUCmBMiUAJkS4HXGR7t7esLtKr9TXFMCZEqATAmQKQEyJUCmBMiUAJkSIFMCZEqATAmQKQEyJUCmBMiUAJkSIFMCZEqATAmQKQEyJUCmBMiUAJkSIFMCZEqATAmQKQEyJUCmBMiUAJkSIFMCZEqATAmQKQEyBQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGBmXpcQBuaRRG5IAAAAAElFTkSuQmCC',
+    11: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOIAAADiCAIAAADccoyAAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABs0lEQVR4nO3dMQ7DMAwEQTrI/7/MlClTxfICMx/QFQu1nAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAuU4PeK7dPT3h766rEcDr9AD4TaYEyJQAmRIgUwJkSoBMCZApATIlQKYEyJQAmRIgUwJkSoBMCZApATIlQKYEyJQAmRIgUwJkSoBMCZApATIlQKYEyJQAmRIgUwJkSoBMCZApATIlQKYEyJQAmRLwPj2Ar8rBhvv5TQmQKQEyJUCmBMiUAJkSIFMCZEqATAmQKQEyJUCmBMiUAJkSIFMCZEqATAmQKQEyJUCmBMiUAJkSIFMCZEqATAmQKQEyJUCmBMiUAJkSIFMCZEqATAmQKQEyJUCmBMiUAKczHmR3b36xcjvFb0qATAmQKQEyJUCmBMiUAJkSIFMCZEqATAmQKQEyJUCmBMiUAJkSIFMCZEqATAmQKQEyJUCmBMiUAJkSIFMCZEqATAmQKQEyJUCmBMiUAJkSIFMCZEqATAmQKQEyJUCmAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMzMB0JXBuZLoFjgAAAAAElFTkSuQmCC',
+  };
+
+  (function () {
+    var btn = document.getElementById('dlpdf');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      var old = btn.textContent;
+      btn.disabled = true; btn.textContent = '生成中… Generating…';
+      try {
+        var JS = (window.jspdf && window.jspdf.jsPDF);
+        if (!JS) throw new Error('PDF library not loaded');
+        var doc = NETPDF_build(JS, NETPDF_MARKERS);
+        doc.save('AR-charge-cubes-A4.pdf');
+      } catch (e) {
+        alert('生成失败 / Failed: ' + e.message);
+        console.error(e);
+      }
+      btn.disabled = false; btn.textContent = old;
+    });
+  })();
+  </script>
 </body>
 </html>
