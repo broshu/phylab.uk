@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dipole Marker Sheet (A4)</title>
+  <style>
+    @page { size: A4 portrait; margin: 0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { background: #e9edf2; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
+
+    .toolbar { text-align: center; padding: 12px; }
+    .toolbar button { font-size: 15px; padding: 10px 22px; border: none; border-radius: 10px;
+      background: #2563eb; color: #fff; font-weight: 700; cursor: pointer; }
+    .toolbar span { color:#566; font-size: 13px; margin-left: 10px; }
+
+    /* A4 sheet */
+    .page {
+      position: relative; width: 210mm; height: 297mm; margin: 0 auto;
+      background: #fff; overflow: hidden;
+      -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    }
+    .title { position: absolute; top: 16mm; left: 0; width: 100%; text-align: center; }
+    .title h1 { font-size: 22px; color: #1c2b25; letter-spacing: .3px; }
+    .title p  { font-size: 13px; color: #6b7269; margin-top: 5px; }
+
+    /* a marker tile = white quiet-zone + the barcode image */
+    .marker {
+      position: absolute; background: #fff; border: 1px dashed #cdd4de;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .marker img { width: 100%; height: 100%; image-rendering: pixelated; display: block; }
+
+    .badge {
+      position: absolute; width: 14mm; height: 14mm; border-radius: 50%;
+      color: #fff; font-size: 30px; font-weight: 800; line-height: 14mm; text-align: center;
+    }
+    .pos { background: #ff3b30; }
+    .neg { background: #3b82f6; }
+    .axis { position: absolute; border-top: 1.5px dashed #c4ccda; }
+
+    .foot { position: absolute; bottom: 14mm; left: 0; width: 100%; text-align: center;
+      font-size: 12px; color: #6b7269; line-height: 1.7; padding: 0 20mm; }
+    @media print { .toolbar { display: none; } html, body { background: #fff; } }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <button onclick="window.print()">Print (A4)</button>
+    <span>Print at 100% scale (no &ldquo;fit to page&rdquo;). Keep the white borders.</span>
+  </div>
+
+  <div class="page">
+    <div class="title">
+      <h1>Electric Dipole — AR Marker Sheet</h1>
+      <p>Lay flat under the iPad. The + marker emits field lines that curve into the &minus; marker.</p>
+    </div>
+
+    <!-- dashed connecting axis -->
+    <div class="axis" style="top: 150mm; left: 50mm; width: 110mm;"></div>
+
+    <!-- + charge : barcode 0 . tile 78mm, image 50mm (14mm quiet zone) -->
+    <div class="marker" style="left: 28mm; top: 111mm; width: 78mm; height: 78mm; padding: 14mm;">
+      <img src="markers/0.png" alt="positive charge marker (barcode 0)">
+    </div>
+    <div class="badge pos" style="left: 60mm; top: 95mm;">+</div>
+
+    <!-- − charge : barcode 1 -->
+    <div class="marker" style="left: 104mm; top: 111mm; width: 78mm; height: 78mm; padding: 14mm;">
+      <img src="markers/1.png" alt="negative charge marker (barcode 1)">
+    </div>
+    <div class="badge neg" style="left: 136mm; top: 95mm;">&minus;</div>
+
+    <div class="foot">
+      Markers are barcodes <b>0</b> (positive) and <b>1</b> (negative). Centre-to-centre spacing ≈ 11&nbsp;cm.
+      Good even lighting and a matte surface give the most stable tracking.
+    </div>
+  </div>
+</body>
+</html>
