@@ -57,6 +57,22 @@
       color:#fff; border:none; border-radius: 14px; padding: 14px 30px;
       font-size: 17px; font-weight: 700;
     }
+    /* Pattern download buttons */
+    #downloads {
+      margin-top: 26px; display:flex; gap: 12px; flex-wrap: wrap; justify-content:center;
+      pointer-events:auto;
+    }
+    #downloads a {
+      text-decoration:none; cursor:pointer; color:#e8ecf5;
+      background: rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.16);
+      border-radius: 14px; padding: 14px 18px; min-width: 150px; text-align:center;
+      display:flex; flex-direction:column; gap:4px; align-items:center;
+    }
+    #downloads a:hover { background: rgba(255,255,255,0.12); }
+    #downloads .big { font-size: 15px; font-weight: 700; }
+    #downloads .small { font-size: 12px; color:#9aa6bd; }
+    #downloads .ic { font-size: 22px; line-height: 1; }
+    .dl-or { margin-top: 24px; color:#6f7c95; font-size: 12px; letter-spacing:.04em; text-transform:uppercase; }
     .hidden { display:none !important; }
   </style>
 </head>
@@ -65,20 +81,31 @@
   <!-- Loading / start gate -->
   <div id="gate">
     <h1>AR Electric Field Lines</h1>
-    <p>Point your iPad camera at the printed charge markers to see their 3D electric field. One <b>+</b> &amp; one <b>&minus;</b> give a <b>dipole</b>; the four-marker square sheet gives a <b>quadrupole</b>.</p>
+    <p>Point your iPad camera at the printed <b>+</b> or <b>&minus;</b> charge marker to see its 3D electric field. Show <b>both</b> markers together to see a dipole field.</p>
     <p style="font-size:12px;color:#6f7c95">Requires camera access. Best in Safari over HTTPS.</p>
-    <button id="startBtn">Start camera</button>
-    <p style="margin-top:18px;line-height:2">
-      <a href="dipole-sheet.html" style="color:#9fb0d0;font-size:13px">Print dipole sheet &#8599;</a><br>
-      <a href="quadrupole-sheet.html" style="color:#9fb0d0;font-size:13px">Print quadrupole sheet &#8599;</a><br>
-      <a href="print-markers.html" style="color:#9fb0d0;font-size:13px">Print single markers &#8599;</a>
+    <button id="startBtn">Start camera (scan)</button>
+
+    <div class="dl-or">First, print the charge patterns</div>
+    <div id="downloads">
+      <a href="print-flat.html" target="_blank" rel="noopener">
+        <span class="ic">▢</span>
+        <span class="big">平面方案 · Flat</span>
+        <span class="small">Print + / − tiles, lay them flat on a desk</span>
+      </a>
+      <a href="print-cube.html" target="_blank" rel="noopener">
+        <span class="ic">⬢</span>
+        <span class="big">立体方案 · Cube</span>
+        <span class="small">Stick markers on 5 faces of a small box</span>
+      </a>
+    </div>
+    <p style="font-size:12px;color:#6f7c95;max-width:440px">
+      Both schemes use the same scan button — the app recognises whichever
+      pattern your camera sees, so there is nothing extra to choose here.
     </p>
-    <p><a href="/labs/" style="color:#6f7c95;font-size:12px">&larr; Back to Labs</a></p>
   </div>
 
   <!-- UI overlay -->
   <div id="ui">
-    <a href="/labs/" style="position:fixed;left:12px;top:12px;pointer-events:auto;background:rgba(20,22,30,0.72);color:#fff;text-decoration:none;padding:8px 14px;border-radius:999px;font-size:13px;font-weight:600;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)">&larr; Labs</a>
     <div id="status">Searching for markers&hellip;</div>
     <div id="legend">
       <div><span class="dot pos"></span>Positive charge (+)</div>
@@ -113,54 +140,34 @@
                 look-at="[camera]"></a-entity>
     </a-marker>
 
-    <!-- 2nd POSITIVE charge marker (barcode value 2) — used by the quadrupole sheet -->
-    <a-marker id="pos2" type="barcode" value="2" smooth="true" smoothCount="8" smoothTolerance="0.01" smoothThreshold="2">
-      <a-sphere radius="0.16" position="0 0.16 0"
-                material="shader: standard; color: #ff3b30; emissive: #ff3b30; emissiveIntensity: 0.6; metalness:0.1; roughness:0.4"></a-sphere>
-      <a-entity text="value: +; align: center; color: #ffffff; width: 4"
-                position="0 0.16 0" scale="1.2 1.2 1.2"
-                look-at="[camera]"></a-entity>
-    </a-marker>
-
-    <!-- 2nd NEGATIVE charge marker (barcode value 3) — used by the quadrupole sheet -->
-    <a-marker id="neg2" type="barcode" value="3" smooth="true" smoothCount="8" smoothTolerance="0.01" smoothThreshold="2">
-      <a-sphere radius="0.16" position="0 0.16 0"
-                material="shader: standard; color: #3b82f6; emissive: #3b82f6; emissiveIntensity: 0.6; metalness:0.1; roughness:0.4"></a-sphere>
-      <a-entity text="value: −; align: center; color: #ffffff; width: 6"
-                position="0 0.16 0" scale="1.2 1.2 1.2"
-                look-at="[camera]"></a-entity>
-    </a-marker>
-
     <a-entity camera></a-entity>
   </a-scene>
 
   <script>
   /* ============================================================
-     Electric field visualisation controller (N charges)
-     Tracks up to four charge markers:
-       barcode 0 = +   barcode 1 = −   barcode 2 = +   barcode 3 = −
-     Each frame it collects every visible charge and builds 3D
-     field-line tubes from ALL of them, so the same app renders a
-     monopole, a dipole (2 markers) or a quadrupole (4 markers).
+     Electric field visualisation controller
+     - Reads world positions of the +/- markers each frame
+     - Builds 3D field-line tubes in world space:
+         both markers visible -> dipole field
+         only + visible       -> radial outward field
+         only - visible       -> radial inward field
      ============================================================ */
   AFRAME.registerComponent('efield-controller', {
     init: function () {
-      // marker element + sign for every possible charge
-      this.markers = [
-        { el: document.querySelector('#pos'),  q: +1 },
-        { el: document.querySelector('#neg'),  q: -1 },
-        { el: document.querySelector('#pos2'), q: +1 },
-        { el: document.querySelector('#neg2'), q: -1 }
-      ];
+      this.posEl = document.querySelector('#pos');
+      this.negEl = document.querySelector('#neg');
       this.statusEl = document.querySelector('#status');
 
       // World-space group that holds all generated field geometry.
       this.group = new THREE.Group();
       this.el.object3D.add(this.group);
 
-      this.tmp = new THREE.Vector3();
-      this.lastKey = '';     // signature of current state to skip needless rebuilds
+      this.tmpP = new THREE.Vector3();
+      this.tmpN = new THREE.Vector3();
+      this.lastKey = '';          // describes current state to avoid needless rebuilds
       this.lastBuild = 0;
+      this.lastPos = new THREE.Vector3();
+      this.lastNeg = new THREE.Vector3();
     },
 
     /* ---- Physics: E field from a set of point charges ---- */
@@ -178,13 +185,11 @@
       return E;
     },
 
-    /* Trace one field line from `seed`. dir=+1 follows the field, -1 reverses it.
-       Returns { pts, sink } where sink=true if it terminated on a negative charge. */
+    /* Trace one field line from `seed`. dir=+1 follows the field, -1 reverses it. */
     traceLine: function (seed, charges, dir, opts) {
       const pts = [];
       const p = seed.clone();
       const E = new THREE.Vector3();
-      let sink = false;
       for (let i = 0; i < opts.maxSteps; i++) {
         pts.push(p.clone());
         E.copy(this.fieldAt(p, charges));
@@ -192,18 +197,15 @@
         if (len < 1e-7) break;
         E.multiplyScalar((dir * opts.step) / len);
         p.add(E);
+        // terminate near a sink charge
         let done = false;
         for (let j = 0; j < charges.length; j++) {
-          if (p.distanceTo(charges[j].pos) < opts.minR) {
-            pts.push(charges[j].pos.clone());
-            sink = (charges[j].q < 0);
-            done = true; break;
-          }
+          if (p.distanceTo(charges[j].pos) < opts.minR) { pts.push(p.clone()); done = true; break; }
         }
         if (done) break;
         if (p.distanceTo(opts.center) > opts.maxR) { pts.push(p.clone()); break; }
       }
-      return { pts: pts, sink: sink };
+      return pts;
     },
 
     /* Evenly distributed seed points on a sphere (Fibonacci sphere). */
@@ -223,20 +225,19 @@
       return seeds;
     },
 
-    /* Build a coloured tube from points. Gradient cFrom->cTo if gradient=true,
-       otherwise solid cFrom. */
-    addTube: function (points, cFrom, cTo, gradient) {
+    /* Build a coloured tube mesh from a list of points. cFrom/cTo are hex colours. */
+    addTube: function (points, cFrom, cTo) {
       if (points.length < 2) return;
       const curve = new THREE.CatmullRomCurve3(points);
-      const seg = Math.min(140, Math.max(8, points.length * 2));
+      const seg = Math.min(120, Math.max(8, points.length * 2));
       const geo = new THREE.TubeGeometry(curve, seg, 0.012, 5, false);
-      const colA = new THREE.Color(cFrom), colB = new THREE.Color(gradient ? cTo : cFrom);
+      // per-vertex colour gradient along the tube length
+      const colA = new THREE.Color(cFrom), colB = new THREE.Color(cTo);
       const pos = geo.attributes.position;
       const colors = new Float32Array(pos.count * 3);
       const ring = 6; // radialSegments(5)+1
-      const rings = Math.max(1, pos.count / ring);
       for (let i = 0; i < pos.count; i++) {
-        const t = Math.floor(i / ring) / rings;
+        const t = Math.floor(i / ring) / Math.max(1, (pos.count / ring));
         const c = colA.clone().lerp(colB, Math.min(1, t));
         colors[i*3] = c.r; colors[i*3+1] = c.g; colors[i*3+2] = c.b;
       }
@@ -245,14 +246,17 @@
       this.group.add(new THREE.Mesh(geo, mat));
     },
 
-    /* Add an arrow cone at point p oriented along direction dir. */
+    /* Add an arrow cone at point p oriented along direction dir (unit). */
     addArrow: function (p, dir, colorHex) {
-      if (dir.length() < 1e-6) return;
+      const len = dir.length();
+      if (len < 1e-6) return;
       const geo = new THREE.ConeGeometry(0.045, 0.11, 10);
       const mat = new THREE.MeshBasicMaterial({ color: new THREE.Color(colorHex) });
       const cone = new THREE.Mesh(geo, mat);
       cone.position.copy(p);
-      cone.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().normalize());
+      const up = new THREE.Vector3(0, 1, 0);
+      const d = dir.clone().normalize();
+      cone.quaternion.setFromUnitVectors(up, d);
       this.group.add(cone);
     },
 
@@ -265,95 +269,91 @@
       }
     },
 
-    /* Arrowheads along a traced line. fieldForward = field points along travel. */
+    /* Place arrowheads along a traced line. fieldDir = which way the field points. */
     decorateArrows: function (pts, colorHex, fieldForward) {
       const every = Math.max(8, Math.floor(pts.length / 3));
       for (let i = every; i < pts.length - 1; i += every) {
-        const dir = new THREE.Vector3().subVectors(pts[i + 1], pts[i]);
+        const a = pts[i], b = pts[i + 1];
+        const dir = new THREE.Vector3().subVectors(b, a);
         if (!fieldForward) dir.multiplyScalar(-1);
-        this.addArrow(pts[i], dir, colorHex);
+        this.addArrow(a, dir, colorHex);
       }
     },
 
-    /* Build the whole field from a list of {pos, q} charges. */
-    build: function (charges) {
+    build: function (state, posW, negW) {
       this.clearGroup();
-      const RED = '#ff5b4f', BLUE = '#4f93ff', ARROW = '#ffd34f';
+      const RED = '#ff5b4f', BLUE = '#4f93ff';
 
-      const positives = charges.filter(c => c.q > 0);
-      const negatives = charges.filter(c => c.q < 0);
-
-      // bounding centre + radius of the charge cloud
-      const center = new THREE.Vector3();
-      charges.forEach(c => center.add(c.pos));
-      center.multiplyScalar(1 / charges.length);
-      let spread = 0.5;
-      charges.forEach(c => { spread = Math.max(spread, c.pos.distanceTo(center)); });
-      const maxR = spread * 2.4 + 0.9;
-
-      // seed from positives (lines flow out of +). If no +, seed from negatives.
-      const sources = positives.length ? positives : negatives;
-      const seedDir = positives.length ? +1 : -1;     // +: follow field; lone −: reverse
-      const seedsPer = charges.length >= 4 ? 12 : (charges.length === 1 ? 16 : 18);
-      const maxSteps = charges.length === 1 ? 80 : 320;
-
-      for (let s = 0; s < sources.length; s++) {
-        const seeds = this.seedSphere(sources[s].pos, 0.22, seedsPer);
-        const opts = { step: 0.035, maxSteps: maxSteps, minR: 0.14, maxR: maxR, center: center };
+      if (state === 'dipole') {
+        const charges = [{ pos: posW, q: 1 }, { pos: negW, q: -1 }];
+        const center = new THREE.Vector3().addVectors(posW, negW).multiplyScalar(0.5);
+        const maxR = posW.distanceTo(negW) * 1.6 + 1.0;
+        const seeds = this.seedSphere(posW, 0.22, 18);
+        const opts = { step: 0.035, maxSteps: 300, minR: 0.14, maxR: maxR, center: center };
         for (let i = 0; i < seeds.length; i++) {
-          const res = this.traceLine(seeds[i], charges, seedDir, opts);
-          if (positives.length) {
-            // line starts on + ; if it ends on a −, fade red->blue, else stays red
-            this.addTube(res.pts, RED, BLUE, res.sink);
-            this.decorateArrows(res.pts, ARROW, true);
-          } else {
-            // lone negative charge: field points inward
-            this.addTube(res.pts, BLUE, BLUE, false);
-            this.decorateArrows(res.pts, ARROW, false);
-          }
+          const pts = this.traceLine(seeds[i], charges, +1, opts);
+          this.addTube(pts, RED, BLUE);
+          this.decorateArrows(pts, '#ffd34f', true);
+        }
+      } else if (state === 'pos' || state === 'neg') {
+        const c = (state === 'pos') ? posW : negW;
+        const q = (state === 'pos') ? 1 : -1;
+        const charges = [{ pos: c, q: q }];
+        const seeds = this.seedSphere(c, 0.20, 16);
+        const opts = { step: 0.045, maxSteps: 70, minR: 0.05, maxR: 1.7, center: c };
+        const col = (state === 'pos') ? RED : BLUE;
+        for (let i = 0; i < seeds.length; i++) {
+          // dir=+1 traces outward for +, and outward (against inward field) for -
+          const pts = this.traceLine(seeds[i], charges, +1, opts);
+          this.addTube(pts, col, col);
+          // field points outward for +, inward for - -> arrows reflect that
+          this.decorateArrows(pts, '#ffd34f', state === 'pos');
         }
       }
     },
 
     tick: function (time) {
-      // collect visible charges + their world positions
-      const charges = [];
-      let sig = '';
-      for (let i = 0; i < this.markers.length; i++) {
-        const m = this.markers[i];
-        if (m.el && m.el.object3D.visible) {
-          m.el.object3D.getWorldPosition(this.tmp);
-          charges.push({ pos: this.tmp.clone(), q: m.q });
-          // signature: marker index + quantised position (detect movement)
-          sig += i + ':' + Math.round(this.tmp.x*30) + ',' +
-                 Math.round(this.tmp.y*30) + ',' + Math.round(this.tmp.z*30) + ';';
-        }
-      }
+      const pos = this.posEl, neg = this.negEl;
+      const pV = pos.object3D.visible, nV = neg.object3D.visible;
 
-      const n = charges.length;
-      const nPos = charges.filter(c => c.q > 0).length;
-      const nNeg = n - nPos;
+      let state = 'none';
+      if (pV && nV) state = 'dipole';
+      else if (pV) state = 'pos';
+      else if (nV) state = 'neg';
 
-      let label;
-      if (n === 0) label = 'Searching for markers…';
-      else if (n === 1) label = (nPos ? 'Positive charge — field points outward'
-                                       : 'Negative charge — field points inward');
-      else if (n === 2 && nPos === 1) label = 'Dipole field — lines flow from + to −';
-      else if (n === 4 && nPos === 2 && nNeg === 2) label = 'Quadrupole field';
-      else label = n + ' charges — superposed field';
-      if (this.statusEl.textContent !== label) this.statusEl.textContent = label;
+      // status text
+      const msg = {
+        dipole: 'Dipole field — lines flow from + to −',
+        pos: 'Positive charge — field points outward',
+        neg: 'Negative charge — field points inward',
+        none: 'Searching for markers…'
+      };
+      if (this.statusEl.textContent !== msg[state]) this.statusEl.textContent = msg[state];
 
-      if (n === 0) {
+      if (state === 'none') {
         if (this.group.children.length) this.clearGroup();
-        this.lastKey = '';
+        this.lastKey = 'none';
         return;
       }
 
+      // current world positions
+      if (pV) pos.object3D.getWorldPosition(this.tmpP);
+      if (nV) neg.object3D.getWorldPosition(this.tmpN);
+
+      // rebuild only on state change, meaningful movement, or every 250ms
+      const moved =
+        (pV && this.tmpP.distanceTo(this.lastPos) > 0.03) ||
+        (nV && this.tmpN.distanceTo(this.lastNeg) > 0.03);
       const stale = (time - this.lastBuild) > 250;
-      if (sig !== this.lastKey || stale) {
-        this.build(charges);
-        this.lastKey = sig;
+
+      if (state !== this.lastKey || moved || stale) {
+        const posW = pV ? this.tmpP.clone() : null;
+        const negW = nV ? this.tmpN.clone() : null;
+        this.build(state, posW, negW);
+        this.lastKey = state;
         this.lastBuild = time;
+        if (pV) this.lastPos.copy(this.tmpP);
+        if (nV) this.lastNeg.copy(this.tmpN);
       }
     }
   });

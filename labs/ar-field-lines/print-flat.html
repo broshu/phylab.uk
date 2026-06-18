@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>平面方案 · Flat Charge Markers</title>
+  <style>
+    :root { --ink:#1b2030; --pos:#ff3b30; --neg:#3b82f6; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+      color: var(--ink); background: #eef1f6; -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    }
+    .sheet { width: 210mm; min-height: 297mm; margin: 0 auto; background:#fff; padding: 15mm; }
+    .scheme-tag { display:inline-block; background:#eef4ff; color:#2563eb; font-weight:800;
+      font-size:12px; padding:4px 10px; border-radius:999px; letter-spacing:.03em; }
+    h1 { font-size: 21px; margin: 8px 0 4px; }
+    .sub { color:#5b6577; font-size: 13px; margin: 0 0 8mm; line-height:1.6; }
+
+    /* ---- comparison / simulation panel ---- */
+    .sims { display:flex; gap:8mm; margin: 0 0 8mm; }
+    .sim { flex:1; border:1px solid #e2e6ee; border-radius:12px; padding:8px 8px 6px; background:#fbfcfe; }
+    .sim.active { border-color:#2563eb; box-shadow:0 0 0 2px #2563eb22; }
+    .sim h3 { margin:2px 0 4px; font-size:13px; }
+    .sim h3 small { font-weight:600; color:#8a93a6; }
+    .sim svg { width:100%; height:auto; display:block; }
+    .sim p { font-size:11px; color:#5b6577; margin:4px 2px 2px; line-height:1.5; }
+
+    /* ---- markers ---- */
+    .cards { display: flex; gap: 14mm; justify-content: center; flex-wrap: wrap; margin-top:4mm; }
+    .card { text-align: center; }
+    .marker-box { width: 66mm; height: 66mm; background:#fff; padding: 11mm;
+      border: 1px dashed #c4ccda; display:flex; align-items:center; justify-content:center; }
+    .marker-box img { width:100%; height:100%; image-rendering: pixelated; }
+    .tag { margin-top: 5mm; font-weight: 800; font-size: 20px; }
+    .tag .sym { display:inline-block; width: 30px; height: 30px; line-height: 28px; border-radius:50%;
+      color:#fff; font-size: 22px; vertical-align: middle; margin-right: 7px; }
+    .pos .sym { background:var(--pos); } .neg .sym { background:var(--neg); }
+    .id { color:#8a93a6; font-size: 12px; margin-top: 2mm; }
+
+    .tips { margin-top: 9mm; font-size: 12px; color:#42495a; line-height: 1.75;
+      border-top:1px solid #e2e6ee; padding-top: 6mm; }
+    .tips b { color: var(--ink); }
+
+    @media print {
+      body { background:#fff; }
+      .sheet { box-shadow:none; margin:0; padding:12mm; }
+      .noprint { display:none; }
+    }
+    .noprint { text-align:center; padding: 12px; }
+    .noprint button { font-size:15px; padding:10px 22px; border:none; border-radius:10px;
+      background:#2563eb; color:#fff; font-weight:700; cursor:pointer; }
+    .noprint a { display:inline-block; margin-left:10px; color:#2563eb; font-size:13px; }
+  </style>
+</head>
+<body>
+  <div class="noprint">
+    <button onclick="window.print()">打印平面方案 · Print flat markers</button>
+    <a href="print-cube.html">需要立体方案？ Cube version →</a>
+  </div>
+
+  <div class="sheet">
+    <span class="scheme-tag">平面方案 · FLAT SCHEME</span>
+    <h1>AR 电场线 — 平面电荷标记</h1>
+    <p class="sub">
+      在普通白纸上打印，剪下两个标记，<b>平放在桌面上</b>即可使用。保留每个黑色方块周围的白边（安静区），不要裁太紧——摄像头靠白边锁定标记。<br>
+      Print on plain white paper, cut the two markers apart, and lay them flat on a desk. Keep the white border around each square.
+    </p>
+
+    <!-- both-scheme simulation panel -->
+    <div class="sims">
+      <div class="sim active">
+        <h3>平面方案 <small>Flat — 桌面平放</small></h3>
+        <!-- flat sim: two flat tiles on a desk with field lines -->
+        <svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg">
+          <!-- desk -->
+          <polygon points="20,150 300,150 270,120 50,120" fill="#eef1f6" stroke="#d3d9e4"/>
+          <!-- + tile -->
+          <polygon points="80,142 130,142 120,128 90,128" fill="#fff" stroke="#c4ccda"/>
+          <rect x="95" y="130" width="14" height="9" fill="#222"/>
+          <!-- - tile -->
+          <polygon points="190,142 240,142 230,128 200,128" fill="#fff" stroke="#c4ccda"/>
+          <rect x="205" y="130" width="14" height="9" fill="#222"/>
+          <!-- + radial field lines (red), rising out of tile -->
+          <g fill="none" stroke="#ff3b30" stroke-width="2">
+            <path d="M102,128 C70,90 60,70 70,40"/>
+            <path d="M102,128 C102,86 100,64 100,34"/>
+            <path d="M102,128 C134,90 150,72 150,46"/>
+            <path d="M102,128 C150,118 175,108 200,100"/>
+          </g>
+          <!-- - field lines (blue), curving into the - tile -->
+          <g fill="none" stroke="#3b82f6" stroke-width="2">
+            <path d="M210,34 C212,70 214,92 214,128"/>
+            <path d="M150,46 C175,70 200,100 213,127"/>
+            <path d="M262,40 C246,74 230,100 216,127"/>
+          </g>
+          <!-- charge dots -->
+          <circle cx="102" cy="120" r="6" fill="#ff3b30"/>
+          <circle cx="214" cy="120" r="6" fill="#3b82f6"/>
+          <text x="99" y="124" font-size="9" fill="#fff" font-weight="700">+</text>
+          <text x="211.5" y="123.5" font-size="11" fill="#fff" font-weight="700">−</text>
+        </svg>
+        <p>标记平放，电场线从屏幕里"长"出来。从上方或斜上方观看效果最好。</p>
+      </div>
+      <div class="sim">
+        <h3>立体方案 <small>Cube — 贴在立方体</small></h3>
+        <!-- cube sim: a cube with field lines wrapping all around -->
+        <svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg">
+          <!-- field lines all around (red, radiating in 3D) -->
+          <g fill="none" stroke="#ff3b30" stroke-width="2" opacity="0.9">
+            <path d="M160,90 C120,40 90,40 70,28"/>
+            <path d="M160,90 C200,40 230,42 250,30"/>
+            <path d="M160,90 C110,80 80,86 50,92"/>
+            <path d="M160,90 C210,82 245,88 275,96"/>
+            <path d="M160,90 C150,140 150,150 150,168"/>
+          </g>
+          <!-- cube (isometric) -->
+          <g stroke="#7c879c" stroke-width="1.2">
+            <polygon points="160,66 196,80 160,94 124,80" fill="#fbe2e0"/><!-- top -->
+            <polygon points="124,80 160,94 160,128 124,114" fill="#fff"/><!-- left -->
+            <polygon points="196,80 160,94 160,128 196,114" fill="#f3f5f9"/><!-- right -->
+          </g>
+          <!-- markers on faces -->
+          <rect x="150" y="78" width="10" height="7" fill="#222" transform="rotate(-12 155 81)"/>
+          <rect x="136" y="92" width="9" height="9" fill="#222" transform="skewY(20)"/>
+          <rect x="171" y="92" width="9" height="9" fill="#222" transform="skewY(-20)"/>
+          <circle cx="160" cy="86" r="6" fill="#ff3b30"/>
+          <text x="157" y="90" font-size="9" fill="#fff" font-weight="700">+</text>
+        </svg>
+        <p>5 个面都贴同一个标记，可以<b>绕着走一圈</b>从任意角度看立体电场。</p>
+      </div>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <div class="marker-box"><img src="markers/0.png" alt="positive charge marker" /></div>
+        <div class="tag pos"><span class="sym">+</span>正电荷 Positive</div>
+        <div class="id">barcode value 0</div>
+      </div>
+      <div class="card">
+        <div class="marker-box"><img src="markers/1.png" alt="negative charge marker" /></div>
+        <div class="tag neg"><span class="sym">&minus;</span>负电荷 Negative</div>
+        <div class="id">barcode value 1</div>
+      </div>
+    </div>
+
+    <div class="tips">
+      <b>使用方法 · How to use</b><br>
+      1. 在 iPad 的 Safari 中打开 AR 应用（需 HTTPS），点击 <b>Start camera</b>。<br>
+      2. 对准 <b>+</b> 标记 → 电场线向外发散；对准 <b>&minus;</b> 标记 → 电场线向内汇聚。<br>
+      3. 把 <b>两个标记</b>同时放进画面（相隔几厘米）→ 显示从 + 指向 &minus; 的<b>偶极子</b>电场。<br>
+      4. 光线均匀、表面平整不反光时追踪最稳定。
+    </div>
+  </div>
+</body>
+</html>
