@@ -13,9 +13,32 @@ using robust 3×3 **barcode** markers (no marker training required).
 ## Files
 
 - `index.html` — the AR application.
-- `print-markers.html` — printable page with the + and − markers.
-- `markers/0.png`, `markers/1.png` — the barcode markers (value 0 = +, value 1 = −).
+- `print-flat.html` — printable **flat** scheme: lay the + / − tiles on a desk.
+- `print-cube.html` — printable **cube** scheme: stickers for a small box.
+- `print-cube-net.html` — printable fold-up cube nets (cardstock).
+- `print-markers.html` — minimal printable page with just the flat + / − markers.
+- `markers/0.png … 11.png` — the barcode markers (see scheme below).
 - `README.md` — this file.
+
+## Marker scheme
+
+| Use | Value(s) | Meaning |
+|-----|----------|---------|
+| Flat + | `0` | positive charge, charge sits AT the marker |
+| Flat − | `1` | negative charge, charge sits AT the marker |
+| Cube + | `2,3,4,5,6` | one per face of the + cube |
+| Cube − | `7,8,9,10,11` | one per face of the − cube |
+
+A cube uses **five different** markers (one per visible face). Each face
+reports its own pose; the app offsets every face inward along its normal by
+half the cube edge, so all faces resolve to the **same point — the cube
+centre** — where the charge actually is. This (a) puts the field at the
+centre instead of on a face, and (b) removes the position jump you'd get
+when the camera switches between two identical faces while circling the cube.
+
+The inward offset is `?cube=` in the URL — the cube half-edge in marker-width
+units, default `1.0` (a cube whose edge ≈ 2× the printed marker's black
+square). The fold-up nets are pre-sized for this default.
 
 ## Run it (HTTPS is required for camera access)
 

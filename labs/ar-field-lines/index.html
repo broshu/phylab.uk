@@ -95,7 +95,7 @@
       <a href="print-cube.html" target="_blank" rel="noopener">
         <span class="ic">⬢</span>
         <span class="big">立体方案 · Cube</span>
-        <span class="small">Stick markers on 5 faces of a small box</span>
+        <span class="small">5 different markers on 5 faces of a small box</span>
       </a>
     </div>
     <p style="font-size:12px;color:#6f7c95;max-width:440px">
@@ -122,23 +122,39 @@
     arjs="sourceType: webcam; detectionMode: mono_and_matrix; matrixCodeType: 3x3; patternRatio: 0.5; debugUIEnabled: false;"
     efield-controller>
 
-    <!-- POSITIVE charge marker (barcode value 0) -->
-    <a-marker id="pos" type="barcode" value="0" smooth="true" smoothCount="8" smoothTolerance="0.01" smoothThreshold="2">
-      <a-sphere radius="0.16" position="0 0.16 0"
-                material="shader: standard; color: #ff3b30; emissive: #ff3b30; emissiveIntensity: 0.6; metalness:0.1; roughness:0.4"></a-sphere>
-      <a-entity text="value: +; align: center; color: #ffffff; width: 4"
-                position="0 0.16 0" scale="1.2 1.2 1.2"
-                look-at="[camera]"></a-entity>
-    </a-marker>
+    <!-- ============================================================
+         Marker set. The controller draws all charge glyphs and field
+         lines itself (in world space), so these markers carry no child
+         geometry — they exist purely for tracking.
 
-    <!-- NEGATIVE charge marker (barcode value 1) -->
-    <a-marker id="neg" type="barcode" value="1" smooth="true" smoothCount="8" smoothTolerance="0.01" smoothThreshold="2">
-      <a-sphere radius="0.16" position="0 0.16 0"
-                material="shader: standard; color: #3b82f6; emissive: #3b82f6; emissiveIntensity: 0.6; metalness:0.1; roughness:0.4"></a-sphere>
-      <a-entity text="value: −; align: center; color: #ffffff; width: 6"
-                position="0 0.16 0" scale="1.2 1.2 1.2"
-                look-at="[camera]"></a-entity>
-    </a-marker>
+           FLAT scheme  : value 0 = +   value 1 = −   (charge AT the marker)
+           CUBE + scheme: values 2,3,4,5,6   (5 faces of the + cube)
+           CUBE − scheme: values 7,8,9,10,11 (5 faces of the − cube)
+
+         For a cube, every face reports a pose; the controller offsets each
+         inward along the face normal by half the cube edge, so all faces
+         resolve to the SAME point — the cube's centre — where the charge
+         actually sits. This removes the position jump when the camera
+         switches from one face to another while circling the cube.
+         ============================================================ -->
+
+    <!-- FLAT markers -->
+    <a-marker id="flatpos" type="barcode" value="0" smooth="true" smoothCount="8" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
+    <a-marker id="flatneg" type="barcode" value="1" smooth="true" smoothCount="8" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
+
+    <!-- CUBE +  (5 distinct faces) -->
+    <a-marker class="cubepos" type="barcode" value="2" smooth="true" smoothCount="6" smoothTolerance="0.02" smoothThreshold="2"></a-marker>
+    <a-marker class="cubepos" type="barcode" value="3" smooth="true" smoothCount="6" smoothTolerance="0.02" smoothThreshold="2"></a-marker>
+    <a-marker class="cubepos" type="barcode" value="4" smooth="true" smoothCount="6" smoothTolerance="0.02" smoothThreshold="2"></a-marker>
+    <a-marker class="cubepos" type="barcode" value="5" smooth="true" smoothCount="6" smoothTolerance="0.02" smoothThreshold="2"></a-marker>
+    <a-marker class="cubepos" type="barcode" value="6" smooth="true" smoothCount="6" smoothTolerance="0.02" smoothThreshold="2"></a-marker>
+
+    <!-- CUBE −  (5 distinct faces) -->
+    <a-marker class="cubeneg" type="barcode" value="7"  smooth="true" smoothCount="6" smoothTolerance="0.02" smoothThreshold="2"></a-marker>
+    <a-marker class="cubeneg" type="barcode" value="8"  smooth="true" smoothCount="6" smoothTolerance="0.02" smoothThreshold="2"></a-marker>
+    <a-marker class="cubeneg" type="barcode" value="9"  smooth="true" smoothCount="6" smoothTolerance="0.02" smoothThreshold="2"></a-marker>
+    <a-marker class="cubeneg" type="barcode" value="10" smooth="true" smoothCount="6" smoothTolerance="0.02" smoothThreshold="2"></a-marker>
+    <a-marker class="cubeneg" type="barcode" value="11" smooth="true" smoothCount="6" smoothTolerance="0.02" smoothThreshold="2"></a-marker>
 
     <a-entity camera></a-entity>
   </a-scene>
@@ -146,28 +162,79 @@
   <script>
   /* ============================================================
      Electric field visualisation controller
-     - Reads world positions of the +/- markers each frame
-     - Builds 3D field-line tubes in world space:
-         both markers visible -> dipole field
-         only + visible       -> radial outward field
-         only - visible       -> radial inward field
+
+     Each frame it gathers the visible charges:
+       - flat + (value 0) / flat − (value 1): charge AT the marker.
+       - cube + (values 2-6) / cube − (values 7-11): every visible face
+         is offset inward along its normal by `cube` (half the cube edge,
+         in marker-width units) and the visible faces are averaged, giving
+         ONE charge at the cube's centre.
+     Then it builds 3D field-line tubes through all charges (Coulomb), so
+     any mix — single charge, dipole, flat+cube — just works.
+
+     `cube` (half-edge) defaults to 1.0 marker-widths, i.e. a cube whose
+     edge ≈ 2× the printed marker's black square. Override with ?cube=0.8
+     in the URL if your box is a different size.
      ============================================================ */
   AFRAME.registerComponent('efield-controller', {
+    schema: { cube: { type: 'number', default: 1.0 } },
     init: function () {
-      this.posEl = document.querySelector('#pos');
-      this.negEl = document.querySelector('#neg');
+      this.flatPos = document.querySelector('#flatpos');               // value 0
+      this.flatNeg = document.querySelector('#flatneg');               // value 1
+      this.cubePos = Array.from(document.querySelectorAll('.cubepos')); // 2-6
+      this.cubeNeg = Array.from(document.querySelectorAll('.cubeneg')); // 7-11
       this.statusEl = document.querySelector('#status');
+
+      // Optional ?cube= override of the cube half-edge.
+      const q = new URLSearchParams(location.search);
+      if (q.has('cube')) {
+        const v = parseFloat(q.get('cube'));
+        if (isFinite(v) && v >= 0) this.data.cube = v;
+      }
 
       // World-space group that holds all generated field geometry.
       this.group = new THREE.Group();
       this.el.object3D.add(this.group);
 
-      this.tmpP = new THREE.Vector3();
-      this.tmpN = new THREE.Vector3();
+      this._p = new THREE.Vector3();
+      this._n = new THREE.Vector3();
+      this._q = new THREE.Quaternion();
       this.lastKey = '';          // describes current state to avoid needless rebuilds
       this.lastBuild = 0;
-      this.lastPos = new THREE.Vector3();
-      this.lastNeg = new THREE.Vector3();
+    },
+
+    /* Fuse the visible faces of one cube into a single centre point.
+       Each face's outward normal is its local +Y in world space; we step
+       inward by `cube` so every face maps to the same cube centre. */
+    cubeCentre: function (faces) {
+      const acc = new THREE.Vector3();
+      let count = 0;
+      for (let i = 0; i < faces.length; i++) {
+        const o = faces[i].object3D;
+        if (!o.visible) continue;
+        o.getWorldPosition(this._p);
+        o.getWorldQuaternion(this._q);
+        this._n.set(0, 1, 0).applyQuaternion(this._q).multiplyScalar(-this.data.cube);
+        acc.add(this._p.add(this._n));
+        count++;
+      }
+      return count ? acc.multiplyScalar(1 / count) : null;
+    },
+
+    /* Gather every visible charge as { pos, q }. */
+    collectCharges: function () {
+      const charges = [];
+      if (this.flatPos.object3D.visible) {
+        const p = new THREE.Vector3(); this.flatPos.object3D.getWorldPosition(p);
+        charges.push({ pos: p, q: 1 });
+      }
+      if (this.flatNeg.object3D.visible) {
+        const p = new THREE.Vector3(); this.flatNeg.object3D.getWorldPosition(p);
+        charges.push({ pos: p, q: -1 });
+      }
+      const cp = this.cubeCentre(this.cubePos); if (cp) charges.push({ pos: cp, q: 1 });
+      const cn = this.cubeCentre(this.cubeNeg); if (cn) charges.push({ pos: cn, q: -1 });
+      return charges;
     },
 
     /* ---- Physics: E field from a set of point charges ---- */
@@ -280,80 +347,98 @@
       }
     },
 
-    build: function (state, posW, negW) {
+    /* A camera-facing +/− disk drawn at a charge position. */
+    addGlyph: function (pos, q) {
+      const cv = document.createElement('canvas');
+      cv.width = cv.height = 128;
+      const g = cv.getContext('2d');
+      g.fillStyle = q > 0 ? '#ff3b30' : '#3b82f6';
+      g.beginPath(); g.arc(64, 64, 60, 0, Math.PI * 2); g.fill();
+      g.strokeStyle = 'rgba(255,255,255,0.9)'; g.lineWidth = 8;
+      g.beginPath(); g.moveTo(34, 64); g.lineTo(94, 64);              // − bar
+      if (q > 0) { g.moveTo(64, 34); g.lineTo(64, 94); }              // + stem
+      g.stroke();
+      const tex = new THREE.CanvasTexture(cv);
+      const mat = new THREE.SpriteMaterial({ map: tex, depthTest: false });
+      const sp = new THREE.Sprite(mat);
+      sp.position.copy(pos);
+      sp.scale.set(0.32, 0.32, 0.32);
+      sp.renderOrder = 999;
+      this.group.add(sp);
+    },
+
+    build: function (charges) {
       this.clearGroup();
       const RED = '#ff5b4f', BLUE = '#4f93ff';
 
-      if (state === 'dipole') {
-        const charges = [{ pos: posW, q: 1 }, { pos: negW, q: -1 }];
-        const center = new THREE.Vector3().addVectors(posW, negW).multiplyScalar(0.5);
-        const maxR = posW.distanceTo(negW) * 1.6 + 1.0;
-        const seeds = this.seedSphere(posW, 0.22, 18);
-        const opts = { step: 0.035, maxSteps: 300, minR: 0.14, maxR: maxR, center: center };
+      // overall centre + spread for line termination bounds
+      const center = new THREE.Vector3();
+      for (let i = 0; i < charges.length; i++) center.add(charges[i].pos);
+      center.multiplyScalar(1 / charges.length);
+      let spread = 0;
+      for (let i = 0; i < charges.length; i++)
+        for (let j = i + 1; j < charges.length; j++)
+          spread = Math.max(spread, charges[i].pos.distanceTo(charges[j].pos));
+      const maxR = spread * 1.6 + 1.2;
+
+      const hasPos = charges.some(c => c.q > 0);
+      const hasNeg = charges.some(c => c.q < 0);
+      // seed from positives if any exist, otherwise from the negatives
+      const sources = charges.filter(c => (hasPos ? c.q > 0 : c.q < 0));
+      const opts = { step: 0.04, maxSteps: 240, minR: 0.13, maxR: maxR, center: center };
+
+      for (let s = 0; s < sources.length; s++) {
+        const src = sources[s];
+        const cFrom = src.q > 0 ? RED : BLUE;
+        // a line leaving a + ends on a − when one exists -> colour gradient
+        const cTo = (src.q > 0 && hasNeg) ? BLUE : cFrom;
+        const seeds = this.seedSphere(src.pos, 0.2, 16);
         for (let i = 0; i < seeds.length; i++) {
           const pts = this.traceLine(seeds[i], charges, +1, opts);
-          this.addTube(pts, RED, BLUE);
-          this.decorateArrows(pts, '#ffd34f', true);
-        }
-      } else if (state === 'pos' || state === 'neg') {
-        const c = (state === 'pos') ? posW : negW;
-        const q = (state === 'pos') ? 1 : -1;
-        const charges = [{ pos: c, q: q }];
-        const seeds = this.seedSphere(c, 0.20, 16);
-        const opts = { step: 0.045, maxSteps: 70, minR: 0.05, maxR: 1.7, center: c };
-        const col = (state === 'pos') ? RED : BLUE;
-        for (let i = 0; i < seeds.length; i++) {
-          // dir=+1 traces outward for +, and outward (against inward field) for -
-          const pts = this.traceLine(seeds[i], charges, +1, opts);
-          this.addTube(pts, col, col);
-          // field points outward for +, inward for - -> arrows reflect that
-          this.decorateArrows(pts, '#ffd34f', state === 'pos');
+          this.addTube(pts, cFrom, cTo);
+          // field points outward from +, inward to − -> arrows follow that
+          this.decorateArrows(pts, '#ffd34f', src.q > 0);
         }
       }
+
+      // charge glyphs on top
+      for (let i = 0; i < charges.length; i++) this.addGlyph(charges[i].pos, charges[i].q);
     },
 
     tick: function (time) {
-      const pos = this.posEl, neg = this.negEl;
-      const pV = pos.object3D.visible, nV = neg.object3D.visible;
-
-      let state = 'none';
-      if (pV && nV) state = 'dipole';
-      else if (pV) state = 'pos';
-      else if (nV) state = 'neg';
+      const charges = this.collectCharges();
 
       // status text
-      const msg = {
-        dipole: 'Dipole field — lines flow from + to −',
-        pos: 'Positive charge — field points outward',
-        neg: 'Negative charge — field points inward',
-        none: 'Searching for markers…'
-      };
-      if (this.statusEl.textContent !== msg[state]) this.statusEl.textContent = msg[state];
+      const nPos = charges.filter(c => c.q > 0).length;
+      const nNeg = charges.filter(c => c.q < 0).length;
+      let msg;
+      if (charges.length === 0)      msg = 'Searching for markers…';
+      else if (nPos && nNeg)         msg = 'Dipole field — lines flow from + to −';
+      else if (nPos)                 msg = 'Positive charge — field points outward';
+      else                           msg = 'Negative charge — field points inward';
+      if (this.statusEl.textContent !== msg) this.statusEl.textContent = msg;
 
-      if (state === 'none') {
+      if (charges.length === 0) {
         if (this.group.children.length) this.clearGroup();
         this.lastKey = 'none';
         return;
       }
 
-      // current world positions
-      if (pV) pos.object3D.getWorldPosition(this.tmpP);
-      if (nV) neg.object3D.getWorldPosition(this.tmpN);
-
-      // rebuild only on state change, meaningful movement, or every 250ms
-      const moved =
-        (pV && this.tmpP.distanceTo(this.lastPos) > 0.03) ||
-        (nV && this.tmpN.distanceTo(this.lastNeg) > 0.03);
+      // Signature of the current scene: signs + positions quantised to ~3cm.
+      // Rebuild only when it changes or every 250ms (movement / new marker).
+      let key = '';
+      for (let i = 0; i < charges.length; i++) {
+        const p = charges[i].pos;
+        key += charges[i].q + ':' +
+               Math.round(p.x / 0.03) + ',' +
+               Math.round(p.y / 0.03) + ',' +
+               Math.round(p.z / 0.03) + '|';
+      }
       const stale = (time - this.lastBuild) > 250;
-
-      if (state !== this.lastKey || moved || stale) {
-        const posW = pV ? this.tmpP.clone() : null;
-        const negW = nV ? this.tmpN.clone() : null;
-        this.build(state, posW, negW);
-        this.lastKey = state;
+      if (key !== this.lastKey || stale) {
+        this.build(charges);
+        this.lastKey = key;
         this.lastBuild = time;
-        if (pV) this.lastPos.copy(this.tmpP);
-        if (nV) this.lastNeg.copy(this.tmpN);
       }
     }
   });

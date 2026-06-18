@@ -57,6 +57,7 @@
 <body>
   <div class="noprint">
     <button onclick="window.print()">打印立体方案 · Print cube markers</button>
+    <a href="print-cube-net.html">折纸版（自带展开图）→</a>
     <a href="print-flat.html">需要平面方案？ Flat version →</a>
   </div>
 
@@ -64,9 +65,9 @@
     <span class="scheme-tag">立体方案 · CUBE SCHEME</span>
     <h1>AR 电场线 — 立体电荷（贴方块）</h1>
     <p class="sub">
-      打印下方标记并剪下，把<b>同一种标记贴在一个小立方体（约 5–6 cm 的纸盒）的 5 个面上</b>：顶面 + 四个侧面。底面贴着桌子，不用贴。
-      这样无论从哪个方向看，摄像头总能看到至少一个面，于是可以<b>绕着方块走一圈</b>从任意角度观察立体电场。<br>
-      Stick the <b>same</b> marker on 5 faces of a small box (top + 4 sides; the bottom rests on the table). The cube is then trackable from every angle.
+      打印下方标记并剪下，把<b>5 个不同的标记贴在一个小立方体（边长约 5 cm，约为标记黑块的 2 倍）的 5 个面上</b>：顶面 + 四个侧面。底面贴着桌子，不用贴。
+      每个面用不同的码，App 才能分辨是哪个面，从而把它们<b>合成同一个方块</b>，把电荷放在方块<b>中心</b>——这样绕着走一圈，电场都稳定不跳。<br>
+      Stick <b>5 different</b> markers on 5 faces of a small box (edge ≈ 2× the marker, ~5 cm; top + 4 sides; bottom rests on the table). Distinct faces let the app fuse them into one cube and place the charge at its centre.
     </p>
 
     <!-- placement diagram + simulation -->
@@ -106,7 +107,7 @@
             <text x="204" y="170">底面留空 (on table)</text>
           </g>
         </svg>
-        <p>共 5 面贴<b>同一个</b>标记（顶 1 + 侧 4）。底面不贴，放在桌上。</p>
+        <p>5 面各贴<b>不同</b>标记（顶 1 + 侧 4），底面不贴。不同的码让 App 算出方块中心。</p>
       </div>
       <div class="box">
         <h3>立体效果 <small>Cube — 360° 观看</small></h3>
@@ -142,33 +143,33 @@
     <h2>剪下并贴到方块上 · Cut out &amp; stick on the box</h2>
 
     <div class="group pos">
-      <div class="group-title pos"><span class="sym">+</span>正电荷立方体 — 5 个面（同一标记 value 0）</div>
+      <div class="group-title pos"><span class="sym">+</span>正电荷立方体 — 5 个面，<b>各不相同</b>（value 2–6）</div>
       <div class="tiles">
-        <div class="tile"><span class="lab">+ 顶</span><img src="markers/0.png" alt="+"></div>
-        <div class="tile"><span class="lab">+ 侧</span><img src="markers/0.png" alt="+"></div>
-        <div class="tile"><span class="lab">+ 侧</span><img src="markers/0.png" alt="+"></div>
-        <div class="tile"><span class="lab">+ 侧</span><img src="markers/0.png" alt="+"></div>
-        <div class="tile"><span class="lab">+ 侧</span><img src="markers/0.png" alt="+"></div>
+        <div class="tile"><span class="lab">+ 顶 · v2</span><img src="markers/2.png" alt="+ top"></div>
+        <div class="tile"><span class="lab">+ 侧 · v3</span><img src="markers/3.png" alt="+ side"></div>
+        <div class="tile"><span class="lab">+ 侧 · v4</span><img src="markers/4.png" alt="+ side"></div>
+        <div class="tile"><span class="lab">+ 侧 · v5</span><img src="markers/5.png" alt="+ side"></div>
+        <div class="tile"><span class="lab">+ 侧 · v6</span><img src="markers/6.png" alt="+ side"></div>
       </div>
     </div>
 
     <div class="group neg">
-      <div class="group-title neg"><span class="sym">&minus;</span>负电荷立方体 — 5 个面（同一标记 value 1）</div>
+      <div class="group-title neg"><span class="sym">&minus;</span>负电荷立方体 — 5 个面，<b>各不相同</b>（value 7–11）</div>
       <div class="tiles">
-        <div class="tile"><span class="lab">− 顶</span><img src="markers/1.png" alt="−"></div>
-        <div class="tile"><span class="lab">− 侧</span><img src="markers/1.png" alt="−"></div>
-        <div class="tile"><span class="lab">− 侧</span><img src="markers/1.png" alt="−"></div>
-        <div class="tile"><span class="lab">− 侧</span><img src="markers/1.png" alt="−"></div>
-        <div class="tile"><span class="lab">− 侧</span><img src="markers/1.png" alt="−"></div>
+        <div class="tile"><span class="lab">− 顶 · v7</span><img src="markers/7.png" alt="− top"></div>
+        <div class="tile"><span class="lab">− 侧 · v8</span><img src="markers/8.png" alt="− side"></div>
+        <div class="tile"><span class="lab">− 侧 · v9</span><img src="markers/9.png" alt="− side"></div>
+        <div class="tile"><span class="lab">− 侧 · v10</span><img src="markers/10.png" alt="− side"></div>
+        <div class="tile"><span class="lab">− 侧 · v11</span><img src="markers/11.png" alt="− side"></div>
       </div>
     </div>
 
     <div class="tips">
       <b>组装与使用 · Assemble &amp; use</b><br>
-      1. 找一个约 <b>5–6 cm</b> 的小立方体纸盒；把 5 张同色标记分别贴在顶面和四个侧面，保留每张标记四周的白边。<br>
+      1. 找一个小立方体纸盒，<b>边长约为标记黑块的 2 倍（≈ 5 cm）</b>；把 5 张标记按上面的编号分别贴在顶面和四个侧面，保留每张四周的白边。盒子大小不同也行——只要在网址后加 <b>?cube=数值</b> 调整（默认 1.0 = 边长 2× 标记）。<br>
       2. 在 iPad 的 Safari 中打开 AR 应用（需 HTTPS），点击 <b>Start camera</b> —— 扫描按钮和平面方案<b>共用一个</b>，无需切换。<br>
       3. 把 <b>+</b> 方块放进画面看向外发散的电场；<b>−</b> 方块看向内汇聚；两个方块同时出现 → 立体偶极子电场。<br>
-      4. 因为 5 个面都是同一标记，你可以举着 iPad <b>绕方块走一圈</b>，从任意角度都能看到电场线。<br>
+      4. 5 个面各不相同，App 会把它们合成同一个方块、把电荷放在<b>方块中心</b>；于是你举着 iPad <b>绕方块走一圈</b>，电场稳定不跳。<br>
       5. 光线均匀、避免反光；方块离镜头约 20–50 cm 时追踪最稳。
     </div>
   </div>

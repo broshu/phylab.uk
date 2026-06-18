@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>折纸立方体 · Fold-up Cube Net</title>
+  <style>
+    :root { --ink:#1b2030; --pos:#ff3b30; --neg:#3b82f6; --cut:#1b2030; --fold:#9aa6bd; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+      color: var(--ink); background: #eef1f6; -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    }
+    .sheet { width: 210mm; min-height: 297mm; margin: 0 auto; background:#fff; padding: 12mm; }
+    .scheme-tag { display:inline-block; background:#fdeee9; color:#d24a2a; font-weight:800;
+      font-size:12px; padding:4px 10px; border-radius:999px; letter-spacing:.03em; }
+    h1 { font-size: 20px; margin: 8px 0 4px; }
+    .sub { color:#5b6577; font-size: 12.5px; margin: 0 0 5mm; line-height:1.6; }
+    .legend { font-size:12px; color:#42495a; display:flex; gap:18px; align-items:center; margin:0 0 4mm; flex-wrap:wrap; }
+    .legend .k { display:inline-flex; align-items:center; gap:7px; }
+    .legend svg { vertical-align:middle; }
+    .netwrap { text-align:center; }
+    .netcap { font-weight:800; font-size:14px; margin: 2mm 0 2mm; }
+    .netcap .sym { display:inline-block; width:24px; height:24px; line-height:22px; border-radius:50%;
+      color:#fff; font-size:16px; text-align:center; vertical-align:middle; margin-right:6px; }
+    .pos .sym { background:var(--pos); } .neg .sym { background:var(--neg); }
+    .net { width: 160mm; height: auto; display:block; margin: 0 auto; }
+    .tips { margin-top: 6mm; font-size: 12px; color:#42495a; line-height: 1.7;
+      border-top:1px solid #e2e6ee; padding-top: 5mm; }
+    .tips b { color: var(--ink); }
+    .page2 { page-break-before: always; }
+
+    @media print {
+      body { background:#fff; }
+      .sheet { box-shadow:none; margin:0; padding:9mm; }
+      .noprint { display:none; }
+    }
+    .noprint { text-align:center; padding: 12px; }
+    .noprint button { font-size:15px; padding:10px 22px; border:none; border-radius:10px;
+      background:#d24a2a; color:#fff; font-weight:700; cursor:pointer; }
+    .noprint a { display:inline-block; margin-left:10px; color:#2563eb; font-size:13px; }
+  </style>
+</head>
+<body>
+  <div class="noprint">
+    <button onclick="window.print()">打印折纸图纸 · Print cube nets</button>
+    <a href="print-cube.html">← 贴方块版 Sticker version</a>
+    <a href="print-flat.html">平面方案 Flat →</a>
+  </div>
+
+  <div class="sheet">
+    <span class="scheme-tag">立体方案 · 折纸版 FOLD-UP NET</span>
+    <h1>AR 电场线 — 折纸立方体（正电荷 +）</h1>
+    <p class="sub">
+      建议用<b>卡纸（160–250 gsm）</b>打印。先沿<b>虚线折痕压线</b>，再沿<b>实线剪下</b>，折成立方体，用透明胶带粘合接缝。
+      每个面是<b>不同的码</b>（已按面排好），别贴错位置，也别让胶带或折边盖住黑色方块。底面留空，朝下放在桌面。
+      这个图纸的标记尺寸已配好（边长 ≈ 2× 标记），App 默认参数即可，无需调整。<br>
+      Print on cardstock. Score the dashed lines, cut the outline, fold into a cube, tape the seams. Each face is a <b>different</b> code (pre-arranged); the blank face is the bottom.
+    </p>
+
+    <div class="legend">
+      <span class="k"><svg width="34" height="10"><line x1="2" y1="5" x2="32" y2="5" stroke="#1b2030" stroke-width="2"/></svg> 实线 = 剪 Cut</span>
+      <span class="k"><svg width="34" height="10"><line x1="2" y1="5" x2="32" y2="5" stroke="#9aa6bd" stroke-width="2" stroke-dasharray="5 4"/></svg> 虚线 = 折 Fold</span>
+      <span class="k">5 面各不相同 · 底面留空</span>
+    </div>
+
+    <!-- ============ + CUBE NET ============ -->
+    <div class="netwrap">
+      <div class="netcap pos"><span class="sym">+</span>正电荷立方体 Positive cube</div>
+      <svg class="net" viewBox="0 0 155 200" xmlns="http://www.w3.org/2000/svg">
+        <g transform="translate(10,10)">
+          <!-- face fills -->
+          <g fill="#ffffff">
+            <rect x="45" y="0"  width="45" height="45"/><!-- Top -->
+            <rect x="0"  y="45" width="45" height="45"/><!-- Left -->
+            <rect x="45" y="45" width="45" height="45"/><!-- Front -->
+            <rect x="90" y="45" width="45" height="45"/><!-- Right -->
+            <rect x="45" y="90" width="45" height="45"/><!-- Bottom (blank) -->
+            <rect x="45" y="135" width="45" height="45"/><!-- Back -->
+          </g>
+          <!-- markers (centered, 22.5mm so cube edge ≈ 2× marker → app default cube=1.0).
+               5 DIFFERENT codes (value 2–6): top, left, front, right, back. -->
+          <g style="image-rendering:pixelated">
+            <image href="markers/2.png" x="56.25" y="11.25"  width="22.5" height="22.5"/><!-- Top  v2 -->
+            <image href="markers/3.png" x="11.25" y="56.25"  width="22.5" height="22.5"/><!-- Left v3 -->
+            <image href="markers/4.png" x="56.25" y="56.25"  width="22.5" height="22.5"/><!-- Front v4 -->
+            <image href="markers/5.png" x="101.25" y="56.25" width="22.5" height="22.5"/><!-- Right v5 -->
+            <image href="markers/6.png" x="56.25" y="146.25" width="22.5" height="22.5"/><!-- Back v6 -->
+          </g>
+          <!-- bottom blank label -->
+          <text x="67.5" y="114" text-anchor="middle" font-size="6" fill="#aab2c2">底面 bottom</text>
+          <text x="67.5" y="121" text-anchor="middle" font-size="5" fill="#c4ccda">（不印·朝下）</text>
+          <!-- fold lines (dashed) -->
+          <g stroke="#9aa6bd" stroke-width="0.5" stroke-dasharray="3 2.4" fill="none">
+            <line x1="45" y1="45"  x2="90" y2="45"/>
+            <line x1="45" y1="45"  x2="45" y2="90"/>
+            <line x1="90" y1="45"  x2="90" y2="90"/>
+            <line x1="45" y1="90"  x2="90" y2="90"/>
+            <line x1="45" y1="135" x2="90" y2="135"/>
+          </g>
+          <!-- cut outline (solid) -->
+          <polygon points="45,0 90,0 90,45 135,45 135,90 90,90 90,180 45,180 45,90 0,90 0,45 45,45"
+                   fill="none" stroke="#1b2030" stroke-width="0.7" stroke-linejoin="round"/>
+        </g>
+      </svg>
+    </div>
+
+    <div class="tips">
+      <b>折法 · How to fold</b><br>
+      1. 卡纸打印 → 沿所有<b>虚线</b>用笔尖/刀背压痕 → 沿外侧<b>实线</b>剪下整个十字。<br>
+      2. 以中间的"前面"为底，把上、左、右、后、顶各面立起折成立方体；接缝用<b>透明胶带</b>粘牢。<br>
+      3. 留空的那个面作底面朝下；其余 5 面各贴<b>不同</b>的 + 标记（v2–v6），App 据此算出方块中心、稳定显示。<br>
+      4. 想更结实，可在里面塞一个同尺寸的小方块或多层卡纸。
+    </div>
+  </div>
+
+  <!-- ============ - CUBE NET (page 2) ============ -->
+  <div class="sheet page2">
+    <span class="scheme-tag">立体方案 · 折纸版 FOLD-UP NET</span>
+    <h1>AR 电场线 — 折纸立方体（负电荷 −）</h1>
+    <p class="sub">
+      与正电荷做法相同，只是这 5 个面改用<b>另一组码（v7–v11）</b>。做一个 + 立方体和一个 − 立方体，两个同时放进画面即可看到立体偶极子电场。
+    </p>
+
+    <div class="legend">
+      <span class="k"><svg width="34" height="10"><line x1="2" y1="5" x2="32" y2="5" stroke="#1b2030" stroke-width="2"/></svg> 实线 = 剪 Cut</span>
+      <span class="k"><svg width="34" height="10"><line x1="2" y1="5" x2="32" y2="5" stroke="#9aa6bd" stroke-width="2" stroke-dasharray="5 4"/></svg> 虚线 = 折 Fold</span>
+      <span class="k">5 面各不相同 · 底面留空</span>
+    </div>
+
+    <div class="netwrap">
+      <div class="netcap neg"><span class="sym">&minus;</span>负电荷立方体 Negative cube</div>
+      <svg class="net" viewBox="0 0 155 200" xmlns="http://www.w3.org/2000/svg">
+        <g transform="translate(10,10)">
+          <g fill="#ffffff">
+            <rect x="45" y="0"  width="45" height="45"/>
+            <rect x="0"  y="45" width="45" height="45"/>
+            <rect x="45" y="45" width="45" height="45"/>
+            <rect x="90" y="45" width="45" height="45"/>
+            <rect x="45" y="90" width="45" height="45"/>
+            <rect x="45" y="135" width="45" height="45"/>
+          </g>
+          <!-- 5 DIFFERENT codes (value 7–11): top, left, front, right, back. -->
+          <g style="image-rendering:pixelated">
+            <image href="markers/7.png"  x="56.25" y="11.25"  width="22.5" height="22.5"/><!-- Top  v7 -->
+            <image href="markers/8.png"  x="11.25" y="56.25"  width="22.5" height="22.5"/><!-- Left v8 -->
+            <image href="markers/9.png"  x="56.25" y="56.25"  width="22.5" height="22.5"/><!-- Front v9 -->
+            <image href="markers/10.png" x="101.25" y="56.25" width="22.5" height="22.5"/><!-- Right v10 -->
+            <image href="markers/11.png" x="56.25" y="146.25" width="22.5" height="22.5"/><!-- Back v11 -->
+          </g>
+          <text x="67.5" y="114" text-anchor="middle" font-size="6" fill="#aab2c2">底面 bottom</text>
+          <text x="67.5" y="121" text-anchor="middle" font-size="5" fill="#c4ccda">（不印·朝下）</text>
+          <g stroke="#9aa6bd" stroke-width="0.5" stroke-dasharray="3 2.4" fill="none">
+            <line x1="45" y1="45"  x2="90" y2="45"/>
+            <line x1="45" y1="45"  x2="45" y2="90"/>
+            <line x1="90" y1="45"  x2="90" y2="90"/>
+            <line x1="45" y1="90"  x2="90" y2="90"/>
+            <line x1="45" y1="135" x2="90" y2="135"/>
+          </g>
+          <polygon points="45,0 90,0 90,45 135,45 135,90 90,90 90,180 45,180 45,90 0,90 0,45 45,45"
+                   fill="none" stroke="#1b2030" stroke-width="0.7" stroke-linejoin="round"/>
+        </g>
+      </svg>
+    </div>
+
+    <div class="tips">
+      <b>提示 · Tips</b><br>
+      光线均匀、避免反光；立方体离 iPad 镜头约 20–50 cm 时追踪最稳。标记越大，识别距离越远。
+    </div>
+  </div>
+</body>
+</html>
