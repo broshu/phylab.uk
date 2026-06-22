@@ -51,6 +51,14 @@
     .noprint button { font-size:15px; padding:10px 22px; border:none; border-radius:10px;
       background:#2563eb; color:#fff; font-weight:700; cursor:pointer; }
     .noprint a { display:inline-block; margin-left:10px; color:#2563eb; font-size:13px; }
+    /* Primary "use the AR" call-to-action */
+    .noprint a.btn-ar {
+      color:#fff; font-size:15px; font-weight:700; margin-left:0;
+      padding:10px 22px; border-radius:10px; text-decoration:none;
+      background: linear-gradient(135deg,#ff5b4f,#3b82f6);
+      box-shadow: 0 4px 14px rgba(59,130,246,.28);
+    }
+    .noprint a.btn-ar:hover { filter:brightness(1.05); }
 
     /* Markers-only sheet: hidden on screen; only printed when its button is used. */
     .markers-only { display:none; }
@@ -80,8 +88,8 @@
 </head>
 <body>
   <div class="noprint">
+    <a class="btn-ar" href="index.html">▶ Open AR (Start camera)</a>
     <button onclick="window.print()">Print flat markers</button>
-    <a href="index.html">Open AR app →</a>
     <a href="print-cube.html">Cube version →</a>
   </div>
 
@@ -154,6 +162,10 @@
       2. Aim at the <b>+</b> marker → field lines radiate outward; aim at the <b>&minus;</b> marker → field lines converge inward.<br>
       3. Put <b>both markers</b> in view together (a few cm apart) → a <b>dipole</b> field pointing from + to &minus;.<br>
       4. Tracking is most stable with even lighting and a flat, non-reflective surface.
+    </div>
+
+    <div class="noprint" style="text-align:left; padding:6mm 0 0;">
+      <a class="btn-ar" href="index.html">▶ Open AR (Start camera)</a>
     </div>
   </div>
 
