@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Labs — PhyLab</title>
-<meta name="description" content="Interactive, browser-based physics demonstrations." />
+<title>AR Labs — PhyLab</title>
+<meta name="description" content="Augmented-reality physics demonstrations you can run in a browser." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
@@ -43,19 +43,30 @@
     pointer-events: none; z-index: 0;
   }
 
-  .wrap { position: relative; z-index: 1; width: 100%; max-width: 1332px; }
+  .wrap { position: relative; z-index: 1; width: 100%; max-width: 880px; }
+
+  .crumb {
+    text-align: center; margin-bottom: 10px;
+    font-size: .92rem; color: var(--muted);
+  }
+  .crumb a { color: var(--green); text-decoration: none; }
+  .crumb a:hover { text-decoration: underline; }
 
   .page-title {
     font-family: "Cormorant Garamond", serif;
     font-size: clamp(2.2rem, 5vw, 3.4rem);
     font-weight: 600; color: var(--ink);
     text-align: center; letter-spacing: .5px;
-    margin-bottom: 40px;
+    margin-bottom: 8px;
+  }
+  .lede {
+    text-align: center; color: var(--muted);
+    max-width: 560px; margin: 0 auto 40px; line-height: 1.6;
   }
 
   .blocks {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 24px;
   }
 
@@ -65,7 +76,7 @@
     flex-direction: column;
     align-items: stretch;
     gap: 14px;
-    padding: 20px 20px 16px;
+    padding: 20px 20px 18px;
     text-decoration: none;
     background: var(--card);
     border: 1px solid var(--line);
@@ -86,15 +97,19 @@
     font-size: 1.6rem; font-weight: 600; color: var(--green);
     letter-spacing: .5px; line-height: 1.1; text-align: center;
   }
+  .block p {
+    font-size: .9rem; color: var(--muted); line-height: 1.55; text-align: center;
+  }
 
-  .block img {
+  .thumb {
     width: 100%;
     aspect-ratio: 16 / 10;
     object-fit: cover;
     object-position: top;
     border: 1px solid var(--line);
     border-radius: 10px;
-    background: #fff;
+    background: #0d1119;
+    display: block;
   }
 
   .badge {
@@ -112,10 +127,6 @@
     box-shadow: 0 1px 2px rgba(28,43,37,.18);
   }
 
-  @media (max-width: 1000px) {
-    .blocks { grid-template-columns: repeat(2, 1fr); }
-  }
-
   @media (max-width: 640px) {
     .blocks { grid-template-columns: 1fr; gap: 18px; }
   }
@@ -123,40 +134,47 @@
 </head>
 <body>
   <main class="wrap">
-    <h1 class="page-title">Labs</h1>
+    <div class="crumb"><a href="/labs/">← Labs</a></div>
+    <h1 class="page-title">AR Labs</h1>
+    <p class="lede">Augmented-reality electric-field demos. Print the charge markers, open the app in Safari on an iPad, and point the camera to see the field in 3D.</p>
+
     <div class="blocks">
-      <a class="block" href="/labs/ar/">
+      <a class="block" href="ar-field-lines/">
         <span class="badge">Beta</span>
-        <h2>AR Electric Field</h2>
-        <img src="ar/ar-field-lines/screenshot.png" alt="AR Electric Field preview" loading="lazy">
+        <h2>AR Electric Field Lines</h2>
+        <img class="thumb" src="ar-field-lines/screenshot.png" alt="AR Electric Field Lines preview" loading="lazy">
+        <p>Flat tiles or marker cubes for + and &minus; charges. Show both together to see a 3D dipole field.</p>
       </a>
-      <a class="block" href="/labs/potential_3d_visualization/">
-        <h2>Electric Potential in 3D</h2>
-        <img src="potential_3d_visualization/screenshot.png" alt="Electric Potential in 3D preview" loading="lazy">
-      </a>
-      <a class="block" href="/labs/oscilloscope-principle/">
-        <h2>Oscilloscope Principle</h2>
-        <img src="oscilloscope-principle/screenshot.png" alt="Oscilloscope Principle preview" loading="lazy">
-      </a>
-      <a class="block" href="/labs/microscopic-current/">
-        <h2>Microscopic Current</h2>
-        <img src="microscopic-current/screenshot.png" alt="Microscopic Current preview" loading="lazy">
-      </a>
-      <a class="block" href="/labs/alternating-field-release/">
-        <h2>Alternating Field Release</h2>
-        <img src="alternating-field-release/screenshot.png" alt="Alternating Field Release preview" loading="lazy">
-      </a>
-      <a class="block" href="/labs/plate-voltage-particle-stream/">
-        <h2>Particle Between Plates</h2>
-        <img src="plate-voltage-particle-stream/screenshot.png" alt="Particle Between Plates preview" loading="lazy">
-      </a>
-      <a class="block" href="/labs/electric-field-lines/">
-        <h2>Electric Field Lines</h2>
-        <img src="electric-field-lines/screenshot.png" alt="Electric Field Lines preview" loading="lazy">
-      </a>
-      <a class="block" href="/labs/vernier-caliper/">
-        <h2>Vernier Caliper</h2>
-        <img src="vernier-caliper/screenshot.png" alt="Vernier Caliper preview" loading="lazy">
+
+      <a class="block" href="efield-ar-cube/">
+        <h2>AR Point Charge — Cube</h2>
+        <svg class="thumb" viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="AR point charge cube preview">
+          <rect width="320" height="200" fill="#0d1119"/>
+          <polygon points="0,150 320,150 320,200 0,200" fill="#161b27"/>
+          <!-- radial field lines from the cube centre -->
+          <g fill="none" stroke="#ff5b4f" stroke-width="2.4" opacity="0.92">
+            <path d="M160,96 C120,46 96,40 74,28"/>
+            <path d="M160,96 C200,46 224,40 246,28"/>
+            <path d="M160,96 C108,86 78,90 44,96"/>
+            <path d="M160,96 C212,86 242,90 276,96"/>
+            <path d="M160,96 C150,150 150,160 150,188"/>
+            <path d="M160,96 C128,124 110,136 92,156"/>
+            <path d="M160,96 C192,124 210,136 228,156"/>
+          </g>
+          <!-- isometric cube -->
+          <g stroke="#7c879c" stroke-width="1.4">
+            <polygon points="160,60 206,82 160,104 114,82" fill="#1d2433"/>
+            <polygon points="114,82 160,104 160,150 114,128" fill="#141a26"/>
+            <polygon points="206,82 160,104 160,150 206,128" fill="#10151f"/>
+          </g>
+          <!-- + charge at the centre -->
+          <circle cx="160" cy="90" r="13" fill="#ff3b30"/>
+          <g stroke="#fff" stroke-width="3" stroke-linecap="round">
+            <line x1="152" y1="90" x2="168" y2="90"/>
+            <line x1="160" y1="82" x2="160" y2="98"/>
+          </g>
+        </svg>
+        <p>One marker on five faces of a small cube anchors a + point charge at its centre — view it from any side.</p>
       </a>
     </div>
   </main>
