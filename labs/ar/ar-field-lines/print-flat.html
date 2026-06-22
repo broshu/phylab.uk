@@ -29,9 +29,10 @@
     /* ---- markers ---- */
     .cards { display: flex; gap: 14mm; justify-content: center; flex-wrap: wrap; margin-top:4mm; }
     .card { text-align: center; }
-    .marker-box { width: 66mm; height: 66mm; background:#fff; padding: 11mm;
+    /* padding is the white quiet zone; the image (black pattern) prints at 40mm = 4cm */
+    .marker-box { width: 60mm; height: 60mm; background:#fff; padding: 10mm;
       border: 1px dashed #c4ccda; display:flex; align-items:center; justify-content:center; }
-    .marker-box img { width:100%; height:100%; image-rendering: pixelated; }
+    .marker-box img { width:40mm; height:40mm; image-rendering: pixelated; }
     .tag { margin-top: 5mm; font-weight: 800; font-size: 20px; }
     .tag .sym { display:inline-block; width: 30px; height: 30px; line-height: 28px; border-radius:50%;
       color:#fff; font-size: 22px; vertical-align: middle; margin-right: 7px; }
@@ -64,10 +65,10 @@
     .markers-only { display:none; }
     .markers-only .m { text-align:center; }
     .markers-only .mbox {
-      width: 72mm; height: 72mm; background:#fff; padding: 12mm;
+      width: 60mm; height: 60mm; background:#fff; padding: 10mm;
       border:1px dashed #c4ccda; display:flex; align-items:center; justify-content:center;
     }
-    .markers-only .mbox img { width:100%; height:100%; image-rendering: pixelated; }
+    .markers-only .mbox img { width:40mm; height:40mm; image-rendering: pixelated; }
     .markers-only .mlabel { margin-top: 4mm; font-weight:800; font-size:18px; }
     .markers-only .mlabel .sym { display:inline-block; width:28px; height:28px; line-height:26px;
       border-radius:50%; color:#fff; font-size:20px; vertical-align:middle; margin-right:7px; }
@@ -92,6 +93,7 @@
     <p class="sub">
       Print on plain white paper, cut the two markers apart, and <b>lay them flat on a desk</b>. Keep the white border (quiet zone) around each black square — don't trim too tight, as the camera locks onto the marker using that border.
     </p>
+    <p class="sub" style="margin-top:-4mm;"><b>Print at 100% (actual size):</b> each pattern should measure <b>4 cm × 4 cm</b> — check with a ruler before cutting.</p>
 
     <!-- flat scheme illustration -->
     <div class="sims">
