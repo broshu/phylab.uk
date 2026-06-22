@@ -170,6 +170,11 @@
         <span class="big">Cube</span>
         <span class="small">5 different markers on 5 faces of a small box</span>
       </a>
+      <a href="print-gun.html" target="_blank" rel="noopener">
+        <span class="ic">⚛</span>
+        <span class="big">Particle gun</span>
+        <span class="small">Fires test charges that trace the field</span>
+      </a>
     </div>
     <p style="font-size:12px;color:#6f7c95;max-width:440px">
       Both schemes use the same scan button — the app recognises whichever
@@ -184,7 +189,7 @@
       <div><span class="dot pos"></span>Positive charge (+)</div>
       <div><span class="dot neg"></span>Negative charge (&minus;)</div>
     </div>
-    <div id="hint">Arrows show field direction: out of + , into &minus;</div>
+    <div id="hint">Arrows show field direction: out of + , into &minus;. The particle-gun marker fires test charges that trace the field.</div>
   </div>
 
   <!-- AR Scene -->
@@ -229,6 +234,9 @@
     <a-marker class="cubeneg" type="barcode" value="10" smooth="true" smoothCount="6" smoothTolerance="0.02" smoothThreshold="2"></a-marker>
     <a-marker class="cubeneg" type="barcode" value="11" smooth="true" smoothCount="6" smoothTolerance="0.02" smoothThreshold="2"></a-marker>
 
+    <!-- PARTICLE GUN (value 12): emits test charges that fly through the field -->
+    <a-marker id="gun" type="barcode" value="12" smooth="true" smoothCount="6" smoothTolerance="0.02" smoothThreshold="2"></a-marker>
+
     <a-entity camera></a-entity>
   </a-scene>
 
@@ -256,6 +264,7 @@
       this.flatNeg = document.querySelector('#flatneg');               // value 1
       this.cubePos = Array.from(document.querySelectorAll('.cubepos')); // 2-6
       this.cubeNeg = Array.from(document.querySelectorAll('.cubeneg')); // 7-11
+      this.gun     = document.querySelector('#gun');                    // value 12
       this.statusEl = document.querySelector('#status');
 
       // Optional ?cube= override of the cube half-edge.
@@ -265,15 +274,171 @@
         if (isFinite(v) && v >= 0) this.data.cube = v;
       }
 
+      /* Particle-gun tuning (all overridable via URL):
+           ?pcharge= +1 / -1   test-particle sign (default +1)
+           ?pspeed=            initial muzzle speed   (units/s)
+           ?pforce=            field acceleration gain
+           ?prate=             particles emitted per second
+           ?plife=             particle lifetime (s)
+           ?pspread=           emission cone half-angle (radians) */
+      const num = (k, d) => { const v = parseFloat(q.get(k)); return isFinite(v) ? v : d; };
+      this.pcfg = {
+        charge: q.get('pcharge') === '-1' ? -1 : 1,
+        speed:  num('pspeed', 0.55),
+        force:  num('pforce', 0.42),
+        rate:   num('prate', 22),
+        life:   num('plife', 4.0),
+        spread: num('pspread', 0.28),
+        max:    140, trail: 26, muzzle: 0.12
+      };
+      this.particles = [];
+      this._emitAcc = 0;
+      this._lastTime = 0;
+
       // World-space group that holds all generated field geometry.
       this.group = new THREE.Group();
       this.el.object3D.add(this.group);
+      // Separate group for live particles + their trails (rebuilt every frame).
+      this.pGroup = new THREE.Group();
+      this.el.object3D.add(this.pGroup);
 
       this._p = new THREE.Vector3();
       this._n = new THREE.Vector3();
       this._q = new THREE.Quaternion();
       this.lastKey = '';          // describes current state to avoid needless rebuilds
       this.lastBuild = 0;
+    },
+
+    /* ---- Particle gun ------------------------------------------------ */
+    /* Muzzle pose: world position of the gun marker + its outward normal
+       (local +Y). Returns null when the gun isn't visible. */
+    gunMuzzle: function () {
+      if (!this.gun || !this.gun.object3D.visible) return null;
+      const pos = new THREE.Vector3();
+      const quat = new THREE.Quaternion();
+      this.gun.object3D.getWorldPosition(pos);
+      this.gun.object3D.getWorldQuaternion(quat);
+      const dir = new THREE.Vector3(0, 1, 0).applyQuaternion(quat).normalize();
+      pos.addScaledVector(dir, this.pcfg.muzzle); // start just above the marker
+      return { pos: pos, dir: dir };
+    },
+
+    /* A direction inside a cone of half-angle `spread` around `dir`. */
+    coneDir: function (dir, spread) {
+      const out = dir.clone();
+      // build a basis perpendicular to dir
+      const up = Math.abs(dir.y) < 0.9 ? new THREE.Vector3(0,1,0) : new THREE.Vector3(1,0,0);
+      const t1 = new THREE.Vector3().crossVectors(dir, up).normalize();
+      const t2 = new THREE.Vector3().crossVectors(dir, t1).normalize();
+      const a = Math.random() * Math.PI * 2;
+      const r = Math.tan(spread) * Math.sqrt(Math.random());
+      out.addScaledVector(t1, r * Math.cos(a));
+      out.addScaledVector(t2, r * Math.sin(a));
+      return out.normalize();
+    },
+
+    updateParticles: function (time, charges) {
+      const cfg = this.pcfg;
+      let dt = this._lastTime ? (time - this._lastTime) / 1000 : 0;
+      this._lastTime = time;
+      if (dt <= 0) return;
+      if (dt > 0.05) dt = 0.05;                  // clamp after stalls
+
+      // Emit from the gun while it is visible.
+      const m = this.gunMuzzle();
+      if (m) {
+        this._emitAcc += cfg.rate * dt;
+        while (this._emitAcc >= 1 && this.particles.length < cfg.max) {
+          this._emitAcc -= 1;
+          const d = this.coneDir(m.dir, cfg.spread);
+          this.particles.push({
+            pos: m.pos.clone(),
+            vel: d.multiplyScalar(cfg.speed),
+            trail: [m.pos.clone()],
+            origin: m.pos.clone(),
+            age: 0
+          });
+        }
+      }
+
+      // Integrate motion under the Coulomb field of the visible charges.
+      const E = new THREE.Vector3();
+      const alive = [];
+      for (let i = 0; i < this.particles.length; i++) {
+        const pt = this.particles[i];
+        E.copy(this.fieldAt(pt.pos, charges));
+        pt.vel.addScaledVector(E, cfg.charge * cfg.force * dt);
+        pt.pos.addScaledVector(pt.vel, dt);
+        pt.age += dt;
+        pt.trail.push(pt.pos.clone());
+        if (pt.trail.length > cfg.trail) pt.trail.shift();
+
+        // cull: too old, flew far away, or fell into a charge
+        let dead = pt.age > cfg.life || pt.pos.distanceTo(pt.origin) > 6;
+        if (!dead) {
+          for (let j = 0; j < charges.length; j++)
+            if (pt.pos.distanceTo(charges[j].pos) < 0.12) { dead = true; break; }
+        }
+        if (!dead) alive.push(pt);
+      }
+      this.particles = alive;
+
+      this.renderParticles(m);
+    },
+
+    renderParticles: function (muzzle) {
+      // clear previous frame
+      for (let i = this.pGroup.children.length - 1; i >= 0; i--) {
+        const o = this.pGroup.children[i];
+        if (o.geometry) o.geometry.dispose();
+        if (o.material) o.material.dispose();
+        this.pGroup.remove(o);
+      }
+      if (!this.particles.length && !muzzle) return;
+
+      const col = this.pcfg.charge > 0 ? new THREE.Color('#ffd34f')
+                                       : new THREE.Color('#7fd0ff');
+
+      // Trails: one line-segment buffer for all particles, fading along the tail.
+      const segPos = [];
+      const segCol = [];
+      for (let i = 0; i < this.particles.length; i++) {
+        const tr = this.particles[i].trail;
+        for (let k = 1; k < tr.length; k++) {
+          const a = tr[k - 1], b = tr[k];
+          const fade = k / tr.length;                 // tail dim -> head bright
+          segPos.push(a.x, a.y, a.z, b.x, b.y, b.z);
+          for (let s = 0; s < 2; s++) segCol.push(col.r*fade, col.g*fade, col.b*fade);
+        }
+      }
+      if (segPos.length) {
+        const g = new THREE.BufferGeometry();
+        g.setAttribute('position', new THREE.Float32BufferAttribute(segPos, 3));
+        g.setAttribute('color', new THREE.Float32BufferAttribute(segCol, 3));
+        const mat = new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.95 });
+        this.pGroup.add(new THREE.LineSegments(g, mat));
+      }
+
+      // Heads: bright points at each particle's current position.
+      if (this.particles.length) {
+        const hp = [];
+        for (let i = 0; i < this.particles.length; i++) {
+          const p = this.particles[i].pos; hp.push(p.x, p.y, p.z);
+        }
+        const g = new THREE.BufferGeometry();
+        g.setAttribute('position', new THREE.Float32BufferAttribute(hp, 3));
+        const mat = new THREE.PointsMaterial({ color: col, size: 0.05, sizeAttenuation: true });
+        this.pGroup.add(new THREE.Points(g, mat));
+      }
+
+      // A small muzzle marker so you can see where the gun is.
+      if (muzzle) {
+        const g = new THREE.SphereGeometry(0.04, 10, 10);
+        const mat = new THREE.MeshBasicMaterial({ color: new THREE.Color('#ffffff') });
+        const s = new THREE.Mesh(g, mat);
+        s.position.copy(muzzle.pos);
+        this.pGroup.add(s);
+      }
     },
 
     /* Fuse the visible faces of one cube into a single centre point.
@@ -480,39 +645,45 @@
 
     tick: function (time) {
       const charges = this.collectCharges();
+      const gunOn = !!(this.gun && this.gun.object3D.visible);
 
       // status text
       const nPos = charges.filter(c => c.q > 0).length;
       const nNeg = charges.filter(c => c.q < 0).length;
       let msg;
-      if (charges.length === 0)      msg = 'Searching for markers…';
-      else if (nPos && nNeg)         msg = 'Dipole field — lines flow from + to −';
-      else if (nPos)                 msg = 'Positive charge — field points outward';
-      else                           msg = 'Negative charge — field points inward';
+      if (charges.length === 0 && !gunOn) msg = 'Searching for markers…';
+      else if (charges.length === 0)      msg = 'Particle gun — add a + or − charge to bend the beam';
+      else if (nPos && nNeg)              msg = 'Dipole field — lines flow from + to −';
+      else if (nPos)                      msg = 'Positive charge — field points outward';
+      else                                msg = 'Negative charge — field points inward';
+      if (gunOn && charges.length)        msg += ' · gun firing';
       if (this.statusEl.textContent !== msg) this.statusEl.textContent = msg;
 
+      // Field-line geometry — only when charges are present.
       if (charges.length === 0) {
         if (this.group.children.length) this.clearGroup();
         this.lastKey = 'none';
-        return;
+      } else {
+        // Signature of the current scene: signs + positions quantised to ~3cm.
+        // Rebuild only when it changes or every 250ms (movement / new marker).
+        let key = '';
+        for (let i = 0; i < charges.length; i++) {
+          const p = charges[i].pos;
+          key += charges[i].q + ':' +
+                 Math.round(p.x / 0.03) + ',' +
+                 Math.round(p.y / 0.03) + ',' +
+                 Math.round(p.z / 0.03) + '|';
+        }
+        const stale = (time - this.lastBuild) > 250;
+        if (key !== this.lastKey || stale) {
+          this.build(charges);
+          this.lastKey = key;
+          this.lastBuild = time;
+        }
       }
 
-      // Signature of the current scene: signs + positions quantised to ~3cm.
-      // Rebuild only when it changes or every 250ms (movement / new marker).
-      let key = '';
-      for (let i = 0; i < charges.length; i++) {
-        const p = charges[i].pos;
-        key += charges[i].q + ':' +
-               Math.round(p.x / 0.03) + ',' +
-               Math.round(p.y / 0.03) + ',' +
-               Math.round(p.z / 0.03) + '|';
-      }
-      const stale = (time - this.lastBuild) > 250;
-      if (key !== this.lastKey || stale) {
-        this.build(charges);
-        this.lastKey = key;
-        this.lastBuild = time;
-      }
+      // Particle gun — integrate & draw every frame (uses the live field).
+      this.updateParticles(time, charges);
     }
   });
 

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Particle Gun Marker</title>
+  <style>
+    :root { --ink:#1b2030; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      color: var(--ink); background: #eef1f6; -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    }
+    .sheet { width: 210mm; min-height: 297mm; margin: 0 auto; background:#fff; padding: 14mm; }
+    h1 { font-size: 21px; margin: 8px 0 4px; }
+    .sub { color:#5b6577; font-size: 13px; margin: 0 0 7mm; line-height:1.6; }
+
+    .card { text-align:center; margin-top: 6mm; }
+    /* padding is the white quiet zone; the image (black pattern) prints at 40mm = 4cm */
+    .marker-box { width: 60mm; height: 60mm; background:#fff; padding: 10mm; margin: 0 auto;
+      border:1px dashed #c4ccda; display:flex; align-items:center; justify-content:center; }
+    .marker-box img { width:40mm; height:40mm; image-rendering: pixelated; }
+    .tag { margin-top: 5mm; font-weight: 800; font-size: 20px; }
+    .tag .sym { display:inline-block; width:30px; height:30px; line-height:28px; border-radius:50%;
+      color:#fff; font-size:20px; vertical-align:middle; margin-right:7px; background:#6b54d6; }
+    .id { color:#8a93a6; font-size: 12px; margin-top: 2mm; }
+
+    .tips { margin-top: 9mm; font-size: 12px; color:#42495a; line-height: 1.75;
+      border-top:1px solid #e2e6ee; padding-top: 6mm; }
+    .tips b { color: var(--ink); }
+
+    @media print {
+      body { background:#fff; }
+      .sheet { box-shadow:none; margin:0; padding:12mm; }
+      .noprint { display:none; }
+      /* keep only the pattern on print */
+      .sub, .tips { display:none !important; }
+    }
+    .noprint { text-align:left; padding: 12px 14mm; }
+    .noprint button { font-size:15px; padding:10px 22px; border:none; border-radius:10px;
+      background:#2563eb; color:#fff; font-weight:700; cursor:pointer; }
+    .noprint a.btn-ar {
+      color:#fff; font-size:15px; font-weight:700; margin-left:10px;
+      padding:10px 22px; border-radius:10px; text-decoration:none;
+      background: linear-gradient(135deg,#ff5b4f,#3b82f6); box-shadow:0 4px 14px rgba(59,130,246,.28);
+    }
+    .noprint a { display:inline-block; margin-left:10px; color:#2563eb; font-size:13px; }
+  </style>
+</head>
+<body>
+  <div class="noprint">
+    <button onclick="window.print()">Print gun marker</button>
+    <a class="btn-ar" href="index.html">▶ Open AR (Start camera)</a>
+    <a href="print-flat.html">Flat scheme →</a>
+    <a href="print-cube.html">Cube scheme →</a>
+  </div>
+
+  <div class="sheet">
+    <h1>AR Electric Field — Particle gun</h1>
+    <p class="sub">
+      Print on plain white paper and lay this marker flat where you want the beam to start.
+      <b>Print at 100% (actual size):</b> the pattern should measure <b>4 cm × 4 cm</b> — check with a ruler, and keep the white border.
+    </p>
+
+    <div class="card">
+      <div class="marker-box"><img src="markers/12.png" alt="particle gun marker (barcode value 12)" /></div>
+      <div class="tag"><span class="sym">⚛</span>Particle gun</div>
+      <div class="id">barcode value 12</div>
+    </div>
+
+    <div class="tips">
+      <b>How to use</b><br>
+      1. Print the <b>+ / −</b> charge markers too (Flat or Cube scheme) and place them in view.<br>
+      2. Open the AR app, tap <b>Start camera</b>, and aim at this marker — it continuously fires test particles up out of the marker.<br>
+      3. The particles feel the field of any visible charges and curve along it, leaving glowing trails (their motion curves).<br>
+      4. Tune in the URL if needed: <code>?pspeed=</code> launch speed, <code>?pforce=</code> field strength, <code>?prate=</code> particles/sec, <code>?pcharge=-1</code> for negative test charges.
+    </div>
+  </div>
+</body>
+</html>
