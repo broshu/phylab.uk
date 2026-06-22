@@ -49,7 +49,10 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       text-align:center; padding: 24px;
     }
-    #gate h1 { font-size: 22px; margin: 0 0 8px; }
+    #gate h1 { font-size: 22px; margin: 0 0 8px; display:flex; align-items:center; gap:10px; justify-content:center; flex-wrap:wrap; }
+    .beta { font-size: 11px; font-weight: 800; letter-spacing:.08em; text-transform: uppercase;
+      color:#ffd34f; background: rgba(255,211,79,0.14); border:1px solid rgba(255,211,79,0.55);
+      padding: 2px 9px; border-radius: 999px; }
     #gate p { color:#9aa6bd; max-width: 420px; line-height:1.5; margin: 6px 0; font-size:14px;}
     #startBtn {
       margin-top: 22px; pointer-events:auto; cursor:pointer;
@@ -80,7 +83,7 @@
 
   <!-- Loading / start gate -->
   <div id="gate">
-    <h1>AR Electric Field Lines</h1>
+    <h1>AR Electric Field Lines <span class="beta">Beta</span></h1>
     <p>Point your iPad camera at the printed <b>+</b> or <b>&minus;</b> charge marker to see its 3D electric field. Show <b>both</b> markers together to see a dipole field.</p>
     <p style="font-size:12px;color:#6f7c95">Requires camera access. Best in Safari over HTTPS.</p>
     <button id="startBtn">Start camera (scan)</button>
