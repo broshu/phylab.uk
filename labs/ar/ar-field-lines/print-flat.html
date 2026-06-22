@@ -56,6 +56,7 @@
 <body>
   <div class="noprint">
     <button onclick="window.print()">Print flat markers</button>
+    <a href="index.html">Open AR app →</a>
     <a href="print-cube.html">Cube version →</a>
   </div>
 
@@ -66,11 +67,11 @@
       Print on plain white paper, cut the two markers apart, and <b>lay them flat on a desk</b>. Keep the white border (quiet zone) around each black square — don't trim too tight, as the camera locks onto the marker using that border.
     </p>
 
-    <!-- both-scheme simulation panel -->
+    <!-- flat scheme illustration -->
     <div class="sims">
       <div class="sim active">
         <h3>Flat <small>— laid flat on a desk</small></h3>
-        <!-- flat sim: two flat tiles on a desk with field lines -->
+        <!-- flat sim: two flat tiles on a desk with a dipole field -->
         <svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg">
           <!-- desk -->
           <polygon points="20,150 300,150 270,120 50,120" fill="#eef1f6" stroke="#d3d9e4"/>
@@ -99,34 +100,7 @@
           <text x="99" y="124" font-size="9" fill="#fff" font-weight="700">+</text>
           <text x="211.5" y="123.5" font-size="11" fill="#fff" font-weight="700">−</text>
         </svg>
-        <p>With the markers flat, the field lines "grow" up out of the desk. Best viewed from above or at an angle.</p>
-      </div>
-      <div class="sim">
-        <h3>Cube <small>— stuck on a box</small></h3>
-        <!-- cube sim: a cube with field lines wrapping all around -->
-        <svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg">
-          <!-- field lines all around (red, radiating in 3D) -->
-          <g fill="none" stroke="#ff3b30" stroke-width="2" opacity="0.9">
-            <path d="M160,90 C120,40 90,40 70,28"/>
-            <path d="M160,90 C200,40 230,42 250,30"/>
-            <path d="M160,90 C110,80 80,86 50,92"/>
-            <path d="M160,90 C210,82 245,88 275,96"/>
-            <path d="M160,90 C150,140 150,150 150,168"/>
-          </g>
-          <!-- cube (isometric) -->
-          <g stroke="#7c879c" stroke-width="1.2">
-            <polygon points="160,66 196,80 160,94 124,80" fill="#fbe2e0"/><!-- top -->
-            <polygon points="124,80 160,94 160,128 124,114" fill="#fff"/><!-- left -->
-            <polygon points="196,80 160,94 160,128 196,114" fill="#f3f5f9"/><!-- right -->
-          </g>
-          <!-- markers on faces -->
-          <rect x="150" y="78" width="10" height="7" fill="#222" transform="rotate(-12 155 81)"/>
-          <rect x="136" y="92" width="9" height="9" fill="#222" transform="skewY(20)"/>
-          <rect x="171" y="92" width="9" height="9" fill="#222" transform="skewY(-20)"/>
-          <circle cx="160" cy="86" r="6" fill="#ff3b30"/>
-          <text x="157" y="90" font-size="9" fill="#fff" font-weight="700">+</text>
-        </svg>
-        <p>With markers on 5 faces you can <b>walk all the way around</b> and see the 3D field from any angle.</p>
+        <p>With the markers flat, the field lines "grow" up out of the desk. Best viewed from above or at an angle. Want the 3D version? See the <a href="print-cube.html">Cube scheme</a>.</p>
       </div>
     </div>
 

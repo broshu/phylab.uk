@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>AR Labs — PhyLab</title>
-<meta name="description" content="Augmented-reality physics demonstrations you can run in a browser." />
+<title>AR Electric Field — PhyLab</title>
+<meta name="description" content="Augmented-reality electric-field demo: flat markers or marker cubes." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
@@ -12,7 +12,6 @@
   :root {
     --ink:    #1c2b25;
     --green:  #2f5d4f;
-    --green-2:#3f7060;
     --accent: #8a9a5b;
     --paper:  #f4f1e8;
     --card:   #faf8f1;
@@ -45,10 +44,7 @@
 
   .wrap { position: relative; z-index: 1; width: 100%; max-width: 880px; }
 
-  .crumb {
-    text-align: center; margin-bottom: 10px;
-    font-size: .92rem; color: var(--muted);
-  }
+  .crumb { text-align: center; margin-bottom: 10px; font-size: .92rem; color: var(--muted); }
   .crumb a { color: var(--green); text-decoration: none; }
   .crumb a:hover { text-decoration: underline; }
 
@@ -59,23 +55,13 @@
     text-align: center; letter-spacing: .5px;
     margin-bottom: 8px;
   }
-  .lede {
-    text-align: center; color: var(--muted);
-    max-width: 560px; margin: 0 auto 40px; line-height: 1.6;
-  }
+  .lede { text-align: center; color: var(--muted); max-width: 560px; margin: 0 auto 40px; line-height: 1.6; }
 
-  .blocks {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 24px;
-  }
+  .blocks { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
 
   .block {
     position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 14px;
+    display: flex; flex-direction: column; align-items: stretch; gap: 14px;
     padding: 20px 20px 18px;
     text-decoration: none;
     background: var(--card);
@@ -86,45 +72,19 @@
     overflow: hidden;
     transition: transform .3s ease, box-shadow .3s ease, border-color .3s;
   }
-  .block:hover {
-    transform: translateY(-5px);
-    border-color: var(--accent);
-    box-shadow: 0 22px 48px -20px rgba(28,43,37,.45);
-  }
+  .block:hover { transform: translateY(-5px); border-color: var(--accent); box-shadow: 0 22px 48px -20px rgba(28,43,37,.45); }
 
   .block h2 {
     font-family: "Cormorant Garamond", serif;
     font-size: 1.6rem; font-weight: 600; color: var(--green);
     letter-spacing: .5px; line-height: 1.1; text-align: center;
   }
-  .block p {
-    font-size: .9rem; color: var(--muted); line-height: 1.55; text-align: center;
-  }
+  .block p { font-size: .9rem; color: var(--muted); line-height: 1.55; text-align: center; }
 
   .thumb {
-    width: 100%;
-    aspect-ratio: 16 / 10;
-    object-fit: cover;
-    object-position: top;
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    background: #0d1119;
-    display: block;
-  }
-
-  .badge {
-    position: absolute;
-    top: 12px; right: 12px;
-    z-index: 2;
-    padding: 3px 10px;
-    font-size: .72rem;
-    font-weight: 500;
-    letter-spacing: .6px;
-    text-transform: uppercase;
-    color: #fff;
-    background: var(--accent);
-    border-radius: 999px;
-    box-shadow: 0 1px 2px rgba(28,43,37,.18);
+    width: 100%; aspect-ratio: 16 / 10;
+    border: 1px solid var(--line); border-radius: 10px;
+    background: var(--paper); display: block;
   }
 
   @media (max-width: 640px) {
@@ -135,46 +95,87 @@
 <body>
   <main class="wrap">
     <div class="crumb"><a href="/labs/">← Labs</a></div>
-    <h1 class="page-title">AR Labs</h1>
-    <p class="lede">Augmented-reality electric-field demos. Print the charge markers, open the app in Safari on an iPad, and point the camera to see the field in 3D.</p>
+    <h1 class="page-title">AR Electric Field</h1>
+    <p class="lede">Two ways to set up the same demo. Print the charge markers, open the app in Safari on an iPad, and point the camera to see the field in 3D.</p>
 
     <div class="blocks">
-      <a class="block" href="ar-field-lines/">
-        <span class="badge">Beta</span>
-        <h2>AR Electric Field Lines</h2>
-        <img class="thumb" src="ar-field-lines/screenshot.png" alt="AR Electric Field Lines preview" loading="lazy">
-        <p>Flat tiles or marker cubes for + and &minus; charges. Show both together to see a 3D dipole field.</p>
-      </a>
-
-      <a class="block" href="efield-ar-cube/">
-        <h2>AR Point Charge — Cube</h2>
-        <svg class="thumb" viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="AR point charge cube preview">
-          <rect width="320" height="200" fill="#0d1119"/>
-          <polygon points="0,150 320,150 320,200 0,200" fill="#161b27"/>
-          <!-- radial field lines from the cube centre -->
-          <g fill="none" stroke="#ff5b4f" stroke-width="2.4" opacity="0.92">
-            <path d="M160,96 C120,46 96,40 74,28"/>
-            <path d="M160,96 C200,46 224,40 246,28"/>
-            <path d="M160,96 C108,86 78,90 44,96"/>
-            <path d="M160,96 C212,86 242,90 276,96"/>
-            <path d="M160,96 C150,150 150,160 150,188"/>
-            <path d="M160,96 C128,124 110,136 92,156"/>
-            <path d="M160,96 C192,124 210,136 228,156"/>
+      <!-- ===== FLAT ===== -->
+      <a class="block" href="ar-field-lines/print-flat.html">
+        <h2>Flat</h2>
+        <svg class="thumb" viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Flat scheme: two tiles on a desk">
+          <defs>
+            <linearGradient id="fieldF" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#d8453c"/><stop offset="0.5" stop-color="#9a6fb0"/><stop offset="1" stop-color="#3f7fd8"/>
+            </linearGradient>
+          </defs>
+          <rect width="320" height="200" fill="#faf8f1"/>
+          <polygon points="0,150 320,150 320,200 0,200" fill="#efeadd"/>
+          <line x1="0" y1="150" x2="320" y2="150" stroke="#d8d2c0" stroke-width="1"/>
+          <!-- field lines from + to − -->
+          <g fill="none" stroke="url(#fieldF)" stroke-width="2.4" opacity="0.95">
+            <path d="M95,140 C120,60 200,60 225,140"/>
+            <path d="M95,140 C130,95 190,95 225,140"/>
+            <path d="M95,140 C68,38 252,38 225,140"/>
           </g>
-          <!-- isometric cube -->
-          <g stroke="#7c879c" stroke-width="1.4">
-            <polygon points="160,60 206,82 160,104 114,82" fill="#1d2433"/>
-            <polygon points="114,82 160,104 160,150 114,128" fill="#141a26"/>
-            <polygon points="206,82 160,104 160,150 206,128" fill="#10151f"/>
+          <!-- flat tiles on the desk -->
+          <g stroke="#c4ccda" stroke-width="1">
+            <polygon points="73,150 95,142 117,150 95,158" fill="#ffffff"/>
+            <polygon points="88,149.4 95,147 102,149.4 95,151.8" fill="#1b2030"/>
+            <polygon points="203,150 225,142 247,150 225,158" fill="#ffffff"/>
+            <polygon points="218,149.4 225,147 232,149.4 225,151.8" fill="#1b2030"/>
           </g>
-          <!-- + charge at the centre -->
-          <circle cx="160" cy="90" r="13" fill="#ff3b30"/>
-          <g stroke="#fff" stroke-width="3" stroke-linecap="round">
-            <line x1="152" y1="90" x2="168" y2="90"/>
-            <line x1="160" y1="82" x2="160" y2="98"/>
+          <!-- charges -->
+          <circle cx="95" cy="140" r="11" fill="#ff3b30"/>
+          <circle cx="225" cy="140" r="11" fill="#3b82f6"/>
+          <g stroke="#fff" stroke-width="2.6" stroke-linecap="round">
+            <line x1="88" y1="140" x2="102" y2="140"/><line x1="95" y1="133" x2="95" y2="147"/>
+            <line x1="218" y1="140" x2="232" y2="140"/>
           </g>
         </svg>
-        <p>One marker on five faces of a small cube anchors a + point charge at its centre — view it from any side.</p>
+        <p>Print two flat tiles and lay them on a desk. Includes the print sheet and how-to.</p>
+      </a>
+
+      <!-- ===== CUBE ===== -->
+      <a class="block" href="ar-field-lines/print-cube.html">
+        <h2>Cube</h2>
+        <svg class="thumb" viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Cube scheme: two marker cubes on a desk">
+          <defs>
+            <linearGradient id="fieldC" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#d8453c"/><stop offset="0.5" stop-color="#9a6fb0"/><stop offset="1" stop-color="#3f7fd8"/>
+            </linearGradient>
+          </defs>
+          <rect width="320" height="200" fill="#faf8f1"/>
+          <polygon points="0,150 320,150 320,200 0,200" fill="#efeadd"/>
+          <line x1="0" y1="150" x2="320" y2="150" stroke="#d8d2c0" stroke-width="1"/>
+          <!-- field lines from + to − -->
+          <g fill="none" stroke="url(#fieldC)" stroke-width="2.4" opacity="0.95">
+            <path d="M95,128 C120,52 200,52 225,128"/>
+            <path d="M95,128 C130,86 190,86 225,128"/>
+            <path d="M95,128 C68,30 252,30 225,128"/>
+          </g>
+          <!-- two isometric cubes on the desk -->
+          <g stroke="#c4ccda" stroke-width="1.1">
+            <polygon points="95,120 119,132 95,144 71,132" fill="#ffffff"/>
+            <polygon points="71,132 95,144 95,168 71,156" fill="#f0eee6"/>
+            <polygon points="119,132 95,144 95,168 119,156" fill="#e7e3d6"/>
+            <polygon points="225,120 249,132 225,144 201,132" fill="#ffffff"/>
+            <polygon points="201,132 225,144 225,168 201,156" fill="#f0eee6"/>
+            <polygon points="249,132 225,144 225,168 249,156" fill="#e7e3d6"/>
+          </g>
+          <!-- small markers on the top faces -->
+          <g fill="#1b2030">
+            <polygon points="88,126 95,123 102,126 95,129"/>
+            <polygon points="218,126 225,123 232,126 225,129"/>
+          </g>
+          <!-- charges at cube centres -->
+          <circle cx="95" cy="128" r="11" fill="#ff3b30"/>
+          <circle cx="225" cy="128" r="11" fill="#3b82f6"/>
+          <g stroke="#fff" stroke-width="2.6" stroke-linecap="round">
+            <line x1="88" y1="128" x2="102" y2="128"/><line x1="95" y1="121" x2="95" y2="135"/>
+            <line x1="218" y1="128" x2="232" y2="128"/>
+          </g>
+        </svg>
+        <p>Stick markers on a small box or fold the paper net. Includes print sheets and how-to.</p>
       </a>
     </div>
   </main>
