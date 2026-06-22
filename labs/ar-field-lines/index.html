@@ -99,48 +99,63 @@
     <!-- Result preview: roughly what the AR view looks like (dipole) -->
     <div id="preview" aria-label="Preview of the AR result">
       <svg viewBox="0 0 280 168" xmlns="http://www.w3.org/2000/svg" role="img">
-        <!-- camera / desk backdrop -->
         <defs>
           <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0" stop-color="#1a2030"/>
             <stop offset="1" stop-color="#0d1119"/>
           </linearGradient>
+          <!-- field-line colour: red at the + (left) fading to blue at the − (right) -->
+          <linearGradient id="field" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0"   stop-color="#ff5b4f"/>
+            <stop offset="0.5" stop-color="#b06ad6"/>
+            <stop offset="1"   stop-color="#4f93ff"/>
+          </linearGradient>
         </defs>
         <rect width="280" height="168" fill="url(#bg)"/>
+
         <!-- desk surface -->
-        <polygon points="0,138 280,138 280,168 0,168" fill="#161b27"/>
-        <ellipse cx="140" cy="138" rx="120" ry="14" fill="#0a0d14" opacity="0.55"/>
-        <!-- printed markers on the desk -->
-        <g opacity="0.9">
-          <rect x="78" y="128" width="20" height="14" rx="2" fill="#f4f1e8" transform="skewX(-20)" />
-          <rect x="190" y="128" width="20" height="14" rx="2" fill="#f4f1e8" transform="skewX(-20)" />
+        <polygon points="0,128 280,128 280,168 0,168" fill="#161b27"/>
+        <line x1="0" y1="128" x2="280" y2="128" stroke="#2a3142" stroke-width="1"/>
+
+        <!-- printed markers lying flat on the desk (isometric tiles), one under each charge -->
+        <g stroke="#c4ccda" stroke-width="0.8">
+          <polygon points="70,140 90,132 110,140 90,148" fill="#f4f1e8"/>
+          <polygon points="84,139.4 90,137 96,139.4 90,141.8" fill="#1b2030"/>
+          <polygon points="170,140 190,132 210,140 190,148" fill="#f4f1e8"/>
+          <polygon points="184,139.4 190,137 196,139.4 190,141.8" fill="#1b2030"/>
         </g>
-        <!-- dipole field lines: out of +, into − -->
-        <g fill="none" stroke="#ff5b4f" stroke-width="2.2" opacity="0.95">
-          <path d="M96,96 C96,40 184,40 184,96"/>
-          <path d="M92,104 C70,30 210,30 188,104"/>
-          <path d="M90,112 C50,20 230,20 190,112"/>
-          <path d="M96,96 C96,150 184,150 184,96"/>
-          <path d="M92,104 C70,170 210,170 188,104"/>
+
+        <!-- dipole field lines: leave the + (left) and arrive into the − (right) -->
+        <g fill="none" stroke="url(#field)" stroke-width="2.2" opacity="0.95">
+          <path d="M90,84 C110,18 170,18 190,84"/>
+          <path d="M90,84 C112,48 168,48 190,84"/>
+          <path d="M90,84 C128,78 152,78 190,84"/>
+          <path d="M90,84 C112,112 168,112 190,84"/>
+          <!-- wide outer loops -->
+          <path d="M90,84 C40,40 60,8 140,8 C220,8 240,40 190,84"/>
         </g>
-        <!-- arrowheads along the lines (field direction) -->
+
+        <!-- arrowheads at line midpoints, pointing along the field (+ → −, i.e. rightward) -->
         <g fill="#ffd34f">
-          <polygon points="140,33 134,41 146,41"/>
-          <polygon points="140,167 134,159 146,159" opacity="0.85"/>
+          <polygon points="138,30 138,40 147,35"/>
+          <polygon points="138,53 138,63 147,58"/>
+          <polygon points="138,79 138,89 147,84"/>
+          <polygon points="138,99 138,109 147,104"/>
         </g>
-        <!-- charges -->
-        <circle cx="96" cy="100" r="13" fill="#ff3b30"/>
-        <circle cx="184" cy="100" r="13" fill="#3b82f6"/>
+
+        <!-- charges, sitting just above their markers -->
+        <circle cx="90" cy="84" r="13" fill="#ff3b30"/>
+        <circle cx="190" cy="84" r="13" fill="#3b82f6"/>
         <g stroke="#fff" stroke-width="3" stroke-linecap="round">
-          <line x1="88" y1="100" x2="104" y2="100"/>
-          <line x1="96" y1="92" x2="96" y2="108"/>
-          <line x1="176" y1="100" x2="192" y2="100"/>
+          <line x1="82" y1="84" x2="98"  y2="84"/>
+          <line x1="90" y1="76" x2="90"  y2="92"/>
+          <line x1="182" y1="84" x2="198" y2="84"/>
         </g>
       </svg>
       <div class="cap">What you'll see — a 3D dipole field from + to &minus;</div>
     </div>
 
-    <p style="font-size:12px;color:#6f7c95">Requires camera access. Best in Safari over HTTPS.</p>
+    <p style="font-size:12px;color:#6f7c95">Requires camera access. Best on iPad.</p>
     <button id="startBtn">Start camera (scan)</button>
 
     <div class="dl-or">First, print the charge patterns</div>
