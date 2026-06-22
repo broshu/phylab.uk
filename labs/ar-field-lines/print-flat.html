@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>平面方案 · Flat Charge Markers</title>
+  <title>Flat Charge Markers</title>
   <style>
     :root { --ink:#1b2030; --pos:#ff3b30; --neg:#3b82f6; }
     * { box-sizing: border-box; }
     body {
-      margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+      margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
       color: var(--ink); background: #eef1f6; -webkit-print-color-adjust: exact; print-color-adjust: exact;
     }
     .sheet { width: 210mm; min-height: 297mm; margin: 0 auto; background:#fff; padding: 15mm; }
@@ -55,22 +55,21 @@
 </head>
 <body>
   <div class="noprint">
-    <button onclick="window.print()">打印平面方案 · Print flat markers</button>
-    <a href="print-cube.html">需要立体方案？ Cube version →</a>
+    <button onclick="window.print()">Print flat markers</button>
+    <a href="print-cube.html">Cube version →</a>
   </div>
 
   <div class="sheet">
-    <span class="scheme-tag">平面方案 · FLAT SCHEME</span>
-    <h1>AR 电场线 — 平面电荷标记</h1>
+    <span class="scheme-tag">FLAT SCHEME</span>
+    <h1>AR Electric Field — Flat charge markers</h1>
     <p class="sub">
-      在普通白纸上打印，剪下两个标记，<b>平放在桌面上</b>即可使用。保留每个黑色方块周围的白边（安静区），不要裁太紧——摄像头靠白边锁定标记。<br>
-      Print on plain white paper, cut the two markers apart, and lay them flat on a desk. Keep the white border around each square.
+      Print on plain white paper, cut the two markers apart, and <b>lay them flat on a desk</b>. Keep the white border (quiet zone) around each black square — don't trim too tight, as the camera locks onto the marker using that border.
     </p>
 
     <!-- both-scheme simulation panel -->
     <div class="sims">
       <div class="sim active">
-        <h3>平面方案 <small>Flat — 桌面平放</small></h3>
+        <h3>Flat <small>— laid flat on a desk</small></h3>
         <!-- flat sim: two flat tiles on a desk with field lines -->
         <svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg">
           <!-- desk -->
@@ -100,10 +99,10 @@
           <text x="99" y="124" font-size="9" fill="#fff" font-weight="700">+</text>
           <text x="211.5" y="123.5" font-size="11" fill="#fff" font-weight="700">−</text>
         </svg>
-        <p>标记平放，电场线从屏幕里"长"出来。从上方或斜上方观看效果最好。</p>
+        <p>With the markers flat, the field lines "grow" up out of the desk. Best viewed from above or at an angle.</p>
       </div>
       <div class="sim">
-        <h3>立体方案 <small>Cube — 贴在立方体</small></h3>
+        <h3>Cube <small>— stuck on a box</small></h3>
         <!-- cube sim: a cube with field lines wrapping all around -->
         <svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg">
           <!-- field lines all around (red, radiating in 3D) -->
@@ -127,29 +126,29 @@
           <circle cx="160" cy="86" r="6" fill="#ff3b30"/>
           <text x="157" y="90" font-size="9" fill="#fff" font-weight="700">+</text>
         </svg>
-        <p>5 个面都贴同一个标记，可以<b>绕着走一圈</b>从任意角度看立体电场。</p>
+        <p>With markers on 5 faces you can <b>walk all the way around</b> and see the 3D field from any angle.</p>
       </div>
     </div>
 
     <div class="cards">
       <div class="card">
         <div class="marker-box"><img src="markers/0.png" alt="positive charge marker" /></div>
-        <div class="tag pos"><span class="sym">+</span>正电荷 Positive</div>
+        <div class="tag pos"><span class="sym">+</span>Positive</div>
         <div class="id">barcode value 0</div>
       </div>
       <div class="card">
         <div class="marker-box"><img src="markers/1.png" alt="negative charge marker" /></div>
-        <div class="tag neg"><span class="sym">&minus;</span>负电荷 Negative</div>
+        <div class="tag neg"><span class="sym">&minus;</span>Negative</div>
         <div class="id">barcode value 1</div>
       </div>
     </div>
 
     <div class="tips">
-      <b>使用方法 · How to use</b><br>
-      1. 在 iPad 的 Safari 中打开 AR 应用（需 HTTPS），点击 <b>Start camera</b>。<br>
-      2. 对准 <b>+</b> 标记 → 电场线向外发散；对准 <b>&minus;</b> 标记 → 电场线向内汇聚。<br>
-      3. 把 <b>两个标记</b>同时放进画面（相隔几厘米）→ 显示从 + 指向 &minus; 的<b>偶极子</b>电场。<br>
-      4. 光线均匀、表面平整不反光时追踪最稳定。
+      <b>How to use</b><br>
+      1. Open the AR app in Safari on the iPad (HTTPS required) and tap <b>Start camera</b>.<br>
+      2. Aim at the <b>+</b> marker → field lines radiate outward; aim at the <b>&minus;</b> marker → field lines converge inward.<br>
+      3. Put <b>both markers</b> in view together (a few cm apart) → a <b>dipole</b> field pointing from + to &minus;.<br>
+      4. Tracking is most stable with even lighting and a flat, non-reflective surface.
     </div>
   </div>
 </body>

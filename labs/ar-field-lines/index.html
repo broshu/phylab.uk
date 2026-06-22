@@ -77,6 +77,16 @@
     #downloads .ic { font-size: 22px; line-height: 1; }
     .dl-or { margin-top: 24px; color:#6f7c95; font-size: 12px; letter-spacing:.04em; text-transform:uppercase; }
     .hidden { display:none !important; }
+    /* Result preview — roughly what you'll see on screen */
+    #preview {
+      margin: 18px auto 4px; width: 280px; max-width: 86%;
+      border-radius: 16px; overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.14);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+      background: #11151f;
+    }
+    #preview svg { display:block; width: 100%; height: auto; }
+    #preview .cap { font-size: 11px; color:#8a93a6; padding: 7px 10px 9px; text-align:center; letter-spacing:.03em; }
   </style>
 </head>
 <body>
@@ -85,6 +95,51 @@
   <div id="gate">
     <h1>AR Electric Field Lines <span class="beta">Beta</span></h1>
     <p>Point your iPad camera at the printed <b>+</b> or <b>&minus;</b> charge marker to see its 3D electric field. Show <b>both</b> markers together to see a dipole field.</p>
+
+    <!-- Result preview: roughly what the AR view looks like (dipole) -->
+    <div id="preview" aria-label="Preview of the AR result">
+      <svg viewBox="0 0 280 168" xmlns="http://www.w3.org/2000/svg" role="img">
+        <!-- camera / desk backdrop -->
+        <defs>
+          <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#1a2030"/>
+            <stop offset="1" stop-color="#0d1119"/>
+          </linearGradient>
+        </defs>
+        <rect width="280" height="168" fill="url(#bg)"/>
+        <!-- desk surface -->
+        <polygon points="0,138 280,138 280,168 0,168" fill="#161b27"/>
+        <ellipse cx="140" cy="138" rx="120" ry="14" fill="#0a0d14" opacity="0.55"/>
+        <!-- printed markers on the desk -->
+        <g opacity="0.9">
+          <rect x="78" y="128" width="20" height="14" rx="2" fill="#f4f1e8" transform="skewX(-20)" />
+          <rect x="190" y="128" width="20" height="14" rx="2" fill="#f4f1e8" transform="skewX(-20)" />
+        </g>
+        <!-- dipole field lines: out of +, into − -->
+        <g fill="none" stroke="#ff5b4f" stroke-width="2.2" opacity="0.95">
+          <path d="M96,96 C96,40 184,40 184,96"/>
+          <path d="M92,104 C70,30 210,30 188,104"/>
+          <path d="M90,112 C50,20 230,20 190,112"/>
+          <path d="M96,96 C96,150 184,150 184,96"/>
+          <path d="M92,104 C70,170 210,170 188,104"/>
+        </g>
+        <!-- arrowheads along the lines (field direction) -->
+        <g fill="#ffd34f">
+          <polygon points="140,33 134,41 146,41"/>
+          <polygon points="140,167 134,159 146,159" opacity="0.85"/>
+        </g>
+        <!-- charges -->
+        <circle cx="96" cy="100" r="13" fill="#ff3b30"/>
+        <circle cx="184" cy="100" r="13" fill="#3b82f6"/>
+        <g stroke="#fff" stroke-width="3" stroke-linecap="round">
+          <line x1="88" y1="100" x2="104" y2="100"/>
+          <line x1="96" y1="92" x2="96" y2="108"/>
+          <line x1="176" y1="100" x2="192" y2="100"/>
+        </g>
+      </svg>
+      <div class="cap">What you'll see — a 3D dipole field from + to &minus;</div>
+    </div>
+
     <p style="font-size:12px;color:#6f7c95">Requires camera access. Best in Safari over HTTPS.</p>
     <button id="startBtn">Start camera (scan)</button>
 
@@ -92,12 +147,12 @@
     <div id="downloads">
       <a href="print-flat.html" target="_blank" rel="noopener">
         <span class="ic">▢</span>
-        <span class="big">平面方案 · Flat</span>
+        <span class="big">Flat</span>
         <span class="small">Print + / − tiles, lay them flat on a desk</span>
       </a>
       <a href="print-cube.html" target="_blank" rel="noopener">
         <span class="ic">⬢</span>
-        <span class="big">立体方案 · Cube</span>
+        <span class="big">Cube</span>
         <span class="small">5 different markers on 5 faces of a small box</span>
       </a>
     </div>

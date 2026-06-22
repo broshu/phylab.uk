@@ -10,8 +10,11 @@ const WORLD = { min: -10, max: 10 };
 const WORLD_SIZE = WORLD.max - WORLD.min;
 const K = 4.0;             // Coulomb constant (scaled)
 const SOFT = 0.35;         // softening radius (avoid singularity)
-const V_CLAMP = 8;         // clamp for color/height
-const HEIGHT_SCALE = 0.35; // 3D height scale
+const SURFACE_SOFT = 0.16; // smaller visual softening keeps charge locations pointy
+const COLOR_V_CLAMP = 8;   // clamp for potential colors
+const HEIGHT_V_CLAMP = 64; // wider clamp so larger charges make higher peaks
+const HEIGHT_SCALE = 0.09; // 3D height scale
+const BASE_PLANE_Y = -HEIGHT_V_CLAMP * HEIGHT_SCALE - 0.45;
 const GRAVITY = 1.0;
 const DT = 1/120;
 const SUBSTEPS = 2;
@@ -40,14 +43,20 @@ const state = {
 };
 
 // ---------------------- Physics ----------------------
-function potential(x, y) {
+function potentialWithSoftening(x, y, soft) {
   let V = 0;
   for (const c of state.charges) {
     const dx = x - c.x, dy = y - c.y;
-    const r = Math.sqrt(dx*dx + dy*dy + SOFT*SOFT);
+    const r = Math.sqrt(dx*dx + dy*dy + soft*soft);
     V += K * c.q / r;
   }
   return V;
+}
+function potential(x, y) {
+  return potentialWithSoftening(x, y, SOFT);
+}
+function surfacePotential(x, y) {
+  return potentialWithSoftening(x, y, SURFACE_SOFT);
 }
 function field(x, y) {
   let Ex = 0, Ey = 0;
@@ -61,7 +70,10 @@ function field(x, y) {
   }
   return [Ex, Ey];
 }
-function clampV(v) { return Math.max(-V_CLAMP, Math.min(V_CLAMP, v)); }
+function clampTo(v, limit) { return Math.max(-limit, Math.min(limit, v)); }
+function clampV(v) { return clampTo(v, COLOR_V_CLAMP); }
+function clampHeightV(v) { return clampTo(v, HEIGHT_V_CLAMP); }
+function surfaceHeight(x, y) { return clampHeightV(surfacePotential(x, y)) * HEIGHT_SCALE; }
 
 // ---------------------- Explosions ----------------------
 function spawnExplosion(x, y) {

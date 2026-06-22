@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>立体方案 · Cube Charge Markers</title>
+  <title>Cube Charge Markers</title>
   <style>
     :root { --ink:#1b2030; --pos:#ff3b30; --neg:#3b82f6; }
     * { box-sizing: border-box; }
     body {
-      margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+      margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
       color: var(--ink); background: #eef1f6; -webkit-print-color-adjust: exact; print-color-adjust: exact;
     }
     .sheet { width: 210mm; min-height: 297mm; margin: 0 auto; background:#fff; padding: 14mm; }
@@ -56,24 +56,23 @@
 </head>
 <body>
   <div class="noprint">
-    <button onclick="window.print()">打印立体方案 · Print cube markers</button>
-    <a href="print-cube-net.html">折纸版（自带展开图）→</a>
-    <a href="print-flat.html">需要平面方案？ Flat version →</a>
+    <button onclick="window.print()">Print cube markers</button>
+    <a href="print-cube-net.html">Fold-up net version →</a>
+    <a href="print-flat.html">Flat version →</a>
   </div>
 
   <div class="sheet">
-    <span class="scheme-tag">立体方案 · CUBE SCHEME</span>
-    <h1>AR 电场线 — 立体电荷（贴方块）</h1>
+    <span class="scheme-tag">CUBE SCHEME</span>
+    <h1>AR Electric Field — Cube charge (stuck on a box)</h1>
     <p class="sub">
-      打印下方标记并剪下，把<b>5 个不同的标记贴在一个小立方体（边长约 5 cm，约为标记黑块的 2 倍）的 5 个面上</b>：顶面 + 四个侧面。底面贴着桌子，不用贴。
-      每个面用不同的码，App 才能分辨是哪个面，从而把它们<b>合成同一个方块</b>，把电荷放在方块<b>中心</b>——这样绕着走一圈，电场都稳定不跳。<br>
-      Stick <b>5 different</b> markers on 5 faces of a small box (edge ≈ 2× the marker, ~5 cm; top + 4 sides; bottom rests on the table). Distinct faces let the app fuse them into one cube and place the charge at its centre.
+      Print and cut out the markers below, then stick <b>5 different markers on the 5 faces of a small box</b> (edge ≈ 2× the marker's black square, ~5 cm): the top + 4 sides. The bottom rests on the table and is left blank.
+      Distinct codes let the app tell the faces apart, <b>fuse them into one cube</b>, and place the charge at the cube's <b>centre</b> — so the field stays stable, with no jumps, as you walk around it.
     </p>
 
     <!-- placement diagram + simulation -->
     <div class="panel">
       <div class="box active">
-        <h3>贴图方式 <small>Where to stick — 5 faces</small></h3>
+        <h3>Where to stick <small>— 5 faces</small></h3>
         <svg viewBox="0 0 320 190" xmlns="http://www.w3.org/2000/svg">
           <!-- table -->
           <polygon points="40,170 280,170 250,140 70,140" fill="#eef1f6" stroke="#d3d9e4"/>
@@ -98,19 +97,19 @@
           <!-- labels with leader lines -->
           <g font-size="10" fill="#42495a">
             <line x1="178" y1="44" x2="206" y2="30" stroke="#aab2c2"/>
-            <text x="208" y="28">顶面 Top</text>
+            <text x="208" y="28">Top</text>
             <line x1="120" y1="110" x2="44" y2="118" stroke="#aab2c2"/>
-            <text x="6" y="122">侧面 ×2</text>
+            <text x="6" y="122">Side ×2</text>
             <line x1="200" y1="110" x2="276" y2="118" stroke="#aab2c2"/>
-            <text x="280" y="122">侧面 ×2</text>
+            <text x="280" y="122">Side ×2</text>
             <line x1="160" y1="150" x2="200" y2="166" stroke="#aab2c2"/>
-            <text x="204" y="170">底面留空 (on table)</text>
+            <text x="204" y="170">Bottom blank (on table)</text>
           </g>
         </svg>
-        <p>5 面各贴<b>不同</b>标记（顶 1 + 侧 4），底面不贴。不同的码让 App 算出方块中心。</p>
+        <p>Stick a <b>different</b> marker on each of the 5 faces (1 top + 4 sides); leave the bottom blank. Distinct codes let the app find the cube's centre.</p>
       </div>
       <div class="box">
-        <h3>立体效果 <small>Cube — 360° 观看</small></h3>
+        <h3>3D result <small>— 360° viewing</small></h3>
         <svg viewBox="0 0 320 190" xmlns="http://www.w3.org/2000/svg">
           <!-- field lines wrapping around in 3D -->
           <g fill="none" stroke="#ff3b30" stroke-width="2" opacity="0.9">
@@ -134,43 +133,43 @@
           <g stroke="#94a0b6" stroke-width="1" fill="none" stroke-dasharray="3 3">
             <path d="M44,150 A130,80 0 0 1 276,150"/>
           </g>
-          <text x="120" y="186" font-size="10" fill="#7c879c">绕一圈都能看到 · view from any side</text>
+          <text x="120" y="186" font-size="10" fill="#7c879c">view from any side</text>
         </svg>
-        <p>两个方块（+ 和 −）一起放，可在桌面上呈现立体的偶极子电场。</p>
+        <p>Place both cubes (+ and −) together on the desk to show a 3D dipole field.</p>
       </div>
     </div>
 
-    <h2>剪下并贴到方块上 · Cut out &amp; stick on the box</h2>
+    <h2>Cut out &amp; stick on the box</h2>
 
     <div class="group pos">
-      <div class="group-title pos"><span class="sym">+</span>正电荷立方体 — 5 个面，<b>各不相同</b>（value 2–6）</div>
+      <div class="group-title pos"><span class="sym">+</span>Positive cube — 5 faces, <b>all different</b> (value 2–6)</div>
       <div class="tiles">
-        <div class="tile"><span class="lab">+ 顶 · v2</span><img src="markers/2.png" alt="+ top"></div>
-        <div class="tile"><span class="lab">+ 侧 · v3</span><img src="markers/3.png" alt="+ side"></div>
-        <div class="tile"><span class="lab">+ 侧 · v4</span><img src="markers/4.png" alt="+ side"></div>
-        <div class="tile"><span class="lab">+ 侧 · v5</span><img src="markers/5.png" alt="+ side"></div>
-        <div class="tile"><span class="lab">+ 侧 · v6</span><img src="markers/6.png" alt="+ side"></div>
+        <div class="tile"><span class="lab">+ Top · v2</span><img src="markers/2.png" alt="+ top"></div>
+        <div class="tile"><span class="lab">+ Side · v3</span><img src="markers/3.png" alt="+ side"></div>
+        <div class="tile"><span class="lab">+ Side · v4</span><img src="markers/4.png" alt="+ side"></div>
+        <div class="tile"><span class="lab">+ Side · v5</span><img src="markers/5.png" alt="+ side"></div>
+        <div class="tile"><span class="lab">+ Side · v6</span><img src="markers/6.png" alt="+ side"></div>
       </div>
     </div>
 
     <div class="group neg">
-      <div class="group-title neg"><span class="sym">&minus;</span>负电荷立方体 — 5 个面，<b>各不相同</b>（value 7–11）</div>
+      <div class="group-title neg"><span class="sym">&minus;</span>Negative cube — 5 faces, <b>all different</b> (value 7–11)</div>
       <div class="tiles">
-        <div class="tile"><span class="lab">− 顶 · v7</span><img src="markers/7.png" alt="− top"></div>
-        <div class="tile"><span class="lab">− 侧 · v8</span><img src="markers/8.png" alt="− side"></div>
-        <div class="tile"><span class="lab">− 侧 · v9</span><img src="markers/9.png" alt="− side"></div>
-        <div class="tile"><span class="lab">− 侧 · v10</span><img src="markers/10.png" alt="− side"></div>
-        <div class="tile"><span class="lab">− 侧 · v11</span><img src="markers/11.png" alt="− side"></div>
+        <div class="tile"><span class="lab">− Top · v7</span><img src="markers/7.png" alt="− top"></div>
+        <div class="tile"><span class="lab">− Side · v8</span><img src="markers/8.png" alt="− side"></div>
+        <div class="tile"><span class="lab">− Side · v9</span><img src="markers/9.png" alt="− side"></div>
+        <div class="tile"><span class="lab">− Side · v10</span><img src="markers/10.png" alt="− side"></div>
+        <div class="tile"><span class="lab">− Side · v11</span><img src="markers/11.png" alt="− side"></div>
       </div>
     </div>
 
     <div class="tips">
-      <b>组装与使用 · Assemble &amp; use</b><br>
-      1. 找一个小立方体纸盒，<b>边长约为标记黑块的 2 倍（≈ 5 cm）</b>；把 5 张标记按上面的编号分别贴在顶面和四个侧面，保留每张四周的白边。盒子大小不同也行——只要在网址后加 <b>?cube=数值</b> 调整（默认 1.0 = 边长 2× 标记）。<br>
-      2. 在 iPad 的 Safari 中打开 AR 应用（需 HTTPS），点击 <b>Start camera</b> —— 扫描按钮和平面方案<b>共用一个</b>，无需切换。<br>
-      3. 把 <b>+</b> 方块放进画面看向外发散的电场；<b>−</b> 方块看向内汇聚；两个方块同时出现 → 立体偶极子电场。<br>
-      4. 5 个面各不相同，App 会把它们合成同一个方块、把电荷放在<b>方块中心</b>；于是你举着 iPad <b>绕方块走一圈</b>，电场稳定不跳。<br>
-      5. 光线均匀、避免反光；方块离镜头约 20–50 cm 时追踪最稳。
+      <b>Assemble &amp; use</b><br>
+      1. Find a small cubic box with an <b>edge about 2× the marker's black square (≈ 5 cm)</b>; stick the 5 markers on the top and four sides per the labels above, keeping the white border around each. A different box size is fine — just add <b>?cube=value</b> to the URL to adjust (default 1.0 = edge 2× marker).<br>
+      2. Open the AR app in Safari on the iPad (HTTPS required) and tap <b>Start camera</b> — the scan button is <b>shared</b> with the flat scheme, so there's nothing to switch.<br>
+      3. Put the <b>+</b> cube in view for an outward field; the <b>−</b> cube for an inward field; both together → a 3D dipole field.<br>
+      4. The 5 distinct faces let the app fuse them into one cube and place the charge at the <b>cube's centre</b>, so you can hold the iPad and <b>walk all the way around</b> with a stable, jump-free field.<br>
+      5. Use even lighting and avoid glare; tracking is most stable with the cube about 20–50 cm from the camera.
     </div>
   </div>
 </body>

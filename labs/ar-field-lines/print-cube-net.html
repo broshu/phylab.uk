@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>折纸立方体 · Fold-up Cube Net</title>
+  <title>Fold-up Cube Net</title>
   <style>
     :root { --ink:#1b2030; --pos:#ff3b30; --neg:#3b82f6; --cut:#1b2030; --fold:#9aa6bd; }
     * { box-sizing: border-box; }
     body {
-      margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+      margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
       color: var(--ink); background: #eef1f6; -webkit-print-color-adjust: exact; print-color-adjust: exact;
     }
     .sheet { width: 210mm; min-height: 297mm; margin: 0 auto; background:#fff; padding: 12mm; }
@@ -43,32 +43,31 @@
 </head>
 <body>
   <div class="noprint">
-    <button id="dlpdf">⬇︎ 下载 PDF（A4 · 正负两页）· Download A4 PDF</button>
-    <button onclick="window.print()">打印折纸图纸 · Print cube nets</button>
-    <a href="print-cube.html">← 贴方块版 Sticker version</a>
-    <a href="print-flat.html">平面方案 Flat →</a>
+    <button id="dlpdf">⬇︎ Download A4 PDF (2 pages: + and −)</button>
+    <button onclick="window.print()">Print cube nets</button>
+    <a href="print-cube.html">← Sticker version</a>
+    <a href="print-flat.html">Flat version →</a>
   </div>
 
   <div class="sheet">
-    <span class="scheme-tag">立体方案 · 折纸版 FOLD-UP NET</span>
-    <h1>AR 电场线 — 折纸立方体（正电荷 +）</h1>
+    <span class="scheme-tag">FOLD-UP NET</span>
+    <h1>AR Electric Field — Fold-up cube (positive +)</h1>
     <p class="sub">
-      建议用<b>卡纸（160–250 gsm）</b>打印。先沿<b>虚线折痕压线</b>，再沿<b>实线剪下</b>，折成立方体，用透明胶带粘合接缝。
-      每个面是<b>不同的码</b>（已按面排好），别贴错位置，也别让胶带或折边盖住黑色方块。底面留空，朝下放在桌面。
-      这个图纸的标记尺寸已配好（边长 ≈ 2× 标记），App 默认参数即可，无需调整。<br>
-      Print on cardstock. Score the dashed lines, cut the outline, fold into a cube, tape the seams. Each face is a <b>different</b> code (pre-arranged); the blank face is the bottom.
+      Print on <b>cardstock (160–250 gsm)</b>. First <b>score the dashed fold lines</b>, then <b>cut along the solid outline</b>, fold into a cube, and tape the seams with clear tape.
+      Each face is a <b>different</b> code (already arranged by face) — don't mix them up, and don't let tape or a fold cover a black square. Leave the bottom face blank and place it face-down on the desk.
+      The marker size is pre-set for this net (edge ≈ 2× marker), so the app's default settings work with no adjustment.
     </p>
 
     <div class="legend">
-      <span class="k"><svg width="34" height="10"><line x1="2" y1="5" x2="32" y2="5" stroke="#1b2030" stroke-width="2"/></svg> 实线 = 剪 Cut</span>
-      <span class="k"><svg width="34" height="10"><line x1="2" y1="5" x2="32" y2="5" stroke="#9aa6bd" stroke-width="2" stroke-dasharray="5 4"/></svg> 虚线 = 折 Fold</span>
-      <span class="k"><svg width="16" height="10"><rect x="1" y="1" width="14" height="8" fill="#e9eef8" stroke="#9aa6bd" stroke-width="0.6"/></svg> 灰块 = 粘贴区涂胶 Glue tab</span>
-      <span class="k">5 面各不相同 · 底面留空</span>
+      <span class="k"><svg width="34" height="10"><line x1="2" y1="5" x2="32" y2="5" stroke="#1b2030" stroke-width="2"/></svg> Solid = Cut</span>
+      <span class="k"><svg width="34" height="10"><line x1="2" y1="5" x2="32" y2="5" stroke="#9aa6bd" stroke-width="2" stroke-dasharray="5 4"/></svg> Dashed = Fold</span>
+      <span class="k"><svg width="16" height="10"><rect x="1" y="1" width="14" height="8" fill="#e9eef8" stroke="#9aa6bd" stroke-width="0.6"/></svg> Grey = Glue tab</span>
+      <span class="k">5 faces all different · bottom blank</span>
     </div>
 
     <!-- ============ + CUBE NET ============ -->
     <div class="netwrap">
-      <div class="netcap pos"><span class="sym">+</span>正电荷立方体 Positive cube</div>
+      <div class="netcap pos"><span class="sym">+</span>Positive cube</div>
       <svg class="net" viewBox="0 0 155 200" xmlns="http://www.w3.org/2000/svg">
         <g transform="translate(10,10)">
           <!-- face fills -->
@@ -90,9 +89,9 @@
             <image href="markers/6.png" x="56.25" y="146.25" width="22.5" height="22.5"/><!-- Back v6 -->
           </g>
           <!-- bottom blank label -->
-          <text x="67.5" y="114" text-anchor="middle" font-size="6" fill="#aab2c2">底面 bottom</text>
-          <text x="67.5" y="121" text-anchor="middle" font-size="5" fill="#c4ccda">（不印·朝下）</text>
-          <!-- glue tabs (粘贴区): one per open cube edge -->
+          <text x="67.5" y="114" text-anchor="middle" font-size="6" fill="#aab2c2">bottom</text>
+          <text x="67.5" y="121" text-anchor="middle" font-size="5" fill="#c4ccda">(blank · face down)</text>
+          <!-- glue tabs: one per open cube edge -->
           <g fill="#e9eef8">
             <polygon points="45,0 48,-6 87,-6 90,0"/>       <!-- Top · top -->
             <polygon points="90,0 96,3 96,42 90,45"/>        <!-- Top · right -->
@@ -102,7 +101,7 @@
             <polygon points="45,180 39,177 39,138 45,135"/>  <!-- Back · left -->
             <polygon points="45,90 42,96 3,96 0,90"/>        <!-- Left · bottom -->
           </g>
-          <text x="67.5" y="-2" text-anchor="middle" font-size="4.5" fill="#8a93a6">粘贴区涂胶 glue tabs</text>
+          <text x="67.5" y="-2" text-anchor="middle" font-size="4.5" fill="#8a93a6">glue tabs</text>
           <!-- fold lines (dashed): 5 face folds + 7 tab bases -->
           <g stroke="#9aa6bd" stroke-width="0.5" stroke-dasharray="3 2.4" fill="none">
             <line x1="45" y1="45"  x2="90" y2="45"/>
@@ -126,31 +125,31 @@
     </div>
 
     <div class="tips">
-      <b>折法 · How to fold</b><br>
-      1. 卡纸打印 → 沿所有<b>虚线</b>用笔尖/刀背压痕 → 沿外侧<b>实线</b>剪下整个十字。<br>
-      2. 以中间的"前面"为底，把上、左、右、后、顶各面立起折成立方体；接缝用<b>透明胶带</b>粘牢。<br>
-      3. 留空的那个面作底面朝下；其余 5 面各贴<b>不同</b>的 + 标记（v2–v6），App 据此算出方块中心、稳定显示。<br>
-      4. 想更结实，可在里面塞一个同尺寸的小方块或多层卡纸。
+      <b>How to fold</b><br>
+      1. Print on cardstock → score along all the <b>dashed lines</b> with a pen tip or the back of a knife → cut out the whole cross along the outer <b>solid line</b>.<br>
+      2. Using the centre "front" as the base, fold the top, left, right, back, and top faces up into a cube; tape the seams firmly with <b>clear tape</b>.<br>
+      3. The blank face goes on the bottom, face down; the other 5 faces carry <b>different</b> + markers (v2–v6), which the app uses to find the cube's centre and display stably.<br>
+      4. For extra rigidity, slip a same-size block or some layered cardstock inside.
     </div>
   </div>
 
   <!-- ============ - CUBE NET (page 2) ============ -->
   <div class="sheet page2">
-    <span class="scheme-tag">立体方案 · 折纸版 FOLD-UP NET</span>
-    <h1>AR 电场线 — 折纸立方体（负电荷 −）</h1>
+    <span class="scheme-tag">FOLD-UP NET</span>
+    <h1>AR Electric Field — Fold-up cube (negative −)</h1>
     <p class="sub">
-      与正电荷做法相同，只是这 5 个面改用<b>另一组码（v7–v11）</b>。做一个 + 立方体和一个 − 立方体，两个同时放进画面即可看到立体偶极子电场。
+      Same as the positive cube, except these 5 faces use <b>a different set of codes (v7–v11)</b>. Make one + cube and one − cube, then put both in view together to see a 3D dipole field.
     </p>
 
     <div class="legend">
-      <span class="k"><svg width="34" height="10"><line x1="2" y1="5" x2="32" y2="5" stroke="#1b2030" stroke-width="2"/></svg> 实线 = 剪 Cut</span>
-      <span class="k"><svg width="34" height="10"><line x1="2" y1="5" x2="32" y2="5" stroke="#9aa6bd" stroke-width="2" stroke-dasharray="5 4"/></svg> 虚线 = 折 Fold</span>
-      <span class="k"><svg width="16" height="10"><rect x="1" y="1" width="14" height="8" fill="#e9eef8" stroke="#9aa6bd" stroke-width="0.6"/></svg> 灰块 = 粘贴区涂胶 Glue tab</span>
-      <span class="k">5 面各不相同 · 底面留空</span>
+      <span class="k"><svg width="34" height="10"><line x1="2" y1="5" x2="32" y2="5" stroke="#1b2030" stroke-width="2"/></svg> Solid = Cut</span>
+      <span class="k"><svg width="34" height="10"><line x1="2" y1="5" x2="32" y2="5" stroke="#9aa6bd" stroke-width="2" stroke-dasharray="5 4"/></svg> Dashed = Fold</span>
+      <span class="k"><svg width="16" height="10"><rect x="1" y="1" width="14" height="8" fill="#e9eef8" stroke="#9aa6bd" stroke-width="0.6"/></svg> Grey = Glue tab</span>
+      <span class="k">5 faces all different · bottom blank</span>
     </div>
 
     <div class="netwrap">
-      <div class="netcap neg"><span class="sym">&minus;</span>负电荷立方体 Negative cube</div>
+      <div class="netcap neg"><span class="sym">&minus;</span>Negative cube</div>
       <svg class="net" viewBox="0 0 155 200" xmlns="http://www.w3.org/2000/svg">
         <g transform="translate(10,10)">
           <g fill="#ffffff">
@@ -169,9 +168,9 @@
             <image href="markers/10.png" x="101.25" y="56.25" width="22.5" height="22.5"/><!-- Right v10 -->
             <image href="markers/11.png" x="56.25" y="146.25" width="22.5" height="22.5"/><!-- Back v11 -->
           </g>
-          <text x="67.5" y="114" text-anchor="middle" font-size="6" fill="#aab2c2">底面 bottom</text>
-          <text x="67.5" y="121" text-anchor="middle" font-size="5" fill="#c4ccda">（不印·朝下）</text>
-          <!-- glue tabs (粘贴区): one per open cube edge -->
+          <text x="67.5" y="114" text-anchor="middle" font-size="6" fill="#aab2c2">bottom</text>
+          <text x="67.5" y="121" text-anchor="middle" font-size="5" fill="#c4ccda">(blank · face down)</text>
+          <!-- glue tabs: one per open cube edge -->
           <g fill="#e9eef8">
             <polygon points="45,0 48,-6 87,-6 90,0"/>
             <polygon points="90,0 96,3 96,42 90,45"/>
@@ -181,7 +180,7 @@
             <polygon points="45,180 39,177 39,138 45,135"/>
             <polygon points="45,90 42,96 3,96 0,90"/>
           </g>
-          <text x="67.5" y="-2" text-anchor="middle" font-size="4.5" fill="#8a93a6">粘贴区涂胶 glue tabs</text>
+          <text x="67.5" y="-2" text-anchor="middle" font-size="4.5" fill="#8a93a6">glue tabs</text>
           <!-- fold lines (dashed): 5 face folds + 7 tab bases -->
           <g stroke="#9aa6bd" stroke-width="0.5" stroke-dasharray="3 2.4" fill="none">
             <line x1="45" y1="45"  x2="90" y2="45"/>
@@ -204,8 +203,8 @@
     </div>
 
     <div class="tips">
-      <b>提示 · Tips</b><br>
-      光线均匀、避免反光；立方体离 iPad 镜头约 20–50 cm 时追踪最稳。标记越大，识别距离越远。
+      <b>Tips</b><br>
+      Use even lighting and avoid glare; tracking is most stable with the cube about 20–50 cm from the iPad camera. Larger markers are recognised from farther away.
     </div>
   </div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -296,14 +295,14 @@ function NETPDF_build(jsPDF, M) {
     if (!btn) return;
     btn.addEventListener('click', function () {
       var old = btn.textContent;
-      btn.disabled = true; btn.textContent = '生成中… Generating…';
+      btn.disabled = true; btn.textContent = 'Generating…';
       try {
         var JS = (window.jspdf && window.jspdf.jsPDF);
         if (!JS) throw new Error('PDF library not loaded');
         var doc = NETPDF_build(JS, NETPDF_MARKERS);
         doc.save('AR-charge-cubes-A4.pdf');
       } catch (e) {
-        alert('生成失败 / Failed: ' + e.message);
+        alert('Failed: ' + e.message);
         console.error(e);
       }
       btn.disabled = false; btn.textContent = old;
