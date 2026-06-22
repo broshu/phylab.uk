@@ -47,6 +47,10 @@
       body { background:#fff; }
       .sheet { box-shadow:none; margin:0; padding:12mm; }
       .noprint { display:none; }
+      /* On the full-sheet print, keep only the patterns — drop the illustration, intro and tips. */
+      body:not(.print-markers-only) .sims,
+      body:not(.print-markers-only) .tips,
+      body:not(.print-markers-only) .sub { display:none !important; }
     }
     .noprint { text-align:center; padding: 12px; }
     .noprint button { font-size:15px; padding:10px 22px; border:none; border-radius:10px;

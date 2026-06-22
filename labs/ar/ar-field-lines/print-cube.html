@@ -48,6 +48,8 @@
       .sheet { box-shadow:none; margin:0; padding:11mm; }
       .noprint { display:none; }
       .group { break-inside: avoid; }
+      /* Keep only the patterns on print — drop the illustrations, intro and tips. */
+      .panel, .tips, .sub, h2 { display:none !important; }
     }
     .noprint { text-align:center; padding: 12px; }
     .noprint button { font-size:15px; padding:10px 22px; border:none; border-radius:10px;
