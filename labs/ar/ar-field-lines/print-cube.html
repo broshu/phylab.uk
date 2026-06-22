@@ -52,18 +52,18 @@
     .noprint button { font-size:15px; padding:10px 22px; border:none; border-radius:10px;
       background:#d24a2a; color:#fff; font-weight:700; cursor:pointer; }
     .noprint a { display:inline-block; margin-left:10px; color:#2563eb; font-size:13px; }
+    /* Primary "use the AR" call-to-action */
+    .noprint a.btn-ar {
+      color:#fff; font-size:15px; font-weight:700; margin-left:0;
+      padding:10px 22px; border-radius:10px; text-decoration:none;
+      background: linear-gradient(135deg,#ff5b4f,#3b82f6);
+      box-shadow: 0 4px 14px rgba(59,130,246,.28);
+    }
+    .noprint a.btn-ar:hover { filter:brightness(1.05); }
   </style>
 </head>
 <body>
-  <div class="noprint">
-    <button onclick="window.print()">Print cube markers</button>
-    <a href="index.html">Open AR app →</a>
-    <a href="print-cube-net.html">Fold-up net version →</a>
-    <a href="print-flat.html">Flat version →</a>
-  </div>
-
   <div class="sheet">
-    <span class="scheme-tag">CUBE SCHEME</span>
     <h1>AR Electric Field — Cube charge (stuck on a box)</h1>
     <p class="sub">
       Print and cut out the markers below, then stick <b>5 different markers on the 5 faces of a small box</b> (edge ≈ 2× the marker's black square, ~5 cm): the top + 4 sides. The bottom rests on the table and is left blank.
@@ -111,36 +111,54 @@
       </div>
       <div class="box">
         <h3>3D result <small>— 360° viewing</small></h3>
-        <svg viewBox="0 0 320 190" xmlns="http://www.w3.org/2000/svg">
-          <!-- field lines wrapping around in 3D -->
-          <g fill="none" stroke="#ff3b30" stroke-width="2" opacity="0.9">
-            <path d="M160,95 C120,45 90,45 68,32"/>
-            <path d="M160,95 C200,45 232,46 254,34"/>
-            <path d="M160,95 C108,84 78,90 46,96"/>
-            <path d="M160,95 C212,86 248,92 280,100"/>
-            <path d="M160,95 C155,150 155,160 155,178"/>
-            <path d="M160,95 C130,120 110,130 92,150"/>
-            <path d="M160,95 C190,120 212,130 232,150"/>
+        <!-- matches the AR hub Cube card -->
+        <svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Cube scheme: two marker cubes on a desk">
+          <defs>
+            <linearGradient id="fieldC" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#d8453c"/><stop offset="0.5" stop-color="#9a6fb0"/><stop offset="1" stop-color="#3f7fd8"/>
+            </linearGradient>
+          </defs>
+          <rect width="320" height="200" fill="#faf8f1"/>
+          <polygon points="0,150 320,150 320,200 0,200" fill="#efeadd"/>
+          <line x1="0" y1="150" x2="320" y2="150" stroke="#d8d2c0" stroke-width="1"/>
+          <!-- field lines from + to − -->
+          <g fill="none" stroke="url(#fieldC)" stroke-width="2.4" opacity="0.95">
+            <path d="M95,128 C120,52 200,52 225,128"/>
+            <path d="M95,128 C130,86 190,86 225,128"/>
+            <path d="M95,128 C68,30 252,30 225,128"/>
           </g>
-          <!-- cube -->
-          <g stroke="#7c879c" stroke-width="1.3">
-            <polygon points="160,66 200,82 160,98 120,82" fill="#fde9e6"/>
-            <polygon points="120,82 160,98 160,138 120,122" fill="#fff"/>
-            <polygon points="200,82 160,98 160,138 200,122" fill="#f3f5f9"/>
+          <!-- two isometric cubes on the desk -->
+          <g stroke="#c4ccda" stroke-width="1.1">
+            <polygon points="95,120 119,132 95,144 71,132" fill="#ffffff"/>
+            <polygon points="71,132 95,144 95,168 71,156" fill="#f0eee6"/>
+            <polygon points="119,132 95,144 95,168 119,156" fill="#e7e3d6"/>
+            <polygon points="225,120 249,132 225,144 201,132" fill="#ffffff"/>
+            <polygon points="201,132 225,144 225,168 201,156" fill="#f0eee6"/>
+            <polygon points="249,132 225,144 225,168 249,156" fill="#e7e3d6"/>
           </g>
-          <circle cx="160" cy="86" r="7" fill="#ff3b30"/>
-          <text x="156.5" y="90" font-size="10" fill="#fff" font-weight="700">+</text>
-          <!-- viewer eye arc -->
-          <g stroke="#94a0b6" stroke-width="1" fill="none" stroke-dasharray="3 3">
-            <path d="M44,150 A130,80 0 0 1 276,150"/>
+          <!-- small markers on the top faces -->
+          <g fill="#1b2030">
+            <polygon points="88,126 95,123 102,126 95,129"/>
+            <polygon points="218,126 225,123 232,126 225,129"/>
           </g>
-          <text x="120" y="186" font-size="10" fill="#7c879c">view from any side</text>
+          <!-- charges at cube centres -->
+          <circle cx="95" cy="128" r="11" fill="#ff3b30"/>
+          <circle cx="225" cy="128" r="11" fill="#3b82f6"/>
+          <g stroke="#fff" stroke-width="2.6" stroke-linecap="round">
+            <line x1="88" y1="128" x2="102" y2="128"/><line x1="95" y1="121" x2="95" y2="135"/>
+            <line x1="218" y1="128" x2="232" y2="128"/>
+          </g>
         </svg>
-        <p>Place both cubes (+ and −) together on the desk to show a 3D dipole field.</p>
+        <p>Place both cubes (+ and −) together on the desk to show a 3D dipole field. Prefer paper? See the <a href="print-cube-net.html">fold-up net</a> or the <a href="print-flat.html">Flat scheme</a>.</p>
       </div>
     </div>
 
     <h2>Cut out &amp; stick on the box</h2>
+
+    <div class="noprint" style="text-align:left; padding:0 0 5mm;">
+      <button onclick="window.print()">Print cube markers</button>
+      <a class="btn-ar" href="index.html">▶ Open AR (Start camera)</a>
+    </div>
 
     <div class="group pos">
       <div class="group-title pos"><span class="sym">+</span>Positive cube — 5 faces, <b>all different</b> (value 2–6)</div>
