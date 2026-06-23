@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>AR Field &amp; Potential — PhyLab</title>
+
+  <!-- A-Frame + AR.js (3x3 matrix-code markers) -->
+  <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.js"></script>
+
+  <style>
+    html, body { margin: 0; padding: 0; overflow: hidden; width: 100%; height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+
+    /* ---------- On-screen UI overlay (doesn't block the camera) ---------- */
+    #ui { position: fixed; inset: 0; pointer-events: none; z-index: 10; }
+
+    #status {
+      position: fixed; left: 50%; top: 12px; transform: translateX(-50%);
+      max-width: 92%; background: rgba(10,14,22,0.72); color: #e8f4ff;
+      padding: 9px 16px; border-radius: 999px; text-align: center;
+      font-size: 14px; font-weight: 600; letter-spacing: .01em;
+      border: 1px solid rgba(86,196,255,0.28);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+
+    #legend {
+      position: fixed; left: 12px; top: 12px;
+      background: rgba(10,14,22,0.66); color: #cfe6f5;
+      padding: 9px 13px; border-radius: 13px; font-size: 12.5px; line-height: 1.7;
+      border: 1px solid rgba(86,196,255,0.18);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    }
+    #legend .dot { display:inline-block; width:11px; height:11px; border-radius:50%; margin-right:7px; vertical-align: middle; }
+    .pos { background:#ff4d4d; box-shadow:0 0 8px rgba(255,77,77,.8); }
+    .neg { background:#3b9bff; box-shadow:0 0 8px rgba(59,155,255,.8); }
+
+    /* ---------- Bottom control bar ---------- */
+    #controls {
+      position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%);
+      display: flex; gap: 10px; pointer-events: auto;
+      background: rgba(10,14,22,0.6); border: 1px solid rgba(86,196,255,0.22);
+      padding: 8px; border-radius: 16px;
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.45);
+    }
+    .toggle {
+      pointer-events: auto; cursor: pointer; user-select: none;
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
+      min-width: 78px; padding: 9px 12px; border-radius: 11px;
+      color: #9fb4c8; background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      font-size: 12.5px; font-weight: 600; transition: all .18s ease;
+    }
+    .toggle .ic { font-size: 17px; line-height: 1; }
+    .toggle.on { color: #061018; background: linear-gradient(135deg,#56c4ff,#39e0c8);
+      border-color: transparent; box-shadow: 0 0 16px rgba(86,196,255,.5); }
+
+    /* ---------- Start gate ---------- */
+    #gate {
+      position: fixed; inset: 0; z-index: 50;
+      background: radial-gradient(circle at 30% 20%, #0e1726, #05070d 70%);
+      color: #e8eefb; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; text-align: center; padding: 26px;
+    }
+    #gate h1 { font-size: 23px; margin: 0 0 6px; display:flex; gap:10px;
+      align-items:center; justify-content:center; flex-wrap:wrap; }
+    .beta { font-size: 10.5px; font-weight: 800; letter-spacing:.09em; text-transform: uppercase;
+      color:#39e0c8; background: rgba(57,224,200,0.12); border:1px solid rgba(57,224,200,0.5);
+      padding: 2px 9px; border-radius: 999px; }
+    #gate p { color:#94a4bd; max-width: 440px; line-height:1.55; margin: 6px 0; font-size:14px; }
+    #startBtn {
+      margin-top: 20px; pointer-events:auto; cursor:pointer;
+      background: linear-gradient(135deg,#56c4ff,#39e0c8);
+      color:#04121a; border:none; border-radius: 14px; padding: 14px 34px;
+      font-size: 17px; font-weight: 800; letter-spacing:.01em;
+      box-shadow: 0 8px 26px rgba(57,224,200,.32);
+    }
+    #downloads { margin-top: 22px; display:flex; gap: 12px; flex-wrap: wrap; justify-content:center; pointer-events:auto; }
+    #downloads a {
+      text-decoration:none; cursor:pointer; color:#dbe6f5;
+      background: rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.14);
+      border-radius: 13px; padding: 12px 16px; min-width: 150px; text-align:center;
+      display:flex; flex-direction:column; gap:3px; align-items:center;
+    }
+    #downloads a:hover { background: rgba(86,196,255,0.12); border-color: rgba(86,196,255,0.4); }
+    #downloads .big { font-size: 14px; font-weight: 700; }
+    #downloads .small { font-size: 11.5px; color:#8a9bb4; max-width: 160px; }
+    #downloads .ic { font-size: 20px; }
+    .dl-or { margin-top: 22px; color:#5e6f8a; font-size: 11.5px; letter-spacing:.06em; text-transform:uppercase; }
+    .crumb { position:fixed; top:14px; left:16px; font-size:13px; }
+    .crumb a { color:#7fd4ff; text-decoration:none; }
+    .hidden { display:none !important; }
+
+    #preview { margin: 16px auto 2px; width: 300px; max-width: 86%;
+      border-radius: 16px; overflow: hidden; border: 1px solid rgba(86,196,255,0.2);
+      box-shadow: 0 14px 36px rgba(0,0,0,0.5); }
+    #preview svg { display:block; width: 100%; height: auto; }
+    #preview .cap { font-size: 11px; color:#7e8ea6; padding: 7px 10px 9px; text-align:center;
+      background:#0a1018; letter-spacing:.02em; }
+  </style>
+</head>
+<body>
+
+  <!-- ============================ START GATE ============================ -->
+  <div id="gate">
+    <div class="crumb"><a href="/labs/">← Labs</a></div>
+    <h1>AR Field &amp; Potential <span class="beta">Beta</span></h1>
+    <p>Scatter the printed <b style="color:#ff7a7a">+</b> and <b style="color:#7ab8ff">−</b> charge cards on a desk, then point your iPad camera at them. The app finds the tabletop plane, lays a tech grid on it, and draws the electric <b>field lines</b> and <b>potential surface</b> in 3D.</p>
+
+    <div id="preview" aria-label="Preview of the AR result">
+      <svg viewBox="0 0 300 168" xmlns="http://www.w3.org/2000/svg" role="img">
+        <defs>
+          <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#0d1626"/><stop offset="1" stop-color="#060a12"/>
+          </linearGradient>
+          <linearGradient id="fld" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#ff5b5b"/><stop offset="1" stop-color="#4f9bff"/>
+          </linearGradient>
+        </defs>
+        <rect width="300" height="168" fill="url(#bg)"/>
+        <!-- perspective grid -->
+        <g stroke="#1e6f8c" stroke-width="0.7" opacity="0.65">
+          <path d="M30,150 L150,96 M90,150 L165,96 M150,150 L180,96 M210,150 L195,96 M270,150 L210,96"/>
+          <path d="M40,150 L260,150 M70,134 L235,134 M95,121 L213,121 M115,110 L196,110"/>
+        </g>
+        <!-- field lines + to - -->
+        <g fill="none" stroke="url(#fld)" stroke-width="2" opacity="0.95">
+          <path d="M105,118 C120,70 180,70 195,118"/>
+          <path d="M105,118 C128,92 172,92 195,118"/>
+          <path d="M105,118 C100,150 200,150 195,118"/>
+        </g>
+        <g fill="#ffd34f">
+          <polygon points="146,77 146,86 154,81"/><polygon points="146,98 146,106 154,102"/>
+        </g>
+        <!-- charges -->
+        <circle cx="105" cy="118" r="9" fill="#ff4d4d"/>
+        <circle cx="195" cy="118" r="9" fill="#3b9bff"/>
+        <g stroke="#fff" stroke-width="2.4" stroke-linecap="round">
+          <line x1="99" y1="118" x2="111" y2="118"/><line x1="105" y1="112" x2="105" y2="124"/>
+          <line x1="189" y1="118" x2="201" y2="118"/>
+        </g>
+      </svg>
+      <div class="cap">Tech grid on the desk · field lines from + to − · potential as height</div>
+    </div>
+
+    <p style="font-size:12px;color:#5e6f8a">Requires camera access · works best on an iPad in Safari</p>
+    <button id="startBtn">Start camera</button>
+
+    <div class="dl-or">First, print the charge cards</div>
+    <div id="downloads">
+      <a href="print-cards.html" target="_blank" rel="noopener">
+        <span class="ic">🖨️</span><span class="big">Print charge cards</span>
+        <span class="small">6 positive + 6 negative cards, each with its own 3×3 code</span>
+      </a>
+      <a href="README.md" target="_blank" rel="noopener">
+        <span class="ic">📖</span><span class="big">How it works</span>
+        <span class="small">Marker scheme, plane fitting &amp; the physics</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- ============================ UI OVERLAY ============================ -->
+  <div id="ui">
+    <div id="status">Searching for charge cards…</div>
+    <div id="legend">
+      <div><span class="dot pos"></span>Positive charge (+)</div>
+      <div><span class="dot neg"></span>Negative charge (−)</div>
+    </div>
+    <div id="controls">
+      <div class="toggle on" id="t-grid"><span class="ic">▦</span><span>Grid</span></div>
+      <div class="toggle on" id="t-field"><span class="ic">⌇</span><span>Field lines</span></div>
+      <div class="toggle"    id="t-pot"><span class="ic">⛰</span><span>Potential</span></div>
+    </div>
+  </div>
+
+  <!-- ============================ AR SCENE ============================ -->
+  <a-scene
+    embedded
+    vr-mode-ui="enabled: false"
+    renderer="logarithmicDepthBuffer: true; precision: medium; antialias: true; alpha: true"
+    arjs="sourceType: webcam; detectionMode: mono_and_matrix; matrixCodeType: 3x3; patternRatio: 0.5; debugUIEnabled: false;"
+    field-controller>
+
+    <!-- POSITIVE charge cards: barcode values 1–6 -->
+    <a-marker class="chg" data-q="1" type="barcode" value="1"  smooth="true" smoothCount="8" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
+    <a-marker class="chg" data-q="1" type="barcode" value="2"  smooth="true" smoothCount="8" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
+    <a-marker class="chg" data-q="1" type="barcode" value="3"  smooth="true" smoothCount="8" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
+    <a-marker class="chg" data-q="1" type="barcode" value="4"  smooth="true" smoothCount="8" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
+    <a-marker class="chg" data-q="1" type="barcode" value="5"  smooth="true" smoothCount="8" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
+    <a-marker class="chg" data-q="1" type="barcode" value="6"  smooth="true" smoothCount="8" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
+
+    <!-- NEGATIVE charge cards: barcode values 7–12 -->
+    <a-marker class="chg" data-q="-1" type="barcode" value="7"  smooth="true" smoothCount="8" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
+    <a-marker class="chg" data-q="-1" type="barcode" value="8"  smooth="true" smoothCount="8" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
+    <a-marker class="chg" data-q="-1" type="barcode" value="9"  smooth="true" smoothCount="8" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
+    <a-marker class="chg" data-q="-1" type="barcode" value="10" smooth="true" smoothCount="8" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
+    <a-marker class="chg" data-q="-1" type="barcode" value="11" smooth="true" smoothCount="8" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
+    <a-marker class="chg" data-q="-1" type="barcode" value="12" smooth="true" smoothCount="8" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
+
+    <a-entity camera></a-entity>
+  </a-scene>
+
+  <script>
+  /* =====================================================================
+     AR Field & Potential controller
+     ---------------------------------------------------------------------
+     Every frame:
+       1. Collect the world positions of all visible charge cards.
+          + cards (barcode 1–6) carry q=+1, − cards (7–12) carry q=−1.
+       2. Fit the common plane the cards lie on (the desktop):
+            1 card  -> the plane of that card (its own surface normal),
+            2 cards -> plane through both, normal = averaged card normals,
+            3+ cards-> least-squares best-fit plane (PCA / covariance).
+          The plane is smoothed over time to remove jitter.
+       3. Lay a translucent tech grid on that plane.
+       4. Field lines: traced *in the plane* (the field of in-plane charges
+          stays in-plane), from + outward, terminating on − or at the edge.
+       5. Potential surface: a mesh displaced normal to the plane by V(x,y).
+          + -> a sharp hill, − -> a funnel well with a dark "black-hole" core
+          whose opaque surface masks the desk behind it.
+     URL overrides: ?k= ?soft= ?height= ?grid= (see defaults below).
+     ===================================================================== */
+  AFRAME.registerComponent('field-controller', {
+    init: function () {
+      const T = AFRAME.THREE || THREE;
+      this.markers = Array.from(document.querySelectorAll('a-marker.chg'));
+      this.statusEl = document.querySelector('#status');
+
+      // ---- tunables (URL-overridable) ----
+      const q = new URLSearchParams(location.search);
+      const num = (k, d) => { const v = parseFloat(q.get(k)); return isFinite(v) ? v : d; };
+      this.K          = num('k', 0.45);   // Coulomb constant (visual units)
+      this.SOFT       = num('soft', 0.16);// softening radius (avoids singularities)
+      this.HEIGHT     = num('height', 0.55); // potential -> height scale
+      this.HCLAMP     = num('hclamp', 1.3);  // max |height| of the surface
+      this.gridForce  = q.has('grid');    // (reserved) force grid options
+
+      // ---- view toggles ----
+      this.show = { grid: true, field: true, pot: false };
+      this.bindToggle('#t-grid', 'grid');
+      this.bindToggle('#t-field', 'field');
+      this.bindToggle('#t-pot',  'pot');
+
+      // ---- scene groups (world space) ----
+      this.root = new THREE.Group();
+      this.el.object3D.add(this.root);
+      this.gridGroup  = new THREE.Group(); this.root.add(this.gridGroup);
+      this.fieldGroup = new THREE.Group(); this.root.add(this.fieldGroup);
+      this.potGroup   = new THREE.Group(); this.root.add(this.potGroup);
+      this.glyphGroup = new THREE.Group(); this.root.add(this.glyphGroup);
+
+      // smoothed plane state
+      this.plane = null;       // { origin:Vec3, normal:Vec3, u:Vec3, v:Vec3 }
+      this.lastKey = '';
+      this.lastBuild = 0;
+
+      // scratch
+      this._v = new THREE.Vector3();
+      this._q = new THREE.Quaternion();
+    },
+
+    bindToggle: function (sel, key) {
+      const el = document.querySelector(sel);
+      el.addEventListener('click', () => {
+        this.show[key] = !this.show[key];
+        el.classList.toggle('on', this.show[key]);
+        this.lastKey = ''; // force rebuild so visibility updates immediately
+      });
+    },
+
+    /* ---- 1. collect visible charges in world space ---- */
+    collectCharges: function () {
+      const charges = [];
+      for (const m of this.markers) {
+        const o = m.object3D;
+        if (!o.visible) continue;
+        const p = new THREE.Vector3();
+        const quat = new THREE.Quaternion();
+        o.getWorldPosition(p);
+        o.getWorldQuaternion(quat);
+        const n = new THREE.Vector3(0, 1, 0).applyQuaternion(quat).normalize();
+        charges.push({ pos: p, q: parseFloat(m.dataset.q), normal: n });
+      }
+      return charges;
+    },
+
+    /* ---- 2. fit the plane the charges lie on ---- */
+    fitPlane: function (charges) {
+      const n = charges.length;
+      const origin = new THREE.Vector3();
+      for (const c of charges) origin.add(c.pos);
+      origin.multiplyScalar(1 / n);
+
+      let normal = new THREE.Vector3();
+      if (n <= 2) {
+        // average the card surface normals
+        for (const c of charges) normal.add(c.normal);
+        if (normal.lengthSq() < 1e-9) normal.set(0, 1, 0);
+        normal.normalize();
+      } else {
+        // PCA: smallest-eigenvalue eigenvector of the covariance matrix
+        let xx=0,xy=0,xz=0,yy=0,yz=0,zz=0;
+        for (const c of charges) {
+          const d = this._v.subVectors(c.pos, origin);
+          xx+=d.x*d.x; xy+=d.x*d.y; xz+=d.x*d.z;
+          yy+=d.y*d.y; yz+=d.y*d.z; zz+=d.z*d.z;
+        }
+        normal = this.smallestEigenVector([[xx,xy,xz],[xy,yy,yz],[xz,yz,zz]]);
+        // orient toward the averaged card normal (so "up" is consistent)
+        const avg = new THREE.Vector3();
+        for (const c of charges) avg.add(c.normal);
+        if (normal.dot(avg) < 0) normal.multiplyScalar(-1);
+      }
+
+      // build an in-plane basis (u, v)
+      const ref = Math.abs(normal.y) < 0.92 ? new THREE.Vector3(0,1,0) : new THREE.Vector3(1,0,0);
+      const u = new THREE.Vector3().crossVectors(ref, normal).normalize();
+      const v = new THREE.Vector3().crossVectors(normal, u).normalize();
+      return { origin, normal, u, v };
+    },
+
+    // Jacobi eigen-decomposition of a symmetric 3x3 -> eigenvector of min eigenvalue
+    smallestEigenVector: function (A) {
+      const a = [A[0].slice(), A[1].slice(), A[2].slice()];
+      const V = [[1,0,0],[0,1,0],[0,0,1]];
+      for (let sweep = 0; sweep < 24; sweep++) {
+        // largest off-diagonal
+        let p=0,qd=1,max=Math.abs(a[0][1]);
+        const o02=Math.abs(a[0][2]), o12=Math.abs(a[1][2]);
+        if (o02>max){max=o02;p=0;qd=2;}
+        if (o12>max){max=o12;p=1;qd=2;}
+        if (max < 1e-10) break;
+        const app=a[p][p], aqq=a[qd][qd], apq=a[p][qd];
+        const phi = 0.5*Math.atan2(2*apq, aqq-app);
+        const c=Math.cos(phi), s=Math.sin(phi);
+        for (let i=0;i<3;i++){
+          const aip=a[i][p], aiq=a[i][qd];
+          a[i][p]=c*aip - s*aiq; a[i][qd]=s*aip + c*aiq;
+        }
+        for (let i=0;i<3;i++){
+          const api=a[p][i], aqi=a[qd][i];
+          a[p][i]=c*api - s*aqi; a[qd][i]=s*api + c*aqi;
+        }
+        for (let i=0;i<3;i++){
+          const vip=V[i][p], viq=V[i][qd];
+          V[i][p]=c*vip - s*viq; V[i][qd]=s*vip + c*viq;
+        }
+      }
+      const eig=[a[0][0],a[1][1],a[2][2]];
+      let mi=0; if(eig[1]<eig[mi])mi=1; if(eig[2]<eig[mi])mi=2;
+      return new THREE.Vector3(V[0][mi],V[1][mi],V[2][mi]).normalize();
+    },
+
+    // smooth plane changes to kill jitter
+    smoothPlane: function (target) {
+      if (!this.plane) { this.plane = target; return; }
+      const a = 0.25;
+      this.plane.origin.lerp(target.origin, a);
+      this.plane.normal.lerp(target.normal, a).normalize();
+      const ref = Math.abs(this.plane.normal.y) < 0.92 ? new THREE.Vector3(0,1,0) : new THREE.Vector3(1,0,0);
+      this.plane.u = new THREE.Vector3().crossVectors(ref, this.plane.normal).normalize();
+      this.plane.v = new THREE.Vector3().crossVectors(this.plane.normal, this.plane.u).normalize();
+    },
+
+    /* ---- plane <-> world helpers ---- */
+    to2D: function (p) {
+      const d = this._v.subVectors(p, this.plane.origin);
+      return { a: d.dot(this.plane.u), b: d.dot(this.plane.v) };
+    },
+    toWorld: function (a, b, h) {
+      return new THREE.Vector3()
+        .copy(this.plane.origin)
+        .addScaledVector(this.plane.u, a)
+        .addScaledVector(this.plane.v, b)
+        .addScaledVector(this.plane.normal, h || 0);
+    },
+
+    /* ---- planar physics (charges live at 2D coords {a,b}) ---- */
+    field2D: function (a, b, cs2) {
+      let Ea=0, Eb=0;
+      for (const c of cs2) {
+        const dx=a-c.a, dy=b-c.b;
+        const r2=dx*dx+dy*dy+this.SOFT*this.SOFT;
+        const r=Math.sqrt(r2), r3=r2*r;
+        Ea += this.K*c.q*dx/r3; Eb += this.K*c.q*dy/r3;
+      }
+      return { Ea, Eb };
+    },
+    potential2D: function (a, b, cs2) {
+      let V=0;
+      for (const c of cs2) {
+        const dx=a-c.a, dy=b-c.b;
+        const r=Math.sqrt(dx*dx+dy*dy+this.SOFT*this.SOFT);
+        V += this.K*c.q/r;
+      }
+      return V;
+    },
+
+    /* ---- 3. translucent tech grid on the plane ---- */
+    buildGrid: function (cs2, S) {
+      this.clear(this.gridGroup);
+      if (!this.show.grid) return;
+      const div = Math.max(8, Math.min(28, Math.round(S*4)));
+      const step = (2*S)/div;
+      const pos=[], col=[];
+      const cMain=new THREE.Color('#39e0c8'), cFaint=new THREE.Color('#1f6f8c');
+      for (let i=0;i<=div;i++){
+        const t=-S+i*step;
+        const major = (i%4===0);
+        const c = major?cMain:cFaint;
+        const o = major?1.0:0.55;
+        // lines parallel to v
+        pushLine(this.toWorld(t,-S,0.002), this.toWorld(t,S,0.002), c, o);
+        // lines parallel to u
+        pushLine(this.toWorld(-S,t,0.002), this.toWorld(S,t,0.002), c, o);
+      }
+      function pushLine(p1,p2,c,o){
+        pos.push(p1.x,p1.y,p1.z,p2.x,p2.y,p2.z);
+        for(let s=0;s<2;s++) col.push(c.r*o,c.g*o,c.b*o);
+      }
+      const g=new THREE.BufferGeometry();
+      g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+      g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));
+      const m=new THREE.LineBasicMaterial({vertexColors:true,transparent:true,opacity:0.5});
+      this.gridGroup.add(new THREE.LineSegments(g,m));
+
+      // soft glow fill plane behind the grid
+      const pg=new THREE.PlaneGeometry(2*S,2*S);
+      pg.rotateX(-Math.PI/2); // local +Y normal
+      const pm=new THREE.MeshBasicMaterial({color:'#0a1c26',transparent:true,opacity:0.18,side:THREE.DoubleSide,depthWrite:false});
+      const plane=new THREE.Mesh(pg,pm);
+      plane.position.copy(this.plane.origin);
+      plane.quaternion.copy(this.planeQuat());
+      this.gridGroup.add(plane);
+    },
+
+    // quaternion mapping local +Y to the plane normal, +X to u
+    planeQuat: function () {
+      const m = new THREE.Matrix4().makeBasis(this.plane.u, this.plane.normal, this.plane.v);
+      return new THREE.Quaternion().setFromRotationMatrix(m);
+    },
+
+    /* ---- 4. field lines, traced in the plane ---- */
+    buildField: function (cs2, S) {
+      this.clear(this.fieldGroup);
+      if (!this.show.field || cs2.length===0) return;
+      const hasPos = cs2.some(c=>c.q>0);
+      const sources = cs2.filter(c => hasPos ? c.q>0 : c.q<0);
+      const seedR = hasPos ? 0.18 : S*0.85;     // small ring on +, wide ring on −
+      const nSeed = 14;
+      const opts = { step: 0.05, maxSteps: 600, minR: 0.16, maxR: S*1.25 };
+      const RED='#ff5b5b', BLUE='#4f9bff';
+
+      for (const src of sources) {
+        for (let i=0;i<nSeed;i++){
+          const th = (i/nSeed)*Math.PI*2;
+          const a0 = src.a + seedR*Math.cos(th);
+          const b0 = src.b + seedR*Math.sin(th);
+          const line = this.trace(a0, b0, cs2, opts);
+          if (line.length<2) continue;
+          const cFrom = src.q>0?RED:BLUE;
+          const cTo   = src.q>0?BLUE:BLUE;
+          this.addTube(line, cFrom, cTo);
+          this.addArrows(line);
+        }
+      }
+    },
+
+    trace: function (a, b, cs2, opts) {
+      const pts=[]; let A=a, B=b;
+      for (let i=0;i<opts.maxSteps;i++){
+        pts.push(this.toWorld(A,B,0.012));
+        const {Ea,Eb}=this.field2D(A,B,cs2);
+        const len=Math.hypot(Ea,Eb);
+        if (len<1e-7) break;
+        A += (Ea/len)*opts.step; B += (Eb/len)*opts.step;
+        let stop=false;
+        for (const c of cs2){ if (Math.hypot(A-c.a,B-c.b)<opts.minR){pts.push(this.toWorld(A,B,0.012)); stop=true; break;} }
+        if (stop) break;
+        if (Math.hypot(A,B) > opts.maxR){ pts.push(this.toWorld(A,B,0.012)); break; }
+      }
+      return pts;
+    },
+
+    addTube: function (points, cFrom, cTo) {
+      if (points.length<2) return;
+      const curve=new THREE.CatmullRomCurve3(points);
+      const seg=Math.min(160,Math.max(8,points.length));
+      const geo=new THREE.TubeGeometry(curve,seg,0.009,6,false);
+      const colA=new THREE.Color(cFrom), colB=new THREE.Color(cTo);
+      const p=geo.attributes.position, colors=new Float32Array(p.count*3);
+      const ring=7;
+      for (let i=0;i<p.count;i++){
+        const t=Math.floor(i/ring)/Math.max(1,p.count/ring);
+        const c=colA.clone().lerp(colB,Math.min(1,t));
+        colors[i*3]=c.r; colors[i*3+1]=c.g; colors[i*3+2]=c.b;
+      }
+      geo.setAttribute('color',new THREE.BufferAttribute(colors,3));
+      this.fieldGroup.add(new THREE.Mesh(geo,new THREE.MeshBasicMaterial({vertexColors:true})));
+    },
+
+    addArrows: function (pts) {
+      const every=Math.max(10,Math.floor(pts.length/3));
+      for (let i=every;i<pts.length-1;i+=every){
+        const dir=new THREE.Vector3().subVectors(pts[i+1],pts[i]);
+        if (dir.lengthSq()<1e-9) continue;
+        const geo=new THREE.ConeGeometry(0.028,0.075,10);
+        const cone=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:'#ffd34f'}));
+        cone.position.copy(pts[i]);
+        cone.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.normalize());
+        this.fieldGroup.add(cone);
+      }
+    },
+
+    /* ---- 5. potential surface (height = V) ---- */
+    buildPotential: function (cs2, S) {
+      this.clear(this.potGroup);
+      if (!this.show.pot || cs2.length===0) return;
+      const N=72;                      // grid resolution
+      const geo=new THREE.PlaneGeometry(2*S,2*S,N,N);
+      // PlaneGeometry lies in XY (local). We map (x,y)->plane (a,b) and z->height.
+      const pos=geo.attributes.position;
+      const colors=new Float32Array(pos.count*3);
+      const cHot=new THREE.Color('#ff5b5b'), cMid=new THREE.Color('#0c1626'), cCold=new THREE.Color('#3b9bff');
+      const cHole=new THREE.Color('#020308');
+      const out=new THREE.Vector3();
+      for (let i=0;i<pos.count;i++){
+        const a=pos.getX(i), b=pos.getY(i);
+        let V=this.potential2D(a,b,cs2);
+        let h=V*this.HEIGHT;
+        h=Math.max(-this.HCLAMP, Math.min(this.HCLAMP, h));
+        out.copy(this.toWorld(a,b,h));
+        pos.setXYZ(i,out.x,out.y,out.z);
+        // colour: red (high) -> dark (zero) -> blue (low), black at deep wells
+        let c;
+        const vt=Math.max(-1,Math.min(1,V*this.HEIGHT/this.HCLAMP));
+        if (vt>=0) c=cMid.clone().lerp(cHot,Math.pow(vt,0.6));
+        else {
+          c=cMid.clone().lerp(cCold,Math.pow(-vt,0.6));
+          if (-vt>0.7) c.lerp(cHole,(-vt-0.7)/0.3); // black-hole core
+        }
+        colors[i*3]=c.r; colors[i*3+1]=c.g; colors[i*3+2]=c.b;
+      }
+      geo.setAttribute('color',new THREE.BufferAttribute(colors,3));
+      geo.computeVertexNormals();
+      // Opaque surface masks the desk behind the wells (the "black hole").
+      const mat=new THREE.MeshPhongMaterial({vertexColors:true, side:THREE.DoubleSide,
+        shininess:40, specular:0x222a33, flatShading:false});
+      this.potGroup.add(new THREE.Mesh(geo,mat));
+
+      // wireframe sheen
+      const wmat=new THREE.MeshBasicMaterial({color:'#39e0c8',wireframe:true,transparent:true,opacity:0.12});
+      this.potGroup.add(new THREE.Mesh(geo,wmat));
+
+      // a couple of lights so the Phong surface reads as 3D
+      if (!this._lit){
+        const amb=new THREE.AmbientLight(0xffffff,0.65);
+        const dir=new THREE.DirectionalLight(0xffffff,0.7); dir.position.set(2,5,2);
+        this.root.add(amb); this.root.add(dir); this._lit=true;
+      }
+
+      // glowing rim ring at each negative well + bright cap at each positive peak
+      for (const c of cs2){
+        if (c.q<0){
+          const ring=new THREE.Mesh(
+            new THREE.TorusGeometry(0.22,0.018,10,40),
+            new THREE.MeshBasicMaterial({color:'#7ad0ff',transparent:true,opacity:0.85}));
+          ring.position.copy(this.toWorld(c.a,c.b,0.01));
+          ring.quaternion.copy(this.planeQuat());
+          ring.rotateX(Math.PI/2);
+          this.potGroup.add(ring);
+        } else {
+          const cap=new THREE.Mesh(
+            new THREE.SphereGeometry(0.03,10,10),
+            new THREE.MeshBasicMaterial({color:'#fff1c0'}));
+          const Vpk=this.potential2D(c.a,c.b,cs2);
+          cap.position.copy(this.toWorld(c.a,c.b,Math.min(this.HCLAMP,Vpk*this.HEIGHT)));
+          this.potGroup.add(cap);
+        }
+      }
+    },
+
+    /* ---- charge glyphs (always shown) ---- */
+    buildGlyphs: function (charges) {
+      this.clear(this.glyphGroup);
+      for (const c of charges){
+        const cv=document.createElement('canvas'); cv.width=cv.height=128;
+        const g=cv.getContext('2d');
+        g.fillStyle=c.q>0?'#ff4d4d':'#3b9bff';
+        g.beginPath(); g.arc(64,64,58,0,Math.PI*2); g.fill();
+        g.strokeStyle='rgba(255,255,255,0.95)'; g.lineWidth=9;
+        g.beginPath(); g.moveTo(34,64); g.lineTo(94,64);
+        if (c.q>0){ g.moveTo(64,34); g.lineTo(64,94); }
+        g.stroke();
+        const tex=new THREE.CanvasTexture(cv);
+        const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,depthTest:false}));
+        sp.position.copy(c.pos).addScaledVector(this.plane.normal,0.02);
+        sp.scale.set(0.18,0.18,0.18); sp.renderOrder=999;
+        this.glyphGroup.add(sp);
+      }
+    },
+
+    clear: function (group) {
+      for (let i=group.children.length-1;i>=0;i--){
+        const o=group.children[i];
+        if (o.geometry) o.geometry.dispose();
+        if (o.material){ if (o.material.map) o.material.map.dispose(); o.material.dispose(); }
+        group.remove(o);
+      }
+    },
+
+    /* ---- main loop ---- */
+    tick: function (time) {
+      const charges = this.collectCharges();
+      const nPos=charges.filter(c=>c.q>0).length, nNeg=charges.filter(c=>c.q<0).length;
+
+      // status line
+      let msg;
+      if (!charges.length) msg='Searching for charge cards…';
+      else if (nPos&&nNeg) msg=`${nPos+nNeg} charges · dipole/multipole field — lines run + → −`;
+      else if (nPos)       msg=`${nPos} positive charge${nPos>1?'s':''} · field points outward`;
+      else                 msg=`${nNeg} negative charge${nNeg>1?'s':''} · field points inward`;
+      if (charges.length) msg += ` · plane ${charges.length>=3?'(best-fit)':'(card)'}`;
+      if (this.statusEl.textContent!==msg) this.statusEl.textContent=msg;
+
+      if (!charges.length){
+        if (this.root.children.some(g=>g.children.length)){
+          this.clear(this.gridGroup); this.clear(this.fieldGroup);
+          this.clear(this.potGroup); this.clear(this.glyphGroup);
+        }
+        this.lastKey=''; this.plane=null; return;
+      }
+
+      // fit + smooth the plane
+      this.smoothPlane(this.fitPlane(charges));
+
+      // rebuild only when the configuration changes (quantised) or every 220ms
+      let key=this.show.grid+this.show.field+this.show.pot+'|';
+      for (const c of charges){
+        const p=c.pos;
+        key += c.q+':'+Math.round(p.x/0.03)+','+Math.round(p.y/0.03)+','+Math.round(p.z/0.03)+'|';
+      }
+      const stale=(time-this.lastBuild)>220;
+      if (key!==this.lastKey || stale){
+        // project charges into plane coords
+        const cs2 = charges.map(c=>{ const q2=this.to2D(c.pos); return {a:q2.a,b:q2.b,q:c.q}; });
+        // region half-size: cover all charges + margin
+        let S=0.9;
+        for (const c of cs2) S=Math.max(S, Math.hypot(c.a,c.b));
+        S += 1.1;
+        this.buildGrid(cs2,S);
+        this.buildField(cs2,S);
+        this.buildPotential(cs2,S);
+        this.buildGlyphs(charges);
+        this.lastKey=key; this.lastBuild=time;
+      }
+    }
+  });
+
+  /* ---- start gate: AR.js requests the camera when the scene plays ---- */
+  (function(){
+    const gate=document.getElementById('gate');
+    const btn=document.getElementById('startBtn');
+    const scene=document.querySelector('a-scene');
+    const reveal=()=>gate.classList.add('hidden');
+    btn.addEventListener('click',()=>setTimeout(reveal,400));
+    scene.addEventListener('arjs-video-loaded',reveal);
+    scene.addEventListener('camera-error',()=>{
+      document.getElementById('status').textContent='Camera unavailable — check permissions & HTTPS';
+    });
+  })();
+  </script>
+</body>
+</html>

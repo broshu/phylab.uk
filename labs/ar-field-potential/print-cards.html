@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Print Charge Cards — AR Field &amp; Potential</title>
+<style>
+  :root { --pos:#d8453c; --neg:#2f6fd8; --ink:#1c2230; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:#f3f4f7; color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+
+  .toolbar {
+    position:sticky; top:0; z-index:5; display:flex; gap:14px; align-items:center;
+    padding:12px 18px; background:#fff; border-bottom:1px solid #e2e4ea;
+    box-shadow:0 1px 6px rgba(0,0,0,.05);
+  }
+  .toolbar a { color:#2f6fd8; text-decoration:none; font-size:14px; }
+  .toolbar h1 { font-size:16px; margin:0; flex:1; }
+  .toolbar button {
+    cursor:pointer; border:none; border-radius:9px; padding:9px 18px; font-weight:700; font-size:14px;
+    background:linear-gradient(135deg,#56c4ff,#39e0c8); color:#04121a;
+  }
+  .note { max-width:760px; margin:16px auto 0; padding:0 18px; color:#4a5366; font-size:13.5px; line-height:1.6; }
+
+  .sheet { max-width:760px; margin:14px auto 40px; padding:0 18px; }
+  .grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+
+  .card {
+    border:2px solid; border-radius:14px; background:#fff; padding:10px 10px 8px;
+    display:flex; flex-direction:column; align-items:center; gap:6px;
+    break-inside:avoid; page-break-inside:avoid;
+  }
+  .card.pos { border-color:var(--pos); }
+  .card.neg { border-color:var(--neg); }
+
+  .top { display:flex; align-items:center; justify-content:space-between; width:100%; padding:0 4px; }
+  .sign { font-size:30px; font-weight:800; line-height:1; }
+  .card.pos .sign { color:var(--pos); }
+  .card.neg .sign { color:var(--neg); }
+  .tag { font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+    padding:2px 8px; border-radius:999px; color:#fff; }
+  .card.pos .tag { background:var(--pos); }
+  .card.neg .tag { background:var(--neg); }
+
+  /* the scannable 3x3 code sits on a white quiet-zone tile */
+  .code { width:100%; aspect-ratio:1/1; background:#fff; border:1px solid #e6e8ee; border-radius:8px;
+    display:flex; align-items:center; justify-content:center; padding:14%; }
+  .code img { width:100%; height:100%; image-rendering:pixelated; }
+
+  .cap { font-size:11px; color:#8b93a4; }
+
+  @media print {
+    .toolbar, .note { display:none; }
+    body { background:#fff; }
+    .sheet { margin:0; max-width:none; padding:8mm; }
+    .grid { gap:8mm; }
+    .card { border-width:1.5px; }
+    @page { margin:8mm; }
+  }
+</style>
+</head>
+<body>
+  <div class="toolbar">
+    <a href="index.html">← Back to app</a>
+    <h1>Charge cards</h1>
+    <button onclick="window.print()">Print / Save PDF</button>
+  </div>
+
+  <p class="note">
+    Print this sheet (A4 or Letter) on plain paper, then cut out the cards. Each card carries its
+    own 3×3 code, so you can lay out <b>as many as you like</b> — every visible card is tracked at
+    once. Red cards are <b>positive (+)</b>, blue cards are <b>negative (−)</b>. Keep the white
+    border around each code intact (it is the quiet zone the camera needs), lay the cards flat on a
+    desk, and avoid glare. Then open the app and point your iPad at them.
+  </p>
+
+  <div class="sheet">
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <script>
+    // + cards = barcode 1-6, - cards = barcode 7-12
+    const grid = document.getElementById('grid');
+    function card(value, sign){
+      const pos = sign>0;
+      const el = document.createElement('div');
+      el.className = 'card ' + (pos?'pos':'neg');
+      el.innerHTML =
+        '<div class="top"><span class="sign">'+(pos?'+':'−')+'</span>'+
+        '<span class="tag">'+(pos?'Positive':'Negative')+'</span></div>'+
+        '<div class="code"><img src="markers/'+value+'.png" alt="code '+value+'"></div>'+
+        '<div class="cap">code '+value+'</div>';
+      return el;
+    }
+    for (let v=1; v<=6;  v++) grid.appendChild(card(v, +1));
+    for (let v=7; v<=12; v++) grid.appendChild(card(v, -1));
+  </script>
+</body>
+</html>
