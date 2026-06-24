@@ -56,6 +56,11 @@
     .toggle.on{color:#061018;background:linear-gradient(135deg,#56c4ff,#39e0c8);border-color:transparent;
       box-shadow:0 0 16px rgba(86,196,255,.5);}
     .toggle.act{cursor:pointer;background:rgba(255,255,255,.06);color:#dbe6f5;}
+
+    #photoctl{position:fixed;right:12px;top:54px;z-index:30;background:rgba(10,14,22,.66);
+      border:1px solid rgba(86,196,255,.18);border-radius:13px;padding:8px 12px;font-size:12px;color:#cfe6f5;
+      display:flex;align-items:center;gap:8px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
+    #photoctl input{width:96px;accent-color:#39e0c8;}
   </style>
 </head>
 <body>
@@ -72,6 +77,7 @@
     <div><span class="dot" style="background:#ffd76a;box-shadow:0 0 8px rgba(255,215,106,.8)"></span>+ particle gun</div>
     <div><span class="dot" style="background:#7fd0ff;box-shadow:0 0 8px rgba(127,208,255,.8)"></span>− particle gun</div>
   </div>
+  <div id="photoctl" class="hidden">📷 Photo <input type="range" id="opac" min="0" max="1" step="0.05" value="0.55"></div>
   <div id="controls" class="hidden">
     <div class="toggle on" id="t-grid"><span class="ic">▦</span><span>Grid</span></div>
     <div class="toggle on" id="t-field"><span class="ic">⌇</span><span>Field lines</span></div>
@@ -410,10 +416,26 @@
   (function(){
     const intro=document.getElementById('intro'), stage=document.getElementById('stage');
     const file=document.getElementById('file'), pick=document.getElementById('pick');
-    const hud=[document.getElementById('status'),document.getElementById('legend'),document.getElementById('controls')];
+    const hud=[document.getElementById('status'),document.getElementById('legend'),
+               document.getElementById('controls'),document.getElementById('photoctl')];
     let blobUrl=null;
 
     function showHud(on){ hud.forEach(e=>e.classList.toggle('hidden',!on)); }
+
+    /* Keep the uploaded photo visible behind the overlay, semi-transparent.
+       AR.js (image source) shows the photo as a DOM <img> with the blob src; we
+       just fade that element so the grid / field / potential read clearly on top. */
+    const opac=document.getElementById('opac');
+    const qp=parseFloat(new URLSearchParams(location.search).get('photo'));
+    let photoOpacity=isFinite(qp)?qp:0.55, photoImg=null;
+    opac.value=photoOpacity;
+    function applyPhotoOpacity(){ if(photoImg) photoImg.style.opacity=photoOpacity; }
+    function findPhotoImg(tries){
+      const img=stage.querySelector('img[src^="blob:"]') || document.querySelector('img[src^="blob:"]');
+      if(img){ photoImg=img; photoImg.style.transition='opacity .2s ease'; applyPhotoOpacity(); }
+      else if(tries>0){ setTimeout(()=>findPhotoImg(tries-1),150); }
+    }
+    opac.addEventListener('input',e=>{ photoOpacity=parseFloat(e.target.value); applyPhotoOpacity(); });
 
     function buildScene(url){
       stage.innerHTML='';
@@ -435,7 +457,9 @@
       if(blobUrl) URL.revokeObjectURL(blobUrl);
       blobUrl=URL.createObjectURL(f);
       intro.classList.add('hidden'); showHud(true);
+      photoImg=null;
       buildScene(blobUrl);
+      findPhotoImg(60);   // poll for AR.js's photo element, then fade it
     }
 
     pick.addEventListener('click',()=>file.click());
