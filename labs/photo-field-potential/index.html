@@ -13,8 +13,9 @@
     html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#05070d;
       font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#e8eefb;}
 
-    #stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;}
+    #stage{position:fixed;inset:0;z-index:1;display:flex;align-items:center;justify-content:center;background:transparent;}
     #stage a-scene, #stage .a-canvas, #stage video, #stage img{z-index:1 !important;}
+    #stage canvas, #stage .a-canvas{background:transparent !important;}
     /* our own photo background — same cover-sizing AR.js uses, so the overlay aligns */
     #bg{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;display:none;
       pointer-events:none;background:#05070d;}
@@ -461,6 +462,13 @@
       // AR.js (image source) needs a resize nudge to size its overlay canvas to cover
       const scene=stage.querySelector('a-scene');
       const kick=()=>window.dispatchEvent(new Event('resize'));
+      if(scene) scene.addEventListener('renderstart',()=>{
+        const renderer=scene.renderer;
+        if(renderer){
+          renderer.setClearColor(0x000000,0);
+          renderer.autoClearColor=false;
+        }
+      },{once:true});
       if(scene) scene.addEventListener('arjs-video-loaded',()=>{ kick(); hideArjsImg(40); });
       [200,600,1200,2200].forEach(t=>setTimeout(kick,t));
     }

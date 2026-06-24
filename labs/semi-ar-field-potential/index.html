@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Semi-AR Field &amp; Potential — PhyLab</title>
+
+  <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.js"></script>
+
+  <style>
+    html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+    a-scene,.a-canvas,video.arjs-video{z-index:1 !important;}
+
+    #ui{position:fixed;inset:0;pointer-events:none;z-index:1000;}
+    #status{position:fixed;left:50%;top:12px;transform:translateX(-50%);max-width:92%;
+      background:rgba(10,14,22,.72);color:#e8f4ff;padding:9px 16px;border-radius:999px;text-align:center;
+      font-size:14px;font-weight:600;border:1px solid rgba(86,196,255,.28);
+      backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
+    #legend{position:fixed;left:12px;top:54px;background:rgba(10,14,22,.66);color:#cfe6f5;
+      padding:9px 13px;border-radius:13px;font-size:12.5px;line-height:1.7;border:1px solid rgba(86,196,255,.18);
+      backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
+    #legend .dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:7px;vertical-align:middle;}
+    .pos{background:#ff4d4d;box-shadow:0 0 8px rgba(255,77,77,.8);} .neg{background:#3b9bff;box-shadow:0 0 8px rgba(59,155,255,.8);}
+
+    #controls{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:1002;display:flex;gap:10px;
+      pointer-events:auto;background:rgba(10,14,22,.6);border:1px solid rgba(86,196,255,.22);padding:8px;border-radius:16px;
+      backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 8px 30px rgba(0,0,0,.45);}
+    .toggle{cursor:pointer;user-select:none;display:flex;flex-direction:column;align-items:center;gap:2px;
+      min-width:72px;padding:9px 12px;border-radius:11px;color:#9fb4c8;background:rgba(255,255,255,.03);
+      border:1px solid rgba(255,255,255,.08);font-size:12.5px;font-weight:600;transition:all .18s ease;}
+    .toggle .ic{font-size:17px;line-height:1;}
+    .toggle.on{color:#061018;background:linear-gradient(135deg,#56c4ff,#39e0c8);border-color:transparent;box-shadow:0 0 16px rgba(86,196,255,.5);}
+    .toggle.disabled{opacity:.4;pointer-events:none;}
+    #lockBtn{color:#04121a;background:linear-gradient(135deg,#ffd76a,#ff9d3b);border-color:transparent;font-weight:800;}
+    #lockBtn.locked{background:rgba(255,255,255,.06);color:#dbe6f5;border:1px solid rgba(255,255,255,.14);font-weight:600;}
+
+    #gate{position:fixed;inset:0;z-index:50;background:radial-gradient(circle at 30% 20%,#0e1726,#05070d 70%);
+      color:#e8eefb;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:26px;}
+    #gate h1{font-size:23px;margin:0 0 6px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center;}
+    .beta{font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#39e0c8;
+      background:rgba(57,224,200,.12);border:1px solid rgba(57,224,200,.5);padding:2px 9px;border-radius:999px;}
+    #gate p{color:#94a4bd;max-width:460px;line-height:1.55;margin:6px 0;font-size:14px;}
+    .step{display:flex;gap:10px;align-items:flex-start;max-width:430px;text-align:left;margin:5px 0;color:#b9c6dc;font-size:13.5px;}
+    .step b{color:#ffd76a;}
+    #startBtn{margin-top:20px;pointer-events:auto;cursor:pointer;background:linear-gradient(135deg,#56c4ff,#39e0c8);
+      color:#04121a;border:none;border-radius:14px;padding:14px 34px;font-size:17px;font-weight:800;box-shadow:0 8px 26px rgba(57,224,200,.32);}
+    .crumb{position:fixed;top:14px;left:16px;font-size:13px;z-index:60;} .crumb a{color:#7fd4ff;text-decoration:none;}
+    .links{margin-top:16px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center;pointer-events:auto;}
+    .links a{color:#dbe6f5;text-decoration:none;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:10px 16px;font-size:13px;}
+    .hidden{display:none !important;}
+  </style>
+</head>
+<body>
+  <div class="crumb"><a href="/labs/">← Labs</a></div>
+
+  <div id="gate">
+    <h1>Semi-AR Field &amp; Potential <span class="beta">Beta</span></h1>
+    <p>Detect the charge cards <b>once</b>, then the charges <b>freeze in place</b>. Walk around with
+       the iPad to view the field and potential from any angle — the charges stay put and don't jitter.</p>
+    <div class="step"><span>①</span><span>Lay the printed cards on a desk and start the camera.</span></div>
+    <div class="step"><span>②</span><span>Point at all the cards so they're seen, then tap <b>Lock charges</b>.</span></div>
+    <div class="step"><span>③</span><span>Move freely to observe. Tap <b>Re-scan</b> to lock a new layout.</span></div>
+    <p style="font-size:12px;color:#5e6f8a">Uses the same printed cards as the other labs. Requires camera + HTTPS.</p>
+    <button id="startBtn">Start camera</button>
+    <div class="links">
+      <a href="../ar-field-potential/print-cards.html" target="_blank" rel="noopener">Print the cards ↗</a>
+    </div>
+  </div>
+
+  <div id="ui">
+    <div id="status">Point at the cards, then tap Lock…</div>
+    <div id="legend">
+      <div><span class="dot pos"></span>Positive charge (+)</div>
+      <div><span class="dot neg"></span>Negative charge (−)</div>
+      <div><span class="dot" style="background:#ffd76a;box-shadow:0 0 8px rgba(255,215,106,.8)"></span>+ particle gun</div>
+      <div><span class="dot" style="background:#7fd0ff;box-shadow:0 0 8px rgba(127,208,255,.8)"></span>− particle gun</div>
+    </div>
+    <div id="controls">
+      <div class="toggle" id="lockBtn"><span class="ic">🔒</span><span>Lock charges</span></div>
+      <div class="toggle on disabled" id="t-grid"><span class="ic">▦</span><span>Grid</span></div>
+      <div class="toggle on disabled" id="t-field"><span class="ic">⌇</span><span>Field lines</span></div>
+      <div class="toggle disabled"    id="t-pot"><span class="ic">⛰</span><span>Potential</span></div>
+    </div>
+  </div>
+
+  <a-scene embedded vr-mode-ui="enabled: false"
+    renderer="logarithmicDepthBuffer: true; precision: medium; antialias: true; alpha: true"
+    arjs="sourceType: webcam; sourceWidth: 1024; sourceHeight: 768; displayWidth: 1024; displayHeight: 768; detectionMode: mono_and_matrix; matrixCodeType: 3x3; patternRatio: 0.5; labelingMode: black_region; maxDetectionRate: 60; debugUIEnabled: false;"
+    semiar-controller>
+    <a-marker class="chg" data-q="1"  type="barcode" value="1"  smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
+    <a-marker class="chg" data-q="1"  type="barcode" value="2"  smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
+    <a-marker class="chg" data-q="1"  type="barcode" value="3"  smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
+    <a-marker class="chg" data-q="1"  type="barcode" value="4"  smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
+    <a-marker class="chg" data-q="1"  type="barcode" value="5"  smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
+    <a-marker class="chg" data-q="-1" type="barcode" value="7"  smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
+    <a-marker class="chg" data-q="-1" type="barcode" value="8"  smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
+    <a-marker class="chg" data-q="-1" type="barcode" value="9"  smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
+    <a-marker class="chg" data-q="-1" type="barcode" value="10" smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
+    <a-marker class="chg" data-q="-1" type="barcode" value="11" smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
+    <a-marker class="gun gun-pos" data-q="1"  type="barcode" value="0"  smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
+    <a-marker class="gun gun-neg" data-q="-1" type="barcode" value="12" smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
+    <a-entity camera></a-entity>
+  </a-scene>
+
+  <script>
+  /* =====================================================================
+     semiar-controller — "lock once, then track the camera"
+       SCAN phase  : AR.js tracks markers live; we just count them.
+       LOCK phase  : freeze the rigid charge layout into a reference frame,
+                     and remember each visible marker's transform in that frame.
+                     Each frame we recover the reference-frame pose from whatever
+                     locked markers are currently visible (averaged + smoothed)
+                     and drive ONE anchor group. The charges never re-detect, so
+                     they don't jitter; you can move the iPad freely.
+     ===================================================================== */
+  AFRAME.registerComponent('semiar-controller', {
+    init: function () {
+      this.chg = Array.from(document.querySelectorAll('a-marker.chg'));
+      this.guns = [
+        { el: document.querySelector('a-marker.gun-pos'), q:+1, color:'#ffd76a' },
+        { el: document.querySelector('a-marker.gun-neg'), q:-1, color:'#7fd0ff' }
+      ].filter(g=>g.el);
+      this.statusEl=document.querySelector('#status');
+
+      const q=new URLSearchParams(location.search);
+      const num=(k,d)=>{const v=parseFloat(q.get(k));return isFinite(v)?v:d;};
+      this.K=num('k',0.45); this.SOFT=num('soft',0.16);
+      this.HEIGHT=num('height',0.55); this.HCLAMP=num('hclamp',1.3);
+      this.gundir=Math.round(num('gundir',0))&3;
+      this.pcfg={speed:num('pspeed',0.7),force:num('pforce',0.5),dt:0.03,maxSteps:520};
+      this.smoothA=num('smooth',0.3);
+
+      this.show={grid:true,field:true,pot:false};
+      this.locked=false;
+      this.frozen=null;            // { cs2, guns, anchors }
+      this._apos=new THREE.Vector3(); this._aquat=new THREE.Quaternion(); this._haveA=false;
+      this._scl=new THREE.Vector3(1,1,1);
+
+      // anchor group carries ALL frozen content; we only update its matrix each frame
+      this.anchor=new THREE.Group(); this.anchor.matrixAutoUpdate=false;
+      this.el.object3D.add(this.anchor);
+      this.content=new THREE.Group(); this.anchor.add(this.content);
+      this.gridGroup=new THREE.Group(); this.content.add(this.gridGroup);
+      this.fieldGroup=new THREE.Group(); this.content.add(this.fieldGroup);
+      this.potGroup=new THREE.Group(); this.content.add(this.potGroup);
+      this.glyphGroup=new THREE.Group(); this.content.add(this.glyphGroup);
+      this.trajGroup=new THREE.Group(); this.content.add(this.trajGroup);
+      this.pGroup=new THREE.Group(); this.content.add(this.pGroup);
+      // live (pre-lock) preview markers, in world space
+      this.liveGroup=new THREE.Group(); this.el.object3D.add(this.liveGroup);
+
+      this._v=new THREE.Vector3(); this.buildKey='';
+      this.bindUI();
+    },
+
+    bindUI:function(){
+      const self=this;
+      const lock=document.querySelector('#lockBtn');
+      const on=(el,fn)=>{const h=(e)=>{if(e){e.preventDefault();e.stopPropagation();}fn();};
+        el.addEventListener('click',h);el.addEventListener('touchend',h,{passive:false});};
+      on(lock,()=>{ if(self.locked) self.rescan(); else self.lockNow(); });
+      [['#t-grid','grid'],['#t-field','field'],['#t-pot','pot']].forEach(([sel,key])=>{
+        const el=document.querySelector(sel);
+        on(el,()=>{ if(!self.locked) return; self.show[key]=!self.show[key]; el.classList.toggle('on',self.show[key]); self.buildKey=''; });
+      });
+    },
+
+    /* ---- gather currently visible markers in world space ---- */
+    liveCharges:function(){
+      const out=[];
+      for(const m of this.chg){const o=m.object3D;if(!o.visible)continue;
+        const p=new THREE.Vector3();o.getWorldPosition(p);
+        const qn=new THREE.Quaternion();o.getWorldQuaternion(qn);
+        out.push({pos:p,q:parseFloat(m.dataset.q),normal:new THREE.Vector3(0,1,0).applyQuaternion(qn).normalize()});}
+      return out;
+    },
+
+    /* ---- LOCK: freeze charges + remember marker transforms in a ref frame ---- */
+    lockNow:function(){
+      const charges=this.liveCharges();
+      const visGuns=this.guns.filter(g=>g.el.object3D.visible);
+      const all=charges.slice();
+      for(const g of visGuns){const p=new THREE.Vector3();g.el.object3D.getWorldPosition(p);
+        const qn=new THREE.Quaternion();g.el.object3D.getWorldQuaternion(qn);
+        all.push({pos:p,q:0,normal:new THREE.Vector3(0,1,0).applyQuaternion(qn).normalize()});}
+      if(!all.length){ this.flash('No cards visible — point at them first'); return; }
+
+      const pl=this.fitPlane(all);
+      // right-handed basis (u, normal, w)
+      const w=new THREE.Vector3().crossVectors(pl.u,pl.normal).normalize();
+      const M=new THREE.Matrix4().makeBasis(pl.u,pl.normal,w).setPosition(pl.origin);
+      const Minv=M.clone().invert();
+
+      // charges -> ref-frame plane coords (a,b)
+      const cs2=[];
+      for(const c of charges){const r=c.pos.clone().applyMatrix4(Minv); cs2.push({a:r.x,b:r.z,q:c.q});}
+
+      // guns -> ref-frame muzzle pose
+      const gunsF=[];
+      for(const g of visGuns){
+        const wp=new THREE.Vector3();g.el.object3D.getWorldPosition(wp);
+        const wq=new THREE.Quaternion();g.el.object3D.getWorldQuaternion(wq);
+        let f=new THREE.Vector3(0,0,1).applyQuaternion(wq);
+        f.addScaledVector(pl.normal,-f.dot(pl.normal)); if(f.lengthSq()<1e-6) f.copy(pl.u); f.normalize();
+        const rp=wp.clone().sub(pl.origin);
+        let a=rp.dot(pl.u), b=rp.dot(w), da=f.dot(pl.u), db=f.dot(w);
+        for(let i=0;i<this.gundir;i++){const t=da;da=-db;db=t;}
+        const nn=Math.hypot(da,db)||1;
+        gunsF.push({a,b,da:da/nn,db:db/nn,q:g.q,color:g.color,el:g.el});
+      }
+
+      // anchors: every currently-visible marker (chg + gun), with K = markerWorld^-1 * M
+      const anchors=[];
+      const consider=this.chg.concat(this.guns.map(g=>g.el));
+      for(const el of consider){const o=el.object3D;if(!o.visible)continue;
+        o.updateMatrixWorld(true);
+        const K=o.matrixWorld.clone().invert().multiply(M);
+        anchors.push({el,K});}
+
+      this.frozen={cs2,guns:gunsF,anchors};
+      this.locked=true; this.buildKey='';
+      // seed the smoothed anchor pose with M
+      M.decompose(this._apos,this._aquat,this._scl); this._haveA=true; this._scl.set(1,1,1);
+      this.clear(this.liveGroup);
+      this.buildTrajectories();   // depends only on frozen data
+      this.setUIState();
+      this.flash(cs2.length+' charges locked · move around to observe');
+    },
+
+    rescan:function(){
+      this.locked=false; this.frozen=null; this._haveA=false; this.buildKey='';
+      [this.gridGroup,this.fieldGroup,this.potGroup,this.glyphGroup,this.trajGroup,this.pGroup].forEach(g=>this.clear(g));
+      this.setUIState();
+    },
+
+    setUIState:function(){
+      const lock=document.querySelector('#lockBtn');
+      lock.classList.toggle('locked',this.locked);
+      lock.querySelector('.ic').textContent=this.locked?'↻':'🔒';
+      lock.querySelector('span:last-child').textContent=this.locked?'Re-scan':'Lock charges';
+      ['#t-grid','#t-field','#t-pot'].forEach(sel=>document.querySelector(sel).classList.toggle('disabled',!this.locked));
+      // sync toggle .on classes
+      document.querySelector('#t-grid').classList.toggle('on',this.show.grid);
+      document.querySelector('#t-field').classList.toggle('on',this.show.field);
+      document.querySelector('#t-pot').classList.toggle('on',this.show.pot);
+    },
+
+    flash:function(msg){ this._flash=msg; this._flashUntil=performance.now()+1800; },
+
+    /* ---- plane fit (PCA for 3+, else averaged normals) ---- */
+    fitPlane:function(pts){
+      const n=pts.length;const origin=new THREE.Vector3();
+      for(const c of pts)origin.add(c.pos);origin.multiplyScalar(1/n);
+      let normal=new THREE.Vector3();
+      if(n<=2){for(const c of pts)normal.add(c.normal);if(normal.lengthSq()<1e-9)normal.set(0,1,0);normal.normalize();}
+      else{let xx=0,xy=0,xz=0,yy=0,yz=0,zz=0;
+        for(const c of pts){const d=this._v.subVectors(c.pos,origin);
+          xx+=d.x*d.x;xy+=d.x*d.y;xz+=d.x*d.z;yy+=d.y*d.y;yz+=d.y*d.z;zz+=d.z*d.z;}
+        normal=this.eig([[xx,xy,xz],[xy,yy,yz],[xz,yz,zz]]);
+        const avg=new THREE.Vector3();for(const c of pts)avg.add(c.normal);if(normal.dot(avg)<0)normal.multiplyScalar(-1);}
+      const ref=Math.abs(normal.y)<0.92?new THREE.Vector3(0,1,0):new THREE.Vector3(1,0,0);
+      const u=new THREE.Vector3().crossVectors(ref,normal).normalize();
+      return {origin,normal,u};
+    },
+    eig:function(A){const a=[A[0].slice(),A[1].slice(),A[2].slice()];const V=[[1,0,0],[0,1,0],[0,0,1]];
+      for(let s=0;s<24;s++){let p=0,qd=1,max=Math.abs(a[0][1]);const o02=Math.abs(a[0][2]),o12=Math.abs(a[1][2]);
+        if(o02>max){max=o02;p=0;qd=2;}if(o12>max){max=o12;p=1;qd=2;}if(max<1e-10)break;
+        const app=a[p][p],aqq=a[qd][qd],apq=a[p][qd];const phi=0.5*Math.atan2(2*apq,aqq-app);const c=Math.cos(phi),si=Math.sin(phi);
+        for(let i=0;i<3;i++){const x=a[i][p],y=a[i][qd];a[i][p]=c*x-si*y;a[i][qd]=si*x+c*y;}
+        for(let i=0;i<3;i++){const x=a[p][i],y=a[qd][i];a[p][i]=c*x-si*y;a[qd][i]=si*x+c*y;}
+        for(let i=0;i<3;i++){const x=V[i][p],y=V[i][qd];V[i][p]=c*x-si*y;V[i][qd]=si*x+c*y;}}
+      const e=[a[0][0],a[1][1],a[2][2]];let mi=0;if(e[1]<e[mi])mi=1;if(e[2]<e[mi])mi=2;
+      return new THREE.Vector3(V[0][mi],V[1][mi],V[2][mi]).normalize();},
+
+    /* ---- local frame helpers (content lives under the anchor group) ---- */
+    L:function(a,b,h){return new THREE.Vector3(a,h||0,b);},   // plane coords -> local (Y up)
+    field2D:function(a,b,cs){let Ea=0,Eb=0;for(const c of cs){const dx=a-c.a,dy=b-c.b;
+      const r2=dx*dx+dy*dy+this.SOFT*this.SOFT,r=Math.sqrt(r2),r3=r2*r;Ea+=this.K*c.q*dx/r3;Eb+=this.K*c.q*dy/r3;}return{Ea,Eb};},
+    potential2D:function(a,b,cs){let V=0;for(const c of cs){const dx=a-c.a,dy=b-c.b;
+      const r=Math.sqrt(dx*dx+dy*dy+this.SOFT*this.SOFT);V+=this.K*c.q/r;}return V;},
+    pHeight:function(a,b,cs){if(this.show.pot&&cs.length){const V=this.potential2D(a,b,cs);
+      return Math.max(-this.HCLAMP,Math.min(this.HCLAMP,V*this.HEIGHT))+0.02;}return 0.02;},
+
+    /* ---- geometry builders (LOCAL frame) ---- */
+    buildGrid:function(cs2,S){this.clear(this.gridGroup);if(!this.show.grid)return;
+      const div=Math.max(8,Math.min(28,Math.round(S*4))),step=(2*S)/div;const pos=[],col=[];
+      const cM=new THREE.Color('#39e0c8'),cF=new THREE.Color('#1f6f8c');const self=this;
+      function Ln(p1,p2,c,o){pos.push(p1.x,p1.y,p1.z,p2.x,p2.y,p2.z);for(let s=0;s<2;s++)col.push(c.r*o,c.g*o,c.b*o);}
+      for(let i=0;i<=div;i++){const t=-S+i*step,maj=(i%4===0),c=maj?cM:cF,o=maj?1:0.55;
+        Ln(self.L(t,-S,0.002),self.L(t,S,0.002),c,o);Ln(self.L(-S,t,0.002),self.L(S,t,0.002),c,o);}
+      const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+      g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));
+      this.gridGroup.add(new THREE.LineSegments(g,new THREE.LineBasicMaterial({vertexColors:true,transparent:true,opacity:0.55})));},
+
+    buildField:function(cs2,S){this.clear(this.fieldGroup);if(!this.show.field||!cs2.length)return;
+      const hasPos=cs2.some(c=>c.q>0),src=cs2.filter(c=>hasPos?c.q>0:c.q<0);
+      const seedR=hasPos?0.18:S*0.85,nSeed=14,opts={step:0.05,maxSteps:240,minR:0.16,maxR:S*1.25};
+      for(const s of src)for(let i=0;i<nSeed;i++){const th=(i/nSeed)*Math.PI*2;
+        const line=this.traceField(s.a+seedR*Math.cos(th),s.b+seedR*Math.sin(th),cs2,opts);if(line.length<2)continue;
+        this.addTube(line,s.q>0?'#ff5b5b':'#4f9bff','#4f9bff');this.addArrows(line);}},
+    traceField:function(a,b,cs2,opts){const pts=[];let A=a,B=b,st=opts.step;
+      for(let i=0;i<opts.maxSteps;i++){pts.push(this.L(A,B,0.012));
+        const f1=this.field2D(A,B,cs2),l1=Math.hypot(f1.Ea,f1.Eb);if(l1<1e-7)break;
+        const k1a=(f1.Ea/l1)*st,k1b=(f1.Eb/l1)*st;const f2=this.field2D(A+k1a,B+k1b,cs2),l2=Math.hypot(f2.Ea,f2.Eb);
+        let dA=k1a,dB=k1b;if(l2>1e-7){dA=0.5*(k1a+(f2.Ea/l2)*st);dB=0.5*(k1b+(f2.Eb/l2)*st);}A+=dA;B+=dB;
+        let stop=false;for(const c of cs2){if(Math.hypot(A-c.a,B-c.b)<opts.minR){pts.push(this.L(A,B,0.012));stop=true;break;}}
+        if(stop)break;if(Math.hypot(A,B)>opts.maxR){pts.push(this.L(A,B,0.012));break;}}return pts;},
+    addTube:function(points,cFrom,cTo){if(points.length<2)return;const curve=new THREE.CatmullRomCurve3(points);
+      const seg=Math.min(80,Math.max(8,points.length));const geo=new THREE.TubeGeometry(curve,seg,0.009,4,false);
+      const cA=new THREE.Color(cFrom),cB=new THREE.Color(cTo),p=geo.attributes.position,colors=new Float32Array(p.count*3),ring=5;
+      for(let i=0;i<p.count;i++){const t=Math.floor(i/ring)/Math.max(1,p.count/ring);const c=cA.clone().lerp(cB,Math.min(1,t));
+        colors[i*3]=c.r;colors[i*3+1]=c.g;colors[i*3+2]=c.b;}
+      geo.setAttribute('color',new THREE.BufferAttribute(colors,3));
+      this.fieldGroup.add(new THREE.Mesh(geo,new THREE.MeshBasicMaterial({vertexColors:true})));},
+    addArrows:function(pts){const every=Math.max(10,Math.floor(pts.length/3));
+      for(let i=every;i<pts.length-1;i+=every){const dir=new THREE.Vector3().subVectors(pts[i+1],pts[i]);if(dir.lengthSq()<1e-9)continue;
+        const cone=new THREE.Mesh(new THREE.ConeGeometry(0.028,0.075,10),new THREE.MeshBasicMaterial({color:'#ffd34f'}));
+        cone.position.copy(pts[i]);cone.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.normalize());this.fieldGroup.add(cone);}},
+
+    buildPotential:function(cs2,S){this.clear(this.potGroup);if(!this.show.pot||!cs2.length)return;
+      const N=72,geo=new THREE.PlaneGeometry(2*S,2*S,N,N),pos=geo.attributes.position,colors=new Float32Array(pos.count*3);
+      const cHot=new THREE.Color('#ff5b5b'),cMid=new THREE.Color('#0c1626'),cCold=new THREE.Color('#3b9bff'),cHole=new THREE.Color('#020308');
+      for(let i=0;i<pos.count;i++){const a=pos.getX(i),b=pos.getY(i);let V=this.potential2D(a,b,cs2);
+        let h=Math.max(-this.HCLAMP,Math.min(this.HCLAMP,V*this.HEIGHT));const L=this.L(a,b,h);pos.setXYZ(i,L.x,L.y,L.z);
+        let c;const vt=Math.max(-1,Math.min(1,V*this.HEIGHT/this.HCLAMP));
+        if(vt>=0)c=cMid.clone().lerp(cHot,Math.pow(vt,0.6));
+        else{c=cMid.clone().lerp(cCold,Math.pow(-vt,0.6));if(-vt>0.7)c.lerp(cHole,(-vt-0.7)/0.3);}
+        colors[i*3]=c.r;colors[i*3+1]=c.g;colors[i*3+2]=c.b;}
+      geo.setAttribute('color',new THREE.BufferAttribute(colors,3));geo.computeVertexNormals();
+      this.potGroup.add(new THREE.Mesh(geo,new THREE.MeshPhongMaterial({vertexColors:true,side:THREE.DoubleSide,shininess:40,specular:0x222a33})));
+      this.potGroup.add(new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:'#39e0c8',wireframe:true,transparent:true,opacity:0.12})));
+      if(!this._lit){this.content.add(new THREE.AmbientLight(0xffffff,0.7));
+        const d=new THREE.DirectionalLight(0xffffff,0.7);d.position.set(2,5,2);this.content.add(d);this._lit=true;}
+      for(const c of cs2){if(c.q<0){const ring=new THREE.Mesh(new THREE.TorusGeometry(0.22,0.018,10,40),
+        new THREE.MeshBasicMaterial({color:'#7ad0ff',transparent:true,opacity:0.85}));
+        ring.position.copy(this.L(c.a,c.b,0.01));ring.rotation.x=0;this.potGroup.add(ring);}
+        else{const cap=new THREE.Mesh(new THREE.SphereGeometry(0.03,10,10),new THREE.MeshBasicMaterial({color:'#fff1c0'}));
+        const Vpk=this.potential2D(c.a,c.b,cs2);cap.position.copy(this.L(c.a,c.b,Math.min(this.HCLAMP,Vpk*this.HEIGHT)));this.potGroup.add(cap);}}},
+
+    buildGlyphs:function(cs2){this.clear(this.glyphGroup);
+      for(const c of cs2){const cv=document.createElement('canvas');cv.width=cv.height=128;const g=cv.getContext('2d');
+        g.fillStyle=c.q>0?'#ff4d4d':'#3b9bff';g.beginPath();g.arc(64,64,58,0,Math.PI*2);g.fill();
+        g.strokeStyle='rgba(255,255,255,0.95)';g.lineWidth=9;g.beginPath();g.moveTo(34,64);g.lineTo(94,64);
+        if(c.q>0){g.moveTo(64,34);g.lineTo(64,94);}g.stroke();
+        const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cv),depthTest:false}));
+        sp.position.copy(this.L(c.a,c.b,this.pHeight(c.a,c.b,cs2)));sp.scale.set(0.18,0.18,0.18);sp.renderOrder=999;this.glyphGroup.add(sp);}},
+
+    /* ---- particle-gun trajectories (frozen, in local frame) ---- */
+    traceParticle:function(g,cs2,S){const cfg=this.pcfg,dt=cfg.dt,path=[];
+      let A=g.a+g.da*0.16,B=g.b+g.db*0.16,va=g.da*cfg.speed,vb=g.db*cfg.speed,maxR=S*1.4;
+      for(let i=0;i<cfg.maxSteps;i++){path.push({a:A,b:B});const f=this.field2D(A,B,cs2);
+        va+=f.Ea*g.q*cfg.force*dt;vb+=f.Eb*g.q*cfg.force*dt;A+=va*dt;B+=vb*dt;
+        if(Math.hypot(A,B)>maxR){path.push({a:A,b:B});break;}
+        let hit=false;for(const c of cs2){if(c.q*g.q<0&&Math.hypot(A-c.a,B-c.b)<0.12){path.push({a:A,b:B});hit=true;break;}}if(hit)break;}
+      return path;},
+    buildTrajectories:function(){this.clear(this.trajGroup);if(!this.frozen)return;
+      const cs2=this.frozen.cs2;let S=0.9;for(const c of cs2)S=Math.max(S,Math.hypot(c.a,c.b));
+      for(const g of this.frozen.guns)S=Math.max(S,Math.hypot(g.a,g.b));S+=1.1;this._S=S;
+      for(const g of this.frozen.guns){const path=this.traceParticle(g,cs2,S);g.path2=path.length>=2?path:null;
+        g.dur=Math.max(2200,path.length*14);if(!g.path2)continue;
+        const wpts=path.map(p=>this.L(p.a,p.b,this.pHeight(p.a,p.b,cs2)));
+        const geo=new THREE.BufferGeometry().setFromPoints(wpts);
+        this.trajGroup.add(new THREE.Line(geo,new THREE.LineBasicMaterial({color:g.color,transparent:true,opacity:0.35})));}},
+
+    animate:function(time){this.clear(this.pGroup);if(!this.frozen)return;const cs2=this.frozen.cs2;
+      for(const g of this.frozen.guns){if(!g.path2)continue;const n=g.path2.length,col=new THREE.Color(g.color),CT=3;
+        for(let k=0;k<CT;k++){const ph=(((time/g.dur)+k/CT)%1),fi=ph*(n-1),i0=Math.floor(fi),f=fi-i0,i1=Math.min(n-1,i0+1);
+          const A=g.path2[i0],B=g.path2[i1],a=A.a+(B.a-A.a)*f,b=A.b+(B.b-A.b)*f;
+          const s=new THREE.Mesh(new THREE.SphereGeometry(0.05,16,16),new THREE.MeshBasicMaterial({color:col}));
+          s.position.copy(this.L(a,b,this.pHeight(a,b,cs2)));this.pGroup.add(s);}}},
+
+    /* ---- pre-lock live preview (jittery, just to confirm detection) ---- */
+    livePreview:function(){this.clear(this.liveGroup);
+      for(const c of this.liveCharges()){const s=new THREE.Mesh(new THREE.SphereGeometry(0.05,12,12),
+        new THREE.MeshBasicMaterial({color:c.q>0?'#ff4d4d':'#3b9bff'}));s.position.copy(c.pos);this.liveGroup.add(s);}},
+
+    clear:function(group){for(let i=group.children.length-1;i>=0;i--){const o=group.children[i];
+      if(o.geometry)o.geometry.dispose();if(o.material){if(o.material.map)o.material.map.dispose();o.material.dispose();}group.remove(o);}},
+
+    /* ---- per-frame ---- */
+    tick:function(time){
+      // flashing status message wins briefly
+      let baseMsg;
+      if(!this.locked){
+        const n=this.liveCharges().length, g=this.guns.filter(x=>x.el.object3D.visible).length;
+        baseMsg=n||g ? (n+' charge'+(n!==1?'s':'')+(g?' + '+g+' gun'+(g>1?'s':''):'')+' visible · tap Lock charges')
+                     : 'Point at the cards so they are seen, then tap Lock';
+        this.livePreview();
+      } else {
+        const seen=this.frozen.anchors.filter(an=>an.el.object3D.visible).length;
+        baseMsg = seen ? ('Locked · '+this.frozen.cs2.length+' charges · tracking '+seen+' marker'+(seen>1?'s':''))
+                       : 'Locked · point back at the cards to keep tracking';
+        this.updateAnchor();
+        this.maybeBuild();
+        this.animate(time);
+      }
+      const msg=(this._flash&&time<this._flashUntil)?this._flash:baseMsg;
+      if(this.statusEl.textContent!==msg) this.statusEl.textContent=msg;
+    },
+
+    // recover the reference-frame pose from currently-visible locked markers
+    updateAnchor:function(){
+      const ests=[];
+      for(const an of this.frozen.anchors){const o=an.el.object3D;if(!o.visible)continue;
+        o.updateMatrixWorld(true);
+        const E=o.matrixWorld.clone().multiply(an.K);     // world_from_ref estimate
+        const p=new THREE.Vector3(),q=new THREE.Quaternion(),s=new THREE.Vector3();
+        E.decompose(p,q,s);ests.push({p,q});}
+      if(!ests.length) return; // keep last pose
+      // average position + quaternion
+      const ap=new THREE.Vector3();let aq=null;
+      for(const e of ests){ap.add(e.p);
+        if(!aq)aq=e.q.clone();else{if(aq.dot(e.q)<0){e.q.x*=-1;e.q.y*=-1;e.q.z*=-1;e.q.w*=-1;}aq.x+=e.q.x;aq.y+=e.q.y;aq.z+=e.q.z;aq.w+=e.q.w;}}
+      ap.multiplyScalar(1/ests.length);aq.normalize();
+      // temporal smoothing
+      const s=this.smoothA;
+      this._apos.lerp(ap,s); this._aquat.slerp(aq,s);
+      this.anchor.matrix.compose(this._apos,this._aquat,this._scl);
+      this.anchor.matrixWorldNeedsUpdate=true;
+    },
+
+    maybeBuild:function(){
+      const key=this.show.grid+''+this.show.field+this.show.pot;
+      if(key===this.buildKey) return;
+      const cs2=this.frozen.cs2,S=this._S||2;
+      this.buildGrid(cs2,S); this.buildField(cs2,S); this.buildPotential(cs2,S); this.buildGlyphs(cs2);
+      this.buildTrajectories();
+      this.buildKey=key;
+    }
+  });
+
+  /* ---- start gate ---- */
+  (function(){
+    const gate=document.getElementById('gate'),btn=document.getElementById('startBtn'),scene=document.querySelector('a-scene');
+    const reveal=()=>gate.classList.add('hidden');
+    btn.addEventListener('click',()=>setTimeout(reveal,400));
+    scene.addEventListener('arjs-video-loaded',function(){reveal();
+      const kick=()=>window.dispatchEvent(new Event('resize'));setTimeout(kick,300);setTimeout(kick,1200);});
+    scene.addEventListener('camera-error',()=>{document.getElementById('status').textContent='Camera unavailable — check permissions & HTTPS';});
+  })();
+  </script>
+</body>
+</html>
