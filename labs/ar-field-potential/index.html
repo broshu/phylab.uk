@@ -244,6 +244,7 @@
       this.SOFT       = num('soft', 0.16);// softening radius (avoids singularities)
       this.HEIGHT     = num('height', 0.55); // potential -> height scale
       this.HCLAMP     = num('hclamp', 1.3);  // max |height| of the surface
+      this.HOLD       = num('hold', 450);    // ms to keep a charge after a marker dropout
 
       // ---- electron-gun config (URL-overridable) ----
       this.gundir = Math.round(num('gundir', 0)) & 3; // 0..3 quarter-turns of beam dir
@@ -296,18 +297,24 @@
       el.addEventListener('touchend', handler, { passive: false });
     },
 
-    /* ---- 1. collect visible charges in world space ---- */
-    collectCharges: function () {
+    /* ---- 1. collect charges (with short persistence to kill flicker) ----
+       AR.js can drop a barcode for a frame or two even with the iPad still.
+       We remember each marker's last pose and keep the charge alive for
+       `HOLD` ms after it was last actually seen, so brief dropouts don't blink. */
+    collectCharges: function (time) {
       const charges = [];
       for (const m of this.markers) {
         const o = m.object3D;
-        if (!o.visible) continue;
-        const p = new THREE.Vector3();
-        const quat = new THREE.Quaternion();
-        o.getWorldPosition(p);
-        o.getWorldQuaternion(quat);
-        const n = new THREE.Vector3(0, 1, 0).applyQuaternion(quat).normalize();
-        charges.push({ pos: p, q: parseFloat(m.dataset.q), normal: n });
+        if (!m._mem) m._mem = { seen:-1, pos:new THREE.Vector3(), normal:new THREE.Vector3(0,1,0) };
+        if (o.visible) {
+          o.getWorldPosition(m._mem.pos);
+          const quat = new THREE.Quaternion(); o.getWorldQuaternion(quat);
+          m._mem.normal.set(0,1,0).applyQuaternion(quat).normalize();
+          if (m._mem.seen < 0) m._mem.seenStart = time;   // first acquisition
+          m._mem.seen = time;
+        }
+        const fresh = m._mem.seen >= 0 && (time - m._mem.seen) <= this.HOLD;
+        if (fresh) charges.push({ pos: m._mem.pos.clone(), q: parseFloat(m.dataset.q), normal: m._mem.normal.clone() });
       }
       return charges;
     },
@@ -638,11 +645,8 @@
     },
 
     /* ---- electron gun: muzzle pose in plane coords {a,b,da,db} ---- */
-    gunPose: function () {
-      if (!this.gun || !this.gun.object3D.visible || !this.plane) return null;
-      const o=this.gun.object3D;
-      const wp=new THREE.Vector3(); o.getWorldPosition(wp);
-      const wq=new THREE.Quaternion(); o.getWorldQuaternion(wq);
+    computeMuzzle: function (wp, wq) {
+      if (!this.plane) return null;
       // card "forward" = local +Z, projected onto the fitted plane
       let f=new THREE.Vector3(0,0,1).applyQuaternion(wq);
       f.addScaledVector(this.plane.normal, -f.dot(this.plane.normal));
@@ -671,8 +675,8 @@
       if (dt<=0){ this.renderParticles(cs2); return; }
       if (dt>0.05) dt=0.05;
 
-      // emit from the gun while it is visible
-      const g=this.gunPose();
+      // emit from the gun while it is visible (uses persisted muzzle)
+      const g=this._muzzle;
       if (g){
         this._emitAcc += cfg.rate*dt;
         const base=Math.atan2(g.db,g.da);
@@ -739,19 +743,26 @@
 
     /* ---- main loop ---- */
     tick: function (time) {
-      const charges = this.collectCharges();
-      const gunVisible = !!(this.gun && this.gun.object3D.visible);
+      const charges = this.collectCharges(time);
+
+      // gun: same persistence grace window as the charges
+      if (this.gun && !this.gun._mem)
+        this.gun._mem={ seen:-1, pos:new THREE.Vector3(), quat:new THREE.Quaternion(), normal:new THREE.Vector3(0,1,0) };
+      if (this.gun && this.gun.object3D.visible){
+        this.gun.object3D.getWorldPosition(this.gun._mem.pos);
+        this.gun.object3D.getWorldQuaternion(this.gun._mem.quat);
+        this.gun._mem.normal.set(0,1,0).applyQuaternion(this.gun._mem.quat).normalize();
+        this.gun._mem.seen=time;
+      }
+      const gunVisible = !!(this.gun && this.gun._mem.seen>=0 && (time-this.gun._mem.seen)<=this.HOLD);
       const nPos=charges.filter(c=>c.q>0).length, nNeg=charges.filter(c=>c.q<0).length;
 
       // markers used for plane fitting = charges + gun (all lie on the desk)
       const planeMarkers = charges.slice();
       let gunWorld=null;
       if (gunVisible){
-        const o=this.gun.object3D;
-        gunWorld=new THREE.Vector3(); o.getWorldPosition(gunWorld);
-        const qq=new THREE.Quaternion(); o.getWorldQuaternion(qq);
-        const n=new THREE.Vector3(0,1,0).applyQuaternion(qq).normalize();
-        planeMarkers.push({ pos:gunWorld, q:0, normal:n });
+        gunWorld=this.gun._mem.pos;
+        planeMarkers.push({ pos:this.gun._mem.pos.clone(), q:0, normal:this.gun._mem.normal.clone() });
       }
 
       // status line
@@ -770,11 +781,14 @@
           this.clear(this.gridGroup); this.clear(this.fieldGroup);
           this.clear(this.potGroup); this.clear(this.glyphGroup); this.clear(this.pGroup);
         }
-        this.particles=[]; this.lastKey=''; this.plane=null; this._lastT=0; return;
+        this.particles=[]; this._muzzle=null; this.lastKey=''; this.plane=null; this._lastT=0; return;
       }
 
       // fit + smooth the plane
       this.smoothPlane(this.fitPlane(planeMarkers));
+
+      // muzzle pose for the particle gun (persisted through dropouts)
+      this._muzzle = gunVisible ? this.computeMuzzle(this.gun._mem.pos, this.gun._mem.quat) : null;
 
       // project charges into plane coords (used by physics, field, potential, gun)
       const cs2 = charges.map(c=>{ const q2=this.to2D(c.pos); return {a:q2.a,b:q2.b,q:c.q}; });
