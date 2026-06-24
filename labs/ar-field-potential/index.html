@@ -171,7 +171,8 @@
     <div id="legend">
       <div><span class="dot pos"></span>Positive charge (+)</div>
       <div><span class="dot neg"></span>Negative charge (−)</div>
-      <div><span class="dot" style="background:#ffd76a;box-shadow:0 0 8px rgba(255,215,106,.8)"></span>Electron-gun beam</div>
+      <div><span class="dot" style="background:#ffd76a;box-shadow:0 0 8px rgba(255,215,106,.8)"></span>+ particle gun</div>
+      <div><span class="dot" style="background:#7fd0ff;box-shadow:0 0 8px rgba(127,208,255,.8)"></span>− particle gun</div>
     </div>
     <div id="controls">
       <div class="toggle on" id="t-grid"><span class="ic">▦</span><span>Grid</span></div>
@@ -188,24 +189,23 @@
     arjs="sourceType: webcam; sourceWidth: 1024; sourceHeight: 768; displayWidth: 1024; displayHeight: 768; detectionMode: mono_and_matrix; matrixCodeType: 3x3; patternRatio: 0.5; labelingMode: black_region; maxDetectionRate: 60; debugUIEnabled: false;"
     field-controller>
 
-    <!-- POSITIVE charge cards: barcode values 1–6 -->
+    <!-- POSITIVE charge cards: barcode values 1–5 (page 1) -->
     <a-marker class="chg" data-q="1" type="barcode" value="1"  smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
     <a-marker class="chg" data-q="1" type="barcode" value="2"  smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
     <a-marker class="chg" data-q="1" type="barcode" value="3"  smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
     <a-marker class="chg" data-q="1" type="barcode" value="4"  smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
     <a-marker class="chg" data-q="1" type="barcode" value="5"  smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
-    <a-marker class="chg" data-q="1" type="barcode" value="6"  smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
 
-    <!-- NEGATIVE charge cards: barcode values 7–12 -->
+    <!-- NEGATIVE charge cards: barcode values 7–11 (page 2) -->
     <a-marker class="chg" data-q="-1" type="barcode" value="7"  smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
     <a-marker class="chg" data-q="-1" type="barcode" value="8"  smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
     <a-marker class="chg" data-q="-1" type="barcode" value="9"  smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
     <a-marker class="chg" data-q="-1" type="barcode" value="10" smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
     <a-marker class="chg" data-q="-1" type="barcode" value="11" smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
-    <a-marker class="chg" data-q="-1" type="barcode" value="12" smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
 
-    <!-- ELECTRON GUN: barcode value 0. Fires + test charges forward, in-plane. -->
-    <a-marker class="gun" type="barcode" value="0" smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
+    <!-- PARTICLE GUNS: barcode 0 fires + test charges, barcode 12 fires − test charges -->
+    <a-marker class="gun gun-pos" data-q="1"  type="barcode" value="0"  smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
+    <a-marker class="gun gun-neg" data-q="-1" type="barcode" value="12" smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
 
     <a-entity camera></a-entity>
   </a-scene>
@@ -234,7 +234,6 @@
     init: function () {
       const T = AFRAME.THREE || THREE;
       this.markers = Array.from(document.querySelectorAll('a-marker.chg'));
-      this.gun = document.querySelector('a-marker.gun');
       this.statusEl = document.querySelector('#status');
 
       // ---- tunables (URL-overridable) ----
@@ -247,19 +246,27 @@
       this.SAMPLE     = num('sample', 1000); // ms between committed position samples (sample-and-hold)
       this.KEEP       = num('hold', 1500);   // ms to keep a charge alive after it was last actually seen
 
-      // ---- electron-gun config (URL-overridable) ----
+      // ---- particle-gun config (URL-overridable) ----
       this.gundir = Math.round(num('gundir', 0)) & 3; // 0..3 quarter-turns of beam dir
       this.pcfg = {
-        charge: q.get('pcharge') === '-1' ? -1 : 1, // test-charge sign (default +)
         speed:  num('pspeed', 0.7),    // muzzle speed (plane units/s)
         force:  num('pforce', 0.5),    // field acceleration gain
-        rate:   num('prate', 18),      // particles per second
-        life:   num('plife', 5.0),     // lifetime (s)
-        spread: num('pspread', 0.10),  // emission half-angle (rad)
+        life:   num('plife', 6.0),     // lifetime (s)
         bound:  num('pbound', 6.0),    // cull distance from plane origin
-        muzzle: 0.16, trail: 260, max: 40
+        muzzle: 0.16, trail: 320, max: 24
       };
-      this.particles = []; this._lastEmit = -1e9; this._lastT = 0;
+      // two guns: + particle gun (barcode 0) and − particle gun (barcode 12)
+      this.guns = [
+        { el: document.querySelector('a-marker.gun-pos'), q:+1, color:'#ffd76a' },
+        { el: document.querySelector('a-marker.gun-neg'), q:-1, color:'#7fd0ff' }
+      ].filter(g => g.el);
+      for (const g of this.guns) {
+        g.mem = { seen:-1, sampled:-1, has:false,
+          raw:new THREE.Vector3(), rawQ:new THREE.Quaternion(),
+          pos:new THREE.Vector3(), quat:new THREE.Quaternion(), normal:new THREE.Vector3(0,1,0) };
+        g.particles = []; g.lastEmit = -1e9; g.muzzle = null;
+      }
+      this._lastT = 0;
 
       // ---- view toggles ----
       this.show = { grid: true, field: true, pot: false };
@@ -687,67 +694,69 @@
       if (dt<=0){ this.renderParticles(cs2); return; }
       if (dt>0.05) dt=0.05;
 
-      // emit ONE big particle per sampling period (in step with the 1 s sample rate),
-      // fired straight along the muzzle direction (no spread).
-      const g=this._muzzle;
-      if (g && (time - this._lastEmit) >= this.SAMPLE && this.particles.length < cfg.max){
-        this._lastEmit = time;
-        this.particles.push({
-          a:g.a+g.da*cfg.muzzle, b:g.b+g.db*cfg.muzzle,
-          va:g.da*cfg.speed, vb:g.db*cfg.speed, age:0, trail:[]
-        });
-      }
-
-      // integrate motion under F = qE (q = test-charge sign)
-      const alive=[];
-      for (const p of this.particles){
-        const {Ea,Eb}=this.field2D(p.a,p.b,cs2);
-        p.va += Ea*cfg.charge*cfg.force*dt;
-        p.vb += Eb*cfg.charge*cfg.force*dt;
-        p.a  += p.va*dt; p.b += p.vb*dt;
-        p.age += dt;
-        p.trail.push([p.a,p.b]); if (p.trail.length>cfg.trail) p.trail.shift();
-        let dead = p.age>cfg.life || Math.hypot(p.a,p.b)>cfg.bound;
-        if (!dead) for (const c of cs2){           // absorbed by an opposite charge
-          if (c.q*cfg.charge<0 && Math.hypot(p.a-c.a,p.b-c.b)<0.13){ dead=true; break; }
+      for (const gun of this.guns){
+        // emit ONE big particle per sampling period, straight along the muzzle (no spread)
+        const g=gun.muzzle;
+        if (g && (time - gun.lastEmit) >= this.SAMPLE && gun.particles.length < cfg.max){
+          gun.lastEmit = time;
+          gun.particles.push({
+            a:g.a+g.da*cfg.muzzle, b:g.b+g.db*cfg.muzzle,
+            va:g.da*cfg.speed, vb:g.db*cfg.speed, age:0, trail:[]
+          });
         }
-        if (!dead) alive.push(p);
+        // integrate motion under F = qE  (q = this gun's test-charge sign)
+        const alive=[];
+        for (const p of gun.particles){
+          const {Ea,Eb}=this.field2D(p.a,p.b,cs2);
+          p.va += Ea*gun.q*cfg.force*dt;
+          p.vb += Eb*gun.q*cfg.force*dt;
+          p.a  += p.va*dt; p.b += p.vb*dt;
+          p.age += dt;
+          p.trail.push([p.a,p.b]); if (p.trail.length>cfg.trail) p.trail.shift();
+          let dead = p.age>cfg.life || Math.hypot(p.a,p.b)>cfg.bound;
+          if (!dead) for (const c of cs2){          // absorbed by an opposite-sign charge
+            if (c.q*gun.q<0 && Math.hypot(p.a-c.a,p.b-c.b)<0.13){ dead=true; break; }
+          }
+          if (!dead) alive.push(p);
+        }
+        gun.particles=alive;
       }
-      this.particles=alive;
       this.renderParticles(cs2);
     },
 
     renderParticles: function (cs2) {
       this.clear(this.pGroup);
-      if (!this.particles.length) return;
-      const col=new THREE.Color(this.pcfg.charge>0 ? '#ffd76a' : '#7fd0ff');
-      // trails (line segments, fading toward the tail), lifted onto the surface
-      const seg=[], scol=[];
-      for (const p of this.particles){
-        const tr=p.trail;
-        for (let k=1;k<tr.length;k++){
-          const A=tr[k-1], B=tr[k];
-          const wa=this.toWorld(A[0],A[1],this.pHeight(A[0],A[1],cs2));
-          const wb=this.toWorld(B[0],B[1],this.pHeight(B[0],B[1],cs2));
-          const fade=k/tr.length;
-          seg.push(wa.x,wa.y,wa.z,wb.x,wb.y,wb.z);
-          for (let s=0;s<2;s++) scol.push(col.r*fade,col.g*fade,col.b*fade);
+      for (const gun of this.guns){
+        if (!gun.particles.length) continue;
+        const col=new THREE.Color(gun.color);
+        // trails (line segments, fading toward the tail), lifted onto the surface
+        const seg=[], scol=[];
+        for (const p of gun.particles){
+          const tr=p.trail;
+          for (let k=1;k<tr.length;k++){
+            const A=tr[k-1], B=tr[k];
+            const wa=this.toWorld(A[0],A[1],this.pHeight(A[0],A[1],cs2));
+            const wb=this.toWorld(B[0],B[1],this.pHeight(B[0],B[1],cs2));
+            const fade=k/tr.length;
+            seg.push(wa.x,wa.y,wa.z,wb.x,wb.y,wb.z);
+            for (let s=0;s<2;s++) scol.push(col.r*fade,col.g*fade,col.b*fade);
+          }
         }
-      }
-      if (seg.length){
-        const gg=new THREE.BufferGeometry();
-        gg.setAttribute('position',new THREE.Float32BufferAttribute(seg,3));
-        gg.setAttribute('color',new THREE.Float32BufferAttribute(scol,3));
-        this.pGroup.add(new THREE.LineSegments(gg,new THREE.LineBasicMaterial({vertexColors:true,transparent:true,opacity:0.9})));
-      }
-      // one big particle head (sphere) per particle
-      for (const p of this.particles){
-        const w=this.toWorld(p.a,p.b,this.pHeight(p.a,p.b,cs2));
-        const s=new THREE.Mesh(
-          new THREE.SphereGeometry(0.055,16,16),
-          new THREE.MeshBasicMaterial({color:col}));
-        s.position.copy(w);
-        this.pGroup.add(s);
+        if (seg.length){
+          const gg=new THREE.BufferGeometry();
+          gg.setAttribute('position',new THREE.Float32BufferAttribute(seg,3));
+          gg.setAttribute('color',new THREE.Float32BufferAttribute(scol,3));
+          this.pGroup.add(new THREE.LineSegments(gg,new THREE.LineBasicMaterial({vertexColors:true,transparent:true,opacity:0.9})));
+        }
+        // one big particle head (sphere) per particle
+        for (const p of gun.particles){
+          const w=this.toWorld(p.a,p.b,this.pHeight(p.a,p.b,cs2));
+          const s=new THREE.Mesh(
+            new THREE.SphereGeometry(0.055,16,16),
+            new THREE.MeshBasicMaterial({color:col}));
+          s.position.copy(w);
+          this.pGroup.add(s);
+        }
       }
     },
 
@@ -755,16 +764,14 @@
     tick: function (time) {
       const charges = this.collectCharges(time);
 
-      // gun: same sample-and-hold scheme as the charges
-      if (this.gun && !this.gun._mem)
-        this.gun._mem={ seen:-1, sampled:-1, has:false,
-          raw:new THREE.Vector3(), rawQ:new THREE.Quaternion(),
-          pos:new THREE.Vector3(), quat:new THREE.Quaternion(), normal:new THREE.Vector3(0,1,0) };
-      if (this.gun){
-        const gm=this.gun._mem;
-        if (this.gun.object3D.visible){
-          this.gun.object3D.getWorldPosition(gm.raw);
-          this.gun.object3D.getWorldQuaternion(gm.rawQ);
+      // guns: same sample-and-hold scheme as the charges
+      const planeMarkers = charges.slice();
+      let anyGun=false;
+      for (const gun of this.guns){
+        const gm=gun.mem;
+        if (gun.el.object3D.visible){
+          gun.el.object3D.getWorldPosition(gm.raw);
+          gun.el.object3D.getWorldQuaternion(gm.rawQ);
           gm.seen=time;
         }
         const recent = gm.seen>=0 && (time-gm.seen)<=this.KEEP;
@@ -773,28 +780,20 @@
           gm.normal.set(0,1,0).applyQuaternion(gm.quat).normalize();
           gm.sampled=time; gm.has=true;
         }
-        if (!recent) gm.has=false;
+        if (!recent){ gm.has=false; gun.particles.length=0; }
+        if (gm.has){ anyGun=true; planeMarkers.push({ pos:gm.pos.clone(), q:0, normal:gm.normal.clone() }); }
       }
-      const gunVisible = !!(this.gun && this.gun._mem.has);
       const nPos=charges.filter(c=>c.q>0).length, nNeg=charges.filter(c=>c.q<0).length;
-
-      // markers used for plane fitting = charges + gun (all lie on the desk)
-      const planeMarkers = charges.slice();
-      let gunWorld=null;
-      if (gunVisible){
-        gunWorld=this.gun._mem.pos;
-        planeMarkers.push({ pos:this.gun._mem.pos.clone(), q:0, normal:this.gun._mem.normal.clone() });
-      }
 
       // status line
       let msg;
-      if (!charges.length && !gunVisible) msg='Searching for charge cards…';
-      else if (!charges.length)           msg='Electron gun — add + / − charges to deflect the beam';
-      else if (nPos&&nNeg)                msg=`${nPos+nNeg} charges · dipole/multipole field — lines run + → −`;
-      else if (nPos)                      msg=`${nPos} positive charge${nPos>1?'s':''} · field points outward`;
-      else                                msg=`${nNeg} negative charge${nNeg>1?'s':''} · field points inward`;
+      if (!charges.length && !anyGun) msg='Searching for charge cards…';
+      else if (!charges.length)        msg='Particle gun — add + / − charges to deflect the beam';
+      else if (nPos&&nNeg)             msg=`${nPos+nNeg} charges · dipole/multipole field — lines run + → −`;
+      else if (nPos)                   msg=`${nPos} positive charge${nPos>1?'s':''} · field points outward`;
+      else                             msg=`${nNeg} negative charge${nNeg>1?'s':''} · field points inward`;
       if (charges.length) msg += ` · plane ${planeMarkers.length>=3?'(best-fit)':'(card)'}`;
-      if (gunVisible && charges.length) msg += ' · gun firing';
+      if (anyGun && charges.length) msg += ' · gun firing';
       if (this.statusEl.textContent!==msg) this.statusEl.textContent=msg;
 
       if (!planeMarkers.length){
@@ -802,14 +801,19 @@
           this.clear(this.gridGroup); this.clear(this.fieldGroup);
           this.clear(this.potGroup); this.clear(this.glyphGroup); this.clear(this.pGroup);
         }
-        this.particles=[]; this._muzzle=null; this.lastKey=''; this.plane=null; this._lastT=0; return;
+        for (const gun of this.guns){ gun.particles.length=0; gun.muzzle=null; }
+        this.lastKey=''; this.plane=null; this._lastT=0; return;
       }
 
       // fit + smooth the plane
       this.smoothPlane(this.fitPlane(planeMarkers));
 
-      // muzzle pose for the particle gun (persisted through dropouts)
-      this._muzzle = gunVisible ? this.computeMuzzle(this.gun._mem.pos, this.gun._mem.quat) : null;
+      // muzzle pose for each gun (persisted through dropouts)
+      let gunWorld=null;
+      for (const gun of this.guns){
+        gun.muzzle = gun.mem.has ? this.computeMuzzle(gun.mem.pos, gun.mem.quat) : null;
+        if (gun.mem.has) gunWorld = gun.mem.pos;
+      }
 
       // project charges into plane coords (used by physics, field, potential, gun)
       const cs2 = charges.map(c=>{ const q2=this.to2D(c.pos); return {a:q2.a,b:q2.b,q:c.q}; });

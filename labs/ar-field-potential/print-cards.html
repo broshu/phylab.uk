@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Print Charge Cards — AR Field &amp; Potential</title>
 <style>
-  :root { --pos:#d8453c; --neg:#2f6fd8; --gun:#1f9c84; --ink:#1c2230; }
+  :root { --pos:#d8453c; --neg:#2f6fd8; --gunp:#c98a1e; --gunn:#2f6fd8; --ink:#1c2230; }
   * { box-sizing: border-box; }
   body { margin:0; background:#f3f4f7; color:var(--ink);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
@@ -18,7 +18,8 @@
     background:linear-gradient(135deg,#56c4ff,#39e0c8); color:#04121a; }
   .note { max-width:760px; margin:16px auto 0; padding:0 18px; color:#4a5366; font-size:13.5px; line-height:1.6; }
 
-  .sheet { max-width:760px; margin:14px auto 40px; padding:0 18px; }
+  .page { max-width:760px; margin:14px auto; padding:0 18px; }
+  .page h2 { font-size:15px; margin:6px 2px 12px; color:var(--ink); font-weight:700; }
   .grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
 
   .card { border:2px solid; border-radius:14px; background:#fff; padding:12px;
@@ -26,32 +27,36 @@
     break-inside:avoid; page-break-inside:avoid; }
   .card.pos { border-color:var(--pos); }
   .card.neg { border-color:var(--neg); }
-  .card.gun { border-color:var(--gun); }
+  .card.gunp { border-color:var(--gunp); }
+  .card.gunn { border-color:var(--gunn); }
 
   .top { display:flex; align-items:center; justify-content:space-between; width:100%; }
   .sign { font-size:30px; font-weight:800; line-height:1; }
   .card.pos .sign { color:var(--pos); }
   .card.neg .sign { color:var(--neg); }
-  .card.gun .sign { color:var(--gun); }
-  .tag { font-size:10px; font-weight:700; letter-spacing:.07em; text-transform:uppercase;
+  .card.gunp .sign { color:var(--gunp); }
+  .card.gunn .sign { color:var(--gunn); }
+  .tag { font-size:9.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
     padding:3px 9px; border-radius:999px; color:#fff; }
   .card.pos .tag { background:var(--pos); }
   .card.neg .tag { background:var(--neg); }
-  .card.gun .tag { background:var(--gun); }
-  .beam { color:var(--gun); font-size:20px; font-weight:700; line-height:1; margin:-2px 0; }
+  .card.gunp .tag { background:var(--gunp); }
+  .card.gunn .tag { background:var(--gunn); }
+  .beam { font-size:18px; font-weight:700; line-height:1; margin:-2px 0; }
+  .card.gunp .beam { color:var(--gunp); }
+  .card.gunn .beam { color:var(--gunn); }
 
-  /* The code is ALWAYS a perfect square with a white quiet zone.             */
-  /* An <img> with height:auto keeps the file's intrinsic 1:1 ratio — it does */
-  /* NOT depend on aspect-ratio or object-fit, which some print engines drop. */
+  /* Codes are ALWAYS square: an <img> with height:auto keeps its 1:1 file ratio. */
   .code { width:100%; background:#fff; border-radius:6px; padding:7%; }
   .code img { width:100%; height:auto; display:block; image-rendering:pixelated; }
-
   .cap { font-size:11px; color:#8b93a4; text-align:center; }
+
+  .pagebreak { page-break-after: always; break-after: page; }
 
   @media print {
     .toolbar, .note { display:none; }
     body { background:#fff; }
-    .sheet { margin:0; max-width:none; padding:6mm; }
+    .page { margin:0; max-width:none; padding:6mm; }
     .grid { gap:7mm; }
     .card { border-width:1.5px; }
     @page { margin:8mm; }
@@ -68,42 +73,54 @@
   </div>
 
   <p class="note">
-    Print this sheet on plain <b>matte</b> paper (A4 or Letter), then cut out the cards. Each code
-    is printed perfectly square — that matters, because the camera can only read a square 3×3 grid.
-    Keep the white margin around every code (the quiet zone the camera needs), lay the cards flat,
-    avoid glare, and use even lighting. Red = <b>positive (+)</b>, blue = <b>negative (−)</b>, green
-    = <b>electron gun</b>. Each card has its own code, so you can scatter as many as you like.
-    For the most reliable result, print the <b>Ready-made A4 PDF</b> (link above) at 100% / no scaling.
+    Two pages, one copy each. <b>Page 1</b> holds the positive (+) charge cards and the
+    <b>positive particle gun</b>; <b>page 2</b> holds the negative (−) cards and the
+    <b>negative particle gun</b>. Print on matte paper, cut out the cards, keep the white border
+    around every code, lay them flat with even lighting. Each gun fires test charges toward its
+    ▲ arrow — the + gun fires + charges, the − gun fires − charges.
   </p>
 
-  <div class="sheet">
-    <div class="grid" id="grid"></div>
+  <!-- ===== PAGE 1 — POSITIVE ===== -->
+  <div class="page pagebreak">
+    <h2>Page 1 · Positive charges + positive particle gun</h2>
+    <div class="grid" id="grid-pos"></div>
+  </div>
 
-    <div class="grid" style="margin-top:16px">
-      <div class="card gun">
-        <div class="top"><span class="sign">⌁</span><span class="tag">Electron gun</span></div>
-        <div class="beam">▲ beam</div>
-        <div class="code"><img src="markers/0.png" alt="code 0"></div>
-        <div class="cap">code 0 · fires + test charges toward the top of this card</div>
-      </div>
-    </div>
+  <!-- ===== PAGE 2 — NEGATIVE ===== -->
+  <div class="page">
+    <h2>Page 2 · Negative charges + negative particle gun</h2>
+    <div class="grid" id="grid-neg"></div>
   </div>
 
   <script>
-    // + cards = barcode 1-6, - cards = barcode 7-12
-    const grid = document.getElementById('grid');
-    function card(value, pos){
-      const el = document.createElement('div');
-      el.className = 'card ' + (pos?'pos':'neg');
-      el.innerHTML =
+    function chargeCard(value, pos){
+      const el=document.createElement('div');
+      el.className='card '+(pos?'pos':'neg');
+      el.innerHTML=
         '<div class="top"><span class="sign">'+(pos?'+':'−')+'</span>'+
         '<span class="tag">'+(pos?'Positive':'Negative')+'</span></div>'+
         '<div class="code"><img src="markers/'+value+'.png" alt="code '+value+'"></div>'+
         '<div class="cap">code '+value+'</div>';
       return el;
     }
-    for (let v=1; v<=6;  v++) grid.appendChild(card(v, true));
-    for (let v=7; v<=12; v++) grid.appendChild(card(v, false));
+    function gunCard(value, pos){
+      const el=document.createElement('div');
+      el.className='card '+(pos?'gunp':'gunn');
+      el.innerHTML=
+        '<div class="top"><span class="sign">⌁</span>'+
+        '<span class="tag">'+(pos?'+ particle gun':'− particle gun')+'</span></div>'+
+        '<div class="beam">▲ '+(pos?'+':'−')+' beam</div>'+
+        '<div class="code"><img src="markers/'+value+'.png" alt="code '+value+'"></div>'+
+        '<div class="cap">code '+value+' · fires '+(pos?'+':'−')+' test charges toward the top</div>';
+      return el;
+    }
+    const gp=document.getElementById('grid-pos');
+    for (let v=1; v<=5; v++) gp.appendChild(chargeCard(v, true));
+    gp.appendChild(gunCard(0, true));               // positive gun = code 0
+
+    const gn=document.getElementById('grid-neg');
+    for (let v=7; v<=11; v++) gn.appendChild(chargeCard(v, false));
+    gn.appendChild(gunCard(12, false));             // negative gun = code 12
   </script>
 </body>
 </html>
