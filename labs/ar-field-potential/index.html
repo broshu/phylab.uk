@@ -257,9 +257,9 @@
         life:   num('plife', 5.0),     // lifetime (s)
         spread: num('pspread', 0.10),  // emission half-angle (rad)
         bound:  num('pbound', 6.0),    // cull distance from plane origin
-        muzzle: 0.16, trail: 30, max: 120
+        muzzle: 0.16, trail: 260, max: 40
       };
-      this.particles = []; this._emitAcc = 0; this._lastT = 0;
+      this.particles = []; this._lastEmit = -1e9; this._lastT = 0;
 
       // ---- view toggles ----
       this.show = { grid: true, field: true, pot: false };
@@ -468,21 +468,15 @@
       g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));
       const m=new THREE.LineBasicMaterial({vertexColors:true,transparent:true,opacity:0.5});
       this.gridGroup.add(new THREE.LineSegments(g,m));
-
-      // soft glow fill plane behind the grid
-      const pg=new THREE.PlaneGeometry(2*S,2*S);
-      pg.rotateX(-Math.PI/2); // local +Y normal
-      const pm=new THREE.MeshBasicMaterial({color:'#0a1c26',transparent:true,opacity:0.18,side:THREE.DoubleSide,depthWrite:false});
-      const plane=new THREE.Mesh(pg,pm);
-      plane.position.copy(this.plane.origin);
-      plane.quaternion.copy(this.planeQuat());
-      this.gridGroup.add(plane);
     },
 
-    // quaternion mapping local +Y to the plane normal, +X to u
+    // Proper rotation mapping local +Y to the plane normal.
+    // NOTE: makeBasis(u, normal, v) is LEFT-handed (a reflection), so feeding it to
+    // setFromRotationMatrix yields a bad quaternion that left the fill plane skew.
+    // setFromUnitVectors is always a clean rotation, so the fill plane now sits
+    // exactly on the desk, coplanar with the grid lines.
     planeQuat: function () {
-      const m = new THREE.Matrix4().makeBasis(this.plane.u, this.plane.normal, this.plane.v);
-      return new THREE.Quaternion().setFromRotationMatrix(m);
+      return new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0), this.plane.normal);
     },
 
     /* ---- 4. field lines, traced in the plane ---- */
@@ -693,20 +687,15 @@
       if (dt<=0){ this.renderParticles(cs2); return; }
       if (dt>0.05) dt=0.05;
 
-      // emit from the gun while it is visible (uses persisted muzzle)
+      // emit ONE big particle per sampling period (in step with the 1 s sample rate),
+      // fired straight along the muzzle direction (no spread).
       const g=this._muzzle;
-      if (g){
-        this._emitAcc += cfg.rate*dt;
-        const base=Math.atan2(g.db,g.da);
-        while (this._emitAcc>=1 && this.particles.length<cfg.max){
-          this._emitAcc-=1;
-          const ang=base+(Math.random()*2-1)*cfg.spread;
-          const sp=cfg.speed*(0.9+0.2*Math.random());
-          this.particles.push({
-            a:g.a+g.da*cfg.muzzle, b:g.b+g.db*cfg.muzzle,
-            va:Math.cos(ang)*sp, vb:Math.sin(ang)*sp, age:0, trail:[]
-          });
-        }
+      if (g && (time - this._lastEmit) >= this.SAMPLE && this.particles.length < cfg.max){
+        this._lastEmit = time;
+        this.particles.push({
+          a:g.a+g.da*cfg.muzzle, b:g.b+g.db*cfg.muzzle,
+          va:g.da*cfg.speed, vb:g.db*cfg.speed, age:0, trail:[]
+        });
       }
 
       // integrate motion under F = qE (q = test-charge sign)
@@ -751,12 +740,15 @@
         gg.setAttribute('color',new THREE.Float32BufferAttribute(scol,3));
         this.pGroup.add(new THREE.LineSegments(gg,new THREE.LineBasicMaterial({vertexColors:true,transparent:true,opacity:0.9})));
       }
-      // bright heads
-      const hp=[];
-      for (const p of this.particles){ const w=this.toWorld(p.a,p.b,this.pHeight(p.a,p.b,cs2)); hp.push(w.x,w.y,w.z); }
-      const gh=new THREE.BufferGeometry();
-      gh.setAttribute('position',new THREE.Float32BufferAttribute(hp,3));
-      this.pGroup.add(new THREE.Points(gh,new THREE.PointsMaterial({color:col,size:0.045,sizeAttenuation:true})));
+      // one big particle head (sphere) per particle
+      for (const p of this.particles){
+        const w=this.toWorld(p.a,p.b,this.pHeight(p.a,p.b,cs2));
+        const s=new THREE.Mesh(
+          new THREE.SphereGeometry(0.055,16,16),
+          new THREE.MeshBasicMaterial({color:col}));
+        s.position.copy(w);
+        this.pGroup.add(s);
+      }
     },
 
     /* ---- main loop ---- */
