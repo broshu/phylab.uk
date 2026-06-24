@@ -40,11 +40,11 @@
   .card.gun .tag { background:var(--gun); }
   .beam { color:var(--gun); font-size:20px; font-weight:700; line-height:1; margin:-2px 0; }
 
-  /* The code is ALWAYS a perfect square with a white quiet zone.            */
-  /* object-fit:contain guarantees the marker never stretches to a rectangle.*/
-  .code { width:100%; aspect-ratio:1 / 1; background:#fff; border-radius:6px;
-    display:flex; align-items:center; justify-content:center; }
-  .code img { width:86%; height:86%; object-fit:contain; image-rendering:pixelated; display:block; }
+  /* The code is ALWAYS a perfect square with a white quiet zone.             */
+  /* An <img> with height:auto keeps the file's intrinsic 1:1 ratio — it does */
+  /* NOT depend on aspect-ratio or object-fit, which some print engines drop. */
+  .code { width:100%; background:#fff; border-radius:6px; padding:7%; }
+  .code img { width:100%; height:auto; display:block; image-rendering:pixelated; }
 
   .cap { font-size:11px; color:#8b93a4; text-align:center; }
 
