@@ -15,6 +15,9 @@
 
     #stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;}
     #stage a-scene, #stage .a-canvas, #stage video, #stage img{z-index:1 !important;}
+    /* our own photo background — same cover-sizing AR.js uses, so the overlay aligns */
+    #bg{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;display:none;
+      pointer-events:none;background:#05070d;}
 
     /* intro / upload panel */
     #intro{position:fixed;inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;
@@ -66,6 +69,8 @@
 <body>
   <div class="crumb"><a href="/labs/">← Labs</a></div>
 
+  <!-- our own semi-transparent photo background -->
+  <img id="bg" alt="" />
   <!-- where the AR (image) scene is mounted -->
   <div id="stage"></div>
 
@@ -422,20 +427,23 @@
 
     function showHud(on){ hud.forEach(e=>e.classList.toggle('hidden',!on)); }
 
-    /* Keep the uploaded photo visible behind the overlay, semi-transparent.
-       AR.js (image source) shows the photo as a DOM <img> with the blob src; we
-       just fade that element so the grid / field / potential read clearly on top. */
+    /* We display the photo ourselves (#bg, object-fit:cover) at a controllable
+       opacity, and HIDE AR.js's own duplicate image. Cover-sizing matches AR.js,
+       so the 3D overlay stays aligned with the photo. */
+    const bg=document.getElementById('bg');
     const opac=document.getElementById('opac');
     const qp=parseFloat(new URLSearchParams(location.search).get('photo'));
-    let photoOpacity=isFinite(qp)?qp:0.55, photoImg=null;
+    let photoOpacity=isFinite(qp)?qp:0.55;
     opac.value=photoOpacity;
-    function applyPhotoOpacity(){ if(photoImg) photoImg.style.opacity=photoOpacity; }
-    function findPhotoImg(tries){
-      const img=stage.querySelector('img[src^="blob:"]') || document.querySelector('img[src^="blob:"]');
-      if(img){ photoImg=img; photoImg.style.transition='opacity .2s ease'; applyPhotoOpacity(); }
-      else if(tries>0){ setTimeout(()=>findPhotoImg(tries-1),150); }
-    }
+    function applyPhotoOpacity(){ bg.style.opacity=photoOpacity; }
     opac.addEventListener('input',e=>{ photoOpacity=parseFloat(e.target.value); applyPhotoOpacity(); });
+
+    // AR.js may render its own copy of the source image — hide it so only #bg shows.
+    function hideArjsImg(tries){
+      let found=false;
+      document.querySelectorAll('img[src^="blob:"]').forEach(im=>{ if(im!==bg){ im.style.opacity='0'; found=true; } });
+      if(!found && tries>0) setTimeout(()=>hideArjsImg(tries-1),150);
+    }
 
     function buildScene(url){
       stage.innerHTML='';
@@ -450,6 +458,11 @@
         'renderer="alpha: true; antialias: true; logarithmicDepthBuffer: true" '+
         'arjs="'+arjs+'" photo-controller>'+ markers.join('') +
         '<a-entity camera></a-entity></a-scene>';
+      // AR.js (image source) needs a resize nudge to size its overlay canvas to cover
+      const scene=stage.querySelector('a-scene');
+      const kick=()=>window.dispatchEvent(new Event('resize'));
+      if(scene) scene.addEventListener('arjs-video-loaded',()=>{ kick(); hideArjsImg(40); });
+      [200,600,1200,2200].forEach(t=>setTimeout(kick,t));
     }
 
     function loadFile(f){
@@ -457,9 +470,9 @@
       if(blobUrl) URL.revokeObjectURL(blobUrl);
       blobUrl=URL.createObjectURL(f);
       intro.classList.add('hidden'); showHud(true);
-      photoImg=null;
+      bg.src=blobUrl; bg.style.display='block'; applyPhotoOpacity();
       buildScene(blobUrl);
-      findPhotoImg(60);   // poll for AR.js's photo element, then fade it
+      hideArjsImg(60);
     }
 
     pick.addEventListener('click',()=>file.click());
