@@ -14,6 +14,16 @@ It uses the **same printed cards** as the AR lab (no reprinting).
 2. Photograph them on a desk from roughly above, sharp and evenly lit.
 3. Open this page, tap **Upload a photo**, and pick the image.
 4. Toggle **Grid / Field lines / Potential**, or tap **New photo** to try another.
+5. Tap **🧊 3D view** to freeze the scene and explore it in 3D: **drag to rotate**,
+   **scroll / pinch to zoom**, **right-drag / two-finger to pan**. Tap it again to go back.
+
+## 3D view (photo becomes 3D)
+
+When you enter 3D view, the photo is **projected onto the detected desk plane** using the
+original (capture) camera, so it becomes a real textured "floor". As you orbit, the photo
+keeps correct perspective and the field lines + potential surface stand up out of it — the
+flat photo effectively turns 3D. The charges are frozen at the moment you entered 3D, so
+nothing jitters while you look around.
 
 ## What it shows
 

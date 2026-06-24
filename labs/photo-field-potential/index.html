@@ -88,6 +88,7 @@
     <div class="toggle on" id="t-grid"><span class="ic">▦</span><span>Grid</span></div>
     <div class="toggle on" id="t-field"><span class="ic">⌇</span><span>Field lines</span></div>
     <div class="toggle"    id="t-pot"><span class="ic">⛰</span><span>Potential</span></div>
+    <div class="toggle"    id="t-3d"><span class="ic">🧊</span><span>3D view</span></div>
     <div class="toggle act" id="t-new"><span class="ic">↻</span><span>New photo</span></div>
   </div>
 
@@ -144,7 +145,25 @@
       this.glyphGroup=new THREE.Group(); this.root.add(this.glyphGroup);
       this.trajGroup=new THREE.Group(); this.root.add(this.trajGroup);
       this.pGroup=new THREE.Group(); this.root.add(this.pGroup);
+      this.groundGroup=new THREE.Group(); this.root.add(this.groundGroup);
       this.plane=null; this.lastKey=''; this._v=new THREE.Vector3();
+
+      // ---- 3D-orbit mode state ----
+      this.mode3d=false; this.orbit=null; this.fkey=''; this._S=2; this._cs2=[]; this._frozenCharges=[];
+      this.cameraEl=null;
+      window.__photoCtrl=this;        // current active controller (scene is recreated on new photo)
+      const t3=document.getElementById('t-3d'); if(t3) t3.classList.remove('on');
+      this.bindGlobalOnce();
+    },
+
+    // bind page buttons + orbit input ONCE; they always act on the current controller
+    bindGlobalOnce:function(){
+      if(window.__photoBound) return; window.__photoBound=true;
+      const cur=()=>window.__photoCtrl;
+      const on=(el,fn)=>{const h=(e)=>{if(e){e.preventDefault();e.stopPropagation();}fn(e);};
+        el.addEventListener('click',h);el.addEventListener('touchend',h,{passive:false});};
+      on(document.getElementById('t-3d'),()=>{const c=cur();if(!c)return;c.mode3d?c.exit3D():c.enter3D();});
+      this.initInput(cur);
     },
 
     /* ---- read detected markers (static) ---- */
@@ -371,7 +390,121 @@
     clear:function(group){for(let i=group.children.length-1;i>=0;i--){const o=group.children[i];
       if(o.geometry)o.geometry.dispose();if(o.material){if(o.material.map)o.material.map.dispose();o.material.dispose();}group.remove(o);}},
 
+    /* ================= 3D ORBIT MODE ================= */
+    // photo UV for a world point on the plane, via the capture camera + cover-fit
+    photoUV:function(world){
+      const v=world.clone().applyMatrix4(this._capVP);    // -> NDC (perspective divide done by Vector3)
+      const cx=v.x*0.5+0.5, cyTop=1-(v.y*0.5+0.5);
+      const W=this._capW,H=this._capH,iw=this._imgW,ih=this._imgH,s=Math.max(W/iw,H/ih);
+      const offX=(W-iw*s)/2, offY=(H-ih*s)/2;
+      return [ ((cx*W-offX)/s)/iw, ((cyTop*H-offY)/s)/ih ];   // v from top; texture.flipY=false
+    },
+    buildGround:function(S){
+      this.clear(this.groundGroup);
+      const img=document.getElementById('bg'); if(!img||!img.naturalWidth) return;
+      const N=64, half=S*1.2, geo=new THREE.PlaneGeometry(2*half,2*half,N,N);
+      const pos=geo.attributes.position, uv=geo.attributes.uv;
+      for(let i=0;i<pos.count;i++){const a=pos.getX(i),b=pos.getY(i);const w=this.toWorld(a,b,0);
+        pos.setXYZ(i,w.x,w.y,w.z);const t=this.photoUV(w);uv.setXY(i,t[0],t[1]);}
+      pos.needsUpdate=true; uv.needsUpdate=true; geo.computeVertexNormals();
+      const tex=new THREE.Texture(img); tex.flipY=false; tex.needsUpdate=true;
+      tex.wrapS=tex.wrapT=THREE.ClampToEdgeWrapping; tex.minFilter=THREE.LinearFilter;
+      if('colorSpace' in tex && THREE.SRGBColorSpace) tex.colorSpace=THREE.SRGBColorSpace;
+      else if(THREE.sRGBEncoding) tex.encoding=THREE.sRGBEncoding;
+      this.groundGroup.add(new THREE.Mesh(geo,new THREE.MeshBasicMaterial({map:tex,side:THREE.DoubleSide})));
+    },
+
+    enter3D:function(){
+      if(this.mode3d || !this.plane) return;
+      const charges=this.collectCharges(); if(!charges.length) return;
+      this.cameraEl=document.querySelector('[camera]');
+      const cam=this.cameraEl && this.cameraEl.getObject3D('camera'); if(!cam) return;
+      cam.updateMatrixWorld(true);
+      this._capV=cam.matrixWorld.clone().invert(); this._capP=cam.projectionMatrix.clone();
+      this._capVP=new THREE.Matrix4().multiplyMatrices(this._capP,this._capV);
+      this._capW=window.innerWidth; this._capH=window.innerHeight;
+      const img=document.getElementById('bg'); this._imgW=img.naturalWidth||1; this._imgH=img.naturalHeight||1;
+      // freeze current scene
+      const cs2=charges.map(c=>{const q=this.to2D(c.pos);return{a:q.a,b:q.b,q:c.q};});
+      let S=0.9; for(const c of cs2)S=Math.max(S,Math.hypot(c.a,c.b));
+      for(const g of this.guns) if(g.mem.has){const gp=this.to2D(g.mem.pos);S=Math.max(S,Math.hypot(gp.a,gp.b));}
+      S+=1.1; this._S=S; this._cs2=cs2; this._frozenCharges=charges;
+      this.buildGround(S);
+      img.style.display='none'; document.getElementById('photoctl').classList.add('hidden');
+      this.initOrbit(); this.mode3d=true; this.fkey='';
+      document.getElementById('t-3d').classList.add('on');
+    },
+    exit3D:function(){
+      this.mode3d=false; this.clear(this.groundGroup);
+      const img=document.getElementById('bg'); if(img) img.style.display='block';
+      document.getElementById('photoctl').classList.remove('hidden');
+      if(this.cameraEl){const e=this.cameraEl.object3D;e.position.set(0,0,0);e.quaternion.identity();e.updateMatrixWorld(true);}
+      this.lastKey=''; document.getElementById('t-3d').classList.remove('on');
+    },
+    initOrbit:function(){
+      const target=this.plane.origin.clone();
+      const eye=new THREE.Vector3(); this.cameraEl.object3D.getWorldPosition(eye);
+      const n=this.plane.normal.clone(), t1=this.plane.u.clone(), t2=new THREE.Vector3().crossVectors(n,t1).normalize();
+      const off=eye.clone().sub(target); const radius=Math.max(0.6,off.length());
+      const h=off.dot(n), planar=off.clone().addScaledVector(n,-h), rp=planar.length();
+      const theta=Math.atan2(planar.dot(t2),planar.dot(t1)), phi=Math.atan2(h,Math.max(1e-3,rp));
+      this.orbit={target,n,t1,t2,radius,theta,phi,minR:radius*0.25,maxR:radius*5};
+    },
+    rotate:function(dx,dy){const o=this.orbit;if(!o)return;o.theta-=dx*0.006;o.phi=Math.max(-1.45,Math.min(1.45,o.phi+dy*0.006));},
+    zoom:function(f){const o=this.orbit;if(!o)return;o.radius=Math.max(o.minR,Math.min(o.maxR,o.radius*f));},
+    pan:function(dx,dy){const o=this.orbit;if(!o||!this.cameraEl)return;const e=this.cameraEl.object3D;
+      const right=new THREE.Vector3().setFromMatrixColumn(e.matrixWorld,0);
+      const up=new THREE.Vector3().setFromMatrixColumn(e.matrixWorld,1);
+      const k=o.radius*0.0016; o.target.addScaledVector(right,-dx*k).addScaledVector(up,dy*k);},
+    applyOrbit:function(){const o=this.orbit;if(!o||!this.cameraEl)return;const cp=Math.cos(o.phi),sp=Math.sin(o.phi);
+      const dir=new THREE.Vector3().addScaledVector(o.t1,cp*Math.cos(o.theta)).addScaledVector(o.t2,cp*Math.sin(o.theta)).addScaledVector(o.n,sp);
+      const eye=o.target.clone().addScaledVector(dir,o.radius);
+      const m=new THREE.Matrix4().lookAt(eye,o.target,o.n);
+      const e=this.cameraEl.object3D; e.position.copy(eye); e.quaternion.setFromRotationMatrix(m); e.updateMatrixWorld(true);},
+
+    initInput:function(cur){
+      let drag=false,lastX=0,lastY=0,mode='',pinch=0;
+      const act=()=>{const c=cur();return (c&&c.mode3d)?c:null;};
+      const inUI=(e)=>e.target&&e.target.closest&&e.target.closest('#controls,#photoctl,#legend');
+      window.addEventListener('mousedown',e=>{if(!act()||inUI(e))return;drag=true;mode=(e.button===2)?'pan':'rot';lastX=e.clientX;lastY=e.clientY;});
+      window.addEventListener('mousemove',e=>{const c=act();if(!c||!drag)return;const dx=e.clientX-lastX,dy=e.clientY-lastY;lastX=e.clientX;lastY=e.clientY;
+        if(mode==='pan')c.pan(dx,dy);else c.rotate(dx,dy);});
+      window.addEventListener('mouseup',()=>{drag=false;});
+      window.addEventListener('contextmenu',e=>{if(act())e.preventDefault();});
+      window.addEventListener('wheel',e=>{const c=act();if(!c)return;e.preventDefault();c.zoom(Math.exp(e.deltaY*0.001));},{passive:false});
+      window.addEventListener('touchstart',e=>{if(!act()||inUI(e))return;
+        if(e.touches.length===1){drag=true;mode='rot';lastX=e.touches[0].clientX;lastY=e.touches[0].clientY;}
+        else if(e.touches.length===2){drag=true;mode='pinch';
+          pinch=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+          lastX=(e.touches[0].clientX+e.touches[1].clientX)/2;lastY=(e.touches[0].clientY+e.touches[1].clientY)/2;}},{passive:false});
+      window.addEventListener('touchmove',e=>{const c=act();if(!c||!drag)return;e.preventDefault();
+        if(mode==='rot'&&e.touches.length===1){const x=e.touches[0].clientX,y=e.touches[0].clientY;c.rotate(x-lastX,y-lastY);lastX=x;lastY=y;}
+        else if(mode==='pinch'&&e.touches.length===2){
+          const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+          c.zoom(pinch/Math.max(1,d));pinch=d;
+          const mx=(e.touches[0].clientX+e.touches[1].clientX)/2,my=(e.touches[0].clientY+e.touches[1].clientY)/2;
+          c.pan(mx-lastX,my-lastY);lastX=mx;lastY=my;}},{passive:false});
+      window.addEventListener('touchend',e=>{if(e.touches.length===0)drag=false;
+        else{lastX=e.touches[0].clientX;lastY=e.touches[0].clientY;mode=e.touches.length===1?'rot':mode;}});
+    },
+
     tick:function(time){
+      if(this.mode3d){
+        this.applyOrbit();
+        const key=this.show.grid+''+this.show.field+this.show.pot;
+        if(key!==this.fkey){
+          this.buildGrid(this._cs2,this._S);this.buildField(this._cs2,this._S);this.buildPotential(this._cs2,this._S);
+          this.buildGlyphs(this._frozenCharges);this.buildTrajectories(this._cs2,this._S);this.fkey=key;
+        }
+        const seen='3D view · drag to rotate · pinch/scroll zoom · two-finger pan';
+        if(this.statusEl.textContent!==seen)this.statusEl.textContent=seen;
+        this.animate(time,this._cs2);
+        return;
+      }
+      this.tickDetect(time);
+    },
+
+    tickDetect:function(time){
       const charges=this.collectCharges();
       // gun poses (static)
       const planeMarkers=charges.slice(); let anyGun=false;
