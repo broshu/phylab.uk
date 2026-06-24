@@ -241,8 +241,9 @@
       const num = (k, d) => { const v = parseFloat(q.get(k)); return isFinite(v) ? v : d; };
       this.K          = num('k', 0.45);   // Coulomb constant (visual units)
       this.SOFT       = num('soft', 0.16);// softening radius (avoids singularities)
-      this.HEIGHT     = num('height', 0.55); // potential -> height scale
-      this.HCLAMP     = num('hclamp', 1.3);  // max |height| of the surface
+      this.SSOFT      = num('ssoft', 0.05);// tiny surface softening -> sharp peaks
+      this.HEIGHT     = num('height', 0.4); // potential -> height scale
+      this.HCLAMP     = num('hclamp', 4.0);  // max |height| (tall enough for pointed peaks)
       this.SAMPLE     = num('sample', 1000); // ms between committed position samples (sample-and-hold)
       this.KEEP       = num('hold', 1500);   // ms to keep a charge alive after it was last actually seen
 
@@ -570,31 +571,36 @@
     buildPotential: function (cs2, S) {
       this.clear(this.potGroup);
       if (!this.show.pot || cs2.length===0) return;
-      const N=72;                      // grid resolution
+      const N=96;                      // grid resolution (finer -> sharper tips)
       const geo=new THREE.PlaneGeometry(2*S,2*S,N,N);
       // PlaneGeometry lies in XY (local). We map (x,y)->plane (a,b) and z->height.
       const pos=geo.attributes.position;
       const colors=new Float32Array(pos.count*3);
-      const cHot=new THREE.Color('#ff5b5b'), cMid=new THREE.Color('#0c1626'), cCold=new THREE.Color('#3b9bff');
-      const cHole=new THREE.Color('#020308');
+      const cHot=new THREE.Color('#ff6a4f'), cTip=new THREE.Color('#fff2cf'),
+            cMid=new THREE.Color('#0c1626'), cHole=new THREE.Color('#000000');
+      const ss=this.SSOFT, abx=new Float32Array(pos.count), aby=new Float32Array(pos.count);
+      const Vat=(a,b)=>{let V=0;for(const c of cs2){const dx=a-c.a,dy=b-c.b;V+=this.K*c.q/Math.sqrt(dx*dx+dy*dy+ss*ss);}return V;};
       const out=new THREE.Vector3();
       for (let i=0;i<pos.count;i++){
-        const a=pos.getX(i), b=pos.getY(i);
-        let V=this.potential2D(a,b,cs2);
-        let h=V*this.HEIGHT;
-        h=Math.max(-this.HCLAMP, Math.min(this.HCLAMP, h));
+        const a=pos.getX(i), b=pos.getY(i); abx[i]=a; aby[i]=b;
+        const V=Vat(a,b);
+        const h=Math.max(-this.HCLAMP, Math.min(this.HCLAMP, V*this.HEIGHT));
         out.copy(this.toWorld(a,b,h));
         pos.setXYZ(i,out.x,out.y,out.z);
-        // colour: red (high) -> dark (zero) -> blue (low), black at deep wells
-        let c;
         const vt=Math.max(-1,Math.min(1,V*this.HEIGHT/this.HCLAMP));
-        if (vt>=0) c=cMid.clone().lerp(cHot,Math.pow(vt,0.6));
-        else {
-          c=cMid.clone().lerp(cCold,Math.pow(-vt,0.6));
-          if (-vt>0.7) c.lerp(cHole,(-vt-0.7)/0.3); // black-hole core
-        }
+        let c;
+        if (vt>=0){ c=cMid.clone().lerp(cHot,Math.pow(vt,0.5)); if(vt>0.75)c.lerp(cTip,(vt-0.75)/0.25*0.85); }
+        else c=cMid.clone().lerp(cHole,Math.pow(-vt,0.45));   // negative -> BLACK hole, not blue
         colors[i*3]=c.r; colors[i*3+1]=c.g; colors[i*3+2]=c.b;
       }
+      // snap an exact apex/pit vertex at each charge so the tip is POINTED (V→∞ physics)
+      for (const c of cs2){
+        let bi=-1,bd=1e9; for(let i=0;i<pos.count;i++){const dx=abx[i]-c.a,dy=aby[i]-c.b,d=dx*dx+dy*dy;if(d<bd){bd=d;bi=i;}}
+        if(bi<0)continue; const h=Math.max(-this.HCLAMP,Math.min(this.HCLAMP,Vat(c.a,c.b)*this.HEIGHT));
+        out.copy(this.toWorld(c.a,c.b,h)); pos.setXYZ(bi,out.x,out.y,out.z);
+        const col=c.q>0?cTip:cHole; colors[bi*3]=col.r;colors[bi*3+1]=col.g;colors[bi*3+2]=col.b;
+      }
+      pos.needsUpdate=true;
       geo.setAttribute('color',new THREE.BufferAttribute(colors,3));
       geo.computeVertexNormals();
       // Opaque surface masks the desk behind the wells (the "black hole").
@@ -613,23 +619,16 @@
         this.root.add(amb); this.root.add(dir); this._lit=true;
       }
 
-      // glowing rim ring at each negative well + bright cap at each positive peak
+      // black-hole accretion ring at each negative well
       for (const c of cs2){
         if (c.q<0){
           const ring=new THREE.Mesh(
-            new THREE.TorusGeometry(0.22,0.018,10,40),
-            new THREE.MeshBasicMaterial({color:'#7ad0ff',transparent:true,opacity:0.85}));
+            new THREE.TorusGeometry(0.16,0.02,12,48),
+            new THREE.MeshBasicMaterial({color:'#7ad0ff',transparent:true,opacity:0.9}));
           ring.position.copy(this.toWorld(c.a,c.b,0.01));
           ring.quaternion.copy(this.planeQuat());
           ring.rotateX(Math.PI/2);
           this.potGroup.add(ring);
-        } else {
-          const cap=new THREE.Mesh(
-            new THREE.SphereGeometry(0.03,10,10),
-            new THREE.MeshBasicMaterial({color:'#fff1c0'}));
-          const Vpk=this.potential2D(c.a,c.b,cs2);
-          cap.position.copy(this.toWorld(c.a,c.b,Math.min(this.HCLAMP,Vpk*this.HEIGHT)));
-          this.potGroup.add(cap);
         }
       }
     },
