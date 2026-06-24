@@ -108,7 +108,7 @@
   <div id="gate">
     <div class="crumb"><a href="/labs/">← Labs</a></div>
     <h1>AR Field &amp; Potential <span class="beta">Beta</span></h1>
-    <p>Scatter the printed <b style="color:#ff7a7a">+</b> and <b style="color:#7ab8ff">−</b> charge cards on a desk, then point your iPad camera at them. The app finds the tabletop plane, lays a tech grid on it, and draws the electric <b>field lines</b> and <b>potential surface</b> in 3D.</p>
+    <p>Scatter the printed <b style="color:#ff7a7a">+</b> and <b style="color:#7ab8ff">−</b> charge cards on a desk, then point your iPad camera at them. The app finds the tabletop plane, lays a tech grid on it, and draws the electric <b>field lines</b> and <b>potential surface</b> in 3D. Add the <b style="color:#ffd76a">electron-gun</b> card to fire test charges that bend in the field.</p>
 
     <div id="preview" aria-label="Preview of the AR result">
       <svg viewBox="0 0 300 168" xmlns="http://www.w3.org/2000/svg" role="img">
@@ -168,6 +168,7 @@
     <div id="legend">
       <div><span class="dot pos"></span>Positive charge (+)</div>
       <div><span class="dot neg"></span>Negative charge (−)</div>
+      <div><span class="dot" style="background:#ffd76a;box-shadow:0 0 8px rgba(255,215,106,.8)"></span>Electron-gun beam</div>
     </div>
     <div id="controls">
       <div class="toggle on" id="t-grid"><span class="ic">▦</span><span>Grid</span></div>
@@ -200,6 +201,9 @@
     <a-marker class="chg" data-q="-1" type="barcode" value="11" smooth="true" smoothCount="8" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
     <a-marker class="chg" data-q="-1" type="barcode" value="12" smooth="true" smoothCount="8" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
 
+    <!-- ELECTRON GUN: barcode value 0. Fires + test charges forward, in-plane. -->
+    <a-marker class="gun" type="barcode" value="0" smooth="true" smoothCount="6" smoothTolerance="0.02" smoothThreshold="2"></a-marker>
+
     <a-entity camera></a-entity>
   </a-scene>
 
@@ -227,6 +231,7 @@
     init: function () {
       const T = AFRAME.THREE || THREE;
       this.markers = Array.from(document.querySelectorAll('a-marker.chg'));
+      this.gun = document.querySelector('a-marker.gun');
       this.statusEl = document.querySelector('#status');
 
       // ---- tunables (URL-overridable) ----
@@ -236,7 +241,20 @@
       this.SOFT       = num('soft', 0.16);// softening radius (avoids singularities)
       this.HEIGHT     = num('height', 0.55); // potential -> height scale
       this.HCLAMP     = num('hclamp', 1.3);  // max |height| of the surface
-      this.gridForce  = q.has('grid');    // (reserved) force grid options
+
+      // ---- electron-gun config (URL-overridable) ----
+      this.gundir = Math.round(num('gundir', 0)) & 3; // 0..3 quarter-turns of beam dir
+      this.pcfg = {
+        charge: q.get('pcharge') === '-1' ? -1 : 1, // test-charge sign (default +)
+        speed:  num('pspeed', 0.7),    // muzzle speed (plane units/s)
+        force:  num('pforce', 0.5),    // field acceleration gain
+        rate:   num('prate', 18),      // particles per second
+        life:   num('plife', 5.0),     // lifetime (s)
+        spread: num('pspread', 0.10),  // emission half-angle (rad)
+        bound:  num('pbound', 6.0),    // cull distance from plane origin
+        muzzle: 0.16, trail: 30, max: 120
+      };
+      this.particles = []; this._emitAcc = 0; this._lastT = 0;
 
       // ---- view toggles ----
       this.show = { grid: true, field: true, pot: false };
@@ -251,6 +269,7 @@
       this.fieldGroup = new THREE.Group(); this.root.add(this.fieldGroup);
       this.potGroup   = new THREE.Group(); this.root.add(this.potGroup);
       this.glyphGroup = new THREE.Group(); this.root.add(this.glyphGroup);
+      this.pGroup     = new THREE.Group(); this.root.add(this.pGroup);
 
       // smoothed plane state
       this.plane = null;       // { origin:Vec3, normal:Vec3, u:Vec3, v:Vec3 }
@@ -612,44 +631,159 @@
       }
     },
 
+    /* ---- electron gun: muzzle pose in plane coords {a,b,da,db} ---- */
+    gunPose: function () {
+      if (!this.gun || !this.gun.object3D.visible || !this.plane) return null;
+      const o=this.gun.object3D;
+      const wp=new THREE.Vector3(); o.getWorldPosition(wp);
+      const wq=new THREE.Quaternion(); o.getWorldQuaternion(wq);
+      // card "forward" = local +Z, projected onto the fitted plane
+      let f=new THREE.Vector3(0,0,1).applyQuaternion(wq);
+      f.addScaledVector(this.plane.normal, -f.dot(this.plane.normal));
+      if (f.lengthSq()<1e-6) f.copy(this.plane.u);
+      f.normalize();
+      const pos=this.to2D(wp);
+      let da=f.dot(this.plane.u), db=f.dot(this.plane.v);
+      for (let i=0;i<this.gundir;i++){ const t=da; da=-db; db=t; } // optional quarter-turns
+      const n=Math.hypot(da,db)||1; da/=n; db/=n;
+      return { a:pos.a, b:pos.b, da, db };
+    },
+
+    // render height for a particle at (a,b): ride the surface in potential view, else lie on the desk
+    pHeight: function (a, b, cs2) {
+      if (this.show.pot && cs2.length){
+        const V=this.potential2D(a,b,cs2);
+        return Math.max(-this.HCLAMP, Math.min(this.HCLAMP, V*this.HEIGHT)) + 0.02;
+      }
+      return 0.02;
+    },
+
+    updateParticles: function (time, cs2) {
+      const cfg=this.pcfg;
+      if (!this._lastT) this._lastT=time;
+      let dt=(time-this._lastT)/1000; this._lastT=time;
+      if (dt<=0){ this.renderParticles(cs2); return; }
+      if (dt>0.05) dt=0.05;
+
+      // emit from the gun while it is visible
+      const g=this.gunPose();
+      if (g){
+        this._emitAcc += cfg.rate*dt;
+        const base=Math.atan2(g.db,g.da);
+        while (this._emitAcc>=1 && this.particles.length<cfg.max){
+          this._emitAcc-=1;
+          const ang=base+(Math.random()*2-1)*cfg.spread;
+          const sp=cfg.speed*(0.9+0.2*Math.random());
+          this.particles.push({
+            a:g.a+g.da*cfg.muzzle, b:g.b+g.db*cfg.muzzle,
+            va:Math.cos(ang)*sp, vb:Math.sin(ang)*sp, age:0, trail:[]
+          });
+        }
+      }
+
+      // integrate motion under F = qE (q = test-charge sign)
+      const alive=[];
+      for (const p of this.particles){
+        const {Ea,Eb}=this.field2D(p.a,p.b,cs2);
+        p.va += Ea*cfg.charge*cfg.force*dt;
+        p.vb += Eb*cfg.charge*cfg.force*dt;
+        p.a  += p.va*dt; p.b += p.vb*dt;
+        p.age += dt;
+        p.trail.push([p.a,p.b]); if (p.trail.length>cfg.trail) p.trail.shift();
+        let dead = p.age>cfg.life || Math.hypot(p.a,p.b)>cfg.bound;
+        if (!dead) for (const c of cs2){           // absorbed by an opposite charge
+          if (c.q*cfg.charge<0 && Math.hypot(p.a-c.a,p.b-c.b)<0.13){ dead=true; break; }
+        }
+        if (!dead) alive.push(p);
+      }
+      this.particles=alive;
+      this.renderParticles(cs2);
+    },
+
+    renderParticles: function (cs2) {
+      this.clear(this.pGroup);
+      if (!this.particles.length) return;
+      const col=new THREE.Color(this.pcfg.charge>0 ? '#ffd76a' : '#7fd0ff');
+      // trails (line segments, fading toward the tail), lifted onto the surface
+      const seg=[], scol=[];
+      for (const p of this.particles){
+        const tr=p.trail;
+        for (let k=1;k<tr.length;k++){
+          const A=tr[k-1], B=tr[k];
+          const wa=this.toWorld(A[0],A[1],this.pHeight(A[0],A[1],cs2));
+          const wb=this.toWorld(B[0],B[1],this.pHeight(B[0],B[1],cs2));
+          const fade=k/tr.length;
+          seg.push(wa.x,wa.y,wa.z,wb.x,wb.y,wb.z);
+          for (let s=0;s<2;s++) scol.push(col.r*fade,col.g*fade,col.b*fade);
+        }
+      }
+      if (seg.length){
+        const gg=new THREE.BufferGeometry();
+        gg.setAttribute('position',new THREE.Float32BufferAttribute(seg,3));
+        gg.setAttribute('color',new THREE.Float32BufferAttribute(scol,3));
+        this.pGroup.add(new THREE.LineSegments(gg,new THREE.LineBasicMaterial({vertexColors:true,transparent:true,opacity:0.9})));
+      }
+      // bright heads
+      const hp=[];
+      for (const p of this.particles){ const w=this.toWorld(p.a,p.b,this.pHeight(p.a,p.b,cs2)); hp.push(w.x,w.y,w.z); }
+      const gh=new THREE.BufferGeometry();
+      gh.setAttribute('position',new THREE.Float32BufferAttribute(hp,3));
+      this.pGroup.add(new THREE.Points(gh,new THREE.PointsMaterial({color:col,size:0.045,sizeAttenuation:true})));
+    },
+
     /* ---- main loop ---- */
     tick: function (time) {
       const charges = this.collectCharges();
+      const gunVisible = !!(this.gun && this.gun.object3D.visible);
       const nPos=charges.filter(c=>c.q>0).length, nNeg=charges.filter(c=>c.q<0).length;
+
+      // markers used for plane fitting = charges + gun (all lie on the desk)
+      const planeMarkers = charges.slice();
+      let gunWorld=null;
+      if (gunVisible){
+        const o=this.gun.object3D;
+        gunWorld=new THREE.Vector3(); o.getWorldPosition(gunWorld);
+        const qq=new THREE.Quaternion(); o.getWorldQuaternion(qq);
+        const n=new THREE.Vector3(0,1,0).applyQuaternion(qq).normalize();
+        planeMarkers.push({ pos:gunWorld, q:0, normal:n });
+      }
 
       // status line
       let msg;
-      if (!charges.length) msg='Searching for charge cards…';
-      else if (nPos&&nNeg) msg=`${nPos+nNeg} charges · dipole/multipole field — lines run + → −`;
-      else if (nPos)       msg=`${nPos} positive charge${nPos>1?'s':''} · field points outward`;
-      else                 msg=`${nNeg} negative charge${nNeg>1?'s':''} · field points inward`;
-      if (charges.length) msg += ` · plane ${charges.length>=3?'(best-fit)':'(card)'}`;
+      if (!charges.length && !gunVisible) msg='Searching for charge cards…';
+      else if (!charges.length)           msg='Electron gun — add + / − charges to deflect the beam';
+      else if (nPos&&nNeg)                msg=`${nPos+nNeg} charges · dipole/multipole field — lines run + → −`;
+      else if (nPos)                      msg=`${nPos} positive charge${nPos>1?'s':''} · field points outward`;
+      else                                msg=`${nNeg} negative charge${nNeg>1?'s':''} · field points inward`;
+      if (charges.length) msg += ` · plane ${planeMarkers.length>=3?'(best-fit)':'(card)'}`;
+      if (gunVisible && charges.length) msg += ' · gun firing';
       if (this.statusEl.textContent!==msg) this.statusEl.textContent=msg;
 
-      if (!charges.length){
+      if (!planeMarkers.length){
         if (this.root.children.some(g=>g.children.length)){
           this.clear(this.gridGroup); this.clear(this.fieldGroup);
-          this.clear(this.potGroup); this.clear(this.glyphGroup);
+          this.clear(this.potGroup); this.clear(this.glyphGroup); this.clear(this.pGroup);
         }
-        this.lastKey=''; this.plane=null; return;
+        this.particles=[]; this.lastKey=''; this.plane=null; this._lastT=0; return;
       }
 
       // fit + smooth the plane
-      this.smoothPlane(this.fitPlane(charges));
+      this.smoothPlane(this.fitPlane(planeMarkers));
 
-      // rebuild only when the configuration changes (quantised) or every 220ms
-      let key=this.show.grid+this.show.field+this.show.pot+'|';
+      // project charges into plane coords (used by physics, field, potential, gun)
+      const cs2 = charges.map(c=>{ const q2=this.to2D(c.pos); return {a:q2.a,b:q2.b,q:c.q}; });
+
+      // rebuild static geometry only when configuration changes or every 220ms
+      let key=this.show.grid+''+this.show.field+this.show.pot+'|';
       for (const c of charges){
         const p=c.pos;
         key += c.q+':'+Math.round(p.x/0.03)+','+Math.round(p.y/0.03)+','+Math.round(p.z/0.03)+'|';
       }
       const stale=(time-this.lastBuild)>220;
       if (key!==this.lastKey || stale){
-        // project charges into plane coords
-        const cs2 = charges.map(c=>{ const q2=this.to2D(c.pos); return {a:q2.a,b:q2.b,q:c.q}; });
-        // region half-size: cover all charges + margin
         let S=0.9;
         for (const c of cs2) S=Math.max(S, Math.hypot(c.a,c.b));
+        if (gunWorld){ const gp=this.to2D(gunWorld); S=Math.max(S, Math.hypot(gp.a,gp.b)); }
         S += 1.1;
         this.buildGrid(cs2,S);
         this.buildField(cs2,S);
@@ -657,6 +791,9 @@
         this.buildGlyphs(charges);
         this.lastKey=key; this.lastBuild=time;
       }
+
+      // particles run every frame (smooth animation, live field)
+      this.updateParticles(time, cs2);
     }
   });
 

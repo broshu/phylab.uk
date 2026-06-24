@@ -30,6 +30,14 @@ using robust 3×3 **matrix-code (barcode)** markers — no marker training requi
   potential V = Σ k·q/r. Positive charges raise a sharp **hill** (the peak is pointed,
   as the math demands); negative charges sink a **funnel well** whose opaque dark core
   masks the desk behind it — a "black hole" — ringed by a glowing rim.
+- **Electron gun.** The green gun card (code 0) continuously fires + test charges forward,
+  parallel to the desk, in the direction of its printed arrow. Each test charge feels the
+  Coulomb force F = qE and bends as it crosses the field. In the **field-lines** view it
+  travels flat across the desktop; in the **potential** view it rides the surface — because
+  a + charge's potential energy is U = qV = V, the height landscape *is* its energy, so a
+  ball sliding on it under "gravity" follows exactly the same trajectory (climbing hills,
+  diving into wells). Tune with `?pspeed=` `?pforce=` `?prate=` `?plife=` `?pspread=`
+  `?pcharge=-1`; rotate the beam with `?gundir=1` (0–3 quarter-turns).
 
 ## Marker scheme
 
@@ -37,6 +45,7 @@ using robust 3×3 **matrix-code (barcode)** markers — no marker training requi
 |-----|----------------|
 | Positive cards (+) | `1, 2, 3, 4, 5, 6` |
 | Negative cards (−) | `7, 8, 9, 10, 11, 12` |
+| Electron gun | `0` |
 
 Each physical card has a **distinct** code, which is what lets AR.js track many cards at
 the same time. One printed sheet gives up to 12 simultaneous charges; print more codes

@@ -33,6 +33,10 @@
   }
   .card.pos { border-color:var(--pos); }
   .card.neg { border-color:var(--neg); }
+  .card.gun { border-color:#1f9c84; position:relative; }
+  .card.gun .sign { color:#1f9c84; }
+  .card.gun .tag  { background:#1f9c84; }
+  .card.gun .beam { color:#1f9c84; font-size:26px; line-height:1; margin:-2px 0 2px; }
 
   .top { display:flex; align-items:center; justify-content:space-between; width:100%; padding:0 4px; }
   .sign { font-size:30px; font-weight:800; line-height:1; }
@@ -72,11 +76,22 @@
     own 3×3 code, so you can lay out <b>as many as you like</b> — every visible card is tracked at
     once. Red cards are <b>positive (+)</b>, blue cards are <b>negative (−)</b>. Keep the white
     border around each code intact (it is the quiet zone the camera needs), lay the cards flat on a
-    desk, and avoid glare. Then open the app and point your iPad at them.
+    desk, and avoid glare. Then open the app and point your iPad at them. The green
+    <b>electron-gun</b> card fires + test charges toward its arrow; if the beam comes out sideways,
+    add <code>?gundir=1</code> (or 2/3) to the app URL to rotate it.
   </p>
 
   <div class="sheet">
     <div class="grid" id="grid"></div>
+
+    <div class="grid" style="margin-top:14px">
+      <div class="card gun">
+        <div class="top"><span class="sign">⌁</span><span class="tag">Electron gun</span></div>
+        <div class="beam">▲ beam</div>
+        <div class="code"><img src="markers/0.png" alt="code 0"></div>
+        <div class="cap">code 0 · fires + test charges toward the top of this card</div>
+      </div>
+    </div>
   </div>
 
   <script>
