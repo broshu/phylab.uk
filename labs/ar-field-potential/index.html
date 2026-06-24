@@ -185,27 +185,27 @@
     embedded
     vr-mode-ui="enabled: false"
     renderer="logarithmicDepthBuffer: true; precision: medium; antialias: true; alpha: true"
-    arjs="sourceType: webcam; detectionMode: mono_and_matrix; matrixCodeType: 3x3; patternRatio: 0.5; debugUIEnabled: false;"
+    arjs="sourceType: webcam; sourceWidth: 1024; sourceHeight: 768; displayWidth: 1024; displayHeight: 768; detectionMode: mono_and_matrix; matrixCodeType: 3x3; patternRatio: 0.5; labelingMode: black_region; maxDetectionRate: 60; debugUIEnabled: false;"
     field-controller>
 
     <!-- POSITIVE charge cards: barcode values 1–6 -->
-    <a-marker class="chg" data-q="1" type="barcode" value="1"  smooth="true" smoothCount="8" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
-    <a-marker class="chg" data-q="1" type="barcode" value="2"  smooth="true" smoothCount="8" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
-    <a-marker class="chg" data-q="1" type="barcode" value="3"  smooth="true" smoothCount="8" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
-    <a-marker class="chg" data-q="1" type="barcode" value="4"  smooth="true" smoothCount="8" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
-    <a-marker class="chg" data-q="1" type="barcode" value="5"  smooth="true" smoothCount="8" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
-    <a-marker class="chg" data-q="1" type="barcode" value="6"  smooth="true" smoothCount="8" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
+    <a-marker class="chg" data-q="1" type="barcode" value="1"  smooth="true" smoothCount="12" smoothTolerance="0.005" smoothThreshold="3"></a-marker>
+    <a-marker class="chg" data-q="1" type="barcode" value="2"  smooth="true" smoothCount="12" smoothTolerance="0.005" smoothThreshold="3"></a-marker>
+    <a-marker class="chg" data-q="1" type="barcode" value="3"  smooth="true" smoothCount="12" smoothTolerance="0.005" smoothThreshold="3"></a-marker>
+    <a-marker class="chg" data-q="1" type="barcode" value="4"  smooth="true" smoothCount="12" smoothTolerance="0.005" smoothThreshold="3"></a-marker>
+    <a-marker class="chg" data-q="1" type="barcode" value="5"  smooth="true" smoothCount="12" smoothTolerance="0.005" smoothThreshold="3"></a-marker>
+    <a-marker class="chg" data-q="1" type="barcode" value="6"  smooth="true" smoothCount="12" smoothTolerance="0.005" smoothThreshold="3"></a-marker>
 
     <!-- NEGATIVE charge cards: barcode values 7–12 -->
-    <a-marker class="chg" data-q="-1" type="barcode" value="7"  smooth="true" smoothCount="8" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
-    <a-marker class="chg" data-q="-1" type="barcode" value="8"  smooth="true" smoothCount="8" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
-    <a-marker class="chg" data-q="-1" type="barcode" value="9"  smooth="true" smoothCount="8" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
-    <a-marker class="chg" data-q="-1" type="barcode" value="10" smooth="true" smoothCount="8" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
-    <a-marker class="chg" data-q="-1" type="barcode" value="11" smooth="true" smoothCount="8" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
-    <a-marker class="chg" data-q="-1" type="barcode" value="12" smooth="true" smoothCount="8" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
+    <a-marker class="chg" data-q="-1" type="barcode" value="7"  smooth="true" smoothCount="12" smoothTolerance="0.005" smoothThreshold="3"></a-marker>
+    <a-marker class="chg" data-q="-1" type="barcode" value="8"  smooth="true" smoothCount="12" smoothTolerance="0.005" smoothThreshold="3"></a-marker>
+    <a-marker class="chg" data-q="-1" type="barcode" value="9"  smooth="true" smoothCount="12" smoothTolerance="0.005" smoothThreshold="3"></a-marker>
+    <a-marker class="chg" data-q="-1" type="barcode" value="10" smooth="true" smoothCount="12" smoothTolerance="0.005" smoothThreshold="3"></a-marker>
+    <a-marker class="chg" data-q="-1" type="barcode" value="11" smooth="true" smoothCount="12" smoothTolerance="0.005" smoothThreshold="3"></a-marker>
+    <a-marker class="chg" data-q="-1" type="barcode" value="12" smooth="true" smoothCount="12" smoothTolerance="0.005" smoothThreshold="3"></a-marker>
 
     <!-- ELECTRON GUN: barcode value 0. Fires + test charges forward, in-plane. -->
-    <a-marker class="gun" type="barcode" value="0" smooth="true" smoothCount="6" smoothTolerance="0.02" smoothThreshold="2"></a-marker>
+    <a-marker class="gun" type="barcode" value="0" smooth="true" smoothCount="10" smoothTolerance="0.01" smoothThreshold="3"></a-marker>
 
     <a-entity camera></a-entity>
   </a-scene>
@@ -483,7 +483,7 @@
       const sources = cs2.filter(c => hasPos ? c.q>0 : c.q<0);
       const seedR = hasPos ? 0.18 : S*0.85;     // small ring on +, wide ring on −
       const nSeed = 14;
-      const opts = { step: 0.05, maxSteps: 600, minR: 0.16, maxR: S*1.25 };
+      const opts = { step: 0.05, maxSteps: 240, minR: 0.16, maxR: S*1.25 };
       const RED='#ff5b5b', BLUE='#4f9bff';
 
       for (const src of sources) {
@@ -501,14 +501,22 @@
       }
     },
 
+    // RK2 (Heun) integration: predictor + corrector. Far more accurate per step,
+    // so we need ~1/3 the steps of plain Euler for smoother, cheaper field lines.
     trace: function (a, b, cs2, opts) {
       const pts=[]; let A=a, B=b;
+      const st=opts.step;
       for (let i=0;i<opts.maxSteps;i++){
         pts.push(this.toWorld(A,B,0.012));
-        const {Ea,Eb}=this.field2D(A,B,cs2);
-        const len=Math.hypot(Ea,Eb);
-        if (len<1e-7) break;
-        A += (Ea/len)*opts.step; B += (Eb/len)*opts.step;
+        const f1=this.field2D(A,B,cs2);
+        const l1=Math.hypot(f1.Ea,f1.Eb);
+        if (l1<1e-7) break;
+        const k1a=(f1.Ea/l1)*st, k1b=(f1.Eb/l1)*st;          // step at current point
+        const f2=this.field2D(A+k1a,B+k1b,cs2);              // step at predicted point
+        const l2=Math.hypot(f2.Ea,f2.Eb);
+        let dA=k1a, dB=k1b;
+        if (l2>1e-7){ dA=0.5*(k1a+(f2.Ea/l2)*st); dB=0.5*(k1b+(f2.Eb/l2)*st); }
+        A+=dA; B+=dB;
         let stop=false;
         for (const c of cs2){ if (Math.hypot(A-c.a,B-c.b)<opts.minR){pts.push(this.toWorld(A,B,0.012)); stop=true; break;} }
         if (stop) break;
@@ -520,11 +528,11 @@
     addTube: function (points, cFrom, cTo) {
       if (points.length<2) return;
       const curve=new THREE.CatmullRomCurve3(points);
-      const seg=Math.min(160,Math.max(8,points.length));
-      const geo=new THREE.TubeGeometry(curve,seg,0.009,6,false);
+      const seg=Math.min(80,Math.max(8,points.length));
+      const geo=new THREE.TubeGeometry(curve,seg,0.009,4,false);
       const colA=new THREE.Color(cFrom), colB=new THREE.Color(cTo);
       const p=geo.attributes.position, colors=new Float32Array(p.count*3);
-      const ring=7;
+      const ring=5;
       for (let i=0;i<p.count;i++){
         const t=Math.floor(i/ring)/Math.max(1,p.count/ring);
         const c=colA.clone().lerp(colB,Math.min(1,t));
@@ -797,9 +805,10 @@
       let key=this.show.grid+''+this.show.field+this.show.pot+'|';
       for (const c of charges){
         const p=c.pos;
-        key += c.q+':'+Math.round(p.x/0.03)+','+Math.round(p.y/0.03)+','+Math.round(p.z/0.03)+'|';
+        // spatial debounce: ~3.5 cm quantisation so small hand-jitter doesn't force redraws
+        key += c.q+':'+Math.round(p.x/0.035)+','+Math.round(p.y/0.035)+','+Math.round(p.z/0.035)+'|';
       }
-      const stale=(time-this.lastBuild)>220;
+      const stale=(time-this.lastBuild)>300;
       if (key!==this.lastKey || stale){
         let S=0.9;
         for (const c of cs2) S=Math.max(S, Math.hypot(c.a,c.b));
