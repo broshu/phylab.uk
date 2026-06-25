@@ -242,7 +242,7 @@
       this.K          = num('k', 0.45);   // Coulomb constant (visual units)
       this.SOFT       = num('soft', 0.16);// softening radius (avoids singularities)
       this.SSOFT      = num('ssoft', 0.05);// tiny surface softening -> sharp peaks
-      this.PSMOOTH    = Math.round(num('psmooth', 2)); // surface smoothing passes (removes facets)
+      this.PSMOOTH    = Math.round(num('psmooth', 4)); // surface smoothing passes (removes facets)
       this.HEIGHT     = num('height', 0.4); // potential -> height scale
       this.HCLAMP     = num('hclamp', 4.0);  // max |height| (tall enough for pointed peaks)
       this.SAMPLE     = num('sample', 1000); // ms between committed position samples (sample-and-hold)

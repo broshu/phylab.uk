@@ -134,10 +134,11 @@
       const num=(k,d)=>{const v=parseFloat(q.get(k));return isFinite(v)?v:d;};
       this.K=num('k',0.45); this.SOFT=num('soft',0.16);
       this.SSOFT=num('ssoft',0.05);                 // tiny softening for the surface -> sharp peaks
-      this.PSMOOTH=Math.round(num('psmooth',2));    // surface smoothing passes (removes facets)
+      this.PSMOOTH=Math.round(num('psmooth',4));    // surface smoothing passes (removes facets)
       this.HEIGHT=num('height',0.4); this.HCLAMP=num('hclamp',4.0);
       this.gundir=Math.round(num('gundir',0))&3;
-      this._groundOpacity=num('ground',0.5);        // 3D desk auto-transparency
+      this._groundOpacity=num('ground',0.45);       // 3D desk transparency (slider)
+      this._potOpacity=num('potop',0.85);           // 3D potential-surface opacity (mostly solid)
       this.pcfg={speed:num('pspeed',0.7),force:num('pforce',0.5),dt:0.03,maxSteps:520};
 
       this.show=window.VIEW;
@@ -308,9 +309,9 @@
         colors[i*3]=c.r;colors[i*3+1]=c.g;colors[i*3+2]=c.b;}
       pos.needsUpdate=true;
       geo.setAttribute('color',new THREE.BufferAttribute(colors,3));geo.computeVertexNormals();
-      // smooth-shaded surface; opaque in flat view, semi-transparent in 3D (no wireframe -> no facets)
+      // smooth-shaded surface; opaque in flat view, mostly-opaque (separate from desk) in 3D
       this.potMat=new THREE.MeshPhongMaterial({vertexColors:true,side:THREE.DoubleSide,shininess:30,specular:0x1b2230,flatShading:false,
-        transparent:this.mode3d, opacity:this.mode3d?this._groundOpacity:1, depthWrite:!this.mode3d});
+        transparent:this.mode3d, opacity:this.mode3d?this._potOpacity:1, depthWrite:!this.mode3d});
       this.potGroup.add(new THREE.Mesh(geo,this.potMat));
       if(!this._lit){const amb=new THREE.AmbientLight(0xffffff,0.7),dir=new THREE.DirectionalLight(0xffffff,0.7);
         dir.position.set(2,5,2);this.root.add(amb);this.root.add(dir);this._lit=true;}
@@ -424,14 +425,11 @@
       tex.wrapS=tex.wrapT=THREE.ClampToEdgeWrapping; tex.minFilter=THREE.LinearFilter;
       if('colorSpace' in tex && THREE.SRGBColorSpace) tex.colorSpace=THREE.SRGBColorSpace;
       else if(THREE.sRGBEncoding) tex.encoding=THREE.sRGBEncoding;
-      // desk photo is auto semi-transparent in 3D so the field/potential read clearly
-      this.groundMat=new THREE.MeshBasicMaterial({map:tex,side:THREE.DoubleSide,transparent:true,opacity:this._groundOpacity});
+      // desk photo: semi-transparent AND depthWrite:false so it never hides the wells dipping below it
+      this.groundMat=new THREE.MeshBasicMaterial({map:tex,side:THREE.DoubleSide,transparent:true,opacity:this._groundOpacity,depthWrite:false});
       this.groundGroup.add(new THREE.Mesh(geo,this.groundMat));
     },
-    setGroundOpacity:function(v){ this._groundOpacity=v;
-      if(this.groundMat) this.groundMat.opacity=v;
-      if(this.potMat && this.mode3d){ this.potMat.opacity=v; this.potMat.transparent=true; this.potMat.depthWrite=false; }
-    },
+    setGroundOpacity:function(v){ this._groundOpacity=v; if(this.groundMat) this.groundMat.opacity=v; },  // slider = desk only
 
     enter3D:function(){
       if(this.mode3d || !this.plane) return;

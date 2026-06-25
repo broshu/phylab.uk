@@ -127,7 +127,7 @@
       const q=new URLSearchParams(location.search);
       const num=(k,d)=>{const v=parseFloat(q.get(k));return isFinite(v)?v:d;};
       this.K=num('k',0.45); this.SOFT=num('soft',0.16); this.SSOFT=num('ssoft',0.05);
-      this.PSMOOTH=Math.round(num('psmooth',2));
+      this.PSMOOTH=Math.round(num('psmooth',4));
       this.HEIGHT=num('height',0.4); this.HCLAMP=num('hclamp',4.0);
       this.gundir=Math.round(num('gundir',0))&3;
       this.pcfg={speed:num('pspeed',0.7),force:num('pforce',0.5),dt:0.03,maxSteps:520};
