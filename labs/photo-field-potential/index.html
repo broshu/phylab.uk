@@ -621,13 +621,11 @@
       const kick=()=>window.dispatchEvent(new Event('resize'));
       if(scene) scene.addEventListener('renderstart',()=>{
         const renderer=scene.renderer;
-        if(renderer){
-          renderer.setClearColor(0x000000,0);
-          renderer.autoClearColor=false;
-        }
+        if(renderer) renderer.setClearColor(0x000000,0);   // transparent clear (alpha renderer) — keep autoClear ON
       },{once:true});
       if(scene) scene.addEventListener('arjs-video-loaded',()=>{ kick(); hideArjsImg(40); });
-      [200,600,1200,2200].forEach(t=>setTimeout(kick,t));
+      // image-source detection is sensitive to canvas sizing — nudge several times
+      [150,400,800,1400,2200,3200].forEach(t=>setTimeout(kick,t));
     }
 
     function loadFile(f){
@@ -635,9 +633,13 @@
       if(blobUrl) URL.revokeObjectURL(blobUrl);
       blobUrl=URL.createObjectURL(f);
       intro.classList.add('hidden'); showHud(true);
+      document.getElementById('status').textContent='Loading photo…';
+      // Build the AR scene only AFTER the image has fully decoded, so AR.js
+      // (image source) processes a valid, correctly-sized image and detects the codes.
+      const start=()=>{ buildScene(blobUrl); hideArjsImg(60); };
+      bg.onload=()=>{ bg.onload=null; start(); };
       bg.src=blobUrl; bg.style.display='block'; applyPhotoOpacity();
-      buildScene(blobUrl);
-      hideArjsImg(60);
+      if(bg.complete && bg.naturalWidth){ bg.onload=null; start(); }   // already cached/decoded
     }
 
     pick.addEventListener('click',()=>file.click());
