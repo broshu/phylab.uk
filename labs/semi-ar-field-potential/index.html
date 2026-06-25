@@ -127,6 +127,7 @@
       const q=new URLSearchParams(location.search);
       const num=(k,d)=>{const v=parseFloat(q.get(k));return isFinite(v)?v:d;};
       this.K=num('k',0.45); this.SOFT=num('soft',0.16); this.SSOFT=num('ssoft',0.05);
+      this.PSMOOTH=Math.round(num('psmooth',2));
       this.HEIGHT=num('height',0.4); this.HCLAMP=num('hclamp',4.0);
       this.gundir=Math.round(num('gundir',0))&3;
       this.pcfg={speed:num('pspeed',0.7),force:num('pforce',0.5),dt:0.03,maxSteps:520};
@@ -320,24 +321,25 @@
         cone.position.copy(pts[i]);cone.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.normalize());this.fieldGroup.add(cone);}},
 
     buildPotential:function(cs2,S){this.clear(this.potGroup);if(!this.show.pot||!cs2.length)return;
-      const N=96,geo=new THREE.PlaneGeometry(2*S,2*S,N,N),pos=geo.attributes.position,colors=new Float32Array(pos.count*3);
+      const N=128,M=N+1,geo=new THREE.PlaneGeometry(2*S,2*S,N,N),pos=geo.attributes.position,cnt=pos.count,colors=new Float32Array(cnt*3);
       const cHot=new THREE.Color('#ff6a4f'),cTip=new THREE.Color('#fff2cf'),cMid=new THREE.Color('#0c1626'),cHole=new THREE.Color('#000000');
-      const ss=this.SSOFT, abx=new Float32Array(pos.count), aby=new Float32Array(pos.count);
+      const ss=this.SSOFT, abx=new Float32Array(cnt), aby=new Float32Array(cnt), hgt=new Float32Array(cnt);
       const Vat=(a,b)=>{let V=0;for(const c of cs2){const dx=a-c.a,dy=b-c.b;V+=this.K*c.q/Math.sqrt(dx*dx+dy*dy+ss*ss);}return V;};
-      for(let i=0;i<pos.count;i++){const a=pos.getX(i),b=pos.getY(i);abx[i]=a;aby[i]=b;
-        const V=Vat(a,b),h=Math.max(-this.HCLAMP,Math.min(this.HCLAMP,V*this.HEIGHT));const L=this.L(a,b,h);pos.setXYZ(i,L.x,L.y,L.z);
-        const vt=Math.max(-1,Math.min(1,V*this.HEIGHT/this.HCLAMP));let c;
+      for(let i=0;i<cnt;i++){const a=pos.getX(i),b=pos.getY(i);abx[i]=a;aby[i]=b;
+        hgt[i]=Math.max(-this.HCLAMP,Math.min(this.HCLAMP,Vat(a,b)*this.HEIGHT));}
+      const al=0.5; for(let p=0;p<this.PSMOOTH;p++){const s=hgt.slice();
+        for(let y=1;y<N;y++)for(let x=1;x<N;x++){const i=y*M+x;
+          hgt[i]=s[i]*(1-al)+(s[i-1]+s[i+1]+s[i-M]+s[i+M])*(al*0.25);}}
+      for(const c of cs2){let bi=-1,bd=1e9;for(let i=0;i<cnt;i++){const dx=abx[i]-c.a,dy=aby[i]-c.b,d=dx*dx+dy*dy;if(d<bd){bd=d;bi=i;}}
+        if(bi>=0){abx[bi]=c.a;aby[bi]=c.b;hgt[bi]=Math.max(-this.HCLAMP,Math.min(this.HCLAMP,Vat(c.a,c.b)*this.HEIGHT));}}
+      for(let i=0;i<cnt;i++){const L=this.L(abx[i],aby[i],hgt[i]);pos.setXYZ(i,L.x,L.y,L.z);
+        const vt=Math.max(-1,Math.min(1,hgt[i]/this.HCLAMP));let c;
         if(vt>=0){c=cMid.clone().lerp(cHot,Math.pow(vt,0.5));if(vt>0.75)c.lerp(cTip,(vt-0.75)/0.25*0.85);}
         else c=cMid.clone().lerp(cHole,Math.pow(-vt,0.45));     // negative -> BLACK hole
         colors[i*3]=c.r;colors[i*3+1]=c.g;colors[i*3+2]=c.b;}
-      for(const c of cs2){let bi=-1,bd=1e9;
-        for(let i=0;i<pos.count;i++){const dx=abx[i]-c.a,dy=aby[i]-c.b,d=dx*dx+dy*dy;if(d<bd){bd=d;bi=i;}}
-        if(bi<0)continue;const h=Math.max(-this.HCLAMP,Math.min(this.HCLAMP,Vat(c.a,c.b)*this.HEIGHT));const L=this.L(c.a,c.b,h);
-        pos.setXYZ(bi,L.x,L.y,L.z);const col=c.q>0?cTip:cHole;colors[bi*3]=col.r;colors[bi*3+1]=col.g;colors[bi*3+2]=col.b;}
       pos.needsUpdate=true;
       geo.setAttribute('color',new THREE.BufferAttribute(colors,3));geo.computeVertexNormals();
-      this.potGroup.add(new THREE.Mesh(geo,new THREE.MeshPhongMaterial({vertexColors:true,side:THREE.DoubleSide,shininess:40,specular:0x222a33})));
-      this.potGroup.add(new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:'#39e0c8',wireframe:true,transparent:true,opacity:0.10})));
+      this.potGroup.add(new THREE.Mesh(geo,new THREE.MeshPhongMaterial({vertexColors:true,side:THREE.DoubleSide,shininess:30,specular:0x1b2230,flatShading:false})));
       if(!this._lit){this.content.add(new THREE.AmbientLight(0xffffff,0.7));
         const d=new THREE.DirectionalLight(0xffffff,0.7);d.position.set(2,5,2);this.content.add(d);this._lit=true;}
       for(const c of cs2){if(c.q<0){const ring=new THREE.Mesh(new THREE.TorusGeometry(0.16,0.02,12,48),

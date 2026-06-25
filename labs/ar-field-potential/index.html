@@ -242,6 +242,7 @@
       this.K          = num('k', 0.45);   // Coulomb constant (visual units)
       this.SOFT       = num('soft', 0.16);// softening radius (avoids singularities)
       this.SSOFT      = num('ssoft', 0.05);// tiny surface softening -> sharp peaks
+      this.PSMOOTH    = Math.round(num('psmooth', 2)); // surface smoothing passes (removes facets)
       this.HEIGHT     = num('height', 0.4); // potential -> height scale
       this.HCLAMP     = num('hclamp', 4.0);  // max |height| (tall enough for pointed peaks)
       this.SAMPLE     = num('sample', 1000); // ms between committed position samples (sample-and-hold)
@@ -571,46 +572,38 @@
     buildPotential: function (cs2, S) {
       this.clear(this.potGroup);
       if (!this.show.pot || cs2.length===0) return;
-      const N=96;                      // grid resolution (finer -> sharper tips)
+      const N=128, M=N+1;              // grid resolution
       const geo=new THREE.PlaneGeometry(2*S,2*S,N,N);
       // PlaneGeometry lies in XY (local). We map (x,y)->plane (a,b) and z->height.
-      const pos=geo.attributes.position;
-      const colors=new Float32Array(pos.count*3);
+      const pos=geo.attributes.position, cnt=pos.count;
+      const colors=new Float32Array(cnt*3);
       const cHot=new THREE.Color('#ff6a4f'), cTip=new THREE.Color('#fff2cf'),
             cMid=new THREE.Color('#0c1626'), cHole=new THREE.Color('#000000');
-      const ss=this.SSOFT, abx=new Float32Array(pos.count), aby=new Float32Array(pos.count);
+      const ss=this.SSOFT, abx=new Float32Array(cnt), aby=new Float32Array(cnt), hgt=new Float32Array(cnt);
       const Vat=(a,b)=>{let V=0;for(const c of cs2){const dx=a-c.a,dy=b-c.b;V+=this.K*c.q/Math.sqrt(dx*dx+dy*dy+ss*ss);}return V;};
       const out=new THREE.Vector3();
-      for (let i=0;i<pos.count;i++){
-        const a=pos.getX(i), b=pos.getY(i); abx[i]=a; aby[i]=b;
-        const V=Vat(a,b);
-        const h=Math.max(-this.HCLAMP, Math.min(this.HCLAMP, V*this.HEIGHT));
-        out.copy(this.toWorld(a,b,h));
-        pos.setXYZ(i,out.x,out.y,out.z);
-        const vt=Math.max(-1,Math.min(1,V*this.HEIGHT/this.HCLAMP));
-        let c;
+      for (let i=0;i<cnt;i++){const a=pos.getX(i),b=pos.getY(i);abx[i]=a;aby[i]=b;
+        hgt[i]=Math.max(-this.HCLAMP,Math.min(this.HCLAMP,Vat(a,b)*this.HEIGHT));}
+      // softening: Laplacian smoothing passes dissolve the facet edges between triangles
+      const al=0.5; for(let p=0;p<this.PSMOOTH;p++){const s=hgt.slice();
+        for(let y=1;y<N;y++)for(let x=1;x<N;x++){const i=y*M+x;
+          hgt[i]=s[i]*(1-al)+(s[i-1]+s[i+1]+s[i-M]+s[i+M])*(al*0.25);}}
+      // re-sharpen the exact apex/pit at each charge after smoothing
+      for (const c of cs2){let bi=-1,bd=1e9;for(let i=0;i<cnt;i++){const dx=abx[i]-c.a,dy=aby[i]-c.b,d=dx*dx+dy*dy;if(d<bd){bd=d;bi=i;}}
+        if(bi>=0){abx[bi]=c.a;aby[bi]=c.b;hgt[bi]=Math.max(-this.HCLAMP,Math.min(this.HCLAMP,Vat(c.a,c.b)*this.HEIGHT));}}
+      for (let i=0;i<cnt;i++){out.copy(this.toWorld(abx[i],aby[i],hgt[i]));pos.setXYZ(i,out.x,out.y,out.z);
+        const vt=Math.max(-1,Math.min(1,hgt[i]/this.HCLAMP));let c;
         if (vt>=0){ c=cMid.clone().lerp(cHot,Math.pow(vt,0.5)); if(vt>0.75)c.lerp(cTip,(vt-0.75)/0.25*0.85); }
-        else c=cMid.clone().lerp(cHole,Math.pow(-vt,0.45));   // negative -> BLACK hole, not blue
+        else c=cMid.clone().lerp(cHole,Math.pow(-vt,0.45));   // negative -> BLACK hole
         colors[i*3]=c.r; colors[i*3+1]=c.g; colors[i*3+2]=c.b;
-      }
-      // snap an exact apex/pit vertex at each charge so the tip is POINTED (V→∞ physics)
-      for (const c of cs2){
-        let bi=-1,bd=1e9; for(let i=0;i<pos.count;i++){const dx=abx[i]-c.a,dy=aby[i]-c.b,d=dx*dx+dy*dy;if(d<bd){bd=d;bi=i;}}
-        if(bi<0)continue; const h=Math.max(-this.HCLAMP,Math.min(this.HCLAMP,Vat(c.a,c.b)*this.HEIGHT));
-        out.copy(this.toWorld(c.a,c.b,h)); pos.setXYZ(bi,out.x,out.y,out.z);
-        const col=c.q>0?cTip:cHole; colors[bi*3]=col.r;colors[bi*3+1]=col.g;colors[bi*3+2]=col.b;
       }
       pos.needsUpdate=true;
       geo.setAttribute('color',new THREE.BufferAttribute(colors,3));
       geo.computeVertexNormals();
-      // Opaque surface masks the desk behind the wells (the "black hole").
+      // smooth-shaded opaque surface (no wireframe -> no facet edges); wells mask the desk
       const mat=new THREE.MeshPhongMaterial({vertexColors:true, side:THREE.DoubleSide,
-        shininess:40, specular:0x222a33, flatShading:false});
+        shininess:30, specular:0x1b2230, flatShading:false});
       this.potGroup.add(new THREE.Mesh(geo,mat));
-
-      // wireframe sheen
-      const wmat=new THREE.MeshBasicMaterial({color:'#39e0c8',wireframe:true,transparent:true,opacity:0.12});
-      this.potGroup.add(new THREE.Mesh(geo,wmat));
 
       // a couple of lights so the Phong surface reads as 3D
       if (!this._lit){
