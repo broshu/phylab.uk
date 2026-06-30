@@ -1,103 +1,74 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-GB">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Cube markers — AR Electric Field</title>
-  <style>
-    :root{ --ink:#1b2030; --pos:#ff3b30; --neg:#3b82f6; --gp:#e0a019; --gn:#2b8fd6; }
-    *{box-sizing:border-box;}
-    body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
-      color:var(--ink);background:#eef1f6;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-    .sheet{width:210mm;margin:0 auto 8mm;background:#fff;padding:13mm;}
-    .scheme-tag{display:inline-block;background:#fff1f0;color:#d8453c;font-weight:800;font-size:12px;
-      padding:4px 10px;border-radius:999px;letter-spacing:.03em;}
-    .scheme-tag.neg{background:#eef4ff;color:#2563eb;}
-    h1{font-size:19px;margin:7px 0 3px;}
-    h2{font-size:14px;margin:5mm 0 1mm;color:#444;}
-    .sub{color:#5b6577;font-size:11.5px;margin:0 0 4mm;line-height:1.55;}
-    .grid{display:flex;gap:4mm;justify-content:center;flex-wrap:nowrap;}
-    .card{text-align:center;}
-    .marker-box{width:33mm;height:33mm;background:#fff;padding:4.5mm;border:1px dashed #c4ccda;
-      display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
-    .marker-box img{width:24mm;height:24mm;image-rendering:pixelated;}
-    .gunbox .arrow{position:absolute;right:1mm;top:50%;transform:translateY(-50%);font-size:18px;line-height:1;}
-    .gunbox.pos-gun .arrow{color:var(--gp);} .gunbox.neg-gun .arrow{color:var(--gn);}
-    .lab{margin-top:2.5mm;font-weight:700;font-size:12px;} .id{color:#8a93a6;font-size:10px;}
-    .face .lab{color:var(--pos);} .face.negf .lab{color:var(--neg);}
-    .guns{display:flex;gap:8mm;justify-content:center;margin-top:2mm;}
-    .tips{margin-top:5mm;font-size:11.5px;color:#42495a;line-height:1.65;border-top:1px solid #e2e6ee;padding-top:3.5mm;}
-    .tips b{color:var(--ink);}
-    .noprint{text-align:center;padding:12px;}
-    .noprint button{font-size:15px;padding:10px 22px;border:none;border-radius:10px;background:#2563eb;color:#fff;font-weight:700;cursor:pointer;}
-    .noprint a{display:inline-block;margin-left:10px;color:#2563eb;font-size:13px;}
-    .noprint a.btn-ar{color:#fff;font-weight:700;margin-left:10px;padding:10px 22px;border-radius:10px;text-decoration:none;
-      background:linear-gradient(135deg,#56c4ff,#39e0c8);box-shadow:0 4px 14px rgba(57,224,200,.28);}
-    @page{ size:A4; margin:12mm; }
-    @media print{
-      html,body{background:#fff;width:auto;}
-      /* fill the printable area — never a fixed 210mm, so nothing overflows the page margins */
-      .sheet{width:auto;max-width:none;margin:0;padding:0;box-shadow:none;}
-      .sheet+.sheet{page-break-before:always;}
-      .noprint{display:none !important;}
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Cube AR — printable sheets</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+  :root{ --ink:#1c2b25; --green:#2f5d4f; --accent:#8a9a5b; --paper:#f4f1e8; --card:#faf8f1; --line:#d8d2c0; --muted:#6b7269;
+    --shadow:0 1px 2px rgba(28,43,37,.05),0 12px 32px -16px rgba(28,43,37,.28); }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:"Inter",sans-serif;background:var(--paper);color:var(--ink);min-height:100vh;padding:42px 24px;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:760px;margin:0 auto;}
+  .crumb{text-align:center;margin-bottom:8px;font-size:.92rem;color:var(--muted);}
+  .crumb a{color:var(--green);text-decoration:none;}
+  .page-title{font-family:"Cormorant Garamond",serif;font-size:clamp(2rem,4.5vw,3rem);font-weight:600;text-align:center;letter-spacing:.5px;margin-bottom:6px;}
+  .lede{text-align:center;color:var(--muted);max-width:620px;margin:0 auto 28px;line-height:1.6;}
+  .lede b{color:var(--green);}
+  .blocks{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .block{display:flex;flex-direction:column;gap:10px;padding:18px;text-decoration:none;background:var(--card);
+    border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);color:var(--ink);transition:transform .25s,border-color .25s;}
+  .block:hover{transform:translateY(-4px);border-color:var(--accent);}
+  .block h2{font-family:"Cormorant Garamond",serif;font-size:1.35rem;font-weight:600;color:var(--green);}
+  .block p{font-size:.86rem;color:var(--muted);line-height:1.5;flex:1;}
+  .thumb{width:100%;aspect-ratio:16/9;border:1px solid var(--line);border-radius:9px;background:#0b0e16;display:block;}
+  .go{align-self:flex-start;font-size:.82rem;font-weight:600;color:#fff;background:var(--green);padding:7px 14px;border-radius:9px;}
+  .note{text-align:center;color:var(--muted);font-size:.86rem;margin-top:26px;line-height:1.7;}
+  .note a{color:var(--green);}
+  @media (max-width:560px){ .blocks{grid-template-columns:1fr;} }
+</style>
 </head>
 <body>
-  <div class="noprint">
-    <button onclick="window.print()">Print these sheets</button>
-    <a class="btn-ar" href="cube.html">▶ Open Cube AR</a>
-    <a href="encoding.pdf" target="_blank">Encoding PDF →</a>
-    <a href="print-plane.html">Plane markers →</a>
-  </div>
+  <main class="wrap">
+    <div class="crumb"><a href="./">← AR Electric Field</a> · <a href="cube.html">Cube AR</a></div>
+    <h1 class="page-title">Cube AR — printable sheets</h1>
+    <p class="lede">Build a <b>+</b> cube and a <b>−</b> cube from flat markers. The sheet prints as exact A4 pages —
+       print at <b>100% / actual size</b>, then stick five markers on each box.</p>
 
-  <!-- PAGE 1 — POSITIVE CUBE -->
-  <div class="sheet">
-    <span class="scheme-tag">CUBE SCHEME · POSITIVE</span>
-    <h1>AR Electric Field — Cube markers (+)</h1>
-    <p class="sub">
-      Print at <b>100% (actual size)</b> — each black pattern is <b>2.4&nbsp;cm</b>. Stick these <b>five</b> markers on five faces of a small box
-      (top + four sides; leave the bottom), keeping the white border. The charge sits at the <b>cube's centre</b>: the app steps every visible
-      face inward by ½ the cube edge and averages them, so it stays dead-centre whatever face you see.
+    <div class="blocks">
+      <a class="block" href="print/cube-markers.pdf" target="_blank" rel="noopener">
+        <h2>Cube markers &amp; manual</h2>
+        <svg class="thumb" viewBox="0 0 320 180" role="img" aria-label="marker cubes with 3-D field">
+          <rect width="320" height="180" fill="#0b0e16"/>
+          <g fill="none" stroke="#ff5b5b" stroke-width="2"><path d="M110,95 C140,45 200,45 210,95"/><path d="M110,95 C150,70 170,70 210,95"/></g>
+          <g stroke="#5c6b80" stroke-width="1"><polygon points="110,86 130,96 110,106 90,96" fill="#fff"/><polygon points="90,96 110,106 110,128 90,118" fill="#d7dbe2"/><polygon points="130,96 110,106 110,128 130,118" fill="#c2c8d2"/>
+          <polygon points="210,86 230,96 210,106 190,96" fill="#fff"/><polygon points="190,96 210,106 210,128 190,118" fill="#d7dbe2"/><polygon points="230,96 210,106 210,128 230,118" fill="#c2c8d2"/></g>
+          <circle cx="110" cy="95" r="10" fill="#ff4d4d"/><circle cx="210" cy="95" r="10" fill="#3b9bff"/>
+        </svg>
+        <p>Two A4 pages: the + cube's five faces, then the − cube's five faces plus the two electron guns — with build &amp; calibration notes.</p>
+        <span class="go">Open PDF →</span>
+      </a>
+
+      <a class="block" href="encoding.pdf" target="_blank" rel="noopener">
+        <h2>Full encoding reference</h2>
+        <svg class="thumb" viewBox="0 0 320 180" role="img" aria-label="encoding table">
+          <rect width="320" height="180" fill="#0b0e16"/>
+          <g fill="#1a2233" stroke="#2a3650"><rect x="40" y="34" width="240" height="22"/><rect x="40" y="62" width="240" height="22"/><rect x="40" y="90" width="240" height="22"/><rect x="40" y="118" width="240" height="22"/></g>
+          <g fill="#cfe6f5" font-family="Inter" font-size="11"><text x="52" y="49">code · marker · role</text></g>
+        </svg>
+        <p>Every barcode in both the Plane and Cube schemes, with what each one does.</p>
+        <span class="go">Open PDF →</span>
+      </a>
+    </div>
+
+    <p class="note">
+      Open <b><a href="cube.html">Cube AR</a></b> once the cubes are built ·
+      flat stickers instead? <a href="print-plane.html">Plane sheets →</a>
     </p>
-    <h2>+ cube — five faces</h2>
-    <div class="grid">
-      <div class="card face"><div class="marker-box"><img src="markers/0.png" alt="+ face 1"></div><div class="lab">+ face 1</div><div class="id">barcode 0</div></div>
-      <div class="card face"><div class="marker-box"><img src="markers/1.png" alt="+ face 2"></div><div class="lab">+ face 2</div><div class="id">barcode 1</div></div>
-      <div class="card face"><div class="marker-box"><img src="markers/2.png" alt="+ face 3"></div><div class="lab">+ face 3</div><div class="id">barcode 2</div></div>
-      <div class="card face"><div class="marker-box"><img src="markers/3.png" alt="+ face 4"></div><div class="lab">+ face 4</div><div class="id">barcode 3</div></div>
-      <div class="card face"><div class="marker-box"><img src="markers/4.png" alt="+ face 5"></div><div class="lab">+ face 5</div><div class="id">barcode 4</div></div>
-    </div>
-    <div class="tips">
-      <b>Calibrate the centre.</b> The inward step is <code>?cube=</code> (cube half-edge ÷ marker width). For a 7&nbsp;cm box with 2.4&nbsp;cm markers,
-      that's 3.5 ÷ 2.4 ≈ <b>1.45</b> → open <code>cube.html?cube=1.45</code>. Default is 1.0.
-    </div>
-  </div>
-
-  <!-- PAGE 2 — NEGATIVE CUBE + GUNS -->
-  <div class="sheet">
-    <span class="scheme-tag neg">CUBE SCHEME · NEGATIVE</span>
-    <h1>AR Electric Field — Cube markers (−) &amp; guns</h1>
-    <p class="sub">Stick these <b>five</b> markers on a second box — it carries a <b>negative</b> charge at its centre. The gun cards lie flat beside the cubes.</p>
-    <h2>− cube — five faces</h2>
-    <div class="grid">
-      <div class="card face negf"><div class="marker-box"><img src="markers/5.png" alt="− face 1"></div><div class="lab">− face 1</div><div class="id">barcode 5</div></div>
-      <div class="card face negf"><div class="marker-box"><img src="markers/6.png" alt="− face 2"></div><div class="lab">− face 2</div><div class="id">barcode 6</div></div>
-      <div class="card face negf"><div class="marker-box"><img src="markers/7.png" alt="− face 3"></div><div class="lab">− face 3</div><div class="id">barcode 7</div></div>
-      <div class="card face negf"><div class="marker-box"><img src="markers/8.png" alt="− face 4"></div><div class="lab">− face 4</div><div class="id">barcode 8</div></div>
-      <div class="card face negf"><div class="marker-box"><img src="markers/9.png" alt="− face 5"></div><div class="lab">− face 5</div><div class="id">barcode 9</div></div>
-    </div>
-
-    <h2>Electron guns <span style="font-weight:500;color:#8a93a6;font-size:11px;">— the ▶ arrow is the firing direction</span></h2>
-    <div class="guns">
-      <div class="card"><div class="marker-box gunbox pos-gun"><img src="markers/10.png" alt="+ electron gun"><span class="arrow">▶</span></div><div class="lab" style="color:var(--gp)">+ gun · e⁺</div><div class="id">barcode 10</div></div>
-      <div class="card"><div class="marker-box gunbox neg-gun"><img src="markers/11.png" alt="− electron gun"><span class="arrow">▶</span></div><div class="lab" style="color:var(--gn)">− gun · e⁻</div><div class="id">barcode 11</div></div>
-    </div>
-    <div class="tips">
-      <b>How to use.</b> Stand both cubes on a desk, open <b>Cube AR</b>, and aim at a cube. After it auto-locks, walk around to see the 3-D field —
-      the shape stays rigid. Guns fire e⁺ / e⁻ along their printed arrow (rotate with <code>?gundir=</code> if needed). The cube codes (0–9) are
-      <b>independent</b> of the Plane scheme — only run one scheme at a time.
-    </div>
-  </div>
+  </main>
+  <script defer src="/assets/nav.js"></script>
 </body>
 </html>
