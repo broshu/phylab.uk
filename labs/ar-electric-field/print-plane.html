@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Plane markers — AR Electric Field</title>
+  <style>
+    :root{ --ink:#1b2030; --pos:#ff3b30; --neg:#3b82f6; --gp:#e0a019; --gn:#2b8fd6; }
+    *{box-sizing:border-box;}
+    body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+      color:var(--ink);background:#eef1f6;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .sheet{width:210mm;min-height:297mm;margin:0 auto;background:#fff;padding:15mm;}
+    .scheme-tag{display:inline-block;background:#eef4ff;color:#2563eb;font-weight:800;font-size:12px;
+      padding:4px 10px;border-radius:999px;letter-spacing:.03em;}
+    h1{font-size:21px;margin:8px 0 4px;}
+    .sub{color:#5b6577;font-size:13px;margin:0 0 6mm;line-height:1.6;}
+    .cards{display:flex;gap:10mm;justify-content:center;flex-wrap:wrap;margin-top:4mm;}
+    .card{text-align:center;}
+    .marker-box{width:58mm;height:58mm;background:#fff;padding:9mm;border:1px dashed #c4ccda;
+      display:flex;align-items:center;justify-content:center;position:relative;}
+    .marker-box img{width:40mm;height:40mm;image-rendering:pixelated;}
+    /* gun firing-direction arrow: points along the marker's local +X (the app fires that way) */
+    .gunbox .arrow{position:absolute;right:-2mm;top:50%;transform:translateY(-50%);font-size:30px;line-height:1;}
+    .gunbox .emit{position:absolute;right:-15mm;top:50%;transform:translateY(-50%);font-weight:800;font-size:15px;}
+    .gunbox.neg-gun .arrow,.gunbox.neg-gun .emit{color:var(--gn);} .gunbox.pos-gun .arrow,.gunbox.pos-gun .emit{color:var(--gp);}
+    .tag{margin-top:5mm;font-weight:800;font-size:19px;}
+    .tag .sym{display:inline-block;width:28px;height:28px;line-height:26px;border-radius:50%;color:#fff;font-size:20px;
+      vertical-align:middle;margin-right:7px;}
+    .pos .sym{background:var(--pos);} .neg .sym{background:var(--neg);}
+    .pos-gun .sym{background:var(--gp);} .neg-gun .sym{background:var(--gn);}
+    .id{color:#8a93a6;font-size:12px;margin-top:2mm;}
+    .tips{margin-top:8mm;font-size:12px;color:#42495a;line-height:1.75;border-top:1px solid #e2e6ee;padding-top:5mm;}
+    .tips b{color:var(--ink);}
+    .row-label{margin:7mm 0 1mm;font-weight:800;font-size:14px;color:#2563eb;}
+    @media print{
+      body{background:#fff;} .sheet{box-shadow:none;margin:0;padding:12mm;} .noprint{display:none;}
+      body:not(.print-markers-only) .tips,body:not(.print-markers-only) .sub{display:none !important;}
+    }
+    .noprint{text-align:center;padding:12px;}
+    .noprint button{font-size:15px;padding:10px 22px;border:none;border-radius:10px;background:#2563eb;color:#fff;font-weight:700;cursor:pointer;}
+    .noprint a{display:inline-block;margin-left:10px;color:#2563eb;font-size:13px;}
+    .noprint a.btn-ar{color:#fff;font-weight:700;margin-left:10px;padding:10px 22px;border-radius:10px;text-decoration:none;
+      background:linear-gradient(135deg,#56c4ff,#39e0c8);box-shadow:0 4px 14px rgba(57,224,200,.28);}
+  </style>
+</head>
+<body>
+  <div class="noprint">
+    <button onclick="window.print()">Print this sheet</button>
+    <a class="btn-ar" href="plane.html">▶ Open Plane AR</a>
+    <a href="encoding.pdf" target="_blank">Encoding PDF →</a>
+    <a href="print-cube.html">Cube markers →</a>
+  </div>
+
+  <div class="sheet">
+    <span class="scheme-tag">PLANE SCHEME</span>
+    <h1>AR Electric Field — Plane markers</h1>
+    <p class="sub">
+      Print on plain white paper at <b>100% (actual size)</b> — each black pattern should measure <b>4&nbsp;cm × 4&nbsp;cm</b> (check with a ruler).
+      Cut the cards apart and <b>lay them flat on a desk</b>. Keep the white border (quiet zone) around each square — that is what the camera locks onto.
+      The charge sits <b>at the centre of its marker</b>. Codes here are independent of the Cube scheme.
+    </p>
+
+    <div class="row-label">Charges</div>
+    <div class="cards">
+      <div class="card">
+        <div class="marker-box"><img src="markers/0.png" alt="positive charge marker" /></div>
+        <div class="tag pos"><span class="sym">+</span>Positive</div>
+        <div class="id">barcode 0</div>
+      </div>
+      <div class="card">
+        <div class="marker-box"><img src="markers/1.png" alt="negative charge marker" /></div>
+        <div class="tag neg"><span class="sym">−</span>Negative</div>
+        <div class="id">barcode 1</div>
+      </div>
+    </div>
+
+    <div class="row-label">Electron guns <span style="font-weight:500;color:#8a93a6;font-size:12px;">— the arrow is the firing direction (it echoes the marker's orientation)</span></div>
+    <div class="cards">
+      <div class="card">
+        <div class="marker-box gunbox pos-gun"><img src="markers/2.png" alt="positive electron gun marker" /><span class="arrow">▶</span><span class="emit">e⁺</span></div>
+        <div class="tag pos-gun"><span class="sym">⊕</span>+ gun (fires e⁺)</div>
+        <div class="id">barcode 2</div>
+      </div>
+      <div class="card">
+        <div class="marker-box gunbox neg-gun"><img src="markers/3.png" alt="negative electron gun marker" /><span class="arrow">▶</span><span class="emit">e⁻</span></div>
+        <div class="tag neg-gun"><span class="sym">⊖</span>− gun (fires e⁻)</div>
+        <div class="id">barcode 3</div>
+      </div>
+    </div>
+
+    <div class="tips">
+      <b>How to use</b><br>
+      1. Open <b>Plane AR</b> and tap <b>Start camera</b> (HTTPS, best on an iPad).<br>
+      2. Aim at the <b>+</b> marker → field lines radiate outward; <b>−</b> → lines converge inward; both together → a dipole.<br>
+      3. The layout <b>auto-locks</b> after a moment, freezing the field-line shape so you can move around without jitter. Tap <b>Re-scan</b> for a new layout.<br>
+      4. Each <b>electron-gun</b> card fires test charges along its printed arrow: the <b>+ gun</b> fires e⁺, the <b>− gun</b> fires e⁻. They bend along the field.
+      If a beam comes out the wrong way, add <code>?gundir=1</code> (0–3 quarter-turns) to the URL.<br>
+      5. Tracking is steadiest with even lighting on a flat, non-glossy surface.
+    </div>
+  </div>
+
+  <script>
+    function printMarkersOnly(){document.body.classList.add('print-markers-only');window.print();}
+    window.addEventListener('afterprint',function(){document.body.classList.remove('print-markers-only');});
+  </script>
+</body>
+</html>

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AR Electric Field — PhyLab</title>
+<meta name="description" content="Augmented-reality electric field: plane markers, marker cubes, or a still photo. Field lines + potential, jitter-free." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --ink:#1c2b25; --green:#2f5d4f; --accent:#8a9a5b; --paper:#f4f1e8; --card:#faf8f1;
+    --line:#d8d2c0; --muted:#6b7269; --shadow:0 1px 2px rgba(28,43,37,.05),0 12px 32px -16px rgba(28,43,37,.28);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:"Inter",sans-serif;background:var(--paper);color:var(--ink);min-height:100vh;
+    display:grid;place-items:center;padding:48px 24px;-webkit-font-smoothing:antialiased;}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:radial-gradient(circle at 20% 15%,rgba(47,93,79,.05),transparent 45%),radial-gradient(circle at 85% 80%,rgba(138,154,91,.06),transparent 50%);}
+  .wrap{position:relative;z-index:1;width:100%;max-width:980px;}
+  .crumb{text-align:center;margin-bottom:10px;font-size:.92rem;color:var(--muted);}
+  .crumb a{color:var(--green);text-decoration:none;} .crumb a:hover{text-decoration:underline;}
+  .page-title{font-family:"Cormorant Garamond",serif;font-size:clamp(2.2rem,5vw,3.4rem);font-weight:600;
+    color:var(--ink);text-align:center;letter-spacing:.5px;margin-bottom:8px;}
+  .lede{text-align:center;color:var(--muted);max-width:620px;margin:0 auto 36px;line-height:1.6;}
+  .blocks{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;}
+  .block{position:relative;display:flex;flex-direction:column;gap:12px;padding:20px 20px 18px;text-decoration:none;
+    background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);color:var(--ink);
+    overflow:hidden;transition:transform .3s ease,box-shadow .3s ease,border-color .3s;}
+  .block:hover{transform:translateY(-5px);border-color:var(--accent);box-shadow:0 22px 48px -20px rgba(28,43,37,.45);}
+  .block h2{font-family:"Cormorant Garamond",serif;font-size:1.5rem;font-weight:600;color:var(--green);
+    letter-spacing:.5px;line-height:1.1;text-align:center;}
+  .block p{font-size:.88rem;color:var(--muted);line-height:1.55;text-align:center;}
+  .thumb{width:100%;aspect-ratio:16/10;border:1px solid var(--line);border-radius:10px;background:#0b0e16;display:block;}
+  .pill{position:absolute;top:12px;right:12px;z-index:2;padding:3px 10px;font-size:.7rem;font-weight:600;letter-spacing:.4px;
+    text-transform:uppercase;color:#fff;background:var(--accent);border-radius:999px;}
+  .foot{margin-top:30px;text-align:center;color:var(--muted);font-size:.9rem;line-height:1.9;}
+  .foot a{color:var(--green);text-decoration:none;font-weight:500;margin:0 8px;}
+  .foot a:hover{text-decoration:underline;}
+  @media (max-width:820px){ .blocks{grid-template-columns:1fr;gap:18px;} }
+</style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="crumb"><a href="/labs/">← Labs</a></div>
+    <h1 class="page-title">AR Electric Field</h1>
+    <p class="lede">See electric field lines (and the potential surface) in augmented reality. Print the markers, then choose
+       a mode. The layout is detected once and <b>frozen</b>, so the field shape stays rigid while you move around — no jitter.</p>
+
+    <div class="blocks">
+      <!-- PLANE -->
+      <a class="block" href="plane.html">
+        <span class="pill">Live AR</span>
+        <h2>Plane AR</h2>
+        <svg class="thumb" viewBox="0 0 320 200" role="img" aria-label="Flat markers on a desk with a dipole field">
+          <defs><linearGradient id="fF" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ff5b5b"/><stop offset="1" stop-color="#4f9bff"/></linearGradient></defs>
+          <rect width="320" height="200" fill="#0b0e16"/>
+          <polygon points="0,150 320,150 320,200 0,200" fill="#10151f"/>
+          <line x1="0" y1="150" x2="320" y2="150" stroke="#26405a" stroke-width="1"/>
+          <g fill="none" stroke="url(#fF)" stroke-width="2.4" opacity="0.95">
+            <path d="M95,140 C120,60 200,60 225,140"/><path d="M95,140 C130,95 190,95 225,140"/><path d="M95,140 C68,38 252,38 225,140"/>
+          </g>
+          <g stroke="#5c6b80" stroke-width="1"><polygon points="73,150 95,142 117,150 95,158" fill="#fff"/><polygon points="203,150 225,142 247,150 225,158" fill="#fff"/></g>
+          <circle cx="95" cy="140" r="11" fill="#ff4d4d"/><circle cx="225" cy="140" r="11" fill="#3b9bff"/>
+          <g stroke="#fff" stroke-width="2.6" stroke-linecap="round"><line x1="88" y1="140" x2="102" y2="140"/><line x1="95" y1="133" x2="95" y2="147"/><line x1="218" y1="140" x2="232" y2="140"/></g>
+        </svg>
+        <p>Flat markers on a desk; charge at each marker centre. In-plane field lines + a potential surface.</p>
+      </a>
+
+      <!-- CUBE -->
+      <a class="block" href="cube.html">
+        <span class="pill">Live AR</span>
+        <h2>Cube AR</h2>
+        <svg class="thumb" viewBox="0 0 320 200" role="img" aria-label="Marker cubes on a desk with a 3-D field">
+          <defs><linearGradient id="fC" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ff5b5b"/><stop offset="1" stop-color="#4f9bff"/></linearGradient></defs>
+          <rect width="320" height="200" fill="#0b0e16"/>
+          <polygon points="0,150 320,150 320,200 0,200" fill="#10151f"/>
+          <line x1="0" y1="150" x2="320" y2="150" stroke="#26405a" stroke-width="1"/>
+          <g fill="none" stroke="url(#fC)" stroke-width="2.4" opacity="0.95">
+            <path d="M95,128 C120,52 200,52 225,128"/><path d="M95,128 C130,86 190,86 225,128"/><path d="M95,128 C68,30 252,30 225,128"/>
+          </g>
+          <g stroke="#5c6b80" stroke-width="1.1">
+            <polygon points="95,120 119,132 95,144 71,132" fill="#fff"/><polygon points="71,132 95,144 95,168 71,156" fill="#d7dbe2"/><polygon points="119,132 95,144 95,168 119,156" fill="#c2c8d2"/>
+            <polygon points="225,120 249,132 225,144 201,132" fill="#fff"/><polygon points="201,132 225,144 225,168 201,156" fill="#d7dbe2"/><polygon points="249,132 225,144 225,168 249,156" fill="#c2c8d2"/>
+          </g>
+          <circle cx="95" cy="128" r="11" fill="#ff4d4d"/><circle cx="225" cy="128" r="11" fill="#3b9bff"/>
+          <g stroke="#fff" stroke-width="2.6" stroke-linecap="round"><line x1="88" y1="128" x2="102" y2="128"/><line x1="95" y1="121" x2="95" y2="135"/><line x1="218" y1="128" x2="232" y2="128"/></g>
+        </svg>
+        <p>Markers on a box; charge at the cube centre. True 3-D field lines you can walk around.</p>
+      </a>
+
+      <!-- PHOTO -->
+      <a class="block" href="photo.html">
+        <span class="pill">Static</span>
+        <h2>Photo</h2>
+        <svg class="thumb" viewBox="0 0 320 200" role="img" aria-label="A still photo with field lines overlaid">
+          <defs><linearGradient id="fP" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ff5b5b"/><stop offset="1" stop-color="#4f9bff"/></linearGradient></defs>
+          <rect width="320" height="200" fill="#0b0e16"/>
+          <rect x="40" y="34" width="240" height="132" rx="8" fill="#161b27" stroke="#26405a"/>
+          <g fill="none" stroke="url(#fP)" stroke-width="2.4" opacity="0.95">
+            <path d="M120,120 C140,60 200,60 220,120"/><path d="M120,120 C150,92 190,92 220,120"/>
+          </g>
+          <circle cx="120" cy="120" r="10" fill="#ff4d4d"/><circle cx="220" cy="120" r="10" fill="#3b9bff"/>
+          <text x="160" y="56" fill="#7fd4ff" font-family="Inter,sans-serif" font-size="13" text-anchor="middle">🧊 3D from a photo</text>
+        </svg>
+        <p>Upload one photo of the cards. Detected once — perfectly stable. Tap 3D to orbit the scene.</p>
+      </a>
+    </div>
+
+    <div class="foot">
+      Print the markers first:
+      <a href="print-plane.html">Plane markers</a> ·
+      <a href="print-cube.html">Cube markers</a> ·
+      <a href="encoding.pdf" target="_blank">Encoding PDF</a>
+      <br><span style="font-size:.82rem">Open in Safari on an iPad (camera needs HTTPS). Field lines show by default; toggle the potential surface in-app.</span>
+    </div>
+  </main>
+  <script defer src="/assets/nav.js"></script>
+</body>
+</html>

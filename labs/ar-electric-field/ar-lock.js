@@ -1,0 +1,372 @@
+/* =====================================================================
+   ar-lock.js  —  "lock once, then move the camera" AR controllers
+   ---------------------------------------------------------------------
+   This is the jitter fix the whole lab is built around.
+
+     SCAN phase  AR.js tracks the printed markers live.  We only watch
+                 them to know they're there (a faint preview dot per
+                 marker).  When they've been seen steadily for a moment
+                 the scene AUTO-LOCKS (default), or the user taps Lock.
+
+     LOCK phase  The charge layout is frozen into a rigid reference
+                 frame and the field geometry is built ONCE.  Its shape
+                 never changes again.  Every frame we recover the
+                 reference frame's pose from whichever markers are
+                 currently visible — averaging all of their (noisy)
+                 readings into one pose and low-pass filtering it — and
+                 drive a single anchor.  So: the field shape is rigid,
+                 only the viewpoint moves, and the averaging keeps it
+                 glued to the real desk as steadily as possible.
+
+   Two flavours share the Lock mixin:
+     arlock-planar : flat markers, charge AT the marker, in-plane field
+                     + potential surface (uses EFieldPlanar).
+     arlock-cube   : cube markers, charge at the CUBE CENTRE (each face
+                     offset inward by ½ edge then averaged), 3-D field
+                     lines (uses EField3D).
+   ===================================================================== */
+(function () {
+  'use strict';
+
+  /* ---------- shared mixin ---------- */
+  var Lock = {
+    initBase: function () {
+      this.cfg = EFieldUtil.readConfig(location.search);
+      this.statusEl = document.querySelector('#status');
+      this.locked = false;
+      this.frozen = null;
+      this.buildKey = '';
+      this._apos = new THREE.Vector3();
+      this._aquat = new THREE.Quaternion();
+      this._scl = new THREE.Vector3(1, 1, 1);
+      this._haveA = false;
+      this._seenSince = 0;     // ms the markers have been continuously present
+      this._flash = ''; this._flashUntil = 0;
+      this._v = new THREE.Vector3();
+
+      // anchor carries ALL frozen content; we only rewrite its matrix each frame
+      this.anchor = new THREE.Group(); this.anchor.matrixAutoUpdate = false;
+      this.el.object3D.add(this.anchor);
+      this.content = new THREE.Group(); this.anchor.add(this.content);
+      this.gridGroup  = new THREE.Group(); this.content.add(this.gridGroup);
+      this.fieldGroup = new THREE.Group(); this.content.add(this.fieldGroup);
+      this.potGroup   = new THREE.Group(); this.content.add(this.potGroup);
+      this.glyphGroup = new THREE.Group(); this.content.add(this.glyphGroup);
+      this.trajGroup  = new THREE.Group(); this.content.add(this.trajGroup);
+      this.pGroup     = new THREE.Group(); this.content.add(this.pGroup);
+      this.liveGroup  = new THREE.Group(); this.el.object3D.add(this.liveGroup);  // pre-lock preview (world)
+
+      this.bindUI();
+    },
+
+    bindUI: function () {
+      var self = this;
+      var on = function (el, fn) { if (!el) return; var h = function (e) { if (e) { e.preventDefault(); e.stopPropagation(); } fn(); };
+        el.addEventListener('click', h); el.addEventListener('touchend', h, { passive: false }); };
+      var lock = document.querySelector('#lockBtn');
+      on(lock, function () { if (self.locked) self.rescan(); else self.lockNow(); });
+      // toggle buttons present for this page
+      [['#t-grid', 'grid'], ['#t-field', 'field'], ['#t-pot', 'pot']].forEach(function (pair) {
+        var el = document.querySelector(pair[0]); if (!el) return;
+        on(el, function () {
+          if (!self.locked || !self.builder.show.hasOwnProperty(pair[1])) return;
+          self.builder.show[pair[1]] = !self.builder.show[pair[1]];
+          el.classList.toggle('on', self.builder.show[pair[1]]);
+          self.buildKey = '';
+        });
+      });
+    },
+
+    flash: function (msg) { this._flash = msg; this._flashUntil = performance.now() + 1800; },
+
+    rescan: function () {
+      this.locked = false; this.frozen = null; this._haveA = false; this.buildKey = ''; this._seenSince = 0;
+      [this.gridGroup, this.fieldGroup, this.potGroup, this.glyphGroup, this.trajGroup, this.pGroup].forEach(EFieldUtil.clear);
+      this.setUIState();
+    },
+
+    setUIState: function () {
+      var lock = document.querySelector('#lockBtn');
+      if (lock) {
+        lock.classList.toggle('locked', this.locked);
+        var ic = lock.querySelector('.ic'); if (ic) ic.textContent = this.locked ? '↻' : '🔒';
+        var lab = lock.querySelector('.lab'); if (lab) lab.textContent = this.locked ? 'Re-scan' : 'Lock now';
+      }
+      ['#t-grid', '#t-field', '#t-pot'].forEach(function (sel) {
+        var el = document.querySelector(sel); if (el) el.classList.toggle('disabled', !this.locked);
+      }, this);
+      if (this.locked && this.builder) {
+        var b = this.builder;
+        var set = function (sel, key) { var el = document.querySelector(sel); if (el && b.show.hasOwnProperty(key)) el.classList.toggle('on', b.show[key]); };
+        set('#t-grid', 'grid'); set('#t-field', 'field'); set('#t-pot', 'pot');
+      }
+    },
+
+    /* build the rigid reference frame M (basis u, normal, w at origin) and its inverse */
+    buildFrame: function (markersForPlane) {
+      var pl = EFieldUtil.fitPlane(markersForPlane);
+      var w = new THREE.Vector3().crossVectors(pl.u, pl.normal).normalize();
+      var M = new THREE.Matrix4().makeBasis(pl.u, pl.normal, w).setPosition(pl.origin);
+      return { pl: pl, w: w, M: M, Minv: M.clone().invert() };
+    },
+
+    /* record K = markerWorld^-1 · M for every currently-visible tracking marker */
+    captureAnchors: function (els, M) {
+      var anchors = [];
+      for (var i = 0; i < els.length; i++) { var o = els[i].object3D; if (!o.visible) continue;
+        o.updateMatrixWorld(true);
+        anchors.push({ el: els[i], K: o.matrixWorld.clone().invert().multiply(M) });
+      }
+      return anchors;
+    },
+
+    /* recover + smooth the reference-frame pose from visible markers (the averaging step) */
+    updateAnchor: function () {
+      var ests = [], i;
+      for (i = 0; i < this.frozen.anchors.length; i++) {
+        var o = this.frozen.anchors[i].el.object3D; if (!o.visible) continue;
+        o.updateMatrixWorld(true);
+        var E = o.matrixWorld.clone().multiply(this.frozen.anchors[i].K);
+        var p = new THREE.Vector3(), q = new THREE.Quaternion(), s = new THREE.Vector3(); E.decompose(p, q, s);
+        ests.push({ p: p, q: q });
+      }
+      if (!EFieldUtil.averagePose(ests, this._apos, this._aquat, this.cfg.smooth, this._haveA)) return;
+      this._haveA = true;
+      this.anchor.matrix.compose(this._apos, this._aquat, this._scl);
+      this.anchor.matrixWorldNeedsUpdate = true;
+    },
+
+    livePreview: function (charges) {
+      EFieldUtil.clear(this.liveGroup);
+      for (var i = 0; i < charges.length; i++) {
+        var s = new THREE.Mesh(new THREE.SphereGeometry(0.05, 12, 12),
+          new THREE.MeshBasicMaterial({ color: charges[i].q > 0 ? EFieldUtil.COL.posFill : EFieldUtil.COL.negFill }));
+        s.position.copy(charges[i].pos); this.liveGroup.add(s);
+      }
+    },
+
+    /* auto-lock once ≥1 charge has been visible steadily for ~1.2 s */
+    maybeAutoLock: function (time, nCharges) {
+      if (!this.cfg.autolock || this.locked) return;
+      if (nCharges < 1) { this._seenSince = 0; return; }
+      if (!this._seenSince) this._seenSince = time;
+      else if (time - this._seenSince > 1200) this.lockNow();
+    }
+  };
+
+  /* =================================================================
+     arlock-planar — flat markers, in-plane field + potential
+     ================================================================= */
+  AFRAME.registerComponent('arlock-planar', Object.assign({}, Lock, {
+    init: function () {
+      this.initBase();
+      this.chg = Array.from(document.querySelectorAll('a-marker.chg'));
+      this.guns = [
+        { el: document.querySelector('a-marker.gun-pos'), q: +1, color: EFieldUtil.COL.gunPos },
+        { el: document.querySelector('a-marker.gun-neg'), q: -1, color: EFieldUtil.COL.gunNeg }
+      ].filter(function (g) { return g.el; });
+      var self = this;
+      this.builder = new EFieldPlanar({
+        cfg: this.cfg,
+        groups: { grid: this.gridGroup, field: this.fieldGroup, pot: this.potGroup, glyph: this.glyphGroup, traj: this.trajGroup, particle: this.pGroup },
+        L: function (a, b, h) { return new THREE.Vector3(a, h || 0, b); },
+        lightTarget: this.content,
+        ringQuat: null
+      });
+      this.setUIState();
+    },
+
+    liveCharges: function () {
+      var out = [];
+      for (var i = 0; i < this.chg.length; i++) { var o = this.chg[i].object3D; if (!o.visible) continue;
+        var p = new THREE.Vector3(); o.getWorldPosition(p);
+        var qn = new THREE.Quaternion(); o.getWorldQuaternion(qn);
+        out.push({ pos: p, q: parseFloat(this.chg[i].dataset.q), normal: new THREE.Vector3(0, 1, 0).applyQuaternion(qn).normalize() });
+      }
+      return out;
+    },
+
+    lockNow: function () {
+      var charges = this.liveCharges();
+      var visGuns = this.guns.filter(function (g) { return g.el.object3D.visible; });
+      var all = charges.slice(), i;
+      for (i = 0; i < visGuns.length; i++) { var p = new THREE.Vector3(); visGuns[i].el.object3D.getWorldPosition(p);
+        var qn = new THREE.Quaternion(); visGuns[i].el.object3D.getWorldQuaternion(qn);
+        all.push({ pos: p, q: 0, normal: new THREE.Vector3(0, 1, 0).applyQuaternion(qn).normalize() }); }
+      if (!all.length) { this.flash('No markers visible — point at them first'); return; }
+
+      var fr = this.buildFrame(all), pl = fr.pl, w = fr.w, Minv = fr.Minv;
+
+      // charges → reference-frame plane coords (a,b)
+      var cs2 = [];
+      for (i = 0; i < charges.length; i++) { var r = charges[i].pos.clone().applyMatrix4(Minv); cs2.push({ a: r.x, b: r.z, q: charges[i].q }); }
+
+      // guns → reference-frame muzzle pose (in-plane forward, with optional gundir rotation)
+      var gunsF = [];
+      for (i = 0; i < visGuns.length; i++) { var g = visGuns[i];
+        var wp = new THREE.Vector3(); g.el.object3D.getWorldPosition(wp);
+        var wq = new THREE.Quaternion(); g.el.object3D.getWorldQuaternion(wq);
+        var f = new THREE.Vector3(1, 0, 0).applyQuaternion(wq);                 // marker local +X = printed arrow
+        f.addScaledVector(pl.normal, -f.dot(pl.normal)); if (f.lengthSq() < 1e-6) f.copy(pl.u); f.normalize();
+        var rp = wp.clone().sub(pl.origin), a = rp.dot(pl.u), b = rp.dot(w), da = f.dot(pl.u), db = f.dot(w);
+        for (var t = 0; t < this.cfg.gundir; t++) { var tmp = da; da = -db; db = tmp; }
+        var nn = Math.hypot(da, db) || 1;
+        gunsF.push({ a: a, b: b, da: da / nn, db: db / nn, q: g.q, color: g.color });
+      }
+
+      var anchors = this.captureAnchors(this.chg.concat(this.guns.map(function (g) { return g.el; })), fr.M);
+      this.frozen = { cs2: cs2, guns: gunsF, anchors: anchors };
+      this.locked = true; this.buildKey = '';
+      fr.M.decompose(this._apos, this._aquat, this._scl); this._haveA = true; this._scl.set(1, 1, 1);
+      EFieldUtil.clear(this.liveGroup);
+
+      // overall scale for line/grid bounds
+      var S = 0.9; for (i = 0; i < cs2.length; i++) S = Math.max(S, Math.hypot(cs2[i].a, cs2[i].b));
+      for (i = 0; i < gunsF.length; i++) S = Math.max(S, Math.hypot(gunsF[i].a, gunsF[i].b)); S += 1.1; this._S = S;
+
+      this.setUIState();
+      this.flash(cs2.length + ' charge' + (cs2.length !== 1 ? 's' : '') + ' locked · move around to view');
+    },
+
+    rebuild: function () {
+      var b = this.builder, cs2 = this.frozen.cs2, S = this._S;
+      b.buildGrid(cs2, S); b.buildField(cs2, S); b.buildPotential(cs2, S); b.buildGlyphs(cs2);
+      b.buildTrajectories(this.frozen.guns, cs2, S);
+    },
+
+    tick: function (time) {
+      var msg;
+      if (!this.locked) {
+        var charges = this.liveCharges();
+        var nGun = this.guns.filter(function (g) { return g.el.object3D.visible; }).length;
+        this.livePreview(charges);
+        this.maybeAutoLock(time, charges.length);
+        msg = (charges.length || nGun)
+          ? (charges.length + ' charge' + (charges.length !== 1 ? 's' : '') + (nGun ? ' + ' + nGun + ' gun' + (nGun > 1 ? 's' : '') : '') + ' — hold steady to lock…')
+          : 'Point at the markers so they are seen…';
+      } else {
+        var seen = this.frozen.anchors.filter(function (an) { return an.el.object3D.visible; }).length;
+        msg = seen ? ('Locked · ' + this.frozen.cs2.length + ' charges · tracking ' + seen + ' marker' + (seen > 1 ? 's' : ''))
+                   : 'Locked · point back at the markers to keep tracking';
+        this.updateAnchor();
+        var key = this.builder.show.grid + '' + this.builder.show.field + this.builder.show.pot;
+        if (key !== this.buildKey) { this.rebuild(); this.buildKey = key; }
+        this.builder.animate(time, this.frozen.guns, this.frozen.cs2);
+      }
+      var shown = (this._flash && time < this._flashUntil) ? this._flash : msg;
+      if (this.statusEl.textContent !== shown) this.statusEl.textContent = shown;
+    }
+  }));
+
+  /* =================================================================
+     arlock-cube — cube markers, charge at cube centre, 3-D field
+     ================================================================= */
+  AFRAME.registerComponent('arlock-cube', Object.assign({}, Lock, {
+    init: function () {
+      this.initBase();
+      this.cubePos = Array.from(document.querySelectorAll('a-marker.cube-pos'));
+      this.cubeNeg = Array.from(document.querySelectorAll('a-marker.cube-neg'));
+      this.guns = [
+        { el: document.querySelector('a-marker.gun-pos'), q: +1, color: EFieldUtil.COL.gunPos },
+        { el: document.querySelector('a-marker.gun-neg'), q: -1, color: EFieldUtil.COL.gunNeg }
+      ].filter(function (g) { return g.el; });
+      this.builder = new EField3D({
+        cfg: this.cfg,
+        groups: { field: this.fieldGroup, glyph: this.glyphGroup, traj: this.trajGroup, particle: this.pGroup }
+      });
+      this.setUIState();
+    },
+
+    /* world-space centre of one cube: each visible face stepped inward ½ edge, then averaged */
+    cubeCentreWorld: function (faces) {
+      var acc = new THREE.Vector3(), count = 0, p = new THREE.Vector3(), q = new THREE.Quaternion(), n = new THREE.Vector3();
+      for (var i = 0; i < faces.length; i++) { var o = faces[i].object3D; if (!o.visible) continue;
+        o.getWorldPosition(p); o.getWorldQuaternion(q);
+        n.set(0, 1, 0).applyQuaternion(q).multiplyScalar(-this.cfg.cube);    // step into the cube
+        acc.add(p.clone().add(n)); count++;
+      }
+      return count ? { pos: acc.multiplyScalar(1 / count), count: count } : null;
+    },
+
+    visibleCubeFaces: function () {
+      var out = [];
+      this.cubePos.concat(this.cubeNeg).forEach(function (el) { if (el.object3D.visible) out.push(el); });
+      return out;
+    },
+
+    lockNow: function () {
+      var cp = this.cubeCentreWorld(this.cubePos);
+      var cn = this.cubeCentreWorld(this.cubeNeg);
+      var centres = [];
+      if (cp) centres.push({ pos: cp.pos, q: +1 });
+      if (cn) centres.push({ pos: cn.pos, q: -1 });
+      var visGuns = this.guns.filter(function (g) { return g.el.object3D.visible; });
+      // plane is fitted from the visible face markers (the desk the cubes sit on)
+      var planePts = [];
+      this.visibleCubeFaces().forEach(function (el) { var o = el.object3D; var p = new THREE.Vector3(); o.getWorldPosition(p);
+        var q = new THREE.Quaternion(); o.getWorldQuaternion(q); planePts.push({ pos: p, normal: new THREE.Vector3(0, 1, 0).applyQuaternion(q).normalize() }); });
+      visGuns.forEach(function (g) { var o = g.el.object3D; var p = new THREE.Vector3(); o.getWorldPosition(p);
+        var q = new THREE.Quaternion(); o.getWorldQuaternion(q); planePts.push({ pos: p, normal: new THREE.Vector3(0, 1, 0).applyQuaternion(q).normalize() }); });
+      if (!centres.length) { this.flash('No cube visible — point at a cube face first'); return; }
+      if (planePts.length < 1) { this.flash('Hold steady…'); return; }
+
+      var fr = this.buildFrame(planePts), pl = fr.pl, Minv = fr.Minv;
+      var rot = new THREE.Matrix4().extractRotation(Minv);
+
+      // charges → local 3-D positions (keeps the cube height above the desk → true 3-D field)
+      var charges = [];
+      for (var i = 0; i < centres.length; i++) charges.push({ pos: centres[i].pos.clone().applyMatrix4(Minv), q: centres[i].q });
+
+      // guns → local muzzle pose, firing along the printed arrow (marker +X) projected onto the desk
+      var gunsF = [];
+      for (i = 0; i < visGuns.length; i++) { var g = visGuns[i];
+        var wp = new THREE.Vector3(); g.el.object3D.getWorldPosition(wp);
+        var wq = new THREE.Quaternion(); g.el.object3D.getWorldQuaternion(wq);
+        var lp = wp.clone().applyMatrix4(Minv);
+        var f = new THREE.Vector3(1, 0, 0).applyQuaternion(wq).applyMatrix4(rot); f.y = 0;
+        if (f.lengthSq() < 1e-6) f.set(1, 0, 0); f.normalize();
+        for (var t = 0; t < this.cfg.gundir; t++) { var tx = f.x; f.x = -f.z; f.z = tx; }
+        gunsF.push({ pos: lp, dir: f, q: g.q, color: g.color });
+      }
+
+      var anchorEls = this.cubePos.concat(this.cubeNeg).concat(this.guns.map(function (g) { return g.el; }));
+      var anchors = this.captureAnchors(anchorEls, fr.M);
+      this.frozen = { charges: charges, guns: gunsF, anchors: anchors };
+      this.locked = true; this.buildKey = '';
+      fr.M.decompose(this._apos, this._aquat, this._scl); this._haveA = true; this._scl.set(1, 1, 1);
+      EFieldUtil.clear(this.liveGroup);
+
+      var S = 0.9; for (i = 0; i < charges.length; i++) S = Math.max(S, charges[i].pos.length()); this._S = S + 1.1;
+      this.setUIState();
+      this.flash(centres.length + ' charge' + (centres.length !== 1 ? 's' : '') + ' locked at cube centre' + (centres.length !== 1 ? 's' : '') + ' · move around');
+    },
+
+    rebuild: function () {
+      this.builder.build(this.frozen.charges);
+      this.builder.buildTrajectories(this.frozen.guns, this.frozen.charges, this._S);
+    },
+
+    tick: function (time) {
+      var msg;
+      if (!this.locked) {
+        var faces = this.visibleCubeFaces();
+        var cp = this.cubeCentreWorld(this.cubePos), cn = this.cubeCentreWorld(this.cubeNeg);
+        var preview = []; if (cp) preview.push({ pos: cp.pos, q: 1 }); if (cn) preview.push({ pos: cn.pos, q: -1 });
+        this.livePreview(preview);
+        this.maybeAutoLock(time, preview.length);
+        msg = faces.length ? (faces.length + ' face' + (faces.length > 1 ? 's' : '') + ' seen — hold steady to lock…')
+                           : 'Point at a cube so its faces are seen…';
+      } else {
+        var seen = this.frozen.anchors.filter(function (an) { return an.el.object3D.visible; }).length;
+        msg = seen ? ('Locked · ' + this.frozen.charges.length + ' charge' + (this.frozen.charges.length !== 1 ? 's' : '') + ' · tracking ' + seen + ' marker' + (seen > 1 ? 's' : ''))
+                   : 'Locked · point back at a cube to keep tracking';
+        this.updateAnchor();
+        var key = this.builder.show.field + '';
+        if (key !== this.buildKey) { this.rebuild(); this.buildKey = key; }
+        this.builder.animate(time, this.frozen.guns);
+      }
+      var shown = (this._flash && time < this._flashUntil) ? this._flash : msg;
+      if (this.statusEl.textContent !== shown) this.statusEl.textContent = shown;
+    }
+  }));
+})();

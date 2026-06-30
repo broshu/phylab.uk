@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cube markers — AR Electric Field</title>
+  <style>
+    :root{ --ink:#1b2030; --pos:#ff3b30; --neg:#3b82f6; --gp:#e0a019; --gn:#2b8fd6; }
+    *{box-sizing:border-box;}
+    body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+      color:var(--ink);background:#eef1f6;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .sheet{width:210mm;min-height:297mm;margin:0 auto;background:#fff;padding:13mm;}
+    .sheet+.sheet{margin-top:8mm;}
+    .scheme-tag{display:inline-block;background:#fff1f0;color:#d8453c;font-weight:800;font-size:12px;
+      padding:4px 10px;border-radius:999px;letter-spacing:.03em;}
+    .scheme-tag.neg{background:#eef4ff;color:#2563eb;}
+    h1{font-size:20px;margin:8px 0 4px;}
+    h2{font-size:16px;margin:6mm 0 2mm;}
+    .sub{color:#5b6577;font-size:12.5px;margin:0 0 5mm;line-height:1.6;}
+    .grid{display:flex;gap:6mm;justify-content:center;flex-wrap:wrap;margin-top:3mm;}
+    .card{text-align:center;}
+    .marker-box{width:46mm;height:46mm;background:#fff;padding:7mm;border:1px dashed #c4ccda;
+      display:flex;align-items:center;justify-content:center;position:relative;}
+    .marker-box img{width:32mm;height:32mm;image-rendering:pixelated;}
+    .gunbox .arrow{position:absolute;right:-1mm;top:50%;transform:translateY(-50%);font-size:24px;line-height:1;}
+    .gunbox .emit{position:absolute;right:-12mm;top:50%;transform:translateY(-50%);font-weight:800;font-size:13px;}
+    .gunbox.neg-gun .arrow,.gunbox.neg-gun .emit{color:var(--gn);} .gunbox.pos-gun .arrow,.gunbox.pos-gun .emit{color:var(--gp);}
+    .lab{margin-top:3mm;font-weight:700;font-size:13px;} .id{color:#8a93a6;font-size:11px;}
+    .face .lab{color:var(--pos);} .face.negf .lab{color:var(--neg);}
+    .tips{margin-top:6mm;font-size:12px;color:#42495a;line-height:1.7;border-top:1px solid #e2e6ee;padding-top:4mm;}
+    .tips b{color:var(--ink);}
+    @media print{ body{background:#fff;} .sheet{box-shadow:none;margin:0;padding:11mm;} .sheet+.sheet{page-break-before:always;} .noprint{display:none;} .tips,.sub{} }
+    .noprint{text-align:center;padding:12px;}
+    .noprint button{font-size:15px;padding:10px 22px;border:none;border-radius:10px;background:#2563eb;color:#fff;font-weight:700;cursor:pointer;}
+    .noprint a{display:inline-block;margin-left:10px;color:#2563eb;font-size:13px;}
+    .noprint a.btn-ar{color:#fff;font-weight:700;margin-left:10px;padding:10px 22px;border-radius:10px;text-decoration:none;
+      background:linear-gradient(135deg,#56c4ff,#39e0c8);box-shadow:0 4px 14px rgba(57,224,200,.28);}
+  </style>
+</head>
+<body>
+  <div class="noprint">
+    <button onclick="window.print()">Print these sheets</button>
+    <a class="btn-ar" href="cube.html">▶ Open Cube AR</a>
+    <a href="encoding.pdf" target="_blank">Encoding PDF →</a>
+    <a href="print-plane.html">Plane markers →</a>
+  </div>
+
+  <!-- PAGE 1 — POSITIVE CUBE -->
+  <div class="sheet">
+    <span class="scheme-tag">CUBE SCHEME · POSITIVE</span>
+    <h1>AR Electric Field — Cube markers (+)</h1>
+    <p class="sub">
+      Print at <b>100% (actual size)</b> — each black pattern is <b>3.2&nbsp;cm</b>. Stick these <b>five</b> markers on five faces of a small box
+      (top + four sides; leave the bottom). Keep the white border around each square. The charge sits at the <b>cube's centre</b>: the app steps
+      every visible face inward by ½ the cube edge and averages them, so the charge stays dead-centre whatever face you see.
+    </p>
+    <h2>+ cube — five faces</h2>
+    <div class="grid">
+      <div class="card face"><div class="marker-box"><img src="markers/0.png" alt="+ face 1"></div><div class="lab">+ face 1</div><div class="id">barcode 0</div></div>
+      <div class="card face"><div class="marker-box"><img src="markers/1.png" alt="+ face 2"></div><div class="lab">+ face 2</div><div class="id">barcode 1</div></div>
+      <div class="card face"><div class="marker-box"><img src="markers/2.png" alt="+ face 3"></div><div class="lab">+ face 3</div><div class="id">barcode 2</div></div>
+      <div class="card face"><div class="marker-box"><img src="markers/3.png" alt="+ face 4"></div><div class="lab">+ face 4</div><div class="id">barcode 3</div></div>
+      <div class="card face"><div class="marker-box"><img src="markers/4.png" alt="+ face 5"></div><div class="lab">+ face 5</div><div class="id">barcode 4</div></div>
+    </div>
+    <div class="tips">
+      <b>Calibrate the centre.</b> The inward step is <code>?cube=</code> (cube half-edge ÷ marker width). For a 7&nbsp;cm box with 3.2&nbsp;cm markers,
+      that's 3.5 ÷ 3.2 ≈ <b>1.1</b> → open <code>cube.html?cube=1.1</code>. Default is 1.0.
+    </div>
+  </div>
+
+  <!-- PAGE 2 — NEGATIVE CUBE -->
+  <div class="sheet">
+    <span class="scheme-tag neg">CUBE SCHEME · NEGATIVE</span>
+    <h1>AR Electric Field — Cube markers (−)</h1>
+    <p class="sub">Stick these <b>five</b> markers on five faces of a second box — this one carries a <b>negative</b> charge at its centre.</p>
+    <h2>− cube — five faces</h2>
+    <div class="grid">
+      <div class="card face negf"><div class="marker-box"><img src="markers/5.png" alt="− face 1"></div><div class="lab">− face 1</div><div class="id">barcode 5</div></div>
+      <div class="card face negf"><div class="marker-box"><img src="markers/6.png" alt="− face 2"></div><div class="lab">− face 2</div><div class="id">barcode 6</div></div>
+      <div class="card face negf"><div class="marker-box"><img src="markers/7.png" alt="− face 3"></div><div class="lab">− face 3</div><div class="id">barcode 7</div></div>
+      <div class="card face negf"><div class="marker-box"><img src="markers/8.png" alt="− face 4"></div><div class="lab">− face 4</div><div class="id">barcode 8</div></div>
+      <div class="card face negf"><div class="marker-box"><img src="markers/9.png" alt="− face 5"></div><div class="lab">− face 5</div><div class="id">barcode 9</div></div>
+    </div>
+
+    <h2>Electron guns <span style="font-weight:500;color:#8a93a6;font-size:12px;">— arrow = firing direction</span></h2>
+    <div class="grid">
+      <div class="card"><div class="marker-box gunbox pos-gun"><img src="markers/10.png" alt="+ electron gun"><span class="arrow">▶</span><span class="emit">e⁺</span></div><div class="lab" style="color:var(--gp)">+ gun (e⁺)</div><div class="id">barcode 10</div></div>
+      <div class="card"><div class="marker-box gunbox neg-gun"><img src="markers/11.png" alt="− electron gun"><span class="arrow">▶</span><span class="emit">e⁻</span></div><div class="lab" style="color:var(--gn)">− gun (e⁻)</div><div class="id">barcode 11</div></div>
+    </div>
+    <div class="tips">
+      <b>How to use.</b> Stand both cubes on a desk, lay the gun cards flat beside them, open <b>Cube AR</b> and aim at a cube. After it
+      auto-locks, walk around to see the 3-D field; the shape stays rigid. Guns fire e⁺ / e⁻ along their printed arrow (rotate with <code>?gundir=</code> if needed).
+      The cube codes (0–9) are <b>independent</b> of the Plane scheme — only run one scheme at a time.
+    </div>
+  </div>
+</body>
+</html>

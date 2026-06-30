@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Cube AR — Electric Field</title>
+
+  <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.js"></script>
+
+  <style>
+    html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+    a-scene,.a-canvas,video.arjs-video{z-index:1 !important;}
+
+    #ui{position:fixed;inset:0;pointer-events:none;z-index:1000;}
+    #status{position:fixed;left:50%;top:12px;transform:translateX(-50%);max-width:92%;
+      background:rgba(10,14,22,.72);color:#e8f4ff;padding:9px 16px;border-radius:999px;text-align:center;
+      font-size:14px;font-weight:600;border:1px solid rgba(86,196,255,.28);
+      backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
+    #legend{position:fixed;left:12px;top:54px;background:rgba(10,14,22,.66);color:#cfe6f5;
+      padding:9px 13px;border-radius:13px;font-size:12.5px;line-height:1.7;border:1px solid rgba(86,196,255,.18);
+      backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
+    #legend .dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:7px;vertical-align:middle;}
+    .pos{background:#ff4d4d;box-shadow:0 0 8px rgba(255,77,77,.8);} .neg{background:#3b9bff;box-shadow:0 0 8px rgba(59,155,255,.8);}
+
+    #controls{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:1002;display:flex;gap:10px;
+      pointer-events:auto;background:rgba(10,14,22,.6);border:1px solid rgba(86,196,255,.22);padding:8px;border-radius:16px;
+      backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 8px 30px rgba(0,0,0,.45);}
+    .toggle{cursor:pointer;user-select:none;display:flex;flex-direction:column;align-items:center;gap:2px;
+      min-width:70px;padding:9px 12px;border-radius:11px;color:#9fb4c8;background:rgba(255,255,255,.03);
+      border:1px solid rgba(255,255,255,.08);font-size:12.5px;font-weight:600;transition:all .18s ease;}
+    .toggle .ic{font-size:17px;line-height:1;}
+    .toggle.on{color:#061018;background:linear-gradient(135deg,#56c4ff,#39e0c8);border-color:transparent;box-shadow:0 0 16px rgba(86,196,255,.5);}
+    .toggle.disabled{opacity:.4;pointer-events:none;}
+    #lockBtn{color:#04121a;background:linear-gradient(135deg,#ffd76a,#ff9d3b);border-color:transparent;font-weight:800;}
+    #lockBtn.locked{background:rgba(255,255,255,.06);color:#dbe6f5;border:1px solid rgba(255,255,255,.14);font-weight:600;}
+
+    #gate{position:fixed;inset:0;z-index:50;background:radial-gradient(circle at 30% 20%,#0e1726,#05070d 70%);
+      color:#e8eefb;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:26px;}
+    #gate h1{font-size:23px;margin:0 0 6px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center;}
+    .beta{font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#39e0c8;
+      background:rgba(57,224,200,.12);border:1px solid rgba(57,224,200,.5);padding:2px 9px;border-radius:999px;}
+    #gate p{color:#94a4bd;max-width:460px;line-height:1.55;margin:6px 0;font-size:14px;}
+    .step{display:flex;gap:10px;align-items:flex-start;max-width:430px;text-align:left;margin:5px 0;color:#b9c6dc;font-size:13.5px;}
+    .step b{color:#ffd76a;}
+    #startBtn{margin-top:20px;pointer-events:auto;cursor:pointer;background:linear-gradient(135deg,#56c4ff,#39e0c8);
+      color:#04121a;border:none;border-radius:14px;padding:14px 34px;font-size:17px;font-weight:800;box-shadow:0 8px 26px rgba(57,224,200,.32);}
+    .crumb{position:fixed;top:14px;left:16px;font-size:13px;z-index:60;} .crumb a{color:#7fd4ff;text-decoration:none;}
+    .links{margin-top:16px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center;pointer-events:auto;}
+    .links a{color:#dbe6f5;text-decoration:none;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:10px 16px;font-size:13px;}
+    .hidden{display:none !important;}
+  </style>
+</head>
+<body>
+  <div class="crumb"><a href="./">← AR Electric Field</a></div>
+
+  <div id="gate">
+    <h1>Cube AR <span class="beta">3-D field</span></h1>
+    <p>Stick the markers on a small box so each cube carries a charge at its <b>centre</b>. Point the camera at a cube and the
+       3-D electric field appears around it. The layout is <b>frozen</b> on lock, so the field shape stays rigid as you circle the cube — no jitter.</p>
+    <div class="step"><span>①</span><span>Build a <b>+</b> cube and a <b>−</b> cube (5 face markers each); stand them on a desk.</span></div>
+    <div class="step"><span>②</span><span>Start the camera and point at a cube — it <b>auto-locks</b> after a moment.</span></div>
+    <div class="step"><span>③</span><span>Walk around to see the 3-D field; tap <b>Re-scan</b> for a new layout.</span></div>
+    <p style="font-size:12px;color:#5e6f8a">Each face of a cube reports a pose; all visible faces are stepped inward ½ edge and averaged → the charge sits dead centre. Requires camera &amp; HTTPS.</p>
+    <button id="startBtn">Start camera</button>
+    <div class="links"><a href="print-cube.html" target="_blank" rel="noopener">Print the cube markers ↗</a></div>
+  </div>
+
+  <div id="ui">
+    <div id="status">Point at a cube…</div>
+    <div id="legend">
+      <div><span class="dot pos"></span>Positive cube (+)</div>
+      <div><span class="dot neg"></span>Negative cube (−)</div>
+      <div><span class="dot" style="background:#ffd76a;box-shadow:0 0 8px rgba(255,215,106,.8)"></span>+ electron gun (fires e⁺)</div>
+      <div><span class="dot" style="background:#7fd0ff;box-shadow:0 0 8px rgba(127,208,255,.8)"></span>− electron gun (fires e⁻)</div>
+    </div>
+    <div id="controls">
+      <div class="toggle" id="lockBtn"><span class="ic">🔒</span><span class="lab">Lock now</span></div>
+      <div class="toggle on disabled" id="t-field"><span class="ic">⌇</span><span>Field</span></div>
+    </div>
+  </div>
+
+  <a-scene embedded vr-mode-ui="enabled: false"
+    renderer="logarithmicDepthBuffer: true; precision: medium; antialias: true; alpha: true"
+    arjs="sourceType: webcam; sourceWidth: 1024; sourceHeight: 768; displayWidth: 1024; displayHeight: 768; detectionMode: mono_and_matrix; matrixCodeType: 3x3; patternRatio: 0.5; labelingMode: black_region; maxDetectionRate: 60; debugUIEnabled: false;"
+    arlock-cube>
+    <!-- CUBE scheme (independent of the Plane scheme — codes are reused there) -->
+    <!-- + cube: 5 faces -->
+    <a-marker class="cube-pos" type="barcode" value="0" smooth="true" smoothCount="5" smoothTolerance="0.02" smoothThreshold="2"></a-marker>
+    <a-marker class="cube-pos" type="barcode" value="1" smooth="true" smoothCount="5" smoothTolerance="0.02" smoothThreshold="2"></a-marker>
+    <a-marker class="cube-pos" type="barcode" value="2" smooth="true" smoothCount="5" smoothTolerance="0.02" smoothThreshold="2"></a-marker>
+    <a-marker class="cube-pos" type="barcode" value="3" smooth="true" smoothCount="5" smoothTolerance="0.02" smoothThreshold="2"></a-marker>
+    <a-marker class="cube-pos" type="barcode" value="4" smooth="true" smoothCount="5" smoothTolerance="0.02" smoothThreshold="2"></a-marker>
+    <!-- − cube: 5 faces -->
+    <a-marker class="cube-neg" type="barcode" value="5" smooth="true" smoothCount="5" smoothTolerance="0.02" smoothThreshold="2"></a-marker>
+    <a-marker class="cube-neg" type="barcode" value="6" smooth="true" smoothCount="5" smoothTolerance="0.02" smoothThreshold="2"></a-marker>
+    <a-marker class="cube-neg" type="barcode" value="7" smooth="true" smoothCount="5" smoothTolerance="0.02" smoothThreshold="2"></a-marker>
+    <a-marker class="cube-neg" type="barcode" value="8" smooth="true" smoothCount="5" smoothTolerance="0.02" smoothThreshold="2"></a-marker>
+    <a-marker class="cube-neg" type="barcode" value="9" smooth="true" smoothCount="5" smoothTolerance="0.02" smoothThreshold="2"></a-marker>
+    <!-- electron guns -->
+    <a-marker class="gun gun-pos" data-q="1"  type="barcode" value="10" smooth="true" smoothCount="5" smoothTolerance="0.02" smoothThreshold="2"></a-marker>
+    <a-marker class="gun gun-neg" data-q="-1" type="barcode" value="11" smooth="true" smoothCount="5" smoothTolerance="0.02" smoothThreshold="2"></a-marker>
+    <a-entity camera></a-entity>
+  </a-scene>
+
+  <script src="efield-core.js"></script>
+  <script src="ar-lock.js"></script>
+  <script>
+    (function () {
+      var gate = document.getElementById('gate'), btn = document.getElementById('startBtn'), scene = document.querySelector('a-scene');
+      var reveal = function () { gate.classList.add('hidden'); };
+      btn.addEventListener('click', function () { setTimeout(reveal, 400); });
+      scene.addEventListener('arjs-video-loaded', function () { reveal();
+        var kick = function () { window.dispatchEvent(new Event('resize')); }; setTimeout(kick, 300); setTimeout(kick, 1200); });
+      scene.addEventListener('camera-error', function () { document.getElementById('status').textContent = 'Camera unavailable — check permissions & HTTPS'; });
+    })();
+  </script>
+</body>
+</html>
