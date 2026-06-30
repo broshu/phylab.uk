@@ -56,7 +56,11 @@
         cube:    num('cube', 1.0),   // cube half-edge in marker-width units
         lift:    num('lift', 2.0),   // Plane AR: how far above the sticker the charge floats (in marker-widths)
         tube3d:  num('tube', 0.025), // 3-D field-line tube radius (bold + glow)
-        seeds3d: Math.round(num('seeds', 18)), // 3-D field lines per source
+        seeds3d: Math.round(num('seeds', 18)), // 3-D field lines per point source
+        plateSide: num('plateside', 4.0),      // charged-plate side length in marker-widths
+        plateQ:    num('plateq', 2.0),         // charged-plate total charge in point-charge units
+        plateGrid: Math.round(num('plategrid', 7)),  // plate modelled as N×N sub-charges
+        plateSeed: Math.round(num('plateseed', 4)),  // field lines per plate face = K×K
         smooth:  num('smooth', 0.3), // anchor pose smoothing (lock modes)
         _hasSmooth: q.has('smooth'),
         autolock:num('autolock', 1), // 1 = auto-freeze once markers are stable
@@ -365,15 +369,105 @@
         seeds.push(new THREE.Vector3(center.x+radius*Math.cos(t)*r, center.y+radius*y, center.z+radius*Math.sin(t)*r)); }
       return seeds;
     },
-    traceLine: function (seed, charges, dir, opts) {
-      var pts=[], p=seed.clone(), E=new THREE.Vector3(), i;
-      for (i=0;i<opts.maxSteps;i++){ pts.push(p.clone()); E.copy(this.fieldAt(p,charges));
+    traceLine: function (seed, elements, dir, opts) {
+      var pts=[], p=seed.clone(), E=new THREE.Vector3(), i, k, sinks=opts.sinks;
+      for (i=0;i<opts.maxSteps;i++){ pts.push(p.clone()); E.copy(this.fieldAt(p,elements));
         var len=E.length(); if (len<1e-7) break; E.multiplyScalar((dir*opts.step)/len); p.add(E);
-        var done=false; for (var j=0;j<charges.length;j++){ if (p.distanceTo(charges[j].pos)<opts.minR){ pts.push(p.clone()); done=true; break; } }
+        var done=false;
+        if (sinks){
+          for (k=0;k<sinks.points.length;k++){ if (p.distanceTo(sinks.points[k])<opts.minR){ pts.push(p.clone()); done=true; break; } }
+          if (!done) for (k=0;k<sinks.plates.length;k++){ if (this.plateDist(p,sinks.plates[k])<opts.minR){ pts.push(p.clone()); done=true; break; } }
+        } else {
+          for (k=0;k<elements.length;k++){ if (p.distanceTo(elements[k].pos)<opts.minR){ pts.push(p.clone()); done=true; break; } }
+        }
         if (done) break;
         if (p.distanceTo(opts.center)>opts.maxR){ pts.push(p.clone()); break; }
       }
       return pts;
+    },
+
+    /* ---- charged-plate helpers ---- */
+    /* seed points spread over BOTH faces of a plate, just off the surface */
+    seedPlate: function (plate, K) {
+      var seeds=[], eps=0.12, i, j;
+      for (i=0;i<K;i++){ var xi=-plate.half + (2*plate.half)*(K<=1?0.5:i/(K-1));
+        for (j=0;j<K;j++){ var yj=plate.height*(K<=1?0.5:j/(K-1));
+          var b=plate.base.clone().addScaledVector(plate.ux,xi).addScaledVector(plate.uy,yj);
+          seeds.push(b.clone().addScaledVector(plate.n, eps));
+          seeds.push(b.clone().addScaledVector(plate.n,-eps)); } }
+      return seeds;
+    },
+    /* distance from P to the finite plate (clamped to the square) */
+    plateDist: function (P, plate) {
+      var d=P.clone().sub(plate.base);
+      var a=Math.max(-plate.half, Math.min(plate.half, d.dot(plate.ux)));
+      var b=Math.max(0, Math.min(plate.height, d.dot(plate.uy)));
+      return P.distanceTo(plate.base.clone().addScaledVector(plate.ux,a).addScaledVector(plate.uy,b));
+    },
+
+    /* expand the scene items into field "elements" (point charges + plate sub-charges) */
+    _scene: function (items) {
+      var elements=[], keypts=[], hasPos=false, hasNeg=false, M=Math.max(2,this.cfg.plateGrid), i, j, it;
+      for (it=0; it<items.length; it++){ var item=items[it];
+        if (item.plate){
+          if (item.q>0) hasPos=true; else hasNeg=true;
+          var qsub=(this.cfg.plateQ*item.q)/(M*M);   // uniform: total = plateQ × point charge
+          for (i=0;i<M;i++){ var xi=-item.half + (2*item.half)*(i/(M-1));
+            for (j=0;j<M;j++){ var yj=item.height*(j/(M-1));
+              elements.push({ pos:item.base.clone().addScaledVector(item.ux,xi).addScaledVector(item.uy,yj), q:qsub }); } }
+          var corners=[[-item.half,0],[item.half,0],[-item.half,item.height],[item.half,item.height]];
+          for (i=0;i<4;i++) keypts.push(item.base.clone().addScaledVector(item.ux,corners[i][0]).addScaledVector(item.uy,corners[i][1]));
+        } else {
+          if (item.q>0) hasPos=true; else hasNeg=true;
+          elements.push({ pos:item.pos, q:item.q }); keypts.push(item.pos);
+        }
+      }
+      return { elements:elements, keypts:keypts, hasPos:hasPos, hasNeg:hasNeg };
+    },
+
+    build: function (items) {
+      EFieldUtil.clear(this.g.field); EFieldUtil.clear(this.g.glyph); if (this.g.plate) EFieldUtil.clear(this.g.plate);
+      this.elements=[];
+      if (!this.show.field || !items.length){ this.buildGlyphs(items); return; }
+      var sc=this._scene(items); this.elements=sc.elements;
+      var center=new THREE.Vector3(), i, j;
+      for (i=0;i<sc.keypts.length;i++) center.add(sc.keypts[i]); center.multiplyScalar(1/sc.keypts.length);
+      var spread=0; for (i=0;i<sc.keypts.length;i++) for (j=i+1;j<sc.keypts.length;j++) spread=Math.max(spread, sc.keypts[i].distanceTo(sc.keypts[j]));
+      var hasPos=sc.hasPos, hasNeg=sc.hasNeg, dipole=hasPos&&hasNeg;
+      var maxR=dipole ? spread*6+2.0 : spread*1.6+1.5;
+      var sourceSign=hasPos?1:-1, dir=sourceSign>0?+1:-1;
+      // sinks = items of opposite sign to the sources (where lines terminate)
+      var sinks={ points:[], plates:[] };
+      for (i=0;i<items.length;i++){ var it=items[i]; if (it.q*sourceSign<0){ if (it.plate) sinks.plates.push(it); else sinks.points.push(it.pos); } }
+      var opts={ step:0.04, maxSteps: dipole?2200:600, minR:0.13, maxR:maxR, center:center, sinks:sinks };
+      for (i=0;i<items.length;i++){ var src=items[i]; if (src.q*sourceSign<=0) continue;     // sources of the chosen sign
+        var cFrom=src.q>0?COL.pos:COL.neg, cTo=(src.q>0&&hasNeg)?COL.neg:cFrom;
+        var seeds = src.plate ? this.seedPlate(src, this.cfg.plateSeed) : this.seedSphere(src.pos,0.2,this.cfg.seeds3d);
+        for (j=0;j<seeds.length;j++){ var pts=this.traceLine(seeds[j], this.elements, dir, opts);
+          this.addTube(this.g.field, pts, cFrom, cTo); this.decorateArrows(this.g.field, pts, COL.arrow, sourceSign>0); }
+      }
+      for (i=0;i<items.length;i++) if (items[i].plate) this.drawPlate(items[i]);
+      this.buildGlyphs(items);
+    },
+
+    /* translucent charged plate + border + sign glyph */
+    drawPlate: function (plate) {
+      var grp=this.g.plate||this.g.glyph, col=plate.q>0?COL.posFill:COL.negFill;
+      var geo=new THREE.PlaneGeometry(2*plate.half, plate.height);
+      var m=new THREE.Matrix4().makeBasis(plate.ux, plate.uy, plate.n);
+      var quat=new THREE.Quaternion().setFromRotationMatrix(m);
+      var centre=plate.base.clone().addScaledVector(plate.uy, plate.height/2);
+      var face=new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color:col, transparent:true, opacity:0.22, side:THREE.DoubleSide, depthWrite:false }));
+      face.position.copy(centre); face.quaternion.copy(quat); grp.add(face);
+      var edges=new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({ color:col, transparent:true, opacity:0.9 }));
+      edges.position.copy(centre); edges.quaternion.copy(quat); grp.add(edges);
+      var sp=EFieldUtil.chargeGlyph(plate.q); sp.position.copy(centre); sp.scale.set(0.4,0.4,0.4); grp.add(sp);
+    },
+
+    buildGlyphs: function (items) {
+      EFieldUtil.clear(this.g.glyph);
+      for (var i=0;i<items.length;i++){ if (items[i].plate) continue; var sp=EFieldUtil.chargeGlyph(items[i].q);
+        sp.position.copy(items[i].pos); sp.scale.set(0.3,0.3,0.3); this.g.glyph.add(sp); }
     },
     /* Bold, glowing 3-D tube: a soft additive glow underlay + a crisp gradient core. */
     addTube: function (group, points, cFrom, cTo) {
@@ -406,45 +500,15 @@
         this.addArrow(group, pts[i], dir, colorHex); }
     },
 
-    build: function (charges) {
-      EFieldUtil.clear(this.g.field); EFieldUtil.clear(this.g.glyph);
-      if (!this.show.field || !charges.length){ this.buildGlyphs(charges); return; }
-      var center=new THREE.Vector3(), i, j;
-      for (i=0;i<charges.length;i++) center.add(charges[i].pos);
-      center.multiplyScalar(1/charges.length);
-      var spread=0;
-      for (i=0;i<charges.length;i++) for (j=i+1;j<charges.length;j++) spread=Math.max(spread, charges[i].pos.distanceTo(charges[j].pos));
-      var hasPos=charges.some(function(c){return c.q>0;}), hasNeg=charges.some(function(c){return c.q<0;});
-      var sources=charges.filter(function(c){ return hasPos ? c.q>0 : c.q<0; });
-      // A field line must end on a charge or at the boundary — never mid-air. For a dipole
-      // give a big boundary + step budget so lines curve all the way back to the − charge;
-      // for a single charge a modest boundary lets them reach it and stop cleanly.
-      var dipole=hasPos&&hasNeg;
-      var maxR=dipole ? spread*6+2.0 : spread*1.6+1.5;
-      var opts={ step:0.04, maxSteps: dipole?1600:500, minR:0.13, maxR:maxR, center:center };
-      for (var s=0;s<sources.length;s++){
-        var src=sources[s], cFrom=src.q>0?COL.pos:COL.neg, cTo=(src.q>0&&hasNeg)?COL.neg:cFrom;
-        var seeds=this.seedSphere(src.pos,0.2,this.cfg.seeds3d);
-        for (i=0;i<seeds.length;i++){ var pts=this.traceLine(seeds[i],charges,+1,opts);
-          this.addTube(this.g.field, pts, cFrom, cTo); this.decorateArrows(this.g.field, pts, COL.arrow, src.q>0); }
-      }
-      this.buildGlyphs(charges);
-    },
-    buildGlyphs: function (charges) {
-      EFieldUtil.clear(this.g.glyph);
-      for (var i=0;i<charges.length;i++){ var sp=EFieldUtil.chargeGlyph(charges[i].q);
-        sp.position.copy(charges[i].pos); sp.scale.set(0.3,0.3,0.3); this.g.glyph.add(sp); }
-    },
-
     /* 3-D electron-gun trajectory: integrate a test charge through the field */
-    traceParticle3D: function (gun, charges, S) {
-      var cfg=this.cfg.pcfg, dt=cfg.dt, path=[];
+    traceParticle3D: function (gun, S) {
+      var cfg=this.cfg.pcfg, dt=cfg.dt, path=[], els=this.elements||[];
       var p=gun.pos.clone().addScaledVector(gun.dir,0.16), vel=gun.dir.clone().multiplyScalar(cfg.speed);
-      var maxR=S*1.6+1.2, E=new THREE.Vector3(), i;
+      var maxR=S*1.6+1.2, E=new THREE.Vector3(), i, j;
       for (i=0;i<cfg.maxSteps;i++){ path.push(p.clone());
-        E.copy(this.fieldAt(p,charges)); vel.addScaledVector(E, gun.q*cfg.force*dt); p.addScaledVector(vel,dt);
+        E.copy(this.fieldAt(p,els)); vel.addScaledVector(E, gun.q*cfg.force*dt); p.addScaledVector(vel,dt);
         if (p.distanceTo(gun.pos)>maxR) { path.push(p.clone()); break; }
-        var hit=false; for (var j=0;j<charges.length;j++){ if (charges[j].q*gun.q<0 && p.distanceTo(charges[j].pos)<0.12){ path.push(p.clone()); hit=true; break; } }
+        var hit=false; for (j=0;j<els.length;j++){ if (els[j].q*gun.q<0 && p.distanceTo(els[j].pos)<0.1){ path.push(p.clone()); hit=true; break; } }
         if (hit) break;
       }
       return path;
@@ -453,7 +517,7 @@
       EFieldUtil.clear(this.g.traj);
       for (var gi=0;gi<guns.length;gi++){ var gun=guns[gi]; gun.path3=null;
         if (!gun.pos) continue;
-        var path=this.traceParticle3D(gun,charges,S); if (path.length<2) continue;
+        var path=this.traceParticle3D(gun,S); if (path.length<2) continue;
         gun.path3=path; gun.dur=Math.max(2200,path.length*14);
         this.g.traj.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(path),
           new THREE.LineBasicMaterial({ color:gun.color, transparent:true, opacity:0.35 })));

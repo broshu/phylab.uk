@@ -165,14 +165,16 @@
       this.initBase();
       if (!this.cfg._hasSmooth) this.cfg.smooth = 0.12;     // stickers are static → steady anchor
       this.chg = Array.from(document.querySelectorAll('a-marker.chg'));
+      this.plateEls = Array.from(document.querySelectorAll('a-marker.plate'));
       this.guns = [
         { el: document.querySelector('a-marker.gun-pos'), q: +1, color: EFieldUtil.COL.gunPos },
         { el: document.querySelector('a-marker.gun-neg'), q: -1, color: EFieldUtil.COL.gunNeg }
       ].filter(function (g) { return g.el; });
       this.stemGroup = new THREE.Group(); this.content.add(this.stemGroup);
+      this.plateGroup = new THREE.Group(); this.content.add(this.plateGroup);
       this.builder = new EField3D({
         cfg: this.cfg,
-        groups: { field: this.fieldGroup, glyph: this.glyphGroup, traj: this.trajGroup, particle: this.pGroup }
+        groups: { field: this.fieldGroup, glyph: this.glyphGroup, traj: this.trajGroup, particle: this.pGroup, plate: this.plateGroup }
       });
       this.setUIState();
     },
@@ -188,25 +190,49 @@
       return out;
     },
 
+    /* world poses of any visible charged-plate markers (for the desk-plane fit / preview) */
+    livePlates: function () {
+      var out = [];
+      for (var i = 0; i < this.plateEls.length; i++) { var o = this.plateEls[i].object3D; if (!o.visible) continue;
+        var p = new THREE.Vector3(); o.getWorldPosition(p);
+        var qn = new THREE.Quaternion(); o.getWorldQuaternion(qn);
+        out.push({ pos: p, q: parseFloat(this.plateEls[i].dataset.q), quat: qn, normal: new THREE.Vector3(0, 1, 0).applyQuaternion(qn).normalize() });
+      }
+      return out;
+    },
+
     lockNow: function () {
       var charges = this.liveCharges();
+      var plates = this.livePlates();
       var visGuns = this.guns.filter(function (g) { return g.el.object3D.visible; });
-      var planePts = charges.slice(), i;
+      var planePts = charges.concat(plates), i;
       for (i = 0; i < visGuns.length; i++) { var p = new THREE.Vector3(); visGuns[i].el.object3D.getWorldPosition(p);
         var qn = new THREE.Quaternion(); visGuns[i].el.object3D.getWorldQuaternion(qn);
         planePts.push({ pos: p, q: 0, normal: new THREE.Vector3(0, 1, 0).applyQuaternion(qn).normalize() }); }
-      if (!charges.length) { this.flash('No charge stickers visible — point at them first'); return; }
+      if (!charges.length && !plates.length) { this.flash('No charge/plate stickers visible — point at them first'); return; }
 
       var fr = this.buildFrame(planePts), Minv = fr.Minv;
       var rot = new THREE.Matrix4().extractRotation(Minv);
       var lift = this.cfg.lift;
 
-      // charges → local 3-D: drop the sticker onto the desk plane (y=0), then float the charge up by `lift`.
-      var local = [], bases = [];
+      // point charges → local 3-D: drop the sticker onto the desk (y=0), then float the charge up by `lift`.
+      var items = [], stems = [];
       for (i = 0; i < charges.length; i++) {
         var base = charges[i].pos.clone().applyMatrix4(Minv); base.y = 0;     // sticker on the desk
         var top = base.clone(); top.y += lift;                                // charge floats above
-        local.push({ pos: top, q: charges[i].q }); bases.push(base);
+        items.push({ pos: top, q: charges[i].q }); stems.push({ base: base, top: top, q: charges[i].q });
+      }
+
+      // charged plates → a square wall standing on the desk: side = plateSide (×edge), perpendicular to the desk,
+      // total charge = plateQ × a point charge. ux = marker +X on the desk; uy = desk-up; n = plate normal.
+      var half = this.cfg.plateSide / 2, hgt = this.cfg.plateSide;
+      for (i = 0; i < plates.length; i++) {
+        var pb = plates[i].pos.clone().applyMatrix4(Minv); pb.y = 0;
+        var ux = new THREE.Vector3(1, 0, 0).applyQuaternion(plates[i].quat).applyMatrix4(rot); ux.y = 0;
+        if (ux.lengthSq() < 1e-6) ux.set(1, 0, 0); ux.normalize();
+        var uy = new THREE.Vector3(0, 1, 0);
+        var n = new THREE.Vector3().crossVectors(ux, uy).normalize();
+        items.push({ plate: true, base: pb, ux: ux, uy: uy, n: n, half: half, height: hgt, q: plates[i].q });
       }
 
       // guns → local muzzle on the desk, firing along the printed arrow (marker +X) projected onto the desk
@@ -221,49 +247,58 @@
         gunsF.push({ pos: lp, dir: f, q: g.q, color: g.color });
       }
 
-      var anchors = this.captureAnchors(this.chg.concat(this.guns.map(function (g) { return g.el; })), fr.M);
-      this.frozen = { charges: local, bases: bases, guns: gunsF, anchors: anchors };
+      var anchorEls = this.chg.concat(this.plateEls).concat(this.guns.map(function (g) { return g.el; }));
+      var anchors = this.captureAnchors(anchorEls, fr.M);
+      this.frozen = { items: items, stems: stems, guns: gunsF, anchors: anchors };
       this.locked = true; this.buildKey = '';
       fr.M.decompose(this._apos, this._aquat, this._scl); this._haveA = true; this._scl.set(1, 1, 1);
       EFieldUtil.clear(this.liveGroup);
 
-      var S = 0.9; for (i = 0; i < local.length; i++) S = Math.max(S, local[i].pos.length()); this._S = S + 1.1;
+      var S = 0.9;
+      for (i = 0; i < items.length; i++) {
+        if (items[i].plate) S = Math.max(S, items[i].base.length() + items[i].half + items[i].height);
+        else S = Math.max(S, items[i].pos.length());
+      }
+      this._S = S + 1.1;
       this.setUIState();
-      this.flash(local.length + ' charge' + (local.length !== 1 ? 's' : '') + ' floating above the stickers · move around');
+      var nc = items.length;
+      this.flash(nc + ' charge' + (nc !== 1 ? 's' : '') + ' locked · move around to view');
     },
 
     /* faint vertical stem from each sticker (on the desk) up to its floating charge */
     buildStems: function () {
       EFieldUtil.clear(this.stemGroup);
-      for (var i = 0; i < this.frozen.charges.length; i++) {
-        var base = this.frozen.bases[i], top = this.frozen.charges[i].pos;
-        var col = this.frozen.charges[i].q > 0 ? EFieldUtil.COL.posFill : EFieldUtil.COL.negFill;
-        var g = new THREE.BufferGeometry().setFromPoints([base, top]);
+      for (var i = 0; i < this.frozen.stems.length; i++) {
+        var st = this.frozen.stems[i];
+        var col = st.q > 0 ? EFieldUtil.COL.posFill : EFieldUtil.COL.negFill;
+        var g = new THREE.BufferGeometry().setFromPoints([st.base, st.top]);
         this.stemGroup.add(new THREE.Line(g, new THREE.LineBasicMaterial({ color: col, transparent: true, opacity: 0.5 })));
         var dot = new THREE.Mesh(new THREE.SphereGeometry(0.03, 10, 10), new THREE.MeshBasicMaterial({ color: col }));
-        dot.position.copy(base); this.stemGroup.add(dot);    // marks the sticker on the desk
+        dot.position.copy(st.base); this.stemGroup.add(dot);    // marks the sticker on the desk
       }
     },
 
     rebuild: function () {
-      this.builder.build(this.frozen.charges);
-      this.builder.buildTrajectories(this.frozen.guns, this.frozen.charges, this._S);
+      this.builder.build(this.frozen.items);
+      this.builder.buildTrajectories(this.frozen.guns, this.frozen.items, this._S);
       this.buildStems();
     },
 
     tick: function (time) {
       var msg;
       if (!this.locked) {
-        var charges = this.liveCharges();
+        var charges = this.liveCharges(), plates = this.livePlates();
+        var n = charges.length + plates.length;
         var nGun = this.guns.filter(function (g) { return g.el.object3D.visible; }).length;
-        this.livePreview(charges);
-        this.maybeAutoLock(time, charges.length);
-        msg = (charges.length || nGun)
-          ? (charges.length + ' charge' + (charges.length !== 1 ? 's' : '') + (nGun ? ' + ' + nGun + ' gun' + (nGun > 1 ? 's' : '') : '') + ' — hold steady to lock…')
+        this.livePreview(charges.concat(plates));
+        this.maybeAutoLock(time, n);
+        msg = (n || nGun)
+          ? (n + ' charge' + (n !== 1 ? 's' : '') + (plates.length ? ' (' + plates.length + ' plate' + (plates.length > 1 ? 's' : '') + ')' : '') + (nGun ? ' + ' + nGun + ' gun' + (nGun > 1 ? 's' : '') : '') + ' — hold steady to lock…')
           : 'Point at the stickers so they are seen…';
       } else {
         var seen = this.frozen.anchors.filter(function (an) { return an.el.object3D.visible; }).length;
-        msg = seen ? ('Locked · ' + this.frozen.charges.length + ' charge' + (this.frozen.charges.length !== 1 ? 's' : '') + ' · tracking ' + seen + ' marker' + (seen > 1 ? 's' : ''))
+        var nc = this.frozen.items.length;
+        msg = seen ? ('Locked · ' + nc + ' charge' + (nc !== 1 ? 's' : '') + ' · tracking ' + seen + ' marker' + (seen > 1 ? 's' : ''))
                    : 'Locked · point back at the stickers to keep tracking';
         this.updateAnchor();
         var key = this.builder.show.field + '';

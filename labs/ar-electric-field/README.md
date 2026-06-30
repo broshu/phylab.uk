@@ -13,7 +13,7 @@ using robust 3×3 **matrix-code (barcode)** markers — no marker training requi
 
 | Page | Mode | Charge sits… | Shows |
 |------|------|--------------|-------|
-| `plane.html` | **Plane AR** (live) | **floating 2× the sticker edge above** each flat sticker (`?lift=`) | true 3-D field lines, electron guns — flat printouts only, no 3-D printer |
+| `plane.html` | **Plane AR** (live) | **floating 2× the sticker edge above** each flat sticker (`?lift=`) | true 3-D field lines, electron guns, **charged plates** (vertical board, 2× charge) — flat printouts only, no 3-D printer |
 | `cube.html`  | **Cube AR** (live)  | at the **cube centre** (each face stepped inward ½ edge, then averaged) | true 3-D field lines, electron guns |
 | `photo.html` | **Photo** (static)  | at the marker centre (detected once in a still image) | in-plane field lines, potential surface, a 3-D orbit view that stands the photo up |
 
@@ -49,7 +49,10 @@ Two **independent** schemes — you only ever run one at a time, so they deliber
 reuse the same barcode values:
 
 **Plane scheme** — `0` positive charge, `1` negative charge, `2` positive electron
-gun (fires e⁺), `3` negative electron gun (fires e⁻).
+gun (fires e⁺), `3` negative electron gun (fires e⁻), `4` positive charged plate,
+`5` negative charged plate. A plate raises a square board standing on the desk (side =
+4× the marker edge, perpendicular to the desk) carrying a **uniform charge of 2× a
+point charge**, modelled as a fine grid of sub-charges so the field is correct.
 
 **Cube scheme** — `0–4` the five faces of the **+** cube, `5–9` the five faces of the
 **−** cube, `10` positive electron gun, `11` negative electron gun.

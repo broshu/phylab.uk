@@ -14,23 +14,23 @@
       padding:4px 10px;border-radius:999px;letter-spacing:.03em;}
     h1{font-size:20px;margin:7px 0 3px;}
     .sub{color:#5b6577;font-size:12px;margin:0 0 5mm;line-height:1.55;}
-    .row-label{margin:5mm 0 1mm;font-weight:800;font-size:13px;color:#2563eb;}
-    .row-label small{font-weight:500;color:#8a93a6;font-size:11px;}
-    .cards{display:flex;gap:8mm;justify-content:center;flex-wrap:wrap;}
+    .row-label{margin:3.5mm 0 1mm;font-weight:800;font-size:12.5px;color:#2563eb;}
+    .row-label small{font-weight:500;color:#8a93a6;font-size:10.5px;}
+    .cards{display:flex;gap:7mm;justify-content:center;flex-wrap:wrap;}
     .card{text-align:center;}
-    .marker-box{width:48mm;height:48mm;background:#fff;padding:7mm;border:1px dashed #c4ccda;
+    .marker-box{width:40mm;height:40mm;background:#fff;padding:6mm;border:1px dashed #c4ccda;
       display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
-    .marker-box img{width:34mm;height:34mm;image-rendering:pixelated;}
+    .marker-box img{width:28mm;height:28mm;image-rendering:pixelated;}
     /* gun firing-direction arrow — kept INSIDE the box (no overflow) */
-    .gunbox .arrow{position:absolute;right:1.5mm;top:50%;transform:translateY(-50%);font-size:22px;line-height:1;}
+    .gunbox .arrow{position:absolute;right:1.5mm;top:50%;transform:translateY(-50%);font-size:20px;line-height:1;}
     .gunbox.pos-gun .arrow{color:var(--gp);} .gunbox.neg-gun .arrow{color:var(--gn);}
-    .tag{margin-top:4mm;font-weight:800;font-size:16px;}
-    .tag .sym{display:inline-block;width:24px;height:24px;line-height:22px;border-radius:50%;color:#fff;font-size:17px;
-      vertical-align:middle;margin-right:6px;}
+    .tag{margin-top:3mm;font-weight:800;font-size:14px;}
+    .tag .sym{display:inline-block;width:22px;height:22px;line-height:20px;border-radius:50%;color:#fff;font-size:15px;
+      vertical-align:middle;margin-right:5px;}
     .pos .sym{background:var(--pos);} .neg .sym{background:var(--neg);}
     .pos-gun .sym{background:var(--gp);} .neg-gun .sym{background:var(--gn);}
     .id{color:#8a93a6;font-size:11px;margin-top:1mm;}
-    .tips{margin-top:6mm;font-size:11.5px;color:#42495a;line-height:1.7;border-top:1px solid #e2e6ee;padding-top:4mm;}
+    .tips{margin-top:4mm;font-size:11px;color:#42495a;line-height:1.6;border-top:1px solid #e2e6ee;padding-top:3mm;}
     .tips b{color:var(--ink);}
     .noprint{text-align:center;padding:12px;}
     .noprint button{font-size:15px;padding:10px 22px;border:none;border-radius:10px;background:#2563eb;color:#fff;font-weight:700;cursor:pointer;}
@@ -60,7 +60,7 @@
     <p class="sub">
       Print at <b>100% (actual size)</b> — each black pattern should measure <b>3.4&nbsp;cm</b> (check with a ruler).
       Cut the cards apart and lay them flat on a desk; keep the white border (quiet zone) around each square.
-      The charge sits <b>at the centre of its marker</b>. These codes are independent of the Cube scheme.
+      On scan, each point charge <b>floats above its sticker</b> for a 3-D field. These codes are independent of the Cube scheme.
     </p>
 
     <div class="row-label">Charges</div>
@@ -91,12 +91,29 @@
       </div>
     </div>
 
+    <div class="row-label">Charged plates <small>— a 4×4-edge vertical board, total charge 2× a point charge</small></div>
+    <div class="cards">
+      <div class="card">
+        <div class="marker-box"><img src="markers/4.png" alt="positive charged plate marker" /></div>
+        <div class="tag pos"><span class="sym">+</span>+ plate (2×)</div>
+        <div class="id">barcode 4</div>
+      </div>
+      <div class="card">
+        <div class="marker-box"><img src="markers/5.png" alt="negative charged plate marker" /></div>
+        <div class="tag neg"><span class="sym">−</span>− plate (2×)</div>
+        <div class="id">barcode 5</div>
+      </div>
+    </div>
+
     <div class="tips">
-      <b>How to use.</b> Open <b>Plane AR</b>, tap <b>Start camera</b> (HTTPS, best on an iPad), and aim at the markers.
-      <b>+</b> → field lines radiate outward; <b>−</b> → lines converge inward; both together → a dipole. The layout
-      <b>auto-locks</b> after a moment, freezing the field shape so you can move around without jitter (tap <b>Re-scan</b> for a new layout).
-      Each gun fires test charges along its printed arrow — the <b>+ gun</b> fires e⁺, the <b>− gun</b> fires e⁻. If a beam comes out
-      the wrong way, add <code>?gundir=1</code> (0–3 quarter-turns) to the URL.
+      <b>How to use.</b> Open <b>Plane AR</b>, tap <b>Start camera</b> (HTTPS, best on an iPad), and aim at the stickers. On scan
+      each point charge <b>floats above its sticker</b> and a true <b>3-D field</b> appears. The layout <b>auto-locks</b> after a
+      moment, freezing the field so you can walk around it without jitter (tap <b>Re-scan</b> for a new layout).<br>
+      <b>Charged plates.</b> A plate sticker (4 / 5) raises a <b>square board standing on the desk</b> — 4× the marker edge wide and
+      tall, perpendicular to the desk — carrying a <b>uniform charge = 2×</b> a point charge, running along the marker's printed arrow.
+      Its field leaves both faces. Tune with <code>?lift=</code> (charge height), <code>?plateside=</code>, <code>?plateq=</code>.<br>
+      <b>Electron guns.</b> The <b>+ gun</b> fires e⁺, the <b>− gun</b> fires e⁻ along the printed arrow; they bend through the 3-D field.
+      If a beam points the wrong way, add <code>?gundir=1</code> (0–3 quarter-turns) to the URL.
     </div>
   </div>
 </body>

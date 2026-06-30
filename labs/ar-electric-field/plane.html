@@ -73,6 +73,8 @@
     <div id="legend">
       <div><span class="dot pos"></span>Positive charge (+)</div>
       <div><span class="dot neg"></span>Negative charge (−)</div>
+      <div><span class="dot pos" style="border-radius:2px"></span>+ charged plate (2×, vertical)</div>
+      <div><span class="dot neg" style="border-radius:2px"></span>− charged plate (2×, vertical)</div>
       <div><span class="dot" style="background:#ffd76a;box-shadow:0 0 8px rgba(255,215,106,.8)"></span>+ electron gun (fires e⁺)</div>
       <div><span class="dot" style="background:#7fd0ff;box-shadow:0 0 8px rgba(127,208,255,.8)"></span>− electron gun (fires e⁻)</div>
     </div>
@@ -91,6 +93,9 @@
     <a-marker class="chg" data-q="-1" type="barcode" value="1" smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
     <a-marker class="gun gun-pos" data-q="1"  type="barcode" value="2" smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
     <a-marker class="gun gun-neg" data-q="-1" type="barcode" value="3" smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2"></a-marker>
+    <!-- charged plates: a 4×4-edge vertical board, total charge 2× a point charge -->
+    <a-marker class="plate" data-q="1"  type="barcode" value="4" smooth="true" smoothCount="8" smoothTolerance="0.012" smoothThreshold="2"></a-marker>
+    <a-marker class="plate" data-q="-1" type="barcode" value="5" smooth="true" smoothCount="8" smoothTolerance="0.012" smoothThreshold="2"></a-marker>
     <a-entity camera></a-entity>
   </a-scene>
 
