@@ -56,15 +56,16 @@
   <div class="crumb"><a href="./">← AR Electric Field</a></div>
 
   <div id="gate">
-    <h1>Plane AR <span class="beta">Field lines</span></h1>
-    <p>Lay the printed <b style="color:#ff7a7a">+</b> / <b style="color:#7ab8ff">−</b> charge markers flat on a desk and start the camera.
-       The layout is detected and then <b>frozen</b>: the field-line shape stays rigid while you move the iPad around it — no jitter.</p>
-    <div class="step"><span>①</span><span>Lay the markers (and optional electron-gun cards) flat on a desk.</span></div>
-    <div class="step"><span>②</span><span>Start the camera and point at them — it <b>auto-locks</b> after a moment.</span></div>
-    <div class="step"><span>③</span><span>Move around to view. Toggle <b>Grid / Field / Potential</b>; tap <b>Re-scan</b> for a new layout.</span></div>
-    <p style="font-size:12px;color:#5e6f8a">Requires camera access &amp; HTTPS. Best on an iPad.</p>
+    <h1>Plane AR <span class="beta">3-D field</span></h1>
+    <p>Lay the printed <b style="color:#ff7a7a">+</b> / <b style="color:#7ab8ff">−</b> stickers flat on a desk — no 3-D printer needed.
+       On scan, each charge <b>floats above its sticker</b> and a true <b>3-D electric field</b> appears around it. The layout is then
+       <b>frozen</b>, so the field stays rigid while you walk around it — no jitter.</p>
+    <div class="step"><span>①</span><span>Lay the <b>+ / −</b> stickers (and optional electron-gun cards) flat on a desk.</span></div>
+    <div class="step"><span>②</span><span>Start the camera and point at them — it <b>auto-locks</b> after a moment, lifting each charge above its sticker.</span></div>
+    <div class="step"><span>③</span><span>Walk around to see the 3-D field; tap <b>Re-scan</b> for a new layout.</span></div>
+    <p style="font-size:12px;color:#5e6f8a">Each charge floats 2× the sticker edge above the desk (tune with <code>?lift=</code>). Requires camera &amp; HTTPS.</p>
     <button id="startBtn">Start camera</button>
-    <div class="links"><a href="print-plane.html" target="_blank" rel="noopener">Print the plane markers ↗</a></div>
+    <div class="links"><a href="print-plane.html" target="_blank" rel="noopener">Print the plane stickers ↗</a></div>
   </div>
 
   <div id="ui">
@@ -77,9 +78,7 @@
     </div>
     <div id="controls">
       <div class="toggle" id="lockBtn"><span class="ic">🔒</span><span class="lab">Lock now</span></div>
-      <div class="toggle on disabled" id="t-grid"><span class="ic">▦</span><span>Grid</span></div>
       <div class="toggle on disabled" id="t-field"><span class="ic">⌇</span><span>Field</span></div>
-      <div class="toggle disabled"    id="t-pot"><span class="ic">⛰</span><span>Potential</span></div>
     </div>
   </div>
 

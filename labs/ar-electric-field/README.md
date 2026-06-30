@@ -13,9 +13,14 @@ using robust 3×3 **matrix-code (barcode)** markers — no marker training requi
 
 | Page | Mode | Charge sits… | Shows |
 |------|------|--------------|-------|
-| `plane.html` | **Plane AR** (live) | at the **marker centre** | in-plane field lines, grid, potential surface, electron guns |
+| `plane.html` | **Plane AR** (live) | **floating 2× the sticker edge above** each flat sticker (`?lift=`) | true 3-D field lines, electron guns — flat printouts only, no 3-D printer |
 | `cube.html`  | **Cube AR** (live)  | at the **cube centre** (each face stepped inward ½ edge, then averaged) | true 3-D field lines, electron guns |
-| `photo.html` | **Photo** (static)  | at the marker centre (detected once in a still image) | field lines, potential, a 3-D orbit view that stands the photo up |
+| `photo.html` | **Photo** (static)  | at the marker centre (detected once in a still image) | in-plane field lines, potential surface, a 3-D orbit view that stands the photo up |
+
+Both live modes now show a genuine **3-D** field: the charges' 3-D positions are
+recovered from the markers, the field lines are traced in 3-D space, and three.js
+projects them through the AR camera. Plane AR lifts the charge above a flat sticker so
+you get a 3-D field from paper alone; Cube AR puts it at the centre of a box.
 
 `index.html` is the hub that links all three plus the print pages.
 

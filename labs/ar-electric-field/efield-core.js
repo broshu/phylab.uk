@@ -54,7 +54,11 @@
         HCLAMP:  num('hclamp', 4.0), // max |height|
         gundir:  Math.round(num('gundir', 0)) & 3,
         cube:    num('cube', 1.0),   // cube half-edge in marker-width units
+        lift:    num('lift', 2.0),   // Plane AR: how far above the sticker the charge floats (in marker-widths)
+        tube3d:  num('tube', 0.025), // 3-D field-line tube radius (bold + glow)
+        seeds3d: Math.round(num('seeds', 18)), // 3-D field lines per source
         smooth:  num('smooth', 0.3), // anchor pose smoothing (lock modes)
+        _hasSmooth: q.has('smooth'),
         autolock:num('autolock', 1), // 1 = auto-freeze once markers are stable
         pcfg: {
           speed:    num('pspeed', 0.7),
@@ -371,10 +375,28 @@
       }
       return pts;
     },
-    addTube: function (group, points, cFrom, cTo) { EFieldPlanar.prototype.addTube.call(this, group, points, cFrom, cTo); },
+    /* Bold, glowing 3-D tube: a soft additive glow underlay + a crisp gradient core. */
+    addTube: function (group, points, cFrom, cTo) {
+      if (points.length<2) return;
+      var curve=new THREE.CatmullRomCurve3(points), seg=Math.min(120,Math.max(8,points.length*2));
+      var R=this.cfg.tube3d;
+      // glow underlay (additive, no depth write so the core always shows through)
+      var gcol=new THREE.Color(cFrom).lerp(new THREE.Color(cTo),0.5);
+      var gg=new THREE.TubeGeometry(curve,seg,R*2.6,8,false);
+      group.add(new THREE.Mesh(gg, new THREE.MeshBasicMaterial({ color:gcol, transparent:true, opacity:0.16,
+        blending:THREE.AdditiveBlending, depthWrite:false })));
+      // crisp gradient core
+      var geo=new THREE.TubeGeometry(curve,seg,R,8,false);
+      var cA=new THREE.Color(cFrom), cB=new THREE.Color(cTo), pos=geo.attributes.position, colors=new Float32Array(pos.count*3), ring=9, i;
+      for (i=0;i<pos.count;i++){ var t=Math.floor(i/ring)/Math.max(1,pos.count/ring); var c=cA.clone().lerp(cB,Math.min(1,t));
+        colors[i*3]=c.r; colors[i*3+1]=c.g; colors[i*3+2]=c.b; }
+      geo.setAttribute('color', new THREE.BufferAttribute(colors,3));
+      group.add(new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors:true })));
+    },
     addArrow: function (group, p, dir, colorHex) {
       if (dir.length()<1e-6) return;
-      var cone=new THREE.Mesh(new THREE.ConeGeometry(0.045,0.11,10), new THREE.MeshBasicMaterial({ color: colorHex }));
+      var r=Math.max(0.05, this.cfg.tube3d*2.4);
+      var cone=new THREE.Mesh(new THREE.ConeGeometry(r,r*2.6,12), new THREE.MeshBasicMaterial({ color: colorHex }));
       cone.position.copy(p); cone.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dir.clone().normalize());
       group.add(cone);
     },
@@ -392,13 +414,17 @@
       center.multiplyScalar(1/charges.length);
       var spread=0;
       for (i=0;i<charges.length;i++) for (j=i+1;j<charges.length;j++) spread=Math.max(spread, charges[i].pos.distanceTo(charges[j].pos));
-      var maxR=spread*1.6+1.2;
       var hasPos=charges.some(function(c){return c.q>0;}), hasNeg=charges.some(function(c){return c.q<0;});
       var sources=charges.filter(function(c){ return hasPos ? c.q>0 : c.q<0; });
-      var opts={ step:0.04, maxSteps:240, minR:0.13, maxR:maxR, center:center };
+      // A field line must end on a charge or at the boundary — never mid-air. For a dipole
+      // give a big boundary + step budget so lines curve all the way back to the − charge;
+      // for a single charge a modest boundary lets them reach it and stop cleanly.
+      var dipole=hasPos&&hasNeg;
+      var maxR=dipole ? spread*6+2.0 : spread*1.6+1.5;
+      var opts={ step:0.04, maxSteps: dipole?1600:500, minR:0.13, maxR:maxR, center:center };
       for (var s=0;s<sources.length;s++){
         var src=sources[s], cFrom=src.q>0?COL.pos:COL.neg, cTo=(src.q>0&&hasNeg)?COL.neg:cFrom;
-        var seeds=this.seedSphere(src.pos,0.2,16);
+        var seeds=this.seedSphere(src.pos,0.2,this.cfg.seeds3d);
         for (i=0;i<seeds.length;i++){ var pts=this.traceLine(seeds[i],charges,+1,opts);
           this.addTube(this.g.field, pts, cFrom, cTo); this.decorateArrows(this.g.field, pts, COL.arrow, src.q>0); }
       }

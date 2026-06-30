@@ -9,32 +9,38 @@
     *{box-sizing:border-box;}
     body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
       color:var(--ink);background:#eef1f6;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-    .sheet{width:210mm;min-height:297mm;margin:0 auto;background:#fff;padding:13mm;}
-    .sheet+.sheet{margin-top:8mm;}
+    .sheet{width:210mm;margin:0 auto 8mm;background:#fff;padding:13mm;}
     .scheme-tag{display:inline-block;background:#fff1f0;color:#d8453c;font-weight:800;font-size:12px;
       padding:4px 10px;border-radius:999px;letter-spacing:.03em;}
     .scheme-tag.neg{background:#eef4ff;color:#2563eb;}
-    h1{font-size:20px;margin:8px 0 4px;}
-    h2{font-size:16px;margin:6mm 0 2mm;}
-    .sub{color:#5b6577;font-size:12.5px;margin:0 0 5mm;line-height:1.6;}
-    .grid{display:flex;gap:6mm;justify-content:center;flex-wrap:wrap;margin-top:3mm;}
+    h1{font-size:19px;margin:7px 0 3px;}
+    h2{font-size:14px;margin:5mm 0 1mm;color:#444;}
+    .sub{color:#5b6577;font-size:11.5px;margin:0 0 4mm;line-height:1.55;}
+    .grid{display:flex;gap:4mm;justify-content:center;flex-wrap:nowrap;}
     .card{text-align:center;}
-    .marker-box{width:46mm;height:46mm;background:#fff;padding:7mm;border:1px dashed #c4ccda;
-      display:flex;align-items:center;justify-content:center;position:relative;}
-    .marker-box img{width:32mm;height:32mm;image-rendering:pixelated;}
-    .gunbox .arrow{position:absolute;right:-1mm;top:50%;transform:translateY(-50%);font-size:24px;line-height:1;}
-    .gunbox .emit{position:absolute;right:-12mm;top:50%;transform:translateY(-50%);font-weight:800;font-size:13px;}
-    .gunbox.neg-gun .arrow,.gunbox.neg-gun .emit{color:var(--gn);} .gunbox.pos-gun .arrow,.gunbox.pos-gun .emit{color:var(--gp);}
-    .lab{margin-top:3mm;font-weight:700;font-size:13px;} .id{color:#8a93a6;font-size:11px;}
+    .marker-box{width:33mm;height:33mm;background:#fff;padding:4.5mm;border:1px dashed #c4ccda;
+      display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+    .marker-box img{width:24mm;height:24mm;image-rendering:pixelated;}
+    .gunbox .arrow{position:absolute;right:1mm;top:50%;transform:translateY(-50%);font-size:18px;line-height:1;}
+    .gunbox.pos-gun .arrow{color:var(--gp);} .gunbox.neg-gun .arrow{color:var(--gn);}
+    .lab{margin-top:2.5mm;font-weight:700;font-size:12px;} .id{color:#8a93a6;font-size:10px;}
     .face .lab{color:var(--pos);} .face.negf .lab{color:var(--neg);}
-    .tips{margin-top:6mm;font-size:12px;color:#42495a;line-height:1.7;border-top:1px solid #e2e6ee;padding-top:4mm;}
+    .guns{display:flex;gap:8mm;justify-content:center;margin-top:2mm;}
+    .tips{margin-top:5mm;font-size:11.5px;color:#42495a;line-height:1.65;border-top:1px solid #e2e6ee;padding-top:3.5mm;}
     .tips b{color:var(--ink);}
-    @media print{ body{background:#fff;} .sheet{box-shadow:none;margin:0;padding:11mm;} .sheet+.sheet{page-break-before:always;} .noprint{display:none;} .tips,.sub{} }
     .noprint{text-align:center;padding:12px;}
     .noprint button{font-size:15px;padding:10px 22px;border:none;border-radius:10px;background:#2563eb;color:#fff;font-weight:700;cursor:pointer;}
     .noprint a{display:inline-block;margin-left:10px;color:#2563eb;font-size:13px;}
     .noprint a.btn-ar{color:#fff;font-weight:700;margin-left:10px;padding:10px 22px;border-radius:10px;text-decoration:none;
       background:linear-gradient(135deg,#56c4ff,#39e0c8);box-shadow:0 4px 14px rgba(57,224,200,.28);}
+    @page{ size:A4; margin:12mm; }
+    @media print{
+      html,body{background:#fff;width:auto;}
+      /* fill the printable area — never a fixed 210mm, so nothing overflows the page margins */
+      .sheet{width:auto;max-width:none;margin:0;padding:0;box-shadow:none;}
+      .sheet+.sheet{page-break-before:always;}
+      .noprint{display:none !important;}
+    }
   </style>
 </head>
 <body>
@@ -50,9 +56,9 @@
     <span class="scheme-tag">CUBE SCHEME · POSITIVE</span>
     <h1>AR Electric Field — Cube markers (+)</h1>
     <p class="sub">
-      Print at <b>100% (actual size)</b> — each black pattern is <b>3.2&nbsp;cm</b>. Stick these <b>five</b> markers on five faces of a small box
-      (top + four sides; leave the bottom). Keep the white border around each square. The charge sits at the <b>cube's centre</b>: the app steps
-      every visible face inward by ½ the cube edge and averages them, so the charge stays dead-centre whatever face you see.
+      Print at <b>100% (actual size)</b> — each black pattern is <b>2.4&nbsp;cm</b>. Stick these <b>five</b> markers on five faces of a small box
+      (top + four sides; leave the bottom), keeping the white border. The charge sits at the <b>cube's centre</b>: the app steps every visible
+      face inward by ½ the cube edge and averages them, so it stays dead-centre whatever face you see.
     </p>
     <h2>+ cube — five faces</h2>
     <div class="grid">
@@ -63,16 +69,16 @@
       <div class="card face"><div class="marker-box"><img src="markers/4.png" alt="+ face 5"></div><div class="lab">+ face 5</div><div class="id">barcode 4</div></div>
     </div>
     <div class="tips">
-      <b>Calibrate the centre.</b> The inward step is <code>?cube=</code> (cube half-edge ÷ marker width). For a 7&nbsp;cm box with 3.2&nbsp;cm markers,
-      that's 3.5 ÷ 3.2 ≈ <b>1.1</b> → open <code>cube.html?cube=1.1</code>. Default is 1.0.
+      <b>Calibrate the centre.</b> The inward step is <code>?cube=</code> (cube half-edge ÷ marker width). For a 7&nbsp;cm box with 2.4&nbsp;cm markers,
+      that's 3.5 ÷ 2.4 ≈ <b>1.45</b> → open <code>cube.html?cube=1.45</code>. Default is 1.0.
     </div>
   </div>
 
-  <!-- PAGE 2 — NEGATIVE CUBE -->
+  <!-- PAGE 2 — NEGATIVE CUBE + GUNS -->
   <div class="sheet">
     <span class="scheme-tag neg">CUBE SCHEME · NEGATIVE</span>
-    <h1>AR Electric Field — Cube markers (−)</h1>
-    <p class="sub">Stick these <b>five</b> markers on five faces of a second box — this one carries a <b>negative</b> charge at its centre.</p>
+    <h1>AR Electric Field — Cube markers (−) &amp; guns</h1>
+    <p class="sub">Stick these <b>five</b> markers on a second box — it carries a <b>negative</b> charge at its centre. The gun cards lie flat beside the cubes.</p>
     <h2>− cube — five faces</h2>
     <div class="grid">
       <div class="card face negf"><div class="marker-box"><img src="markers/5.png" alt="− face 1"></div><div class="lab">− face 1</div><div class="id">barcode 5</div></div>
@@ -82,15 +88,15 @@
       <div class="card face negf"><div class="marker-box"><img src="markers/9.png" alt="− face 5"></div><div class="lab">− face 5</div><div class="id">barcode 9</div></div>
     </div>
 
-    <h2>Electron guns <span style="font-weight:500;color:#8a93a6;font-size:12px;">— arrow = firing direction</span></h2>
-    <div class="grid">
-      <div class="card"><div class="marker-box gunbox pos-gun"><img src="markers/10.png" alt="+ electron gun"><span class="arrow">▶</span><span class="emit">e⁺</span></div><div class="lab" style="color:var(--gp)">+ gun (e⁺)</div><div class="id">barcode 10</div></div>
-      <div class="card"><div class="marker-box gunbox neg-gun"><img src="markers/11.png" alt="− electron gun"><span class="arrow">▶</span><span class="emit">e⁻</span></div><div class="lab" style="color:var(--gn)">− gun (e⁻)</div><div class="id">barcode 11</div></div>
+    <h2>Electron guns <span style="font-weight:500;color:#8a93a6;font-size:11px;">— the ▶ arrow is the firing direction</span></h2>
+    <div class="guns">
+      <div class="card"><div class="marker-box gunbox pos-gun"><img src="markers/10.png" alt="+ electron gun"><span class="arrow">▶</span></div><div class="lab" style="color:var(--gp)">+ gun · e⁺</div><div class="id">barcode 10</div></div>
+      <div class="card"><div class="marker-box gunbox neg-gun"><img src="markers/11.png" alt="− electron gun"><span class="arrow">▶</span></div><div class="lab" style="color:var(--gn)">− gun · e⁻</div><div class="id">barcode 11</div></div>
     </div>
     <div class="tips">
-      <b>How to use.</b> Stand both cubes on a desk, lay the gun cards flat beside them, open <b>Cube AR</b> and aim at a cube. After it
-      auto-locks, walk around to see the 3-D field; the shape stays rigid. Guns fire e⁺ / e⁻ along their printed arrow (rotate with <code>?gundir=</code> if needed).
-      The cube codes (0–9) are <b>independent</b> of the Plane scheme — only run one scheme at a time.
+      <b>How to use.</b> Stand both cubes on a desk, open <b>Cube AR</b>, and aim at a cube. After it auto-locks, walk around to see the 3-D field —
+      the shape stays rigid. Guns fire e⁺ / e⁻ along their printed arrow (rotate with <code>?gundir=</code> if needed). The cube codes (0–9) are
+      <b>independent</b> of the Plane scheme — only run one scheme at a time.
     </div>
   </div>
 </body>

@@ -155,27 +155,29 @@
   };
 
   /* =================================================================
-     arlock-planar — flat markers, in-plane field + potential
+     arlock-planar — flat stickers on the desk; each charge floats 2× the
+     sticker edge ABOVE its sticker, and a true 3-D field is drawn around the
+     floating charges. This gives a real 3-D field with only flat printouts
+     (no 3-D printer needed). Lock-once freezes it so there is no jitter.
      ================================================================= */
   AFRAME.registerComponent('arlock-planar', Object.assign({}, Lock, {
     init: function () {
       this.initBase();
+      if (!this.cfg._hasSmooth) this.cfg.smooth = 0.12;     // stickers are static → steady anchor
       this.chg = Array.from(document.querySelectorAll('a-marker.chg'));
       this.guns = [
         { el: document.querySelector('a-marker.gun-pos'), q: +1, color: EFieldUtil.COL.gunPos },
         { el: document.querySelector('a-marker.gun-neg'), q: -1, color: EFieldUtil.COL.gunNeg }
       ].filter(function (g) { return g.el; });
-      var self = this;
-      this.builder = new EFieldPlanar({
+      this.stemGroup = new THREE.Group(); this.content.add(this.stemGroup);
+      this.builder = new EField3D({
         cfg: this.cfg,
-        groups: { grid: this.gridGroup, field: this.fieldGroup, pot: this.potGroup, glyph: this.glyphGroup, traj: this.trajGroup, particle: this.pGroup },
-        L: function (a, b, h) { return new THREE.Vector3(a, h || 0, b); },
-        lightTarget: this.content,
-        ringQuat: null
+        groups: { field: this.fieldGroup, glyph: this.glyphGroup, traj: this.trajGroup, particle: this.pGroup }
       });
       this.setUIState();
     },
 
+    /* each visible flat marker → one charge, with the desk-up normal */
     liveCharges: function () {
       var out = [];
       for (var i = 0; i < this.chg.length; i++) { var o = this.chg[i].object3D; if (!o.visible) continue;
@@ -189,49 +191,64 @@
     lockNow: function () {
       var charges = this.liveCharges();
       var visGuns = this.guns.filter(function (g) { return g.el.object3D.visible; });
-      var all = charges.slice(), i;
+      var planePts = charges.slice(), i;
       for (i = 0; i < visGuns.length; i++) { var p = new THREE.Vector3(); visGuns[i].el.object3D.getWorldPosition(p);
         var qn = new THREE.Quaternion(); visGuns[i].el.object3D.getWorldQuaternion(qn);
-        all.push({ pos: p, q: 0, normal: new THREE.Vector3(0, 1, 0).applyQuaternion(qn).normalize() }); }
-      if (!all.length) { this.flash('No markers visible — point at them first'); return; }
+        planePts.push({ pos: p, q: 0, normal: new THREE.Vector3(0, 1, 0).applyQuaternion(qn).normalize() }); }
+      if (!charges.length) { this.flash('No charge stickers visible — point at them first'); return; }
 
-      var fr = this.buildFrame(all), pl = fr.pl, w = fr.w, Minv = fr.Minv;
+      var fr = this.buildFrame(planePts), Minv = fr.Minv;
+      var rot = new THREE.Matrix4().extractRotation(Minv);
+      var lift = this.cfg.lift;
 
-      // charges → reference-frame plane coords (a,b)
-      var cs2 = [];
-      for (i = 0; i < charges.length; i++) { var r = charges[i].pos.clone().applyMatrix4(Minv); cs2.push({ a: r.x, b: r.z, q: charges[i].q }); }
+      // charges → local 3-D: drop the sticker onto the desk plane (y=0), then float the charge up by `lift`.
+      var local = [], bases = [];
+      for (i = 0; i < charges.length; i++) {
+        var base = charges[i].pos.clone().applyMatrix4(Minv); base.y = 0;     // sticker on the desk
+        var top = base.clone(); top.y += lift;                                // charge floats above
+        local.push({ pos: top, q: charges[i].q }); bases.push(base);
+      }
 
-      // guns → reference-frame muzzle pose (in-plane forward, with optional gundir rotation)
+      // guns → local muzzle on the desk, firing along the printed arrow (marker +X) projected onto the desk
       var gunsF = [];
       for (i = 0; i < visGuns.length; i++) { var g = visGuns[i];
         var wp = new THREE.Vector3(); g.el.object3D.getWorldPosition(wp);
         var wq = new THREE.Quaternion(); g.el.object3D.getWorldQuaternion(wq);
-        var f = new THREE.Vector3(1, 0, 0).applyQuaternion(wq);                 // marker local +X = printed arrow
-        f.addScaledVector(pl.normal, -f.dot(pl.normal)); if (f.lengthSq() < 1e-6) f.copy(pl.u); f.normalize();
-        var rp = wp.clone().sub(pl.origin), a = rp.dot(pl.u), b = rp.dot(w), da = f.dot(pl.u), db = f.dot(w);
-        for (var t = 0; t < this.cfg.gundir; t++) { var tmp = da; da = -db; db = tmp; }
-        var nn = Math.hypot(da, db) || 1;
-        gunsF.push({ a: a, b: b, da: da / nn, db: db / nn, q: g.q, color: g.color });
+        var lp = wp.clone().applyMatrix4(Minv); lp.y = 0.02;
+        var f = new THREE.Vector3(1, 0, 0).applyQuaternion(wq).applyMatrix4(rot); f.y = 0;
+        if (f.lengthSq() < 1e-6) f.set(1, 0, 0); f.normalize();
+        for (var t = 0; t < this.cfg.gundir; t++) { var tx = f.x; f.x = -f.z; f.z = tx; }
+        gunsF.push({ pos: lp, dir: f, q: g.q, color: g.color });
       }
 
       var anchors = this.captureAnchors(this.chg.concat(this.guns.map(function (g) { return g.el; })), fr.M);
-      this.frozen = { cs2: cs2, guns: gunsF, anchors: anchors };
+      this.frozen = { charges: local, bases: bases, guns: gunsF, anchors: anchors };
       this.locked = true; this.buildKey = '';
       fr.M.decompose(this._apos, this._aquat, this._scl); this._haveA = true; this._scl.set(1, 1, 1);
       EFieldUtil.clear(this.liveGroup);
 
-      // overall scale for line/grid bounds
-      var S = 0.9; for (i = 0; i < cs2.length; i++) S = Math.max(S, Math.hypot(cs2[i].a, cs2[i].b));
-      for (i = 0; i < gunsF.length; i++) S = Math.max(S, Math.hypot(gunsF[i].a, gunsF[i].b)); S += 1.1; this._S = S;
-
+      var S = 0.9; for (i = 0; i < local.length; i++) S = Math.max(S, local[i].pos.length()); this._S = S + 1.1;
       this.setUIState();
-      this.flash(cs2.length + ' charge' + (cs2.length !== 1 ? 's' : '') + ' locked · move around to view');
+      this.flash(local.length + ' charge' + (local.length !== 1 ? 's' : '') + ' floating above the stickers · move around');
+    },
+
+    /* faint vertical stem from each sticker (on the desk) up to its floating charge */
+    buildStems: function () {
+      EFieldUtil.clear(this.stemGroup);
+      for (var i = 0; i < this.frozen.charges.length; i++) {
+        var base = this.frozen.bases[i], top = this.frozen.charges[i].pos;
+        var col = this.frozen.charges[i].q > 0 ? EFieldUtil.COL.posFill : EFieldUtil.COL.negFill;
+        var g = new THREE.BufferGeometry().setFromPoints([base, top]);
+        this.stemGroup.add(new THREE.Line(g, new THREE.LineBasicMaterial({ color: col, transparent: true, opacity: 0.5 })));
+        var dot = new THREE.Mesh(new THREE.SphereGeometry(0.03, 10, 10), new THREE.MeshBasicMaterial({ color: col }));
+        dot.position.copy(base); this.stemGroup.add(dot);    // marks the sticker on the desk
+      }
     },
 
     rebuild: function () {
-      var b = this.builder, cs2 = this.frozen.cs2, S = this._S;
-      b.buildGrid(cs2, S); b.buildField(cs2, S); b.buildPotential(cs2, S); b.buildGlyphs(cs2);
-      b.buildTrajectories(this.frozen.guns, cs2, S);
+      this.builder.build(this.frozen.charges);
+      this.builder.buildTrajectories(this.frozen.guns, this.frozen.charges, this._S);
+      this.buildStems();
     },
 
     tick: function (time) {
@@ -243,15 +260,15 @@
         this.maybeAutoLock(time, charges.length);
         msg = (charges.length || nGun)
           ? (charges.length + ' charge' + (charges.length !== 1 ? 's' : '') + (nGun ? ' + ' + nGun + ' gun' + (nGun > 1 ? 's' : '') : '') + ' — hold steady to lock…')
-          : 'Point at the markers so they are seen…';
+          : 'Point at the stickers so they are seen…';
       } else {
         var seen = this.frozen.anchors.filter(function (an) { return an.el.object3D.visible; }).length;
-        msg = seen ? ('Locked · ' + this.frozen.cs2.length + ' charges · tracking ' + seen + ' marker' + (seen > 1 ? 's' : ''))
-                   : 'Locked · point back at the markers to keep tracking';
+        msg = seen ? ('Locked · ' + this.frozen.charges.length + ' charge' + (this.frozen.charges.length !== 1 ? 's' : '') + ' · tracking ' + seen + ' marker' + (seen > 1 ? 's' : ''))
+                   : 'Locked · point back at the stickers to keep tracking';
         this.updateAnchor();
-        var key = this.builder.show.grid + '' + this.builder.show.field + this.builder.show.pot;
+        var key = this.builder.show.field + '';
         if (key !== this.buildKey) { this.rebuild(); this.buildKey = key; }
-        this.builder.animate(time, this.frozen.guns, this.frozen.cs2);
+        this.builder.animate(time, this.frozen.guns);
       }
       var shown = (this._flash && time < this._flashUntil) ? this._flash : msg;
       if (this.statusEl.textContent !== shown) this.statusEl.textContent = shown;
@@ -264,6 +281,9 @@
   AFRAME.registerComponent('arlock-cube', Object.assign({}, Lock, {
     init: function () {
       this.initBase();
+      // Cubes are placed static, so prefer a steadier (heavier-smoothed) anchor than
+      // the plane default — unless the user pinned ?smooth= themselves.
+      if (!this.cfg._hasSmooth) this.cfg.smooth = 0.12;
       this.cubePos = Array.from(document.querySelectorAll('a-marker.cube-pos'));
       this.cubeNeg = Array.from(document.querySelectorAll('a-marker.cube-neg'));
       this.guns = [
