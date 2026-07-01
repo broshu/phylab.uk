@@ -354,7 +354,9 @@
   function EField3D(opts) {
     this.cfg = opts.cfg;
     this.g = opts.groups;
-    this.show = { field: true };
+    this.lightTarget = opts.lightTarget || null;
+    this.show = { field: true, pot: false };
+    this._lit = false;
   }
   EField3D.prototype = {
     fieldAt: function (p, charges) {
@@ -468,6 +470,65 @@
       EFieldUtil.clear(this.g.glyph);
       for (var i=0;i<items.length;i++){ if (items[i].plate) continue; var sp=EFieldUtil.chargeGlyph(items[i].q);
         sp.position.copy(items[i].pos); sp.scale.set(0.3,0.3,0.3); this.g.glyph.add(sp); }
+    },
+
+    /* Potential height-surface over the DESK plane (local x-z at y=0).
+       The desk is the V=0 reference; the surface rises to y ∝ V(x,z) where V
+       is the Coulomb potential of the floating point charges sampled at desk
+       level (y=0). Height is auto-scaled so the relief is always visible no
+       matter how high the charges float. Point charges only (plates skipped). */
+    buildPotential: function (items, S) {
+      var pot = this.g.pot; if (!pot) return;
+      EFieldUtil.clear(pot);
+      if (!this.show.pot) return;
+      var charges = [], ci;
+      for (ci=0; ci<items.length; ci++){ if (!items[ci].plate) charges.push(items[ci]); }
+      if (!charges.length) return;
+      var K=this.cfg.K, soft=this.cfg.SOFT;
+      // potential at a desk point (a,0,b) — the charge floats at c.pos (y = height above desk)
+      var Vat=function(a,b){ var V=0,k,c,dx,dy,dz; for(k=0;k<charges.length;k++){ c=charges[k];
+        dx=a-c.pos.x; dy=c.pos.y; dz=b-c.pos.z; V+=K*c.q/Math.sqrt(dx*dx+dy*dy+dz*dz+soft*soft); } return V; };
+
+      var N=140, M=N+1, geo=new THREE.PlaneGeometry(2*S,2*S,N,N), pos=geo.attributes.position, cnt=pos.count;
+      var abx=new Float32Array(cnt), aby=new Float32Array(cnt), raw=new Float32Array(cnt), i, maxAbs=1e-6;
+      for (i=0;i<cnt;i++){ var a=pos.getX(i), b=pos.getY(i); abx[i]=a; aby[i]=b;
+        var v=Vat(a,b); raw[i]=v; if (Math.abs(v)>maxAbs) maxAbs=Math.abs(v); }
+      // auto-scale the tallest feature to a comfortable, always-visible relief
+      var targetPeak=Math.max(0.8, Math.min(2.2, S*0.5)), scale=targetPeak/maxAbs;
+      var hgt=new Float32Array(cnt); for (i=0;i<cnt;i++) hgt[i]=raw[i]*scale;
+
+      // gentle smoothing (same as the 2-D surface) so the mesh reads cleanly
+      var al=0.5, p2; for (p2=0;p2<this.cfg.PSMOOTH;p2++){ var sm=hgt.slice();
+        for (var y=1;y<N;y++) for (var x=1;x<N;x++){ var idx=y*M+x;
+          hgt[idx]=sm[idx]*(1-al)+(sm[idx-1]+sm[idx+1]+sm[idx-M]+sm[idx+M])*(al*0.25); } }
+
+      var colors=new Float32Array(cnt*3);
+      var cHot=new THREE.Color('#ff6a4f'), cTip=new THREE.Color('#fff2cf'), cMid=new THREE.Color('#0c1626'), cHole=new THREE.Color('#0a1120');
+      for (i=0;i<cnt;i++){ pos.setXYZ(i, abx[i], hgt[i], aby[i]);
+        var vt=Math.max(-1,Math.min(1,hgt[i]/targetPeak)), c;
+        if (vt>=0){ c=cMid.clone().lerp(cHot,Math.pow(vt,0.5)); if(vt>0.75) c.lerp(cTip,(vt-0.75)/0.25*0.85); }
+        else c=cMid.clone().lerp(cHole,Math.pow(-vt,0.45));
+        colors[i*3]=c.r; colors[i*3+1]=c.g; colors[i*3+2]=c.b; }
+      pos.needsUpdate=true;
+      geo.setAttribute('color', new THREE.BufferAttribute(colors,3)); geo.computeVertexNormals();
+      var mat=new THREE.MeshPhongMaterial({ vertexColors:true, side:THREE.DoubleSide, shininess:30, specular:0x1b2230,
+        transparent:true, opacity:0.88, depthWrite:false });
+      pot.add(new THREE.Mesh(geo, mat));
+
+      // vertical drop-line from each floating charge down to the surface point
+      // directly beneath it — makes "height = potential at that spot" legible
+      for (var di=0; di<charges.length; di++){ var cc=charges[di];
+        var hb=Vat(cc.pos.x,cc.pos.z)*scale, col=cc.q>0?COL.posFill:COL.negFill;
+        pot.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(cc.pos.x,0.004,cc.pos.z), new THREE.Vector3(cc.pos.x,hb,cc.pos.z)]),
+          new THREE.LineBasicMaterial({ color:col, transparent:true, opacity:0.45 })));
+        var mk=new THREE.Mesh(new THREE.SphereGeometry(0.04,10,10), new THREE.MeshBasicMaterial({ color:col }));
+        mk.position.set(cc.pos.x,hb,cc.pos.z); pot.add(mk);
+      }
+
+      var lt=this.lightTarget||pot;
+      if (!this._lit){ var amb=new THREE.AmbientLight(0xffffff,0.72), dir=new THREE.DirectionalLight(0xffffff,0.7);
+        dir.position.set(2,5,2); lt.add(amb); lt.add(dir); this._lit=true; }
     },
     /* Bold, glowing 3-D tube: a soft additive glow underlay + a crisp gradient core. */
     addTube: function (group, points, cFrom, cTo) {

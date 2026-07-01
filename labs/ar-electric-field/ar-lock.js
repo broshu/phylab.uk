@@ -174,7 +174,8 @@
       this.plateGroup = new THREE.Group(); this.content.add(this.plateGroup);
       this.builder = new EField3D({
         cfg: this.cfg,
-        groups: { field: this.fieldGroup, glyph: this.glyphGroup, traj: this.trajGroup, particle: this.pGroup, plate: this.plateGroup }
+        lightTarget: this.content,
+        groups: { field: this.fieldGroup, glyph: this.glyphGroup, traj: this.trajGroup, particle: this.pGroup, plate: this.plateGroup, pot: this.potGroup }
       });
       this.setUIState();
     },
@@ -280,6 +281,7 @@
 
     rebuild: function () {
       this.builder.build(this.frozen.items);
+      this.builder.buildPotential(this.frozen.items, this._S);
       this.builder.buildTrajectories(this.frozen.guns, this.frozen.items, this._S);
       this.buildStems();
     },
@@ -301,7 +303,7 @@
         msg = seen ? ('Locked · ' + nc + ' charge' + (nc !== 1 ? 's' : '') + ' · tracking ' + seen + ' marker' + (seen > 1 ? 's' : ''))
                    : 'Locked · point back at the stickers to keep tracking';
         this.updateAnchor();
-        var key = this.builder.show.field + '';
+        var key = this.builder.show.field + '|' + this.builder.show.pot;
         if (key !== this.buildKey) { this.rebuild(); this.buildKey = key; }
         this.builder.animate(time, this.frozen.guns);
       }
@@ -327,7 +329,8 @@
       ].filter(function (g) { return g.el; });
       this.builder = new EField3D({
         cfg: this.cfg,
-        groups: { field: this.fieldGroup, glyph: this.glyphGroup, traj: this.trajGroup, particle: this.pGroup }
+        lightTarget: this.content,
+        groups: { field: this.fieldGroup, glyph: this.glyphGroup, traj: this.trajGroup, particle: this.pGroup, pot: this.potGroup }
       });
       this.setUIState();
     },
@@ -398,6 +401,7 @@
 
     rebuild: function () {
       this.builder.build(this.frozen.charges);
+      this.builder.buildPotential(this.frozen.charges, this._S);
       this.builder.buildTrajectories(this.frozen.guns, this.frozen.charges, this._S);
     },
 
@@ -416,7 +420,7 @@
         msg = seen ? ('Locked · ' + this.frozen.charges.length + ' charge' + (this.frozen.charges.length !== 1 ? 's' : '') + ' · tracking ' + seen + ' marker' + (seen > 1 ? 's' : ''))
                    : 'Locked · point back at a cube to keep tracking';
         this.updateAnchor();
-        var key = this.builder.show.field + '';
+        var key = this.builder.show.field + '|' + this.builder.show.pot;
         if (key !== this.buildKey) { this.rebuild(); this.buildKey = key; }
         this.builder.animate(time, this.frozen.guns);
       }
