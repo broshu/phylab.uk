@@ -22,8 +22,10 @@ sub-charges totalling ±2q (the standard uniformly-charged-sheet idealisation).
   proportional to |q| (16 per unit charge, so a plate gets 32 spread over both
   faces). Lines leave + charges radially, leave plates perpendicular to the
   faces, and terminate on − charges/plates or leave the picture. Arrows show
-  the direction of **E**. (Lines are seeded from the positive items; a scene
-  with unbalanced charge omits the lines that arrive from infinity.)
+  the direction of **E**. Lines are traced forward from every + item and
+  backward from every − item; a backward trace that lands on a + item would
+  retrace a forward line and is skipped, so − items get their full complement
+  of arriving lines without duplicates.
 - **Equipotential surfaces** — true 3-D isosurfaces of V extracted with
   marching tetrahedra on a 46³ grid, at **equal ΔV steps** (±0.35, ±0.7,
   ±1.05, ±1.4 · kq/d), so tightly packed shells mean a strong field. Surface
@@ -57,8 +59,13 @@ screenshot.png  hub thumbnail
 
 ## Run
 
-Camera needs HTTPS (or localhost). Desktop demo without a camera:
-`index.html?demo=dipole` (also `like`, `plates`, `mixed`) — drag to orbit.
+Camera needs HTTPS (or localhost). Two camera-free test modes:
+
+- **Test with a photo** (button on the start screen) — upload a picture of the
+  printed cards; it is fed through the exact AR pipeline (AR.js
+  `sourceType: image`), so detection, locking and rendering are the real thing.
+- **Desktop demo** — `index.html?demo=dipole` (also `like`, `plates`, `mixed`),
+  synthetic layouts with an orbit camera, no marker detection.
 
 URL knobs: `?lines=` field lines per unit charge · `?iso=` levels per sign ·
 `?grid=` isosurface resolution · `?smooth=` anchor smoothing (lower = steadier)

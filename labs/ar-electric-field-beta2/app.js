@@ -46,8 +46,8 @@ var CFG = {
 };
 
 var COL = {
-  pos: '#ff5b5b', neg: '#4f9bff', posFill: '#ff4d4d', negFill: '#3b9bff',
-  arrow: '#ffd34f', grid: '#1f6f8c', zero: '#aab6c6'
+  pos: '#e0442e', neg: '#2f7cd6', posFill: '#e04333', negFill: '#2f7cd6',
+  arrow: '#d9931b', grid: '#8a9a5b', zero: '#8b93a3'
 };
 
 var UP = new THREE.Vector3(0, 1, 0);
@@ -243,11 +243,11 @@ function addTube (group, pts, cFrom, cTo) {
   if (pts.length < 2) return;
   var curve = new THREE.CatmullRomCurve3(pts);
   var seg = Math.min(160, Math.max(12, pts.length));
-  /* soft additive glow underlay */
+  /* soft halo underlay (normal blending so it reads on light backgrounds) */
   var glow = new THREE.TubeGeometry(curve, seg, CFG.tubeR * 2.5, 6, false);
   var gcol = new THREE.Color(cFrom).lerp(new THREE.Color(cTo), 0.5);
   group.add(new THREE.Mesh(glow, new THREE.MeshBasicMaterial({
-    color: gcol, transparent: true, opacity: 0.15, blending: THREE.AdditiveBlending, depthWrite: false
+    color: gcol, transparent: true, opacity: 0.16, depthWrite: false
   })));
   /* crisp core with a colour gradient from source to sink */
   var geo = new THREE.TubeGeometry(curve, seg, CFG.tubeR, 6, false);
@@ -295,33 +295,52 @@ function chargeSprite (q, size) {
    Scientific conventions: the number of lines is proportional to |q|
    (16 per unit charge), lines leave + charges radially / plates
    perpendicular to their faces, and end on − charges/plates or run
-   out of the picture. */
+   out of the picture.
+   Lines are traced FORWARD from every + item and BACKWARD from every
+   − item. A backward trace that lands on a + item retraces a forward
+   line and is skipped — what survives are the lines that arrive at −
+   from outside the picture (the far half of every big dipole loop),
+   so − items are dressed as fully as + ones. */
 function buildFieldLines (items, els, group) {
   clearGroup(group);
+  if (!items.length) return;
   var hasPos = items.some(function (i) { return i.q > 0; });
   var hasNeg = items.some(function (i) { return i.q < 0; });
-  if (!items.length) return;
-  var srcSign = hasPos ? 1 : -1, mixed = hasPos && hasNeg;
+  var mixed = hasPos && hasNeg;
   var m = metrics(items);
-  var opt = {
-    center: m.center,
-    maxR: mixed ? m.spread * 3 + 4 : m.spread + 3,
-    maxSteps: mixed ? 2600 : 700,
-    stopPts: [], stopPlates: []
-  };
-  items.forEach(function (it) {
-    if (it.q * srcSign < 0) (it.type === 'plate' ? opt.stopPlates.push(it) : opt.stopPts.push(it.pos));
-  });
+  var maxR = mixed ? m.spread * 3 + 4 : m.spread + 3;
+  var maxSteps = mixed ? 2600 : 700;
+
+  function stopsAgainst (sign) {   // items of the opposite sign terminate a trace
+    var st = { pts: [], plates: [] };
+    items.forEach(function (it) {
+      if (it.q * sign < 0) (it.type === 'plate' ? st.plates.push(it) : st.pts.push(it.pos));
+    });
+    return st;
+  }
+  function nearStop (p, st) {
+    var i;
+    for (i = 0; i < st.pts.length; i++) if (p.distanceTo(st.pts[i]) < 0.2) return true;
+    for (i = 0; i < st.plates.length; i++) if (plateDistance(p, st.plates[i]) < 0.16) return true;
+    return false;
+  }
+
   items.forEach(function (src) {
-    if (src.q * srcSign <= 0) return;
+    var dir = src.q > 0 ? 1 : -1;                 // − items are traced against E
+    var st = stopsAgainst(src.q);
+    var opt = { center: m.center, maxR: maxR, maxSteps: maxSteps,
+      stopPts: st.pts, stopPlates: st.plates };
     var cA = src.q > 0 ? COL.pos : COL.neg;
     var cB = mixed ? (src.q > 0 ? COL.neg : COL.pos) : cA;
     var seeds = src.type === 'plate'
       ? plateSeeds(src, CFG.linesPerQ * CFG.plateQ / 2)
       : sphereSeeds(src.pos, 0.18, CFG.linesPerQ);
     seeds.forEach(function (s) {
-      var pts = traceLine(s, els, srcSign, opt);
-      if (pts.length > 3) { addTube(group, pts, cA, cB); addArrows(group, pts, srcSign); }
+      var pts = traceLine(s, els, dir, opt);
+      if (pts.length < 4) return;
+      if (dir < 0 && mixed && nearStop(pts[pts.length - 1], st)) return;   // duplicate of a forward line
+      addTube(group, pts, cA, cB);
+      addArrows(group, pts, dir);
     });
   });
 }
@@ -457,10 +476,10 @@ function buildIsoSurfaces (items, els, group) {
     geo.setAttribute('normal', new THREE.BufferAttribute(nrm, 3));
     var t = Math.abs(lvl) / Vmax;
     var color = lvl === 0 ? new THREE.Color(COL.zero)
-      : lvl > 0 ? new THREE.Color('#ffb08a').lerp(new THREE.Color('#ff2d1f'), t)
-                : new THREE.Color('#9fd0ff').lerp(new THREE.Color('#1f6bff'), t);
+      : lvl > 0 ? new THREE.Color('#e8825f').lerp(new THREE.Color('#c62817'), t)
+                : new THREE.Color('#7fa9e8').lerp(new THREE.Color('#1a53c0'), t);
     var mesh = new THREE.Mesh(geo, new THREE.MeshPhongMaterial({
-      color: color, transparent: true, opacity: lvl === 0 ? 0.1 : 0.13 + 0.14 * t,
+      color: color, transparent: true, opacity: lvl === 0 ? 0.12 : 0.16 + 0.16 * t,
       side: THREE.DoubleSide, depthWrite: false, shininess: 60
     }));
     mesh.renderOrder = Math.round(10 * t);   // inner (stronger) shells drawn last
@@ -582,8 +601,10 @@ AFRAME.registerComponent('efield-ar', {
     this.gCards.visible = !pot;
     this.gDesk.visible = !pot && this.demo;
     document.body.classList.toggle('space', pot);
-    var v = document.querySelector('video');
-    if (v) v.style.visibility = pot ? 'hidden' : 'visible';
+    /* the AR source is a <video> (webcam) or a body-level <img> (photo test) */
+    document.querySelectorAll('video, body > img').forEach(function (el) {
+      el.style.visibility = pot ? 'hidden' : 'visible';
+    });
     var b = document.getElementById('t-pot');
     if (b) b.classList.toggle('on', pot);
   },
@@ -840,15 +861,21 @@ var MARKS = [
   { v: 4, kind: 'plate', q: 1 },  { v: 5, kind: 'plate', q: -1 }
 ];
 
-function makeScene (demo) {
+/* kind: 'ar' (webcam) · 'photo' (a still image runs through the SAME AR
+   pipeline — for testing without a camera) · 'demo' (no AR at all) */
+function makeScene (kind, photo) {
   var s = document.createElement('a-scene');
   s.setAttribute('embedded', '');
   s.setAttribute('vr-mode-ui', 'enabled: false');
   s.setAttribute('renderer', 'logarithmicDepthBuffer: true; precision: medium; antialias: true; alpha: true');
-  if (!demo) {
-    s.setAttribute('arjs',
-      'sourceType: webcam; sourceWidth: 1024; sourceHeight: 768; displayWidth: 1024; displayHeight: 768; ' +
-      'detectionMode: mono_and_matrix; matrixCodeType: 3x3; patternRatio: 0.5; labelingMode: black_region; ' +
+  if (kind !== 'demo') {
+    var src = kind === 'photo'
+      ? 'sourceType: image; sourceUrl: ' + photo.url +
+        '; sourceWidth: ' + photo.w + '; sourceHeight: ' + photo.h +
+        '; displayWidth: ' + photo.w + '; displayHeight: ' + photo.h
+      : 'sourceType: webcam; sourceWidth: 1024; sourceHeight: 768; displayWidth: 1024; displayHeight: 768';
+    s.setAttribute('arjs', src +
+      '; detectionMode: mono_and_matrix; matrixCodeType: 3x3; patternRatio: 0.5; labelingMode: black_region; ' +
       'maxDetectionRate: 60; debugUIEnabled: false');
     MARKS.forEach(function (m) {
       var el = document.createElement('a-marker');
@@ -879,24 +906,50 @@ if (typeof document !== 'undefined' && document.addEventListener) {
     if (CFG.demo) {
       gate.classList.add('hidden');
       document.body.classList.add('demo');
-      makeScene(true);
+      makeScene('demo');
       return;
     }
+    var kicks = function () {
+      var kick = function () { window.dispatchEvent(new Event('resize')); };
+      setTimeout(kick, 300); setTimeout(kick, 1200);
+    };
     document.getElementById('startBtn').addEventListener('click', function () {
-      var s = makeScene(false);
+      var s = makeScene('ar');
       var reveal = function () { gate.classList.add('hidden'); };
       setTimeout(reveal, 1500);   // fallback if the video event never fires
-      s.addEventListener('arjs-video-loaded', function () {
-        reveal();
-        var kick = function () { window.dispatchEvent(new Event('resize')); };
-        setTimeout(kick, 300); setTimeout(kick, 1200);
-      });
+      s.addEventListener('arjs-video-loaded', function () { reveal(); kicks(); });
       s.addEventListener('camera-error', function () {
         var st = document.getElementById('status');
         if (st) st.textContent = 'Camera unavailable — check permission & HTTPS';
         reveal();
       });
     });
+
+    /* photo test: the uploaded picture becomes the AR camera feed — the
+       detection, lock and rendering pipeline is exactly the live one */
+    var pBtn = document.getElementById('photoBtn'), pFile = document.getElementById('photoFile');
+    if (pBtn && pFile) {
+      pBtn.addEventListener('click', function (e) { e.preventDefault(); pFile.click(); });
+      pFile.addEventListener('change', function () {
+        var f = pFile.files && pFile.files[0];
+        if (!f) return;
+        var img = new Image();
+        img.onload = function () {
+          var sc = Math.min(1, 1280 / Math.max(img.naturalWidth, img.naturalHeight));
+          var cv = document.createElement('canvas');
+          cv.width = Math.round(img.naturalWidth * sc);
+          cv.height = Math.round(img.naturalHeight * sc);
+          cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+          cv.toBlob(function (blob) {
+            makeScene('photo', { url: URL.createObjectURL(blob), w: cv.width, h: cv.height });
+            gate.classList.add('hidden');
+            document.body.classList.add('photo');
+            kicks();
+          }, 'image/jpeg', 0.92);
+        };
+        img.src = URL.createObjectURL(f);
+      });
+    }
   });
 }
 
