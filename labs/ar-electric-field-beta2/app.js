@@ -917,7 +917,10 @@ AFRAME.registerComponent('efield-ar', {
 
     this.items = items;
     this.els = expandElements(items);
-    this._pivot = metrics(items).center.clone();
+    /* photo-orbit pivot: the layout centre on the desk, raised 2d — the
+       height where the charges float — so the scene turns about them */
+    var mc = metrics(items).center;
+    this._pivot = V3(mc.x, CFG.lift, mc.z);
     this.locked = true;
     this.isoBuilt = false;
     M.decompose(this._p, this._q, this._s); this._s.set(1, 1, 1);
