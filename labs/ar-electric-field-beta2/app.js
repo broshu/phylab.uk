@@ -521,12 +521,12 @@ function buildIsoSurfaces (items, els, group) {
 }
 
 /* ---- potential relief (the beta-1 idea, made rigorous) ----
-   The desk plane is lifted to h(x,z) = s · V(x,0,z), where V is the TRUE
-   potential evaluated on the desk (exact point charges + exact rectangle
-   plates) and s is one single linear scale (tallest feature = 1.5 d).
-   No clamping, no smoothing — the shape IS the potential. Contour rings are
-   drawn at equal ΔV steps; because h ∝ V they come out as horizontal lines
-   at equal height steps, a live topographic map of V. */
+   The desk plane is lifted to h(x,z) = V(x,0,z) — the TRUE potential
+   evaluated on the desk (exact point charges + exact rectangle plates),
+   mapped 1:1 into height: one unit of kq/d is one card-edge d of height.
+   No scaling, no clamping, no smoothing — the shape IS the potential.
+   Contour rings are drawn every ΔV = 0.1 kq/d; because h = V they sit at
+   exactly 0.1 d height steps, a live topographic map of V. */
 
 /* marching squares: segments of the level set V = L on a G×G grid */
 function contourSegments (V, G, x0, z0, step, L) {
@@ -565,15 +565,14 @@ function buildHeightSurface (items, group) {
     V[n] = v;
     if (Math.abs(v) > maxAbs) maxAbs = Math.abs(v);
   }
-  var s = 1.5 / maxAbs;                         // the ONE linear scale
 
-  /* the relief mesh, coloured by signed V */
+  /* the relief mesh: height IS the potential (1:1), coloured by signed V */
   var pos = new Float32Array(G * G * 3), col = new Float32Array(G * G * 3);
   var cNeut = new THREE.Color('#ded7c4'), cPos = new THREE.Color('#c62817'), cNeg = new THREE.Color('#1a53c0');
   for (j = 0, n = 0; j < G; j++) for (i = 0; i < G; i++, n++) {
     var t = V[n] / maxAbs;
     pos[n * 3] = x0 + i * step;
-    pos[n * 3 + 1] = V[n] * s + 0.01;
+    pos[n * 3 + 1] = V[n] + 0.01;
     pos[n * 3 + 2] = z0 + j * step;
     var c = t >= 0 ? cNeut.clone().lerp(cPos, Math.pow(t, 0.6))
                    : cNeut.clone().lerp(cNeg, Math.pow(-t, 0.6));
@@ -592,16 +591,16 @@ function buildHeightSurface (items, group) {
   group.add(new THREE.Mesh(geo, new THREE.MeshPhongMaterial({
     vertexColors: true, side: THREE.DoubleSide, transparent: true, opacity: 0.92, shininess: 24 })));
 
-  /* equal-ΔV contour rings (ΔV = max|V|/5, 4 per present sign, plus V = 0) */
+  /* contour rings every ΔV = 0.1 kq/d (= 0.1 d of height), plus V = 0 */
   var hasPos = items.some(function (it) { return it.q > 0; });
   var hasNeg = items.some(function (it) { return it.q < 0; });
   var lines = [];
   function ring (L) {
     var ss = contourSegments(V, G, x0, z0, step, L);
-    for (var k = 0; k < ss.length; k++) lines.push(new THREE.Vector3(ss[k][0], L * s + 0.02, ss[k][1]));
+    for (var k = 0; k < ss.length; k++) lines.push(new THREE.Vector3(ss[k][0], L + 0.02, ss[k][1]));
   }
-  var dV = maxAbs / 5;
-  for (var lev = 1; lev <= 4; lev++) {
+  var dV = 0.1, nLev = Math.min(30, Math.floor(maxAbs / dV));
+  for (var lev = 1; lev <= nLev; lev++) {
     if (hasPos) ring(lev * dV);
     if (hasNeg) ring(-lev * dV);
   }
@@ -614,7 +613,7 @@ function buildHeightSurface (items, group) {
   /* drop line from each floating charge to the relief right beneath it */
   items.forEach(function (it) {
     if (it.type !== 'charge') return;
-    var hv = potentialItems(it.pos.x, 0, it.pos.z, items) * s;
+    var hv = potentialItems(it.pos.x, 0, it.pos.z, items);
     var colr = it.q > 0 ? COL.posFill : COL.negFill;
     group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(
       [new THREE.Vector3(it.pos.x, hv + 0.01, it.pos.z), it.pos.clone()]),
@@ -667,6 +666,7 @@ var Gyro = {
 AFRAME.registerComponent('efield-ar', {
   init: function () {
     this.demo = !!CFG.demo;
+    this.photo = this.el.hasAttribute && this.el.hasAttribute('data-photo');
     this.locked = false;
     this.items = null; this.els = null; this.anchors = [];
     this.show = { field: true, pot: false, hgt: false };
@@ -698,7 +698,66 @@ AFRAME.registerComponent('efield-ar', {
 
     this.markers = Array.prototype.slice.call(this.el.querySelectorAll('a-marker'));
     this.bindUI();
+    if (this.photo) this.bindOrbit();     // a photo can't move — the mouse replaces the iPad
     if (this.demo) this.setupDemo();
+  },
+
+  /* ---------- photo-test orbit: drag = look around, wheel/pinch = dolly ----------
+     The photo is static, so the marker-derived pose never changes. The orbit is
+     an extra rigid transform premultiplied onto the tracked anchor each frame:
+     yaw spins the frozen scene about its own desk normal, pitch tilts it about
+     the screen's horizontal axis, both through the layout centre. Physics and
+     the lock pipeline are untouched. */
+  bindOrbit: function () {
+    var self = this, ptrs = new Map(), lastPinch = 0;
+    this.orbit = { yaw: 0, pitch: 0, dolly: 0 };
+    function onUI (t) { return t && t.closest && t.closest('#controls, #gate, #legend'); }
+    window.addEventListener('pointerdown', function (e) {
+      if (onUI(e.target)) return;
+      ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    });
+    window.addEventListener('pointermove', function (e) {
+      if (!ptrs.has(e.pointerId) || !self.locked) return;
+      var p = ptrs.get(e.pointerId);
+      if (ptrs.size === 1) {
+        self.orbit.yaw -= (e.clientX - p.x) * 0.006;
+        self.orbit.pitch = Math.max(-1.35, Math.min(1.35, self.orbit.pitch + (e.clientY - p.y) * 0.005));
+      }
+      p.x = e.clientX; p.y = e.clientY;
+      if (ptrs.size === 2) {
+        var a = Array.from(ptrs.values());
+        var d = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y);
+        if (lastPinch) self.orbit.dolly += (d - lastPinch) * 0.01;
+        lastPinch = d;
+      }
+    });
+    var end = function (e) { ptrs.delete(e.pointerId); if (ptrs.size < 2) lastPinch = 0; };
+    window.addEventListener('pointerup', end);
+    window.addEventListener('pointercancel', end);
+    window.addEventListener('wheel', function (e) {
+      if (self.locked) self.orbit.dolly -= e.deltaY * 0.004;
+    }, { passive: true });
+    window.addEventListener('dblclick', function () {
+      self.orbit.yaw = 0; self.orbit.pitch = 0; self.orbit.dolly = 0;
+    });
+  },
+
+  applyOrbit: function () {
+    var o = this.orbit;
+    if (!o || (!o.yaw && !o.pitch && !o.dolly) || !this._pivot) return;
+    var base = this.anchor.matrix;
+    var P = this._pivot.clone().applyMatrix4(base);      // pivot: layout centre, world
+    var deskY = V3(base.elements[4], base.elements[5], base.elements[6]).normalize();
+    var R = new THREE.Matrix4().makeRotationAxis(V3(1, 0, 0), o.pitch)
+      .multiply(new THREE.Matrix4().makeRotationAxis(deskY, o.yaw));
+    var O = new THREE.Matrix4().makeTranslation(P.x, P.y, P.z)
+      .multiply(R)
+      .multiply(new THREE.Matrix4().makeTranslation(-P.x, -P.y, -P.z));
+    var len = P.length() || 1;                           // dolly along the view ray, clamped
+    var d = Math.max(-2.5 * len, Math.min(0.6 * len, o.dolly));
+    O.premultiply(new THREE.Matrix4().makeTranslation(-P.x * d / len, -P.y * d / len, -P.z * d / len));
+    this.anchor.matrix.premultiply(O);
+    this.anchor.matrixWorldNeedsUpdate = true;
   },
 
   /* ---------- UI ---------- */
@@ -858,6 +917,7 @@ AFRAME.registerComponent('efield-ar', {
 
     this.items = items;
     this.els = expandElements(items);
+    this._pivot = metrics(items).center.clone();
     this.locked = true;
     this.isoBuilt = false;
     M.decompose(this._p, this._q, this._s); this._s.set(1, 1, 1);
@@ -924,6 +984,7 @@ AFRAME.registerComponent('efield-ar', {
       this.anchor.matrixWorldNeedsUpdate = true;
       this.anchor.matrix.decompose(this._p, this._q, this._s); this._s.set(1, 1, 1);
     }
+    if (this.photo) this.applyOrbit();
     return ests.length;
   },
 
@@ -943,10 +1004,12 @@ AFRAME.registerComponent('efield-ar', {
         : 'Point the camera at the printed cards…';
     } else {
       var seen = this.trackAnchor();
-      msg = seen
-        ? 'Locked · tracking ' + seen + ' card' + (seen > 1 ? 's' : '')
-        : (Gyro.ref ? 'Locked · gyro view — show a card to re-anchor'
-                    : 'Locked · point back at the cards to track');
+      msg = this.photo
+        ? 'Locked · photo test — drag to orbit, scroll/pinch to zoom, double-tap to reset'
+        : seen
+          ? 'Locked · tracking ' + seen + ' card' + (seen > 1 ? 's' : '')
+          : (Gyro.ref ? 'Locked · gyro view — show a card to re-anchor'
+                      : 'Locked · point back at the cards to track');
     }
     var shown = (this._flash && performance.now() < this._flashUntil) ? this._flash : msg;
     if (this.statusEl && this.statusEl.textContent !== shown) this.statusEl.textContent = shown;

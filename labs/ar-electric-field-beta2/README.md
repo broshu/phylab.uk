@@ -36,12 +36,13 @@ graininess even on the desk right at the plate's base.
   when both signs are present. In this view the camera image is hidden — only
   the charges, field lines and shells remain.
 - **Potential relief** — the beta-1 height-map idea, made rigorous: the desk
-  plane rises to h(x,z) = s · V(x,0,z), where V is the true potential
-  evaluated **on the desk** and s is one single linear scale (tallest feature
-  = 1.5 d). No clamping, no smoothing — the shape *is* the potential.
-  Contour rings are drawn at equal ΔV steps; since h ∝ V they sit at equal
-  height steps, a live topographic map. A drop line links each floating
-  charge to the relief directly beneath it.
+  plane rises to h(x,z) = V(x,0,z), the true potential evaluated **on the
+  desk**, mapped 1:1 into height — one unit of kq/d is one card-edge d. No
+  scaling, no clamping, no smoothing — the shape *is* the potential (a +q
+  charge floating at 2d makes a 0.5 d bump directly beneath itself, exactly
+  q/(2d)). Contour rings are drawn every ΔV = 0.1; since h = V they sit at
+  exactly 0.1 d height steps, a live topographic map. A drop line links each
+  floating charge to the relief directly beneath it.
 
 ## The jitter fix (rewritten, not copied, from beta 1)
 
