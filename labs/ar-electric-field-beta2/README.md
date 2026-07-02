@@ -40,13 +40,13 @@ graininess even on the desk right at the plate's base.
   horizontal plane **through the floating charges** (y = 2d), mapped 1:1 into
   height — one unit of kq/d is one card-edge d. In that plane a point charge
   is a genuine ±q/ρ singularity, so + charges are sharp peaks and − charges
-  deep funnels; for display the spikes are clipped at ±2 kq/d (exactly the
-  height at which the charges float). Below the cap there is no scaling and
-  no smoothing — the shape *is* the potential. Contour rings are drawn every
-  ΔV = 0.1; since h = V they sit at exactly 0.1 d height steps, a live
-  topographic map. A drop line links each floating charge to the relief
-  directly beneath it. Shells and Relief are mutually exclusive — switching
-  one on switches the other off.
+  deep funnels. There is **no clipping, no scaling, no smoothing** — this is
+  AR, a spike is simply allowed to run out of view; the shape *is* the
+  potential, strictly 1:1. Only the colour ramp saturates (at the highest
+  contour, 3 kq/d), so the singular vertex doesn't wash the palette out.
+  Contour rings are drawn every ΔV = 0.1; since h = V they sit at exactly
+  0.1 d height steps, a live topographic map. Shells and Relief are mutually
+  exclusive — switching one on switches the other off.
 
 ## The jitter fix (rewritten, not copied, from beta 1)
 

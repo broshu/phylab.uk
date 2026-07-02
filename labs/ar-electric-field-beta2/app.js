@@ -532,11 +532,13 @@ function buildIsoSurfaces (items, els, group) {
    point charge is a genuine ±q/ρ singularity, so + charges rise as sharp
    peaks and − charges fall as deep funnels. (Sampling on the desk itself
    was wrong for point charges: 2d below a charge V is only q/2d ≈ 0.5 —
-   a barely visible mound with no tip at all.) For display only, spikes
-   are clipped at ±VCAP = 2 kq/d, the height at which the charges float;
-   below the cap there is no scaling and no smoothing — the shape IS the
-   potential. Contour rings are drawn every ΔV = 0.1 kq/d; because h = V
-   they sit at exactly 0.1 d height steps, a live topographic map of V. */
+   a barely visible mound with no tip at all.) NO clipping, no scaling,
+   no smoothing: this is AR, a spike is allowed to run right off the
+   screen — the shape IS the potential, 1:1 (one kq/d = one card-edge d).
+   Only the COLOUR ramp saturates at the highest contour level, otherwise
+   the singular vertex would wash every other colour out.
+   Contour rings are drawn every ΔV = 0.1 kq/d; because h = V they sit at
+   exactly 0.1 d height steps, a live topographic map of V. */
 
 /* marching squares: segments of the level set V = L on a G×G grid */
 function contourSegments (V, G, x0, z0, step, L) {
@@ -569,11 +571,10 @@ function buildHeightSurface (items, group) {
   var S = Math.min(6, Math.max(3, m.spread * 0.75 + 2.2));
   var x0 = m.center.x - S, z0 = m.center.z - S;
   var N = 120, G = N + 1, step = 2 * S / N;
-  var yS = CFG.lift, VCAP = 2;           // sample plane through the charges; display clip
+  var yS = CFG.lift;                     // sample plane through the floating charges
   var V = new Float32Array(G * G), maxAbs = 1e-9, i, j, n;
   for (j = 0, n = 0; j < G; j++) for (i = 0; i < G; i++, n++) {
     var v = potentialItems(x0 + i * step, yS, z0 + j * step, items);
-    if (v > VCAP) v = VCAP; else if (v < -VCAP) v = -VCAP;
     V[n] = v;
     if (Math.abs(v) > maxAbs) maxAbs = Math.abs(v);
   }
@@ -581,8 +582,9 @@ function buildHeightSurface (items, group) {
   /* the relief mesh: height IS the potential (1:1), coloured by signed V */
   var pos = new Float32Array(G * G * 3), col = new Float32Array(G * G * 3);
   var cNeut = new THREE.Color('#ded7c4'), cPos = new THREE.Color('#c62817'), cNeg = new THREE.Color('#1a53c0');
+  var cScale = Math.min(maxAbs, 3);      // colour saturates at the top contour (30 × 0.1)
   for (j = 0, n = 0; j < G; j++) for (i = 0; i < G; i++, n++) {
-    var t = V[n] / maxAbs;
+    var t = Math.max(-1, Math.min(1, V[n] / cScale));
     pos[n * 3] = x0 + i * step;
     pos[n * 3 + 1] = V[n] + 0.01;
     pos[n * 3 + 2] = z0 + j * step;
@@ -622,20 +624,10 @@ function buildHeightSurface (items, group) {
       new THREE.LineBasicMaterial({ color: '#3a453e', transparent: true, opacity: 0.55 })));
   }
 
-  /* drop line from each floating charge to the relief right beneath it */
-  items.forEach(function (it) {
-    if (it.type !== 'charge') return;
-    var hv = potentialItems(it.pos.x, yS, it.pos.z, items);
-    if (hv > VCAP) hv = VCAP; else if (hv < -VCAP) hv = -VCAP;   // dot sits on the clipped tip
-    var colr = it.q > 0 ? COL.posFill : COL.negFill;
-    group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(
-      [new THREE.Vector3(it.pos.x, hv + 0.01, it.pos.z), it.pos.clone()]),
-      new THREE.LineBasicMaterial({ color: colr, transparent: true, opacity: 0.4 })));
-    var dot = new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 10),
-      new THREE.MeshBasicMaterial({ color: colr }));
-    dot.position.set(it.pos.x, hv + 0.01, it.pos.z);
-    group.add(dot);
-  });
+  /* no drop lines any more: the potential is sampled in the charges' own
+     plane, so each charge sits exactly on (in fact inside) its own spike —
+     the peak/funnel itself marks the spot. A drop line to the unclipped
+     singular vertex would just be a kilometre-long stray segment. */
 }
 
 /* faint desk grid (demo mode only — in AR the real desk is visible) */
