@@ -15,8 +15,11 @@ unit of length for the whole scene.
 
 ## Physics
 
-k = q = d = 1 internally. Plates are modelled as a uniform 9 × 9 sheet of
-sub-charges totalling ±2q (the standard uniformly-charged-sheet idealisation).
+k = q = d = 1 internally. For the **electric field** (line tracing), plates are
+modelled as a uniform 9 × 9 sheet of sub-charges totalling ±2q; for the
+**potential** (shells and relief), plates use the exact closed-form potential
+of a uniformly charged rectangle — finite everywhere, no sub-charge
+graininess even on the desk right at the plate's base.
 
 - **Field lines** — traced in 3-D with RK4 along **E**; the line count is
   proportional to |q| (16 per unit charge, so a plate gets 32 spread over both
@@ -26,12 +29,19 @@ sub-charges totalling ±2q (the standard uniformly-charged-sheet idealisation).
   backward from every − item; a backward trace that lands on a + item would
   retrace a forward line and is skipped, so − items get their full complement
   of arriving lines without duplicates.
-- **Equipotential surfaces** — true 3-D isosurfaces of V extracted with
+- **Equipotential shells** — true 3-D isosurfaces of V extracted with
   marching tetrahedra on a 46³ grid, at **equal ΔV steps** (±0.35, ±0.7,
   ±1.05, ±1.4 · kq/d), so tightly packed shells mean a strong field. Surface
   normals are analytic (**n** ∝ ∇V = −**E**), and the V = 0 surface is shown
   when both signs are present. In this view the camera image is hidden — only
-  the charges, field lines and shells remain in dark space.
+  the charges, field lines and shells remain.
+- **Potential relief** — the beta-1 height-map idea, made rigorous: the desk
+  plane rises to h(x,z) = s · V(x,0,z), where V is the true potential
+  evaluated **on the desk** and s is one single linear scale (tallest feature
+  = 1.5 d). No clamping, no smoothing — the shape *is* the potential.
+  Contour rings are drawn at equal ΔV steps; since h ∝ V they sit at equal
+  height steps, a live topographic map. A drop line links each floating
+  charge to the relief directly beneath it.
 
 ## The jitter fix (rewritten, not copied, from beta 1)
 
@@ -70,6 +80,11 @@ Camera needs HTTPS (or localhost). Two camera-free test modes:
 URL knobs: `?lines=` field lines per unit charge · `?iso=` levels per sign ·
 `?grid=` isosurface resolution · `?smooth=` anchor smoothing (lower = steadier)
 · `?autolock=0` manual lock only.
+
+Note for future edits: never style the AR source with a bare `video` CSS
+selector. AR.js gives its feed (`#arjs-video`) an inline `z-index: −2` so the
+3-D canvas can composite above it; an `!important` z-index on `video` puts the
+feed on top of the canvas and every virtual object silently disappears.
 
 Barcode images from the open-source
 [artoolkit-barcode-markers-collection](https://github.com/nicolocarpignoli/artoolkit-barcode-markers-collection).

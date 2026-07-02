@@ -24,7 +24,10 @@
       background:var(--paper);}
     body.space{background:radial-gradient(circle at 42% 30%,#f7f4ec,#e3dcc9 78%);}
     body.demo{background:radial-gradient(circle at 42% 30%,#f7f4ec,#e8e2d1 78%);}
-    a-scene,.a-canvas,video{z-index:1 !important;}
+    /* the canvas must sit above the AR video/photo source. AR.js gives its
+       source element (#arjs-video) an inline z-index of −2 — never override
+       it with a bare `video` selector, or the feed covers all 3-D content. */
+    a-scene,.a-canvas{z-index:1 !important;}
 
     #ui{position:fixed;inset:0;pointer-events:none;z-index:1000;}
     #status{position:fixed;left:50%;top:12px;transform:translateX(-50%);max-width:92%;
@@ -94,7 +97,7 @@
        <b>2d above its card</b>, and each ±2q plate stands as a <b>2d × 2d board upright on the desk</b>.</p>
     <div class="step"><span>①</span><span>Print the <b>marker sheet</b> at 100% and cut out the cards.</span></div>
     <div class="step"><span>②</span><span>Start the camera and hold steady — the layout <b>locks automatically</b>, so the field stays rigid (no jitter) while you move.</span></div>
-    <div class="step"><span>③</span><span>Toggle <b>Field lines</b> and <b>Equipotential</b>. The equipotential view hides the desk — only the charges and surfaces remain, and the view follows the camera (gyro keeps it moving when no card is in sight).</span></div>
+    <div class="step"><span>③</span><span>Toggle <b>Field lines</b>, <b>Shells</b> (3-D equipotential surfaces — this view hides the desk and follows the camera, with gyro fallback) and <b>Relief</b> (the desk rises to height ∝ V, with equal-ΔV contour rings).</span></div>
     <p style="font-size:12px;color:#9aa294">Camera needs HTTPS · field lines: 16 per unit charge · equipotentials: equal ΔV steps.<br>
        No camera to hand? <b>Test with a photo</b> of the printed cards — it runs through the exact AR pipeline.</p>
     <button id="startBtn">Start camera</button>
@@ -114,15 +117,16 @@
       <div><span class="dot cneg"></span>−q point charge · 2d above its card</div>
       <div><span class="dot sq cpos"></span>+2q plate · 2d × 2d, upright</div>
       <div><span class="dot sq cneg"></span>−2q plate · 2d × 2d, upright</div>
-      <div class="hint">equipotentials at equal ΔV — tighter shells ⇒ stronger E</div>
+      <div class="hint">shells &amp; rings at equal ΔV — tighter ⇒ stronger E<br>relief: height ∝ V on the desk (one linear scale)</div>
     </div>
     <div id="controls">
       <div class="toggle" id="lockBtn"><span class="ic">🔒</span><span class="lab">Lock now</span></div>
       <div class="toggle disabled" id="t-field"><span class="ic">⌇</span><span>Field lines</span></div>
-      <div class="toggle disabled" id="t-pot"><span class="ic">◎</span><span>Equipotential</span></div>
+      <div class="toggle disabled" id="t-pot"><span class="ic">◎</span><span>Shells</span></div>
+      <div class="toggle disabled" id="t-hgt"><span class="ic">⛰</span><span>Relief</span></div>
     </div>
   </div>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=3"></script>
 </body>
 </html>

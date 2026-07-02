@@ -164,6 +164,39 @@ function potentialAt (x, y, z, els) {
   return V;
 }
 
+/* ---- exact potential of a uniformly charged rectangle ----
+   V = kσ ∬ dA/r has the closed form Σ± [ u·ln(v+r) + v·ln(u+r) − w·atan(uv/(w·r)) ]
+   over the four corners. Finite everywhere (even on the sheet itself), so the
+   potential relief and the isosurfaces carry no sub-charge graininess. */
+var _rv = new THREE.Vector3();
+function rectV (x, y, z, pl) {
+  var d = _rv.set(x, y, z).sub(pl.base);
+  var a = d.dot(pl.ux), b = d.dot(UP), w = d.dot(pl.n);
+  var sigma = CFG.plateQ * pl.q / (2 * pl.half * pl.side);
+  var u1 = -pl.half - a, u2 = pl.half - a, v1 = -b, v2 = pl.side - b;
+  function F (u, v) {
+    var r = Math.sqrt(u * u + v * v + w * w);
+    return u * Math.log(Math.max(v + r, 1e-12)) +
+           v * Math.log(Math.max(u + r, 1e-12)) -
+           (w === 0 ? 0 : w * Math.atan2(u * v, w * r));
+  }
+  return sigma * (F(u2, v2) - F(u1, v2) - F(u2, v1) + F(u1, v1));
+}
+
+/* potential of the whole layout: exact point charges + exact plates */
+function potentialItems (x, y, z, items) {
+  var V = 0;
+  for (var i = 0; i < items.length; i++) {
+    var it = items[i];
+    if (it.type === 'plate') V += rectV(x, y, z, it);
+    else {
+      var dx = x - it.pos.x, dy = y - it.pos.y, dz = z - it.pos.z;
+      V += it.q / Math.sqrt(dx * dx + dy * dy + dz * dz + 1e-9);
+    }
+  }
+  return V;
+}
+
 /* distance from a point to a (finite) plate rectangle */
 function plateDistance (p, pl) {
   var d = V3().subVectors(p, pl.base);
@@ -449,7 +482,7 @@ function buildIsoSurfaces (items, els, group) {
   var org = [m.center.x - R, m.center.y - R, m.center.z - R];
   var vals = new Float32Array(G * G * G), n = 0;
   for (var k = 0; k < G; k++) for (var j = 0; j < G; j++) for (var i = 0; i < G; i++)
-    vals[n++] = potentialAt(org[0] + i * step, org[1] + j * step, org[2] + k * step, els);
+    vals[n++] = potentialItems(org[0] + i * step, org[1] + j * step, org[2] + k * step, items);
 
   var hasPos = items.some(function (it) { return it.q > 0; });
   var hasNeg = items.some(function (it) { return it.q < 0; });
@@ -484,6 +517,112 @@ function buildIsoSurfaces (items, els, group) {
     }));
     mesh.renderOrder = Math.round(10 * t);   // inner (stronger) shells drawn last
     group.add(mesh);
+  });
+}
+
+/* ---- potential relief (the beta-1 idea, made rigorous) ----
+   The desk plane is lifted to h(x,z) = s · V(x,0,z), where V is the TRUE
+   potential evaluated on the desk (exact point charges + exact rectangle
+   plates) and s is one single linear scale (tallest feature = 1.5 d).
+   No clamping, no smoothing — the shape IS the potential. Contour rings are
+   drawn at equal ΔV steps; because h ∝ V they come out as horizontal lines
+   at equal height steps, a live topographic map of V. */
+
+/* marching squares: segments of the level set V = L on a G×G grid */
+function contourSegments (V, G, x0, z0, step, L) {
+  var segs = [];
+  function ip (va, vb, pa, pb) {
+    var t = (L - va) / (vb - va);
+    return [pa[0] + t * (pb[0] - pa[0]), pa[1] + t * (pb[1] - pa[1])];
+  }
+  for (var j = 0; j < G - 1; j++) for (var i = 0; i < G - 1; i++) {
+    var x = x0 + i * step, z = z0 + j * step;
+    var v00 = V[j * G + i], v10 = V[j * G + i + 1];
+    var v01 = V[(j + 1) * G + i], v11 = V[(j + 1) * G + i + 1];
+    var b00 = v00 > L, b10 = v10 > L, b01 = v01 > L, b11 = v11 > L;
+    if (b00 === b10 && b10 === b11 && b11 === b01) continue;
+    var p00 = [x, z], p10 = [x + step, z], p01 = [x, z + step], p11 = [x + step, z + step];
+    var pts = [];
+    if (b00 !== b10) pts.push(ip(v00, v10, p00, p10));
+    if (b10 !== b11) pts.push(ip(v10, v11, p10, p11));
+    if (b01 !== b11) pts.push(ip(v01, v11, p01, p11));
+    if (b00 !== b01) pts.push(ip(v00, v01, p00, p01));
+    for (var k = 0; k + 1 < pts.length; k += 2) segs.push(pts[k], pts[k + 1]);
+  }
+  return segs;
+}
+
+function buildHeightSurface (items, group) {
+  clearGroup(group);
+  if (!items.length) return;
+  var m = metrics(items);
+  var S = Math.min(6, Math.max(3, m.spread * 0.75 + 2.2));
+  var x0 = m.center.x - S, z0 = m.center.z - S;
+  var N = 120, G = N + 1, step = 2 * S / N;
+  var V = new Float32Array(G * G), maxAbs = 1e-9, i, j, n;
+  for (j = 0, n = 0; j < G; j++) for (i = 0; i < G; i++, n++) {
+    var v = potentialItems(x0 + i * step, 0, z0 + j * step, items);
+    V[n] = v;
+    if (Math.abs(v) > maxAbs) maxAbs = Math.abs(v);
+  }
+  var s = 1.5 / maxAbs;                         // the ONE linear scale
+
+  /* the relief mesh, coloured by signed V */
+  var pos = new Float32Array(G * G * 3), col = new Float32Array(G * G * 3);
+  var cNeut = new THREE.Color('#ded7c4'), cPos = new THREE.Color('#c62817'), cNeg = new THREE.Color('#1a53c0');
+  for (j = 0, n = 0; j < G; j++) for (i = 0; i < G; i++, n++) {
+    var t = V[n] / maxAbs;
+    pos[n * 3] = x0 + i * step;
+    pos[n * 3 + 1] = V[n] * s + 0.01;
+    pos[n * 3 + 2] = z0 + j * step;
+    var c = t >= 0 ? cNeut.clone().lerp(cPos, Math.pow(t, 0.6))
+                   : cNeut.clone().lerp(cNeg, Math.pow(-t, 0.6));
+    col[n * 3] = c.r; col[n * 3 + 1] = c.g; col[n * 3 + 2] = c.b;
+  }
+  var idx = [];
+  for (j = 0; j < N; j++) for (i = 0; i < N; i++) {
+    var a = j * G + i, b = a + 1, c2 = a + G, d2 = c2 + 1;
+    idx.push(a, c2, b, b, c2, d2);
+  }
+  var geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  geo.setIndex(idx);
+  geo.computeVertexNormals();
+  group.add(new THREE.Mesh(geo, new THREE.MeshPhongMaterial({
+    vertexColors: true, side: THREE.DoubleSide, transparent: true, opacity: 0.92, shininess: 24 })));
+
+  /* equal-ΔV contour rings (ΔV = max|V|/5, 4 per present sign, plus V = 0) */
+  var hasPos = items.some(function (it) { return it.q > 0; });
+  var hasNeg = items.some(function (it) { return it.q < 0; });
+  var lines = [];
+  function ring (L) {
+    var ss = contourSegments(V, G, x0, z0, step, L);
+    for (var k = 0; k < ss.length; k++) lines.push(new THREE.Vector3(ss[k][0], L * s + 0.02, ss[k][1]));
+  }
+  var dV = maxAbs / 5;
+  for (var lev = 1; lev <= 4; lev++) {
+    if (hasPos) ring(lev * dV);
+    if (hasNeg) ring(-lev * dV);
+  }
+  if (hasPos && hasNeg) ring(0);
+  if (lines.length) {
+    group.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(lines),
+      new THREE.LineBasicMaterial({ color: '#3a453e', transparent: true, opacity: 0.55 })));
+  }
+
+  /* drop line from each floating charge to the relief right beneath it */
+  items.forEach(function (it) {
+    if (it.type !== 'charge') return;
+    var hv = potentialItems(it.pos.x, 0, it.pos.z, items) * s;
+    var colr = it.q > 0 ? COL.posFill : COL.negFill;
+    group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(
+      [new THREE.Vector3(it.pos.x, hv + 0.01, it.pos.z), it.pos.clone()]),
+      new THREE.LineBasicMaterial({ color: colr, transparent: true, opacity: 0.4 })));
+    var dot = new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 10),
+      new THREE.MeshBasicMaterial({ color: colr }));
+    dot.position.set(it.pos.x, hv + 0.01, it.pos.z);
+    group.add(dot);
   });
 }
 
@@ -530,7 +669,7 @@ AFRAME.registerComponent('efield-ar', {
     this.demo = !!CFG.demo;
     this.locked = false;
     this.items = null; this.els = null; this.anchors = [];
-    this.show = { field: true, pot: false };
+    this.show = { field: true, pot: false, hgt: false };
     this.isoBuilt = false;
 
     /* the anchor carries ALL frozen content; only its matrix is rewritten */
@@ -538,12 +677,13 @@ AFRAME.registerComponent('efield-ar', {
     this.anchor.matrixAutoUpdate = false;
     this.el.object3D.add(this.anchor);
     var G = function () { return new THREE.Group(); };
-    this.gCards = G(); this.gField = G(); this.gIso = G();
+    this.gCards = G(); this.gField = G(); this.gIso = G(); this.gHgt = G();
     this.gGlyph = G(); this.gPlate = G(); this.gDesk = G();
     var self = this;
-    [this.gCards, this.gField, this.gIso, this.gGlyph, this.gPlate, this.gDesk]
+    [this.gCards, this.gField, this.gIso, this.gHgt, this.gGlyph, this.gPlate, this.gDesk]
       .forEach(function (g) { self.anchor.add(g); });
     this.gIso.visible = false;
+    this.gHgt.visible = false;
     this.gLive = G(); this.el.object3D.add(this.gLive);     // scan-phase preview dots
 
     this.anchor.add(new THREE.AmbientLight(0xffffff, 0.75));
@@ -590,6 +730,12 @@ AFRAME.registerComponent('efield-ar', {
         }, 30);
       } else self.applyPotView();
     });
+    on('t-hgt', function () {
+      if (!self.locked) return;
+      self.show.hgt = !self.show.hgt;
+      self.gHgt.visible = self.show.hgt;
+      document.getElementById('t-hgt').classList.toggle('on', self.show.hgt);
+    });
     this.refreshUI();
   },
 
@@ -601,8 +747,8 @@ AFRAME.registerComponent('efield-ar', {
     this.gCards.visible = !pot;
     this.gDesk.visible = !pot && this.demo;
     document.body.classList.toggle('space', pot);
-    /* the AR source is a <video> (webcam) or a body-level <img> (photo test) */
-    document.querySelectorAll('video, body > img').forEach(function (el) {
+    /* the AR source is #arjs-video: a <video> (webcam) or an <img> (photo test) */
+    document.querySelectorAll('#arjs-video, video, body > img').forEach(function (el) {
       el.style.visibility = pot ? 'hidden' : 'visible';
     });
     var b = document.getElementById('t-pot');
@@ -618,7 +764,7 @@ AFRAME.registerComponent('efield-ar', {
       lb.classList.toggle('locked', this.locked);
     }
     var self = this;
-    ['t-field', 't-pot'].forEach(function (id) {
+    ['t-field', 't-pot', 't-hgt'].forEach(function (id) {
       var el = document.getElementById(id);
       if (el) el.classList.toggle('disabled', !self.locked);
     });
@@ -626,6 +772,8 @@ AFRAME.registerComponent('efield-ar', {
     if (f) f.classList.toggle('on', this.show.field && this.locked);
     var p = document.getElementById('t-pot');
     if (p) p.classList.toggle('on', this.show.pot);
+    var h = document.getElementById('t-hgt');
+    if (h) h.classList.toggle('on', this.show.hgt);
   },
 
   flash: function (msg) { this._flash = msg; this._flashUntil = performance.now() + 2000; },
@@ -677,6 +825,9 @@ AFRAME.registerComponent('efield-ar', {
       return { p: r.p, up: V3(0, 1, 0).applyQuaternion(r.q) };
     });
     var M = deskFrame(obs);
+    /* sanity: a real desk frame sits some distance from the camera — a
+       near-origin frame means degenerate detections, refuse to freeze them */
+    if (V3().setFromMatrixPosition(M).length() < 0.15) { this.flash('Hold steady…'); return; }
     var Minv = M.clone().invert();
     var rot = new THREE.Matrix4().extractRotation(Minv);
 
@@ -728,7 +879,9 @@ AFRAME.registerComponent('efield-ar', {
     buildPlates(this.items, this.gPlate);
     buildGlyphs(this.items, this.gGlyph);
     buildCards(this.items, this.gCards);
+    buildHeightSurface(this.items, this.gHgt);
     this.gField.visible = this.show.field;
+    this.gHgt.visible = this.show.hgt;
     if (this.show.pot) { buildIsoSurfaces(this.items, this.els, this.gIso); this.isoBuilt = true; }
   },
 
@@ -736,8 +889,9 @@ AFRAME.registerComponent('efield-ar', {
     this.locked = false;
     this.items = null; this.els = null; this.anchors = [];
     this.scan = {}; this._stableCount = -1; this._stableSince = 0;
-    this.show.pot = false; this.applyPotView();
-    [this.gField, this.gIso, this.gGlyph, this.gPlate, this.gCards]
+    this.show.pot = false; this.show.hgt = false; this.gHgt.visible = false;
+    this.applyPotView();
+    [this.gField, this.gIso, this.gHgt, this.gGlyph, this.gPlate, this.gCards]
       .forEach(function (g) { clearGroup(g); });
     this.refreshUI();
   },
@@ -862,44 +1016,45 @@ var MARKS = [
 ];
 
 /* kind: 'ar' (webcam) · 'photo' (a still image runs through the SAME AR
-   pipeline — for testing without a camera) · 'demo' (no AR at all) */
+   pipeline — for testing without a camera) · 'demo' (no AR at all).
+   Built with insertAdjacentHTML so the elements are parser-created with all
+   attributes in place before the custom elements upgrade (exactly like the
+   static markup A-Frame and AR.js are developed against). */
 function makeScene (kind, photo) {
-  var s = document.createElement('a-scene');
-  s.setAttribute('embedded', '');
-  s.setAttribute('vr-mode-ui', 'enabled: false');
-  s.setAttribute('renderer', 'logarithmicDepthBuffer: true; precision: medium; antialias: true; alpha: true');
-  if (kind !== 'demo') {
+  var R = ' renderer="logarithmicDepthBuffer: true; precision: medium; antialias: true; alpha: true"';
+  var html;
+  if (kind === 'demo') {
+    html = '<a-scene embedded vr-mode-ui="enabled: false"' + R + ' efield-ar>' +
+      '<a-entity camera="fov: 48" look-controls="enabled: false" wasd-controls="enabled: false"></a-entity>' +
+      '</a-scene>';
+  } else {
     var src = kind === 'photo'
       ? 'sourceType: image; sourceUrl: ' + photo.url +
         '; sourceWidth: ' + photo.w + '; sourceHeight: ' + photo.h +
         '; displayWidth: ' + photo.w + '; displayHeight: ' + photo.h
       : 'sourceType: webcam; sourceWidth: 1024; sourceHeight: 768; displayWidth: 1024; displayHeight: 768';
-    s.setAttribute('arjs', src +
-      '; detectionMode: mono_and_matrix; matrixCodeType: 3x3; patternRatio: 0.5; labelingMode: black_region; ' +
-      'maxDetectionRate: 60; debugUIEnabled: false');
-    MARKS.forEach(function (m) {
-      var el = document.createElement('a-marker');
-      el.setAttribute('type', 'barcode');
-      el.setAttribute('value', m.v);
-      el.dataset.kind = m.kind; el.dataset.q = m.q; el.dataset.value = m.v;
-      s.appendChild(el);
-    });
-    var cam = document.createElement('a-entity');
-    cam.setAttribute('camera', '');
-    s.appendChild(cam);
-  } else {
-    var cam2 = document.createElement('a-entity');
-    cam2.setAttribute('camera', 'fov: 48');
-    cam2.setAttribute('look-controls', 'enabled: false');
-    cam2.setAttribute('wasd-controls', 'enabled: false');
-    s.appendChild(cam2);
+    var markers = MARKS.map(function (m) {
+      return '<a-marker type="barcode" value="' + m.v + '"' +
+        ' data-kind="' + m.kind + '" data-q="' + m.q + '" data-value="' + m.v + '"' +
+        ' smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2"></a-marker>';
+    }).join('');
+    html = '<a-scene embedded vr-mode-ui="enabled: false"' + R +
+      ' arjs="' + src + '; detectionMode: mono_and_matrix; matrixCodeType: 3x3; patternRatio: 0.5; ' +
+      'labelingMode: black_region; maxDetectionRate: 60; debugUIEnabled: false"' +
+      ' efield-ar>' + markers + '<a-entity camera></a-entity></a-scene>';
   }
-  s.setAttribute('efield-ar', '');
-  document.body.appendChild(s);
-  return s;
+  document.body.insertAdjacentHTML('beforeend', html);
+  return document.body.lastElementChild;
 }
 
 if (typeof document !== 'undefined' && document.addEventListener) {
+  /* surface any runtime error in the status pill — AR bugs on iPads are
+     otherwise invisible (no console at hand) */
+  window.addEventListener('error', function (e) {
+    var st = document.getElementById('status');
+    if (st && e.message) st.textContent = '⚠ ' + e.message;
+  });
+
   document.addEventListener('DOMContentLoaded', function () {
     var gate = document.getElementById('gate');
     if (!gate) return;
@@ -957,6 +1112,7 @@ if (typeof document !== 'undefined' && document.addEventListener) {
 if (typeof window !== 'undefined') {
   window.__EF = {
     CFG: CFG, expandElements: expandElements, fieldAt: fieldAt, potentialAt: potentialAt,
+    rectV: rectV, potentialItems: potentialItems, contourSegments: contourSegments,
     plateDistance: plateDistance, traceLine: traceLine, sphereSeeds: sphereSeeds,
     plateSeeds: plateSeeds, metrics: metrics, marchTets: marchTets,
     deskFrame: deskFrame, averagePose: averagePose, smallestEigenvector: smallestEigenvector
