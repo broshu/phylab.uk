@@ -176,9 +176,13 @@ function rectV (x, y, z, pl) {
   var u1 = -pl.half - a, u2 = pl.half - a, v1 = -b, v2 = pl.side - b;
   function F (u, v) {
     var r = Math.sqrt(u * u + v * v + w * w);
+    /* NB: plain atan, not atan2. atan2(uv, wr) lands on the wrong branch
+       when w < 0, adding a spurious 4πσ|w| inside the prism behind the
+       plate — it rendered as huge blocky "slabs" in the shell view.
+       r ≥ |w| > 0 whenever w ≠ 0, so the division is safe. */
     return u * Math.log(Math.max(v + r, 1e-12)) +
            v * Math.log(Math.max(u + r, 1e-12)) -
-           (w === 0 ? 0 : w * Math.atan2(u * v, w * r));
+           (w === 0 ? 0 : w * Math.atan(u * v / (w * r)));
   }
   return sigma * (F(u2, v2) - F(u1, v2) - F(u2, v1) + F(u1, v1));
 }
