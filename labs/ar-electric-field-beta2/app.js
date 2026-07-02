@@ -1102,6 +1102,7 @@ function makeScene (kind, photo) {
         ' smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2"></a-marker>';
     }).join('');
     html = '<a-scene embedded vr-mode-ui="enabled: false"' + R +
+      (kind === 'photo' ? ' data-photo="1"' : '') +
       ' arjs="' + src + '; detectionMode: mono_and_matrix; matrixCodeType: 3x3; patternRatio: 0.5; ' +
       'labelingMode: black_region; maxDetectionRate: 60; debugUIEnabled: false"' +
       ' efield-ar>' + markers + '<a-entity camera></a-entity></a-scene>';

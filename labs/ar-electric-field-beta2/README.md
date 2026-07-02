@@ -75,6 +75,9 @@ Camera needs HTTPS (or localhost). Two camera-free test modes:
 - **Test with a photo** (button on the start screen) — upload a picture of the
   printed cards; it is fed through the exact AR pipeline (AR.js
   `sourceType: image`), so detection, locking and rendering are the real thing.
+  Since a photo can't move, the mouse replaces the iPad after lock: drag to
+  orbit the frozen scene (about the layout centre), scroll or pinch to dolly,
+  double-click to reset the view.
 - **Desktop demo** — `index.html?demo=dipole` (also `like`, `plates`, `mixed`),
   synthetic layouts with an orbit camera, no marker detection.
 
