@@ -34,7 +34,7 @@
   .card h2{margin:0 0 2px; font-size:16px; font-weight:650;}
   .card .sub{margin:0 0 12px; font-size:12.5px; color:var(--muted);}
   canvas{width:100%; display:block; border-radius:8px; background:#fff; border:1px solid var(--soft); touch-action:none;}
-  #canvas3d{background:#0b0e16;}
+  #canvas3d{background:#f3f5f9;}
   .legend{display:flex; flex-wrap:wrap; gap:14px; margin-top:10px; font-size:12px; color:var(--muted);}
   .legend span{display:inline-flex; align-items:center; gap:6px;}
   .dot{width:10px; height:10px; border-radius:50%;}
@@ -60,6 +60,7 @@
     font-size:13px; cursor:pointer;
   }
   .ghost:hover{border-color:#bcbcb4;}
+  .ghost.sm{padding:6px 11px; font-size:12.5px; border-radius:999px;}
   .hint{margin:12px auto 0; width:min(1280px,calc(100% - 48px)); font-size:12px; color:var(--muted);}
   footer{width:min(1280px,calc(100% - 48px)); margin:22px auto 30px; font-size:12px; color:var(--muted);}
 </style>
@@ -67,14 +68,14 @@
 <body>
   <header class="top-bar">
     <h1>Electric Potential in 3D</h1>
-    <p class="lede">Two charges create a potential field. On the left, the 2D plane shows field lines and equipotential contours; on the right, the same potential is lifted into a true 3D surface. The height is exactly V = &Sigma; kq/r &mdash; nothing is clamped, so each charge becomes an infinitely sharp spike: a peak shooting up over a positive charge, a well plunging down at a negative one. Because a real 1/r singularity is infinitely thin, the spikes taper to invisible needles all on their own. Drag the charges on the left, or drag the 3D view to orbit.</p>
+    <p class="lede">Point charges create a potential field. On the left, the 2D plane shows field lines and equipotential contours; on the right, the same potential is lifted into a true 3D surface. The height is exactly V = &Sigma; kq/r &mdash; nothing is clamped, so each charge becomes an infinitely sharp spike: a peak shooting up over a positive charge, a well plunging down at a negative one. Because a real 1/r singularity is infinitely thin, the spikes taper to invisible needles all on their own. Drag the charges on the left, or drag the 3D view to orbit.</p>
   </header>
 
   <main class="layout">
     <div class="panels">
       <section class="card">
         <h2>2D field &amp; equipotentials</h2>
-        <p class="sub">Drag either charge to move it.</p>
+        <p class="sub">Drag a charge from the tray below into the field to add it &middot; drag one out of the field to remove it &middot; click to select (dashed ring).</p>
         <canvas id="canvas2d"></canvas>
         <div class="legend">
           <span><span class="dot pos"></span>Positive charge</span>
@@ -97,13 +98,25 @@
     </div>
 
     <div class="controls">
-      <div class="ctrl">
-        <label>Charge A magnitude <span class="val" id="qaVal">+5</span></label>
-        <input type="range" id="qa" min="-9" max="9" step="1" value="5">
+      <div class="ctrl" style="min-width:auto;">
+        <label>Charges</label>
+        <div class="toggles">
+          <button class="ghost sm" id="clearAll">Clear all</button>
+        </div>
       </div>
       <div class="ctrl">
-        <label>Charge B magnitude <span class="val" id="qbVal">-5</span></label>
-        <input type="range" id="qb" min="-9" max="9" step="1" value="-5">
+        <label>Selected charge <span class="val" id="qSelVal">+5</span></label>
+        <input type="range" id="qSel" min="-9" max="9" step="1" value="5">
+      </div>
+      <div class="ctrl" style="min-width:auto;">
+        <label>Presets</label>
+        <div class="toggles">
+          <button class="ghost sm" id="pDipole">Dipole +/&minus;</button>
+          <button class="ghost sm" id="pLike">Two like charges</button>
+          <button class="ghost sm" id="pSingle">Single charge</button>
+          <button class="ghost sm" id="pQuad">Quadrupole</button>
+          <button class="ghost sm" id="pPlates">Parallel plates</button>
+        </div>
       </div>
       <div class="ctrl">
         <label>Equipotential levels <span class="val" id="lvlVal">10</span></label>
@@ -121,7 +134,7 @@
         <button class="ghost" id="reset">Reset positions &amp; charges</button>
       </div>
     </div>
-    <p class="hint">Tip: the 3D surface updates live as you drag the charges or change their magnitudes. The height mapping is genuinely V = &Sigma; kq/r with no ceiling &mdash; the very tall, very thin spikes are physically correct.</p>
+    <p class="hint">Tip: add as many charges as you like, or start from a preset &mdash; try Parallel plates and count the evenly spaced equipotentials between the plates. The 3D surface updates live as you drag the charges or change their magnitudes. The height mapping is genuinely V = &Sigma; kq/r with no ceiling &mdash; the very tall, very thin spikes are physically correct.</p>
   </main>
 
   <footer>Interactive physics demonstration &middot; PhyLab</footer>
