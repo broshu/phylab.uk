@@ -9,7 +9,7 @@
   :root{
     --bg:#f7f7f5; --card:#fff; --ink:#111; --muted:#646464;
     --line:#d9d9d4; --soft:#ececea; --panel:#fafaf8;
-    --pos:#f45b69; --neg:#2d7ff9;
+    --pos:#ff5b5b; --neg:#4f9bff; --arrow:#ffd34f;
   }
   html,body{margin:0;}
   body{
@@ -21,7 +21,7 @@
     width:min(1280px,calc(100% - 48px)); margin:0 auto; padding:24px 0 14px;
   }
   .top-bar h1{margin:0 0 6px; font-size:28px; line-height:1.15; font-weight:700; letter-spacing:-.01em;}
-  .lede{margin:0; max-width:760px; color:var(--muted); font-size:14px; line-height:1.5;}
+  .lede{margin:0; max-width:820px; color:var(--muted); font-size:14px; line-height:1.5;}
   .layout{
     width:min(1280px,calc(100% - 48px)); margin:0 auto; padding:0 0 28px;
   }
@@ -34,6 +34,7 @@
   .card h2{margin:0 0 2px; font-size:16px; font-weight:650;}
   .card .sub{margin:0 0 12px; font-size:12.5px; color:var(--muted);}
   canvas{width:100%; display:block; border-radius:8px; background:#fff; border:1px solid var(--soft); touch-action:none;}
+  #canvas3d{background:#0b0e16;}
   .legend{display:flex; flex-wrap:wrap; gap:14px; margin-top:10px; font-size:12px; color:var(--muted);}
   .legend span{display:inline-flex; align-items:center; gap:6px;}
   .dot{width:10px; height:10px; border-radius:50%;}
@@ -48,11 +49,6 @@
   .ctrl label{font-size:12px; color:var(--muted); display:flex; justify-content:space-between; gap:10px;}
   .ctrl label .val{color:var(--ink); font-weight:600;}
   input[type=range]{accent-color:var(--neg); width:100%;}
-  .seg{display:inline-flex; border:1px solid var(--line); border-radius:8px; overflow:hidden;}
-  .seg button{
-    border:0; background:#fff; padding:7px 12px; font-size:12.5px; cursor:pointer; color:var(--ink);
-  }
-  .seg button.active{background:var(--ink); color:#fff;}
   .toggles{display:flex; flex-wrap:wrap; gap:8px;}
   .chip{
     display:inline-flex; align-items:center; gap:6px; font-size:12.5px; cursor:pointer;
@@ -71,7 +67,7 @@
 <body>
   <header class="top-bar">
     <h1>Electric Potential in 3D</h1>
-    <p class="lede">Two charges create a potential field. On the left, the 2D plane shows field lines and equipotential contours; on the right, the same potential is lifted into a 3D surface — peaks above positive charges, wells below negative ones. Drag the charges on the left, or drag the 3D view to rotate.</p>
+    <p class="lede">Two charges create a potential field. On the left, the 2D plane shows field lines and equipotential contours; on the right, the same potential is lifted into a true 3D surface. The height is exactly V = &Sigma; kq/r &mdash; nothing is clamped, so each charge becomes an infinitely sharp spike: a peak shooting up over a positive charge, a well plunging down at a negative one. Because a real 1/r singularity is infinitely thin, the spikes taper to invisible needles all on their own. Drag the charges on the left, or drag the 3D view to orbit.</p>
   </header>
 
   <main class="layout">
@@ -83,18 +79,19 @@
         <div class="legend">
           <span><span class="dot pos"></span>Positive charge</span>
           <span><span class="dot neg"></span>Negative charge</span>
-          <span><span class="swatch" style="background:#444"></span>Field line</span>
+          <span><span class="swatch" style="background:linear-gradient(90deg,#ff5b5b,#4f9bff)"></span>Field line</span>
+          <span><span class="swatch" style="background:var(--arrow)"></span>Field direction</span>
           <span><span class="swatch" style="background:#8a9a5b"></span>Equipotential</span>
         </div>
       </section>
 
       <section class="card">
-        <h2>3D potential surface (height = V)</h2>
-        <p class="sub">Drag to rotate the view.</p>
+        <h2>3D potential surface (height = V, unclamped)</h2>
+        <p class="sub">Drag to orbit &middot; scroll to zoom. Spikes run off the top/bottom of the frame &mdash; that is the true 1/r singularity.</p>
         <canvas id="canvas3d"></canvas>
         <div class="legend">
-          <span><span class="swatch" style="background:var(--pos)"></span>Higher potential</span>
-          <span><span class="swatch" style="background:var(--neg)"></span>Lower potential</span>
+          <span><span class="swatch" style="background:var(--pos)"></span>Higher potential (peak)</span>
+          <span><span class="swatch" style="background:var(--neg)"></span>Lower potential (well)</span>
         </div>
       </section>
     </div>
@@ -124,11 +121,12 @@
         <button class="ghost" id="reset">Reset positions &amp; charges</button>
       </div>
     </div>
-    <p class="hint">Tip: the 3D surface updates live as you drag the charges or change their magnitudes.</p>
+    <p class="hint">Tip: the 3D surface updates live as you drag the charges or change their magnitudes. The height mapping is genuinely V = &Sigma; kq/r with no ceiling &mdash; the very tall, very thin spikes are physically correct.</p>
   </main>
 
-  <footer>Interactive physics demonstration · PhyLab</footer>
+  <footer>Interactive physics demonstration &middot; PhyLab</footer>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="js/main.js"></script>
   <script defer src="/assets/nav.js"></script>
 </body>
