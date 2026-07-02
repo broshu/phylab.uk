@@ -6,8 +6,8 @@
 
      barcode 0 / 6   +q point charge  → floats 2d above its card
      barcode 1 / 7   −q point charge  → floats 2d above its card
-     barcode 4       +2q plate        → 2d×2d board upright on the card
-     barcode 5       −2q plate        → 2d×2d board upright on the card
+     barcode 4       +2q plate        → 4d×4d board upright on the card
+     barcode 5       −2q plate        → 4d×4d board upright on the card
 
    Anti-jitter ("lock once"):
      While scanning, every card's pose is low-pass filtered. Once the
@@ -33,9 +33,9 @@ function num (k, d) { var v = parseFloat(Q.get(k)); return isFinite(v) ? v : d; 
 
 var CFG = {
   lift: 2,                                   // charge height above the desk (×d)
-  plateSide: 2,                              // plate edge length (×d)
+  plateSide: 4,                              // plate edge length (×d)
   plateQ: 2,                                 // plate |charge| in units of q
-  plateGrid: 9,                              // plate modelled as N×N sub-charges
+  plateGrid: 13,                             // plate modelled as N×N sub-charges
   linesPerQ: Math.round(num('lines', 16)),   // field lines per unit of charge
   tubeR: 0.02,                               // field-line tube radius
   smooth: num('smooth', 0.12),               // anchor low-pass (lower = steadier)
@@ -525,12 +525,18 @@ function buildIsoSurfaces (items, els, group) {
 }
 
 /* ---- potential relief (the beta-1 idea, made rigorous) ----
-   The desk plane is lifted to h(x,z) = V(x,0,z) — the TRUE potential
-   evaluated on the desk (exact point charges + exact rectangle plates),
-   mapped 1:1 into height: one unit of kq/d is one card-edge d of height.
-   No scaling, no clamping, no smoothing — the shape IS the potential.
-   Contour rings are drawn every ΔV = 0.1 kq/d; because h = V they sit at
-   exactly 0.1 d height steps, a live topographic map of V. */
+   The desk plane is lifted to h(x,z) = V(x, lift, z) — the TRUE potential
+   (exact point charges + exact rectangle plates) sampled in the horizontal
+   plane THROUGH the floating charges (y = lift = 2d), mapped 1:1 into
+   height: one unit of kq/d is one card-edge d of height. In that plane a
+   point charge is a genuine ±q/ρ singularity, so + charges rise as sharp
+   peaks and − charges fall as deep funnels. (Sampling on the desk itself
+   was wrong for point charges: 2d below a charge V is only q/2d ≈ 0.5 —
+   a barely visible mound with no tip at all.) For display only, spikes
+   are clipped at ±VCAP = 2 kq/d, the height at which the charges float;
+   below the cap there is no scaling and no smoothing — the shape IS the
+   potential. Contour rings are drawn every ΔV = 0.1 kq/d; because h = V
+   they sit at exactly 0.1 d height steps, a live topographic map of V. */
 
 /* marching squares: segments of the level set V = L on a G×G grid */
 function contourSegments (V, G, x0, z0, step, L) {
@@ -563,9 +569,11 @@ function buildHeightSurface (items, group) {
   var S = Math.min(6, Math.max(3, m.spread * 0.75 + 2.2));
   var x0 = m.center.x - S, z0 = m.center.z - S;
   var N = 120, G = N + 1, step = 2 * S / N;
+  var yS = CFG.lift, VCAP = 2;           // sample plane through the charges; display clip
   var V = new Float32Array(G * G), maxAbs = 1e-9, i, j, n;
   for (j = 0, n = 0; j < G; j++) for (i = 0; i < G; i++, n++) {
-    var v = potentialItems(x0 + i * step, 0, z0 + j * step, items);
+    var v = potentialItems(x0 + i * step, yS, z0 + j * step, items);
+    if (v > VCAP) v = VCAP; else if (v < -VCAP) v = -VCAP;
     V[n] = v;
     if (Math.abs(v) > maxAbs) maxAbs = Math.abs(v);
   }
@@ -617,7 +625,8 @@ function buildHeightSurface (items, group) {
   /* drop line from each floating charge to the relief right beneath it */
   items.forEach(function (it) {
     if (it.type !== 'charge') return;
-    var hv = potentialItems(it.pos.x, 0, it.pos.z, items);
+    var hv = potentialItems(it.pos.x, yS, it.pos.z, items);
+    if (hv > VCAP) hv = VCAP; else if (hv < -VCAP) hv = -VCAP;   // dot sits on the clipped tip
     var colr = it.q > 0 ? COL.posFill : COL.negFill;
     group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(
       [new THREE.Vector3(it.pos.x, hv + 0.01, it.pos.z), it.pos.clone()]),
@@ -784,6 +793,12 @@ AFRAME.registerComponent('efield-ar', {
       if (!self.locked) return;
       Gyro.enable();                       // user gesture → motion permission prompt
       self.show.pot = !self.show.pot;
+      if (self.show.pot && self.show.hgt) {          // Shells ⟷ Relief: mutually exclusive
+        self.show.hgt = false;
+        self.gHgt.visible = false;
+        var hb = document.getElementById('t-hgt');
+        if (hb) hb.classList.remove('on');
+      }
       if (self.show.pot && !self.isoBuilt) {
         self.flash('Computing equipotential surfaces…');
         setTimeout(function () {
@@ -796,6 +811,10 @@ AFRAME.registerComponent('efield-ar', {
     on('t-hgt', function () {
       if (!self.locked) return;
       self.show.hgt = !self.show.hgt;
+      if (self.show.hgt && self.show.pot) {          // Relief ⟷ Shells: mutually exclusive
+        self.show.pot = false;
+        self.applyPotView();                         // hides shells, restores the camera view
+      }
       self.gHgt.visible = self.show.hgt;
       document.getElementById('t-hgt').classList.toggle('on', self.show.hgt);
     });

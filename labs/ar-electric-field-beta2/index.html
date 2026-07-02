@@ -94,10 +94,10 @@
     <h1>AR Electric Field <span class="beta">beta 2</span></h1>
     <p>Print the barcode cards and lay them <b>flat on the desk</b>. Every card has the same edge
        length <i>d</i>. In AR, each <b style="color:#c0392b">+q</b> / <b style="color:#2b6cb0">−q</b> charge floats
-       <b>2d above its card</b>, and each ±2q plate stands as a <b>2d × 2d board upright on the desk</b>.</p>
+       <b>2d above its card</b>, and each ±2q plate stands as a <b>4d × 4d board upright on the desk</b>.</p>
     <div class="step"><span>①</span><span>Print the <b>marker sheet</b> at 100% and cut out the cards.</span></div>
     <div class="step"><span>②</span><span>Start the camera and hold steady — the layout <b>locks automatically</b>, so the field stays rigid (no jitter) while you move.</span></div>
-    <div class="step"><span>③</span><span>Toggle <b>Field lines</b>, <b>Shells</b> (3-D equipotential surfaces — this view hides the desk and follows the camera, with gyro fallback) and <b>Relief</b> (the desk rises to height ∝ V, with equal-ΔV contour rings).</span></div>
+    <div class="step"><span>③</span><span>Toggle <b>Field lines</b>, <b>Shells</b> (3-D equipotential surfaces — this view hides the desk and follows the camera, with gyro fallback) and <b>Relief</b> (the desk rises to height ∝ V, with equal-ΔV contour rings). Shells and Relief are one-at-a-time — switching one on switches the other off.</span></div>
     <p style="font-size:12px;color:#9aa294">Camera needs HTTPS · field lines: 16 per unit charge · equipotentials: equal ΔV steps.<br>
        No camera to hand? <b>Test with a photo</b> of the printed cards — it runs through the exact AR pipeline.</p>
     <button id="startBtn">Start camera</button>
@@ -115,9 +115,9 @@
     <div id="legend">
       <div><span class="dot cpos"></span>+q point charge · 2d above its card</div>
       <div><span class="dot cneg"></span>−q point charge · 2d above its card</div>
-      <div><span class="dot sq cpos"></span>+2q plate · 2d × 2d, upright</div>
-      <div><span class="dot sq cneg"></span>−2q plate · 2d × 2d, upright</div>
-      <div class="hint">shells &amp; rings at equal ΔV — tighter ⇒ stronger E<br>relief: height = V on the desk, 1:1 (d per kq/d) · rings every 0.1</div>
+      <div><span class="dot sq cpos"></span>+2q plate · 4d × 4d, upright</div>
+      <div><span class="dot sq cneg"></span>−2q plate · 4d × 4d, upright</div>
+      <div class="hint">shells &amp; rings at equal ΔV — tighter ⇒ stronger E<br>relief: height = V at charge height (2d), 1:1 (d per kq/d) · rings every 0.1 · peaks clipped at ±2</div>
     </div>
     <div id="controls">
       <div class="toggle" id="lockBtn"><span class="ic">🔒</span><span class="lab">Lock now</span></div>
@@ -127,6 +127,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=6"></script>
+  <script src="app.js?v=7"></script>
 </body>
 </html>

@@ -8,7 +8,7 @@ unit of length for the whole scene.
 |---------|---------|
 | 0 / 6 | **+q** point charge — appears floating **2d above** its card |
 | 1 / 7 | **−q** point charge — appears floating **2d above** its card |
-| 4 | **+2q plate** — a **2d × 2d** board standing upright on the card (base on the desk, board along the card's x-axis) |
+| 4 | **+2q plate** — a **4d × 4d** board standing upright on the card (base on the desk, board along the card's x-axis) |
 | 5 | **−2q plate** — same geometry, opposite charge |
 
 `markers.pdf` is the single printable page with all six cards and their meanings.
@@ -16,7 +16,7 @@ unit of length for the whole scene.
 ## Physics
 
 k = q = d = 1 internally. For the **electric field** (line tracing), plates are
-modelled as a uniform 9 × 9 sheet of sub-charges totalling ±2q; for the
+modelled as a uniform 13 × 13 sheet of sub-charges totalling ±2q; for the
 **potential** (shells and relief), plates use the exact closed-form potential
 of a uniformly charged rectangle — finite everywhere, no sub-charge
 graininess even on the desk right at the plate's base.
@@ -36,13 +36,17 @@ graininess even on the desk right at the plate's base.
   when both signs are present. In this view the camera image is hidden — only
   the charges, field lines and shells remain.
 - **Potential relief** — the beta-1 height-map idea, made rigorous: the desk
-  plane rises to h(x,z) = V(x,0,z), the true potential evaluated **on the
-  desk**, mapped 1:1 into height — one unit of kq/d is one card-edge d. No
-  scaling, no clamping, no smoothing — the shape *is* the potential (a +q
-  charge floating at 2d makes a 0.5 d bump directly beneath itself, exactly
-  q/(2d)). Contour rings are drawn every ΔV = 0.1; since h = V they sit at
-  exactly 0.1 d height steps, a live topographic map. A drop line links each
-  floating charge to the relief directly beneath it.
+  plane rises to h(x,z) = V(x, 2d, z), the true potential sampled in the
+  horizontal plane **through the floating charges** (y = 2d), mapped 1:1 into
+  height — one unit of kq/d is one card-edge d. In that plane a point charge
+  is a genuine ±q/ρ singularity, so + charges are sharp peaks and − charges
+  deep funnels; for display the spikes are clipped at ±2 kq/d (exactly the
+  height at which the charges float). Below the cap there is no scaling and
+  no smoothing — the shape *is* the potential. Contour rings are drawn every
+  ΔV = 0.1; since h = V they sit at exactly 0.1 d height steps, a live
+  topographic map. A drop line links each floating charge to the relief
+  directly beneath it. Shells and Relief are mutually exclusive — switching
+  one on switches the other off.
 
 ## The jitter fix (rewritten, not copied, from beta 1)
 
