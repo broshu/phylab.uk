@@ -465,3 +465,39 @@ footer {
         order: -1;
     }
 }
+/* ---- Dark mode · follows system colour scheme ---- */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #14161a;
+        --card: #1d2024;
+        --ink: #e7e8ea;
+        --muted: #9aa0a8;
+        --line: #363a41;
+        --soft-line: #2a2e34;
+        --panel-bg: #212429;
+    }
+    /* filled emphasis buttons keep a light fill (var(--ink)); flip their text dark */
+    .primary-button,
+    .mode-button.active,
+    .segbtn.active,
+    .preset-button.active,
+    .field-type-btn.active,
+    .field-switch.active,
+    .reveal-button {
+        color: var(--bg);
+    }
+    /* outline / ghost controls sit on the dark card, not white */
+    .ghost-button,
+    .chip,
+    .field-switch,
+    .secondary-button,
+    .preset-button,
+    .field-type-btn {
+        background: var(--card);
+    }
+    .ghost-button:hover,
+    .secondary-button:hover,
+    .field-type-btn:hover {
+        background: var(--soft-line);
+    }
+}

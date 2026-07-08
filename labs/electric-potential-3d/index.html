@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Electric Potential in 3D</title>
+<title>Electric Potential 3D</title>
 <style>
   * { box-sizing: border-box; }
   :root{
     --bg:#f7f7f5; --card:#fff; --ink:#111; --muted:#646464;
-    --line:#d9d9d4; --soft:#ececea; --panel:#fafaf8;
+    --line:#d9d9d4; --soft-line:#ececea; --panel-bg:#fafaf8;
     --pos:#ff5b5b; --neg:#4f9bff; --arrow:#ffd34f;
   }
   html,body{margin:0;}
@@ -33,7 +33,7 @@
   }
   .card h2{margin:0 0 2px; font-size:16px; font-weight:650;}
   .card .sub{margin:0 0 12px; font-size:12.5px; color:var(--muted);}
-  canvas{width:100%; display:block; border-radius:8px; background:#fff; border:1px solid var(--soft); touch-action:none;}
+  canvas{width:100%; display:block; border-radius:8px; background:#fff; border:1px solid var(--soft-line); touch-action:none;}
   #canvas3d{background:#f3f5f9;}
   .legend{display:flex; flex-wrap:wrap; gap:14px; margin-top:10px; font-size:12px; color:var(--muted);}
   .legend span{display:inline-flex; align-items:center; gap:6px;}
@@ -48,7 +48,7 @@
   .ctrl{display:flex; flex-direction:column; gap:6px; min-width:170px;}
   .ctrl label{font-size:12px; color:var(--muted); display:flex; justify-content:space-between; gap:10px;}
   .ctrl label .val{color:var(--ink); font-weight:600;}
-  input[type=range]{accent-color:var(--neg); width:100%;}
+  input[type=range]{accent-color:var(--ink); width:100%;}
   .toggles{display:flex; flex-wrap:wrap; gap:8px;}
   .chip{
     display:inline-flex; align-items:center; gap:6px; font-size:12.5px; cursor:pointer;
@@ -56,10 +56,10 @@
   }
   .chip input{margin:0;}
   .ghost{
-    border:1px solid var(--line); background:#fff; border-radius:8px; padding:8px 14px;
-    font-size:13px; cursor:pointer;
+    border:1px solid var(--line); background:#fff; border-radius:6px; padding:8px 14px;
+    font-size:13px; font-weight:600; cursor:pointer; transition:background .15s ease;
   }
-  .ghost:hover{border-color:#bcbcb4;}
+  .ghost:hover{background:var(--soft-line);}
   .ghost.sm{padding:6px 11px; font-size:12.5px; border-radius:999px;}
   .card-head{display:flex; justify-content:space-between; align-items:flex-start; gap:12px 16px; flex-wrap:wrap;}
   .seg{display:inline-flex; border:1px solid var(--line); border-radius:999px; overflow:hidden; background:#fff;}
@@ -68,14 +68,30 @@
     font-size:12.5px; padding:6px 13px; color:var(--muted); white-space:nowrap;
   }
   .segbtn + .segbtn{border-left:1px solid var(--line);}
-  .segbtn.active{background:var(--neg); color:#fff; font-weight:600;}
+  .segbtn.active{background:var(--ink); color:#fff; font-weight:600;}
   .hint{margin:12px auto 0; width:min(1280px,calc(100% - 48px)); font-size:12px; color:var(--muted);}
   footer{width:min(1280px,calc(100% - 48px)); margin:22px auto 30px; font-size:12px; color:var(--muted);}
+
+  /* ---- Dark mode · follows system colour scheme ---- */
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#14161a; --card:#1d2024; --ink:#e7e8ea; --muted:#9aa0a8;
+      --line:#363a41; --soft-line:#2a2e34; --panel-bg:#212429;
+    }
+    /* light-filled active segment: flip its text dark */
+    .segbtn.active{color:var(--bg);}
+    /* outline controls sit on the dark card, not white */
+    .ghost, .chip, .seg{background:var(--card);}
+    .ghost:hover{background:var(--soft-line);}
+    /* keep the figure canvases legible on dark chrome */
+    canvas{background:#f4f5f7;}
+    #canvas3d{background:#eef1f6;}
+  }
 </style>
 </head>
 <body>
   <header class="top-bar">
-    <h1>Electric Potential in 3D</h1>
+    <h1>Electric Potential 3D</h1>
     <p class="lede">Point charges create a potential field. On the left, the 2D plane shows field lines and equipotential contours; on the right, the same potential is lifted into a true 3D surface. The height is exactly V = &Sigma; kq/r &mdash; nothing is clamped, so each charge becomes an infinitely sharp spike: a peak shooting up over a positive charge, a well plunging down at a negative one. Because a real 1/r singularity is infinitely thin, the spikes taper to invisible needles all on their own. Or switch the right panel to <em>equipotential surfaces</em> &mdash; the true level sets V(x,y,z) = const drawn as nested shells in space. Drag the charges on the left, or drag the 3D view to orbit.</p>
   </header>
 

@@ -119,15 +119,37 @@
   @media (max-width: 640px) {
     .blocks { grid-template-columns: 1fr; gap: 18px; }
   }
+
+  /* ---- Dark mode · follows system colour scheme ---- */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink:    #e7e8ea;
+      --green:  #8fb8a8;
+      --green-2:#a6c8ba;
+      --accent: #a3b06e;
+      --paper:  #14161a;
+      --card:   #1d2024;
+      --line:   #363a41;
+      --muted:  #9aa0a8;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 32px -16px rgba(0,0,0,.7);
+    }
+    body::before {
+      background:
+        radial-gradient(circle at 20% 15%, rgba(143,184,168,.06), transparent 45%),
+        radial-gradient(circle at 85% 80%, rgba(163,176,110,.07), transparent 50%);
+    }
+    .block img { background: #0f1114; }
+    .block:hover { box-shadow: 0 22px 48px -20px rgba(0,0,0,.7); }
+  }
 </style>
 </head>
 <body>
   <main class="wrap">
     <h1 class="page-title">Labs</h1>
     <div class="blocks">
-      <a class="block" href="/labs/potential_3d_visualization/">
-        <h2>Electric Potential in 3D</h2>
-        <img src="potential_3d_visualization/screenshot.png" alt="Electric Potential in 3D preview" loading="lazy">
+      <a class="block" href="/labs/electric-potential-3d/">
+        <h2>Electric Potential 3D</h2>
+        <img src="electric-potential-3d/screenshot.png" alt="Electric Potential 3D preview" loading="lazy">
       </a>
       <a class="block" href="/labs/oscilloscope-principle/">
         <h2>Oscilloscope Principle</h2>
@@ -137,14 +159,6 @@
         <h2>Microscopic Current</h2>
         <img src="microscopic-current/screenshot.png" alt="Microscopic Current preview" loading="lazy">
       </a>
-      <a class="block" href="/labs/alternating-field-release/">
-        <h2>Alternating Field Release</h2>
-        <img src="alternating-field-release/screenshot.png" alt="Alternating Field Release preview" loading="lazy">
-      </a>
-      <a class="block" href="/labs/plate-voltage-particle-stream/">
-        <h2>Particle Between Plates</h2>
-        <img src="plate-voltage-particle-stream/screenshot.png" alt="Particle Between Plates preview" loading="lazy">
-      </a>
       <a class="block" href="/labs/electric-field-lines/">
         <h2>Electric Field Lines</h2>
         <img src="electric-field-lines/screenshot.png" alt="Electric Field Lines preview" loading="lazy">
@@ -152,6 +166,14 @@
       <a class="block" href="/labs/vernier-caliper/">
         <h2>Vernier Caliper</h2>
         <img src="vernier-caliper/screenshot.png" alt="Vernier Caliper preview" loading="lazy">
+      </a>
+      <a class="block" href="/labs/particle-between-plates/">
+        <h2>Particle Between Plates</h2>
+        <img src="particle-between-plates/screenshot.png" alt="Particle Between Plates preview" loading="lazy">
+      </a>
+      <a class="block" href="/labs/alternating-field-release/">
+        <h2>Alternating Field Release</h2>
+        <img src="alternating-field-release/screenshot.png" alt="Alternating Field Release preview" loading="lazy">
       </a>
 
       <!-- Beta / experimental (AR) — kept at the end -->
