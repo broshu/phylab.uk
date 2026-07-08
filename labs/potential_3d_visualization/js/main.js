@@ -28,7 +28,10 @@
   var settings = {
     levels: 10,
     showLines: true,
-    showEquip: true
+    showEquip: true,
+    view3D: "surface",   // "surface" (height = V) | "equipot" (isosurfaces)
+    shells: 5,           // number of equipotential shells per sign
+    showZero: false      // draw the V = 0 surface
   };
 
   // ---- Physics constants ----------------------------------------------
@@ -65,6 +68,40 @@
     return { ex: ex, ey: ey };
   }
 
+  // ---- True 3-D physics (for equipotential SURFACES in space) ----------
+  // The point charges live on the plane y = 0 at (c.x, 0, c.y) in scene
+  // coordinates. The full-space potential is the exact Coulomb sum
+  //   V(x,y,z) = Σ k q / sqrt((x-c.x)^2 + y^2 + (z-c.y)^2)      — no clamp.
+  // An equipotential surface is the level set { V = V0 }, extracted with
+  // marching cubes. Normals come from the exact analytic gradient below,
+  // so the shading involves no finite-difference approximation.
+  function potential3D(x, y, z) {
+    var v = 0;
+    for (var i = 0; i < charges.length; i++) {
+      var c = charges[i];
+      var dx = x - c.x, dy = y, dz = z - c.y;
+      var r = Math.sqrt(dx * dx + dy * dy + dz * dz);
+      if (r < RMIN) r = RMIN;
+      v += K * c.q / r;
+    }
+    return v;
+  }
+
+  // ∇V(x,y,z); grad(kq/r) = -k q r_vec / r^3.  Returns [gx,gy,gz].
+  function gradient3D(x, y, z) {
+    var gx = 0, gy = 0, gz = 0;
+    for (var i = 0; i < charges.length; i++) {
+      var c = charges[i];
+      var dx = x - c.x, dy = y, dz = z - c.y;
+      var r2 = dx * dx + dy * dy + dz * dz;
+      var r = Math.sqrt(r2);
+      if (r < RMIN) r = RMIN;
+      var s = -K * c.q / (r2 * r);   // = -kq / r^3
+      gx += s * dx; gy += s * dy; gz += s * dz;
+    }
+    return [gx, gy, gz];
+  }
+
   // ---- DOM ------------------------------------------------------------
   var c2 = document.getElementById("canvas2d");
   var x2 = c2.getContext("2d");
@@ -78,6 +115,17 @@
   var tLines = document.getElementById("tLines");
   var tEquip = document.getElementById("tEquip");
   var reset = document.getElementById("reset");
+
+  // 3D view-mode controls
+  var vSurface = document.getElementById("vSurface");
+  var vEquipot = document.getElementById("vEquipot");
+  var shells = document.getElementById("shells");
+  var shellsVal = document.getElementById("shellsVal");
+  var tZero = document.getElementById("tZero");
+  var equipCtrl = document.getElementById("equipCtrl");
+  var surf3dTitle = document.getElementById("surf3dTitle");
+  var surf3dSub = document.getElementById("surf3dSub");
+  var surf3dLegend = document.getElementById("surf3dLegend");
 
   // ---- Sizing (2D) ----------------------------------------------------
   function fit2d() {
@@ -368,12 +416,19 @@
   // ---- 3D: honest potential surface via THREE.js ----------------------
   var THREE = window.THREE;
   var renderer, scene, camera, surfMesh, baseGeo, baseA, baseB, colorAttr, chargeDots = [], dotGeo;
-  var wireGeo, wireN = 44;             // surface-following mesh lines (rows/cols)
+  var wireGeo, wireLines, wireN = 44;  // surface-following mesh lines (rows/cols)
+  var equipotGroup;                    // holds the equipotential-surface meshes
+  var groundGrid;                      // reference grid on the charge plane
   var GRID_N = 200;                    // fine grid -> spikes stay thin
   var HEIGHT = 0.32;                   // height per unit V (no ceiling applied)
   var BG3D = 0xf3f5f9;                 // light background, matches the page theme
   var orbit = { yaw: -0.6, pitch: 0.62, radius: 3.3 };
   var dirty = true;
+  var chargeDragging = false;          // true while a charge is being dragged
+
+  // sampling box for the 3-D field (scene units): x,z in +/-BXZ, y in +/-BY
+  var BXZ = 1.5, BY = 1.15;
+  var RES_IDLE = 66, RES_DRAG = 44;    // grid points along x/z (idle vs. dragging)
 
   function init3D() {
     renderer = new THREE.WebGLRenderer({ canvas: c3, antialias: true });
@@ -390,9 +445,9 @@
     var dl2 = new THREE.DirectionalLight(0xbcd0ff, 0.15);
     dl2.position.set(-3, 2, -2); scene.add(dl2);
 
-    // faint reference ground grid at V = 0
-    var grid = new THREE.GridHelper(2, 20, 0xb9c2d0, 0xdde3ec);
-    grid.position.y = 0; scene.add(grid);
+    // faint reference ground grid at V = 0 (the plane the charges sit on)
+    groundGrid = new THREE.GridHelper(2, 20, 0xb9c2d0, 0xdde3ec);
+    groundGrid.position.y = 0; scene.add(groundGrid);
 
     // potential surface
     baseGeo = new THREE.PlaneGeometry(2, 2, GRID_N, GRID_N);
@@ -413,14 +468,21 @@
     wireGeo = new THREE.BufferGeometry();
     wireGeo.setAttribute("position",
       new THREE.BufferAttribute(new Float32Array(2 * wireN * (wireN + 1) * 2 * 3), 3));
-    scene.add(new THREE.LineSegments(wireGeo, new THREE.LineBasicMaterial({
+    wireLines = new THREE.LineSegments(wireGeo, new THREE.LineBasicMaterial({
       color: 0x64748b, transparent: true, opacity: 0.22
-    })));
+    }));
+    scene.add(wireLines);
+
+    // group that will hold the equipotential isosurface shells (built on demand)
+    equipotGroup = new THREE.Group();
+    equipotGroup.visible = false;
+    scene.add(equipotGroup);
 
     // charge marker dots sitting on the base plane (synced to charge list)
     dotGeo = new THREE.SphereGeometry(0.035, 16, 16);
     syncDots3D();
 
+    applyView3D();       // set initial visibility for the chosen mode
     fit3d();
     animate3D();
     setupOrbit();
@@ -513,11 +575,165 @@
   }
   function lerp3(a, b, t) { return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]; }
 
+  // ---- 3D: true equipotential SURFACES (isosurfaces of V in space) -----
+  // Choose the iso-values as a geometric ladder. For a lone charge V0 sits on
+  // a sphere of radius r = k|q|/V0, so a geometric ladder in V0 gives shells
+  // that are pleasantly spread in radius from ~0.14 out to ~1.25.
+  function equipotLevels(M) {
+    var qmax = 0;
+    for (var i = 0; i < charges.length; i++) qmax = Math.max(qmax, Math.abs(charges[i].q));
+    if (qmax === 0) return [];
+    var Vhi = K * qmax / 0.14;     // innermost shell (small sphere near a charge)
+    var Vlo = K * qmax / 1.25;     // outermost shell (large sphere)
+    if (Vlo >= Vhi) Vlo = Vhi * 0.5;
+    var levels = [];
+    if (M <= 1) { levels.push(Vhi); return levels; }
+    var ratio = Math.pow(Vlo / Vhi, 1 / (M - 1));
+    for (var k = 0; k < M; k++) levels.push(Vhi * Math.pow(ratio, k));  // descending
+    return levels;
+  }
+
+  function makeShellMaterial(rgb, opacity) {
+    return new THREE.MeshPhongMaterial({
+      color: new THREE.Color(rgb[0], rgb[1], rgb[2]),
+      transparent: true, opacity: opacity,
+      side: THREE.DoubleSide, depthWrite: false,
+      shininess: 55, specular: 0x556070
+    });
+  }
+
+  // Build one isosurface mesh at value `iso`. Positions come from marching
+  // cubes; per-vertex normals come from the EXACT analytic gradient ∇V, so
+  // the smooth shading is honest (no finite-difference / faceting error).
+  function addShell(field, nx, ny, nz, origin, spacing, iso, rgb, opacity) {
+    var pos = window.MC.polygonize(field, nx, ny, nz, origin, spacing, iso);
+    if (!pos) return;
+    var n = pos.length;
+    var nrm = new Float32Array(n);
+    // outward normal: for a positive shell "outside" is lower V (normal = -∇V);
+    // for a negative shell "outside" is higher V (normal = +∇V).
+    var sgn = iso >= 0 ? -1 : 1;
+    for (var i = 0; i < n; i += 3) {
+      var g = gradient3D(pos[i], pos[i + 1], pos[i + 2]);
+      var gx = g[0] * sgn, gy = g[1] * sgn, gz = g[2] * sgn;
+      var len = Math.sqrt(gx * gx + gy * gy + gz * gz) || 1;
+      nrm[i] = gx / len; nrm[i + 1] = gy / len; nrm[i + 2] = gz / len;
+    }
+    var geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+    geo.setAttribute("normal", new THREE.BufferAttribute(nrm, 3));
+    equipotGroup.add(new THREE.Mesh(geo, makeShellMaterial(rgb, opacity)));
+  }
+
+  function clearEquipot() {
+    for (var i = equipotGroup.children.length - 1; i >= 0; i--) {
+      var m = equipotGroup.children[i];
+      m.geometry.dispose(); m.material.dispose();
+      equipotGroup.remove(m);
+    }
+  }
+
+  function buildEquipot(res) {
+    syncDots3D();
+    updateChargeDots();
+    clearEquipot();
+
+    // grid: uniform spacing; fewer points in y (shorter axis)
+    var nx = res, nz = res;
+    var ny = Math.max(8, Math.round(res * BY / BXZ));
+    var origin = [-BXZ, -BY, -BXZ];
+    var spacing = [2 * BXZ / (nx - 1), 2 * BY / (ny - 1), 2 * BXZ / (nz - 1)];
+
+    // sample the exact potential once; every shell reuses this field
+    var field = new Float32Array(nx * ny * nz);
+    var idx = 0;
+    for (var iz = 0; iz < nz; iz++) {
+      var z = origin[2] + iz * spacing[2];
+      for (var iy = 0; iy < ny; iy++) {
+        var y = origin[1] + iy * spacing[1];
+        for (var ix = 0; ix < nx; ix++) {
+          field[idx++] = potential3D(origin[0] + ix * spacing[0], y, z);
+        }
+      }
+    }
+
+    var M = settings.shells;
+    var levels = equipotLevels(M);
+    var deepRed = [0.80, 0.12, 0.12], liteRed = [1.0, 0.60, 0.55];
+    var deepBlue = [0.09, 0.30, 0.75], liteBlue = [0.55, 0.75, 1.0];
+    for (var k = 0; k < levels.length; k++) {
+      var f = M > 1 ? k / (M - 1) : 0;        // 0 = innermost, 1 = outermost
+      var op = 0.42 - 0.24 * f;               // inner shells a touch more solid
+      var Lv = levels[k];
+      addShell(field, nx, ny, nz, origin, spacing,  Lv, lerp3(deepRed, liteRed, f), op);
+      addShell(field, nx, ny, nz, origin, spacing, -Lv, lerp3(deepBlue, liteBlue, f), op);
+    }
+
+    // optional V = 0 surface (e.g. the mid-plane of a balanced dipole)
+    if (settings.showZero) {
+      addShell(field, nx, ny, nz, origin, spacing, 0, [0.54, 0.60, 0.36], 0.20);
+    }
+  }
+
+  // keep the charge dots in sync (position + colour) — shared by both modes
+  function updateChargeDots() {
+    for (var d = 0; d < chargeDots.length; d++) {
+      chargeDots[d].position.set(charges[d].x, 0.02, charges[d].y);
+      chargeDots[d].material.color.set(charges[d].q >= 0 ? COL.posFill : COL.negFill);
+      chargeDots[d].visible = charges[d].q !== 0;
+    }
+  }
+
+  // ---- switch between the two right-panel visualisations ----------------
+  var SURF_TXT = {
+    title: "3D potential surface (height = V, unclamped)",
+    sub: "Drag to orbit · scroll to zoom. Spikes run off the top/bottom of the frame — that is the true 1/r singularity."
+  };
+  var EQ_TXT = {
+    title: "Equipotential surfaces in 3D (level sets of V)",
+    sub: "Each shell is a surface of constant potential in space: V(x,y,z) = const, extracted exactly from V = Σ kq/r. Red encloses positive charges, blue negative; inner shells are nearer the charges (higher |V|). Drag to orbit · scroll to zoom."
+  };
+
+  function applyView3D() {
+    var eq = settings.view3D === "equipot";
+    if (surfMesh) surfMesh.visible = !eq;
+    if (wireLines) wireLines.visible = !eq;
+    if (equipotGroup) equipotGroup.visible = eq;
+
+    if (surf3dTitle) surf3dTitle.textContent = (eq ? EQ_TXT : SURF_TXT).title;
+    if (surf3dSub) surf3dSub.textContent = (eq ? EQ_TXT : SURF_TXT).sub;
+    if (surf3dLegend) surf3dLegend.innerHTML = eq
+      ? '<span><span class="swatch" style="background:#cc2020"></span>Positive equipotential (V &gt; 0)</span>' +
+        '<span><span class="swatch" style="background:#4f8bff"></span>Negative equipotential (V &lt; 0)</span>' +
+        '<span>Inner shell = higher |V| (closer to a charge)</span>'
+      : '<span><span class="swatch" style="background:var(--pos)"></span>Higher potential (peak)</span>' +
+        '<span><span class="swatch" style="background:var(--neg)"></span>Lower potential (well)</span>';
+
+    if (vSurface) vSurface.setAttribute("aria-pressed", eq ? "false" : "true");
+    if (vEquipot) vEquipot.setAttribute("aria-pressed", eq ? "true" : "false");
+    if (vSurface) vSurface.classList.toggle("active", !eq);
+    if (vEquipot) vEquipot.classList.toggle("active", eq);
+    if (equipCtrl) equipCtrl.style.display = eq ? "" : "none";
+  }
+
+  function setView3D(mode) {
+    if (settings.view3D === mode) return;
+    settings.view3D = mode;
+    applyView3D();
+    dirty = true;   // trigger a rebuild of whichever representation is now active
+  }
+
   function animate3D() {
     requestAnimationFrame(animate3D);
-    if (dirty) { build3D(); dirty = false; }
+    if (dirty) {
+      if (settings.view3D === "equipot") buildEquipot(chargeDragging ? RES_DRAG : RES_IDLE);
+      else build3D();
+      dirty = false;
+    }
     // camera from spherical orbit around a point slightly above the plane
-    var tgt = new THREE.Vector3(0, 0.12, 0);
+    // (centre on the plane itself when showing equipotential shells)
+    var ty = settings.view3D === "equipot" ? 0.0 : 0.12;
+    var tgt = new THREE.Vector3(0, ty, 0);
     var cp = Math.cos(orbit.pitch), sp = Math.sin(orbit.pitch);
     // flip the up vector past the poles so the view stays continuous
     camera.up.set(0, cp >= 0 ? 1 : -1, 0);
@@ -597,6 +813,7 @@
     var wc = s2w(p.x, p.y);
     charges[dragging].x = wc.x;   // unclamped — free to leave the field
     charges[dragging].y = wc.y;
+    chargeDragging = true;        // lower-res 3D rebuild while dragging
     e.preventDefault();
     draw2D(true); dirty = true;   // coarse while dragging, for responsiveness
   }
@@ -613,7 +830,8 @@
       c.y = Math.max(-0.95, Math.min(0.95, c.y));
     }
     dragging = -1;
-    refresh();   // full-quality redraw + 3D update
+    chargeDragging = false;
+    refresh();   // full-quality redraw + high-res 3D update
   }
   c2.addEventListener("mousedown", onDown);
   window.addEventListener("mousemove", onMove);
@@ -698,8 +916,24 @@
   });
   tLines.addEventListener("change", function () { settings.showLines = tLines.checked; draw2D(); });
   tEquip.addEventListener("change", function () { settings.showEquip = tEquip.checked; draw2D(); });
+
+  // 3D view-mode controls
+  if (vSurface) vSurface.addEventListener("click", function () { setView3D("surface"); });
+  if (vEquipot) vEquipot.addEventListener("click", function () { setView3D("equipot"); });
+  if (shells) shells.addEventListener("input", function () {
+    settings.shells = +shells.value; shellsVal.textContent = settings.shells;
+    if (settings.view3D === "equipot") dirty = true;
+  });
+  if (tZero) tZero.addEventListener("change", function () {
+    settings.showZero = tZero.checked;
+    if (settings.view3D === "equipot") dirty = true;
+  });
+
   reset.addEventListener("click", function () {
     settings.levels = 10; levels.value = 10; lvlVal.textContent = "10";
+    settings.shells = 5; if (shells) { shells.value = 5; shellsVal.textContent = "5"; }
+    settings.showZero = false; if (tZero) tZero.checked = false;
+    setView3D("surface");
     orbit.yaw = -0.6; orbit.pitch = 0.62; orbit.radius = 3.3;
     applyPreset("dipole");
   });

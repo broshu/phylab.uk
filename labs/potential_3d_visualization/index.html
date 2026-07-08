@@ -61,6 +61,14 @@
   }
   .ghost:hover{border-color:#bcbcb4;}
   .ghost.sm{padding:6px 11px; font-size:12.5px; border-radius:999px;}
+  .card-head{display:flex; justify-content:space-between; align-items:flex-start; gap:12px 16px; flex-wrap:wrap;}
+  .seg{display:inline-flex; border:1px solid var(--line); border-radius:999px; overflow:hidden; background:#fff;}
+  .segbtn{
+    appearance:none; border:0; background:transparent; cursor:pointer;
+    font-size:12.5px; padding:6px 13px; color:var(--muted); white-space:nowrap;
+  }
+  .segbtn + .segbtn{border-left:1px solid var(--line);}
+  .segbtn.active{background:var(--neg); color:#fff; font-weight:600;}
   .hint{margin:12px auto 0; width:min(1280px,calc(100% - 48px)); font-size:12px; color:var(--muted);}
   footer{width:min(1280px,calc(100% - 48px)); margin:22px auto 30px; font-size:12px; color:var(--muted);}
 </style>
@@ -68,7 +76,7 @@
 <body>
   <header class="top-bar">
     <h1>Electric Potential in 3D</h1>
-    <p class="lede">Point charges create a potential field. On the left, the 2D plane shows field lines and equipotential contours; on the right, the same potential is lifted into a true 3D surface. The height is exactly V = &Sigma; kq/r &mdash; nothing is clamped, so each charge becomes an infinitely sharp spike: a peak shooting up over a positive charge, a well plunging down at a negative one. Because a real 1/r singularity is infinitely thin, the spikes taper to invisible needles all on their own. Drag the charges on the left, or drag the 3D view to orbit.</p>
+    <p class="lede">Point charges create a potential field. On the left, the 2D plane shows field lines and equipotential contours; on the right, the same potential is lifted into a true 3D surface. The height is exactly V = &Sigma; kq/r &mdash; nothing is clamped, so each charge becomes an infinitely sharp spike: a peak shooting up over a positive charge, a well plunging down at a negative one. Because a real 1/r singularity is infinitely thin, the spikes taper to invisible needles all on their own. Or switch the right panel to <em>equipotential surfaces</em> &mdash; the true level sets V(x,y,z) = const drawn as nested shells in space. Drag the charges on the left, or drag the 3D view to orbit.</p>
   </header>
 
   <main class="layout">
@@ -87,10 +95,16 @@
       </section>
 
       <section class="card">
-        <h2>3D potential surface (height = V, unclamped)</h2>
-        <p class="sub">Drag to orbit &middot; scroll to zoom. Spikes run off the top/bottom of the frame &mdash; that is the true 1/r singularity.</p>
+        <div class="card-head">
+          <h2 id="surf3dTitle">3D potential surface (height = V, unclamped)</h2>
+          <div class="seg" role="group" aria-label="3D view mode">
+            <button class="segbtn active" id="vSurface" aria-pressed="true">Potential surface</button>
+            <button class="segbtn" id="vEquipot" aria-pressed="false">Equipotential surfaces</button>
+          </div>
+        </div>
+        <p class="sub" id="surf3dSub">Drag to orbit &middot; scroll to zoom. Spikes run off the top/bottom of the frame &mdash; that is the true 1/r singularity.</p>
         <canvas id="canvas3d"></canvas>
-        <div class="legend">
+        <div class="legend" id="surf3dLegend">
           <span><span class="swatch" style="background:var(--pos)"></span>Higher potential (peak)</span>
           <span><span class="swatch" style="background:var(--neg)"></span>Lower potential (well)</span>
         </div>
@@ -129,6 +143,13 @@
           <label class="chip"><input type="checkbox" id="tEquip" checked> Equipotentials</label>
         </div>
       </div>
+      <div class="ctrl" id="equipCtrl" style="display:none;">
+        <label>3D equipotential shells <span class="val" id="shellsVal">5</span></label>
+        <input type="range" id="shells" min="1" max="8" step="1" value="5">
+        <div class="toggles" style="margin-top:4px;">
+          <label class="chip"><input type="checkbox" id="tZero"> Show V = 0 surface</label>
+        </div>
+      </div>
       <div class="ctrl" style="min-width:auto;">
         <label>Reset</label>
         <button class="ghost" id="reset">Reset positions &amp; charges</button>
@@ -140,6 +161,7 @@
   <footer>Interactive physics demonstration &middot; PhyLab</footer>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="js/marching-cubes.js"></script>
   <script src="js/main.js"></script>
   <script defer src="/assets/nav.js"></script>
 </body>
