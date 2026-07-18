@@ -691,7 +691,7 @@
   };
   var EQ_TXT = {
     title: "Equipotential surfaces in 3D (level sets of V)",
-    sub: "Each shell is a surface of constant potential in space: V(x,y,z) = const, extracted exactly from V = Σ kq/r. Red encloses positive charges, blue negative; inner shells are nearer the charges (higher |V|). Drag to orbit · scroll to zoom."
+    sub: "Drag to orbit · scroll to zoom."
   };
 
   function applyView3D() {
