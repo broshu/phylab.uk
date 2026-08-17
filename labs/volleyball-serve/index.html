@@ -9,37 +9,26 @@
 </head>
 <body>
     <header class="top-bar">
-        <div>
-            <h1>Volleyball Serve</h1>
-            <p class="subtitle">Horizontal launch · two boundaries: over the net, inside the baseline</p>
-        </div>
+        <h1>Volleyball Serve</h1>
         <div class="top-bar-right">
             <div class="readout">
-                <span>Serve speed</span>
-                <strong id="speedReadout">15.0 m/s</strong>
-            </div>
-            <div class="readout">
                 <span>Result</span>
-                <strong id="verdictReadout">Into the net</strong>
+                <strong id="verdictReadout">—</strong>
             </div>
         </div>
     </header>
 
     <main class="layout">
+        <section class="panel task-panel">
+            <h2>Task</h2>
+            <p id="taskPrompt"></p>
+        </section>
+
         <section class="panel controls-panel" id="controls"></section>
 
         <section class="panel stage-panel">
             <canvas id="stage"></canvas>
-            <div class="legend">
-                <span><i class="swatch swatch-ok"></i>lands in</span>
-                <span><i class="swatch swatch-bad"></i>into the net</span>
-                <span><i class="swatch swatch-info"></i>long</span>
-                <span><i class="swatch swatch-dash"></i>boundary paths</span>
-            </div>
         </section>
-
-        <section class="panel work-panel" id="derivation"></section>
-        <section class="panel coach-panel" id="feedback"></section>
     </main>
 
     <script type="module" src="js/main.js"></script>

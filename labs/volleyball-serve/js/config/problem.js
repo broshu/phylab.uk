@@ -34,7 +34,7 @@ export const PROBLEMS = {
     netHeight: 2.2,
     netDistance: 9,
     courtEnd: 18,
-    speed: { min: 10, max: 30, step: 0.1, default: 15 },
+    speed: { min: 0, max: 30, step: 1, default: 15, unit: 'm/s' },
     adjustable: {
       speed: true,
       hitHeight: false,

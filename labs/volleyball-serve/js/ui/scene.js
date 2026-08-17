@@ -210,7 +210,10 @@ export function createScene(canvas, store, { onLanded } = {}) {
   function drawOutcome(result) {
     const { toX, toY, cssW } = geom;
 
-    if (result.verdict === Verdict.NET) {
+    // too slow to even reach the net: it lands short, on this side
+    const short = result.verdict === Verdict.NET && result.xLand < problem.netDistance;
+
+    if (result.verdict === Verdict.NET && !short) {
       const x = toX(problem.netDistance);
       const y = toY(Math.max(0, result.heightAtNet));
       ctx.strokeStyle = palette.bad;
@@ -229,7 +232,7 @@ export function createScene(canvas, store, { onLanded } = {}) {
     }
 
     const gy = toY(0);
-    const x = toX(Math.min(result.xLand, VIEW.xMax - 0.3));
+    const x = toX(Math.min(Math.max(result.xLand, VIEW.xMin + 0.3), VIEW.xMax - 0.3));
     ctx.fillStyle = result.verdict === Verdict.IN ? palette.ok : palette.bad;
     ctx.beginPath();
     ctx.ellipse(x, gy, 7, 3, 0, 0, Math.PI * 2);

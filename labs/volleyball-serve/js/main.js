@@ -3,6 +3,10 @@
  * Adding a panel means importing one more create* here; nothing else changes.
  *
  * Flow: phase 'aim' (choose a speed) → 'serve' (animation) → 'done' (verdict).
+ *
+ * ui/derivation.js (live working) and ui/feedback.js (coaching) are written and
+ * tested but deliberately not mounted — the page is kept to task, speed and
+ * animation. Mount them by adding one line each, as below.
  */
 import { getProblem, DEFAULT_PROBLEM_ID } from './config/problem.js';
 import { createStore } from './core/state.js';
@@ -11,8 +15,6 @@ import { createTutor } from './services/tutor.js';
 import { createAttemptLog } from './services/attempts.js';
 import { createScene } from './ui/scene.js';
 import { createControls } from './ui/controls.js';
-import { createDerivation } from './ui/derivation.js';
-import { createFeedback } from './ui/feedback.js';
 
 const problem = getProblem(DEFAULT_PROBLEM_ID);
 const tutor = createTutor();
@@ -45,19 +47,14 @@ const VERDICT_LABEL = {
   [Verdict.OUT]: 'Out — long',
 };
 
-const feedbackRoot = document.querySelector('#feedback');
+document.querySelector('#taskPrompt').textContent = problem.prompt;
 
 const scene = createScene(document.querySelector('#stage'), store, {
   onLanded: (result) => {
     store.set({ phase: 'done' });
     attempts.record(result);
-    feedback.renderProgress();
   },
 });
-
-createDerivation(document.querySelector('#derivation'), store);
-
-const feedback = createFeedback(feedbackRoot, store, { tutor, attempts });
 
 createControls(document.querySelector('#controls'), store, {
   onServe: () => {
@@ -65,17 +62,13 @@ createControls(document.querySelector('#controls'), store, {
     scene.serve();
   },
   onAim: () => scene.reset(),
-  onClear: () => {
-    attempts.reset();
-    feedback.renderProgress();
+  onHelp: () => {
+    /* reserved: will hand the current state to the tutor service */
   },
 });
 
-// Header read-outs
-const speedReadout = document.querySelector('#speedReadout');
 const verdictReadout = document.querySelector('#verdictReadout');
-store.subscribe(({ v, phase, result }) => {
-  speedReadout.textContent = `${v.toFixed(1)} m/s`;
+store.subscribe(({ phase, result }) => {
   verdictReadout.textContent = phase === 'done' ? VERDICT_LABEL[result.verdict] : '—';
   verdictReadout.dataset.verdict = phase === 'done' ? result.verdict : '';
 });

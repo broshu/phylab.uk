@@ -82,6 +82,7 @@ const check = (name, cond, detail = '') => results.push({ name, ok: !!cond, deta
 
 const el = (sel) => document.querySelector(sel);
 const control = (sel) => el('#controls').querySelector(sel);
+const problemNetDistance = (store) => store.get().problem.netDistance;
 
 check('assembly ran without errors', errors.length === 0, errors[0]?.stack || '');
 check('window.__vb exported', !!api);
@@ -94,14 +95,23 @@ if (api) {
   check('starts in the aiming phase', store.get().phase === 'aim');
   check('no verdict before serving', el('#verdictReadout').textContent === '—');
   check('serve button reads "Serve"', control('#serve').textContent === 'Serve');
+  check('task prompt rendered', el('#taskPrompt').textContent.length > 40);
   check('render loop survives aiming', errors.length === 0, errors[0]?.stack || '');
 
-  // ---- choose a speed through the real slider listener ----
+  // ---- slider configured 0–30 in whole m/s ----
   const slider = control('#speed');
+  check('slider range is 0–30', /min="0"/.test(el('#controls').innerHTML) && /max="30"/.test(el('#controls').innerHTML));
+  check('slider step is 1', /step="1"/.test(el('#controls').innerHTML));
+
+  // ---- choose a speed through the real slider listener ----
   slider.value = '21';
   slider.dispatch('input');
   check('slider sets the speed', store.get().v === 21);
+  check('speed shown as a whole number', control('#speedOut').textContent === '21');
   check('still aiming after moving the slider', store.get().phase === 'aim');
+
+  control('#help').dispatch('click'); // reserved, must not throw
+  check('help button is inert for now', errors.length === 0, errors[0]?.stack || '');
 
   // ---- serve ----
   control('#serve').dispatch('click');
@@ -130,6 +140,16 @@ if (api) {
   check('second serve judged out', store.get().result.verdict === 'out');
   check('two serves logged', attempts.summary().total === 2);
   check('CSV export works', attempts.toCSV().split('\n').length === 3);
+
+  // ---- a serve too slow to reach the net still resolves ----
+  slider.value = '5';
+  slider.dispatch('input');
+  control('#serve').dispatch('click');
+  pump(4);
+  await new Promise((r) => setTimeout(r, 30));
+  check('5 m/s lands short of the net', store.get().result.xLand < problemNetDistance(store));
+  check('and is judged a fault', store.get().result.verdict === 'net');
+  check('phase still resolves to done', store.get().phase === 'done');
   attempts.reset();
 
   check('render loop ran without errors', errors.length === 0, errors[0]?.stack || '');

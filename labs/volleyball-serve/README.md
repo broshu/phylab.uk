@@ -15,13 +15,17 @@ aim ──serve──▶ serve ──ball lands──▶ done
 
 - **aim** — nothing has been served. The player stands on the floor and the
   hitting arm is drawn further back the larger the chosen speed, so the
-  wind-up is a direct read-out of the slider. The working panel shows dashes
-  and there is no verdict: the answer cannot be read off by dragging.
+  wind-up is a direct read-out of the slider. No trajectory and no verdict:
+  the answer cannot be read off by dragging.
 - **serve** — toss, jump, contact exactly at the apex (the hand reaches
   3.2 m), then the ball flies at half speed with the path drawn progressively.
   The slider is locked while the ball is in the air.
-- **done** — the full path, the landing mark, the working and the coaching
-  appear. The serve is logged automatically. Moving the slider returns to aim.
+- **done** — the full path, the landing mark and the verdict appear. The serve
+  is logged automatically. Moving the slider returns to aim.
+
+The page itself is deliberately spare: task, speed, animation. `ui/derivation.js`
+(step-by-step numbers) and `ui/feedback.js` (coaching text) are written and
+tested but not mounted — see *Extension points*.
 
 ## Problem data
 
@@ -37,7 +41,8 @@ aim ──serve──▶ serve ──ball lands──▶ done
 - upper bound (stay in): 18 ÷ 0.8 = **22.5 m/s**
 - lower bound (clear the net): the ball may fall 1.0 m before the net, so
   t₁ = √0.2 s and v = 9 ÷ t₁ = 9√5 ≈ **20.12 m/s**
-- legal window **20.1 – 22.5 m/s**; whole-number answers are 21 and 22 m/s
+- legal window **20.1 – 22.5 m/s**; the slider runs 0–30 m/s in steps of 1, so
+  the whole-number answers a student can land on are 21 and 22 m/s
 
 A window this narrow is a real feature of the physics: with a 2.43 m men's net
 a horizontal serve from the baseline needs a contact point above 3.24 m, which
@@ -61,9 +66,9 @@ js/
   ui/
     scene.js          canvas: court, net, trajectory, phase clock
     player.js         the server: standing wind-up, toss, jump, contact
-    controls.js       slider and buttons
-    derivation.js     live working
-    feedback.js       verdict + coaching
+    controls.js       speed slider, Serve and Help
+    derivation.js     step-by-step working (not mounted)
+    feedback.js       verdict + coaching (not mounted)
     theme.js          canvas palette read from CSS variables
 tests/
   check.mjs           numerical self-check
@@ -87,6 +92,17 @@ itself is plain static files and needs no build step.
 
 ## Extension points
 
+- **The Help button** — wired to `onHelp` in `main.js` and currently a no-op.
+  The obvious implementation is to pass the current state to
+  `tutor.hint({problem, result, attempts})` and show what comes back.
+- **Bring back Working / Coaching** — add a `<section class="panel" id="…">`
+  to `index.html` and one line to `main.js`:
+  `createDerivation(document.querySelector('#derivation'), store)` or
+  `createFeedback(document.querySelector('#feedback'), store, { tutor, attempts })`.
+  The CSS they need is still in `style.css`, in its own labelled block.
+- **Boundary paths** — `scene.js` still draws the two limiting trajectories
+  when `showGhosts` is true in the store; there is simply no control for it.
+  `__vb.store.set({ showGhosts: true })` in the console turns it on.
 - **Real model instead of the rule-based tutor** — replace the body of
   `createTutor()`; keep returning `{title, body, level, scaffold?}`.
   `feedback.js` already awaits it and discards stale responses.
