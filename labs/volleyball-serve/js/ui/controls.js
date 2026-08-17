@@ -1,16 +1,22 @@
 /**
- * Input controls. Controls only call store.set — they never compute physics.
- * Sliders for hitHeight / netHeight are already anticipated by
- * problem.adjustable and can be added here for later levels.
+ * Input controls. Controls only call store.set or the callbacks — they never
+ * compute physics. The flow is: choose a speed, then serve.
+ * Sliders for hitHeight / netHeight are anticipated by problem.adjustable and
+ * can be added here for later levels.
  */
-export function createControls(root, store, { onCommit, onReset, onReplay } = {}) {
+const SERVE_LABEL = {
+  aim: 'Serve',
+  serve: 'Serving…',
+  done: 'Serve again',
+};
+
+export function createControls(root, store, { onServe, onClear, onAim } = {}) {
   const { problem } = store.get();
   const s = problem.speed;
 
   root.innerHTML = `
     <div class="section-title">
       <h2>Controls</h2>
-      <button id="replayBtn" class="ghost-button" type="button">Replay</button>
     </div>
 
     <div class="task">
@@ -26,31 +32,48 @@ export function createControls(root, store, { onCommit, onReset, onReplay } = {}
       <output id="speedOut"></output>
     </label>
 
+    <p class="hint-line" id="flowHint">Set a speed, then serve.</p>
+
     <label class="check">
       <input id="ghosts" type="checkbox">
       <span>Show the two boundary paths</span>
     </label>
 
     <div class="button-row">
-      <button id="record" class="primary-button" type="button">Log this attempt</button>
-      <button id="clear" class="ghost-button" type="button">Clear</button>
+      <button id="serve" class="primary-button" type="button">Serve</button>
+      <button id="clear" class="ghost-button" type="button">Clear log</button>
     </div>
   `;
 
   const slider = root.querySelector('#speed');
   const out = root.querySelector('#speedOut');
   const ghosts = root.querySelector('#ghosts');
+  const serveBtn = root.querySelector('#serve');
+  const hint = root.querySelector('#flowHint');
 
-  slider.addEventListener('input', () => store.set({ v: Number(slider.value) }));
+  slider.addEventListener('input', () => {
+    store.set({ v: Number(slider.value) });
+    onAim?.(); // moving the slider takes us back to the standing pose
+  });
   ghosts.addEventListener('change', () => store.set({ showGhosts: ghosts.checked }));
-  root.querySelector('#record').addEventListener('click', () => onCommit?.(store.get()));
-  root.querySelector('#clear').addEventListener('click', () => onReset?.());
-  root.querySelector('#replayBtn').addEventListener('click', () => onReplay?.());
+  serveBtn.addEventListener('click', () => onServe?.(store.get()));
+  root.querySelector('#clear').addEventListener('click', () => onClear?.());
 
   store.subscribe((state) => {
     out.textContent = `${state.v.toFixed(1)} m/s`;
     if (Number(slider.value) !== state.v) slider.value = String(state.v);
-    slider.dataset.verdict = state.result.verdict;
+
+    const flying = state.phase === 'serve';
+    slider.disabled = flying;
+    serveBtn.disabled = flying;
+    serveBtn.textContent = SERVE_LABEL[state.phase];
+    slider.dataset.verdict = state.phase === 'done' ? state.result.verdict : '';
+    hint.textContent =
+      state.phase === 'aim'
+        ? 'Set a speed, then serve.'
+        : flying
+          ? 'Ball in the air…'
+          : 'Move the slider to try another speed.';
   });
 
   return { setSpeed: (v) => store.set({ v }) };

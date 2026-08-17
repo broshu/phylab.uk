@@ -1,8 +1,27 @@
 # Volleyball Serve
 
-Projectile-motion lab. The student drags one slider (launch speed) and sees the
-trajectory, whether the ball clears the net, and where it lands. Two boundaries
-have to be satisfied at once, which is the point of the exercise.
+Projectile-motion lab. The student sets a launch speed, commits to it by
+serving, and then sees the trajectory, whether the ball cleared the net and
+where it landed. Two boundaries have to be satisfied at once, which is the
+point of the exercise.
+
+## Flow
+
+```
+aim ──serve──▶ serve ──ball lands──▶ done
+ ▲                                    │
+ └────────── move the slider ─────────┘
+```
+
+- **aim** — nothing has been served. The player stands on the floor and the
+  hitting arm is drawn further back the larger the chosen speed, so the
+  wind-up is a direct read-out of the slider. The working panel shows dashes
+  and there is no verdict: the answer cannot be read off by dragging.
+- **serve** — toss, jump, contact exactly at the apex (the hand reaches
+  3.2 m), then the ball flies at half speed with the path drawn progressively.
+  The slider is locked while the ball is in the air.
+- **done** — the full path, the landing mark, the working and the coaching
+  appear. The serve is logged automatically. Moving the slider returns to aim.
 
 ## Problem data
 
@@ -40,7 +59,8 @@ js/
     tutor.js          coaching text (rule-based today, async interface)
     attempts.js       attempt log, scoring, CSV export
   ui/
-    scene.js          canvas: court, net, trajectory, animation
+    scene.js          canvas: court, net, trajectory, phase clock
+    player.js         the server: standing wind-up, toss, jump, contact
     controls.js       slider and buttons
     derivation.js     live working
     feedback.js       verdict + coaching
@@ -73,6 +93,12 @@ itself is plain static files and needs no build step.
 - **Report attempts to a server** — replace `save()` in `attempts.js`;
   `record/summary/toCSV` are the stable interface.
 - **More steps in the working panel** — add a `row(label, value, ok)` call.
+- **Change the figure** — `player.js` is self-contained: body proportions in
+  `BODY`, timing in `SERVE_TIMELINE`, and the wind-up mapping in
+  `hitArmAngle()`. It is handed a world→screen transform and draws itself, so
+  nothing else needs to know how the player is built. The jump height is
+  derived from the contact height, so raising `hitHeight` makes the player
+  jump higher rather than breaking the contact point.
 - **More scenarios** — add an entry to `PROBLEMS` in `config/problem.js`.
   `problem.adjustable` is already there for levels where the student is allowed
   to change the contact height or net height and watch the window move.

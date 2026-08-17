@@ -1,6 +1,7 @@
 /**
  * Working panel: the evaluator's intermediate quantities laid out in the order
- * a student would write them down, updating live with the slider.
+ * a student would write them down. The numbers only appear once the ball has
+ * been served, so the slider cannot be used to read off the answer.
  * To add a step, add one more row() call.
  */
 const f = (x, n = 2) => (Number.isFinite(x) ? Number(x).toFixed(n) : '—');
@@ -22,25 +23,33 @@ export function createDerivation(root, store) {
        <span>${label}</span><strong>${value}</strong>
      </p>`;
 
-  store.subscribe(({ problem: p, result: r }) => {
+  store.subscribe(({ problem: p, result: r, phase }) => {
+    const shown = phase !== 'aim';
+    const val = (text) => (shown ? text : '—');
+    const flag = (ok) => (shown ? ok : undefined);
+
     netEl.innerHTML =
-      row(`t₁ = x_net / v = ${p.netDistance} / ${f(r.v, 1)}`, `${f(r.tNet)} s`) +
-      row('drop in that time h₁ = ½gt₁²', `${f(r.dropAtNet)} m`) +
-      row(`height at the net = ${p.hitHeight} − h₁`, `${f(r.heightAtNet)} m`, r.netClearance > 0) +
+      row(`t₁ = x_net / v = ${p.netDistance} / ${f(r.v, 1)}`, val(`${f(r.tNet)} s`)) +
+      row('drop in that time h₁ = ½gt₁²', val(`${f(r.dropAtNet)} m`)) +
+      row(
+        `height at the net = ${p.hitHeight} − h₁`,
+        val(`${f(r.heightAtNet)} m`),
+        flag(r.netClearance > 0),
+      ) +
       row(
         `versus the ${p.netHeight} m tape`,
-        `${r.netClearance > 0 ? 'over by ' : 'under by '}${f(Math.abs(r.netClearance))} m`,
-        r.netClearance > 0,
+        val(`${r.netClearance > 0 ? 'over by ' : 'under by '}${f(Math.abs(r.netClearance))} m`),
+        flag(r.netClearance > 0),
       );
 
     landEl.innerHTML =
       row(`t₂ = √(2h/g) = √(2×${p.hitHeight}/${p.g})`, `${f(r.tLand)} s`) +
       row('<em>independent of v — the key idea</em>', '') +
-      row(`x = v·t₂ = ${f(r.v, 1)} × ${f(r.tLand)}`, `${f(r.xLand, 1)} m`) +
+      row(`x = v·t₂ = ${f(r.v, 1)} × ${f(r.tLand)}`, val(`${f(r.xLand, 1)} m`)) +
       row(
         `versus the ${p.courtEnd} m baseline`,
-        `${r.outBy > 0 ? 'over by ' : 'short by '}${f(Math.abs(r.outBy), 1)} m`,
-        r.outBy <= 0,
+        val(`${r.outBy > 0 ? 'over by ' : 'short by '}${f(Math.abs(r.outBy), 1)} m`),
+        flag(r.outBy <= 0),
       );
   });
 }

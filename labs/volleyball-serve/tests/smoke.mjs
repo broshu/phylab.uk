@@ -1,6 +1,6 @@
 /**
- * Smoke test: runs the whole assembly against a fake DOM/canvas to catch
- * typos, undefined variables and broken subscriptions.  node tests/smoke.mjs
+ * Smoke test: runs the whole assembly against a fake DOM/canvas, then drives
+ * the animation clock through a complete serve.  node tests/smoke.mjs
  */
 const noop = () => {};
 
@@ -25,6 +25,7 @@ function makeEl(tag = 'div') {
     dataset: {},
     style: {},
     hidden: false,
+    disabled: false,
     textContent: '',
     value: '0',
     checked: false,
@@ -51,51 +52,88 @@ global.document = {
   },
 };
 global.window = { devicePixelRatio: 2, addEventListener: noop };
-let frames = 0;
+
+// Controllable frame clock so the test can run the serve animation to the end.
+let rafCb = null;
+let clockMs = 0;
 global.requestAnimationFrame = (fn) => {
-  if (frames++ < 3) setTimeout(() => fn(frames * 16), 0);
+  rafCb = fn;
 };
+function pump(seconds) {
+  const end = clockMs + seconds * 1000;
+  while (rafCb && clockMs <= end) {
+    const cb = rafCb;
+    rafCb = null;
+    clockMs += 16;
+    cb(clockMs);
+  }
+}
 
 const errors = [];
 process.on('uncaughtException', (e) => errors.push(e));
 process.on('unhandledRejection', (e) => errors.push(e));
 
 await import('../js/main.js');
-await new Promise((r) => setTimeout(r, 60));
+await new Promise((r) => setTimeout(r, 30));
 
 const api = global.window.__vb;
 const results = [];
 const check = (name, cond, detail = '') => results.push({ name, ok: !!cond, detail });
+
+const el = (sel) => document.querySelector(sel);
+const control = (sel) => el('#controls').querySelector(sel);
 
 check('assembly ran without errors', errors.length === 0, errors[0]?.stack || '');
 check('window.__vb exported', !!api);
 
 if (api) {
   const { store, attempts } = api;
-  check('initial v = 15', store.get().v === 15);
-  check('initial verdict = net', store.get().result.verdict === 'net');
 
-  store.set({ v: 21 });
-  check('21 m/s → in', store.get().result.verdict === 'in');
-  check('derived result stays in sync', store.get().result.v === 21);
+  // ---- aiming ----
+  pump(0.5);
+  check('starts in the aiming phase', store.get().phase === 'aim');
+  check('no verdict before serving', el('#verdictReadout').textContent === '—');
+  check('serve button reads "Serve"', control('#serve').textContent === 'Serve');
+  check('render loop survives aiming', errors.length === 0, errors[0]?.stack || '');
 
-  store.set({ v: 25 });
-  check('25 m/s → out', store.get().result.verdict === 'out');
+  // ---- choose a speed through the real slider listener ----
+  const slider = control('#speed');
+  slider.value = '21';
+  slider.dispatch('input');
+  check('slider sets the speed', store.get().v === 21);
+  check('still aiming after moving the slider', store.get().phase === 'aim');
 
-  store.set({ showGhosts: true });
-  check('boundary paths toggle', store.get().showGhosts === true);
+  // ---- serve ----
+  control('#serve').dispatch('click');
+  check('serving phase entered', store.get().phase === 'serve');
+  pump(0.4);
+  check('slider locked during flight', control('#speed').disabled === true);
+  check('no verdict mid-flight', el('#verdictReadout').textContent === '—');
 
-  attempts.record(store.get().result);
-  check('attempt logged', attempts.summary().total === 1);
-  check('CSV export works', attempts.toCSV().split('\n').length === 2);
+  pump(4);
+  await new Promise((r) => setTimeout(r, 30));
+  check('phase done after the ball lands', store.get().phase === 'done');
+  check('verdict revealed', el('#verdictReadout').textContent === 'In');
+  check('serve logged automatically', attempts.summary().total === 1);
+  check('button offers another serve', control('#serve').textContent === 'Serve again');
+  check('slider unlocked', control('#speed').disabled === false);
+
+  // ---- a new speed resets to aiming ----
+  slider.value = '25';
+  slider.dispatch('input');
+  check('new speed returns to aiming', store.get().phase === 'aim');
+  check('verdict hidden again', el('#verdictReadout').textContent === '—');
+
+  control('#serve').dispatch('click');
+  pump(4);
+  await new Promise((r) => setTimeout(r, 30));
+  check('second serve judged out', store.get().result.verdict === 'out');
+  check('two serves logged', attempts.summary().total === 2);
+  check('CSV export works', attempts.toCSV().split('\n').length === 3);
   attempts.reset();
 
-  check('header read-out updated', document.querySelector('#speedReadout').textContent === '25.0 m/s');
-  check('verdict read-out updated', document.querySelector('#verdictReadout').textContent === 'Out — long');
+  check('render loop ran without errors', errors.length === 0, errors[0]?.stack || '');
 }
-
-await new Promise((r) => setTimeout(r, 80));
-check('render loop ran without errors', errors.length === 0, errors[0]?.stack || '');
 
 let fails = 0;
 for (const r of results) {

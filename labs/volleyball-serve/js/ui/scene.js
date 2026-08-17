@@ -1,21 +1,36 @@
 /**
- * Canvas scene: side view of the court, trajectory and flight animation.
- * Reads the store, never writes to it. All drawing goes through one
- * world→screen transform, so changing the framing means editing VIEW only.
+ * Canvas scene: side view of the court, the server, the trajectory.
+ * Reads the store, never writes to it — phase changes are reported through
+ * callbacks so that main.js stays the only place that wires things together.
+ *
+ * Phases
+ *   'aim'   nothing has been served yet; the player stands and winds up as the
+ *           slider moves. No trajectory, no verdict.
+ *   'serve' the animation is running: toss, jump, contact, flight.
+ *   'done'  the ball has landed; the full path and the outcome stay on screen.
  */
 import { trajectory, flightTime } from '../core/physics.js';
 import { Verdict } from '../core/evaluator.js';
 import { readPalette, onSchemeChange } from './theme.js';
+import { createPlayer, SERVE_TIMELINE } from './player.js';
 
 // World window in metres. yMin is negative to leave room for the ground labels.
 // x and y share one scale, so the parabola keeps its true shape.
 const VIEW = { xMin: -2.4, xMax: 20.4, yMin: -1.0, yMax: 3.9 };
 
-export function createScene(canvas, store) {
+const BALL_SLOW = 0.5; // flight is played at half speed
+const SETTLE = 0.45; // pause after the ball lands before the verdict is called
+
+export function createScene(canvas, store, { onLanded } = {}) {
   const ctx = canvas.getContext('2d');
-  const anim = { t: 0, playing: true, last: 0 };
+  const { problem } = store.get();
+  const player = createPlayer(problem);
+
   let geom = null;
   let palette = readPalette();
+  let clock = 0; // seconds since the serve started
+  let lastTs = 0;
+  let landedFired = false;
 
   function resize() {
     const cssW = canvas.parentElement.clientWidth;
@@ -44,7 +59,27 @@ export function createScene(canvas, store) {
   const font = (size) =>
     `${size}px Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif`;
 
-  function drawBackground(problem) {
+  /** Flight time at which the ball stops: the net if it does not clear. */
+  function stopTime(result) {
+    const tEnd = flightTime(problem.hitHeight, problem.g);
+    return result.verdict === Verdict.NET ? Math.min(result.tNet, tEnd) : tEnd;
+  }
+
+  /** Flight clock, seconds after contact (0 before the ball is struck). */
+  function flightClock(phase, result) {
+    if (phase === 'aim') return 0;
+    const t = Math.max(0, clock - SERVE_TIMELINE.contact) * BALL_SLOW;
+    return Math.min(t, stopTime(result));
+  }
+
+  function speedFraction(state) {
+    const s = state.problem.speed;
+    return (state.v - s.min) / (s.max - s.min);
+  }
+
+  // ---------------------------------------------------------------- drawing
+
+  function drawBackground() {
     const { cssW, cssH, toX, toY } = geom;
     ctx.fillStyle = palette.sky;
     ctx.fillRect(0, 0, cssW, cssH);
@@ -53,7 +88,6 @@ export function createScene(canvas, store) {
     ctx.fillStyle = palette.ground;
     ctx.fillRect(0, gy, cssW, cssH - gy);
 
-    // far half of the court, net → baseline
     ctx.fillStyle = palette.court;
     ctx.fillRect(toX(problem.netDistance), gy, toX(problem.courtEnd) - toX(problem.netDistance), 6);
 
@@ -81,27 +115,24 @@ export function createScene(canvas, store) {
     }
   }
 
-  function drawNet(problem) {
+  function drawNet() {
     const { toX, toY } = geom;
     const x = toX(problem.netDistance);
     const top = toY(problem.netHeight);
-    const bottom = toY(0);
 
     ctx.strokeStyle = palette.net;
     ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.moveTo(x, bottom);
+    ctx.moveTo(x, toY(0));
     ctx.lineTo(x, top);
     ctx.stroke();
 
-    // tape along the top of the net
     ctx.fillStyle = palette.sky;
     ctx.fillRect(x - 4, top - 5, 8, 6);
     ctx.strokeStyle = palette.net;
     ctx.lineWidth = 1;
     ctx.strokeRect(x - 4, top - 5, 8, 6);
 
-    // mesh texture
     ctx.globalAlpha = 0.35;
     const meshBottom = toY(problem.netHeight - 1.0);
     for (let yy = top; yy < meshBottom; yy += 7) {
@@ -118,31 +149,27 @@ export function createScene(canvas, store) {
     ctx.fillText(`net ${problem.netHeight} m`, x, top - 12);
   }
 
-  function drawServer(problem) {
+  /** Dashed marker at the contact height, so the 3.2 m is visible while aiming. */
+  function drawContactMark() {
     const { toX, toY } = geom;
-    const x = toX(0);
-    const yTop = toY(problem.hitHeight);
-
+    const y = toY(problem.hitHeight);
     ctx.strokeStyle = palette.groundLine;
     ctx.setLineDash([4, 4]);
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(x, toY(0));
-    ctx.lineTo(x, yTop);
+    ctx.moveTo(toX(-2.1), y);
+    ctx.lineTo(toX(1.1), y);
     ctx.stroke();
     ctx.setLineDash([]);
 
-    ctx.fillStyle = palette.ink;
+    ctx.fillStyle = palette.muted;
     ctx.font = font(12);
-    ctx.textAlign = 'right';
-    ctx.fillText(`contact ${problem.hitHeight} m`, x - 8, yTop + 4);
-
-    ctx.beginPath();
-    ctx.arc(x, yTop, 4, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.textAlign = 'left';
+    ctx.fillText(`contact ${problem.hitHeight} m`, toX(-2.1), y - 7);
   }
 
   function drawPath(pts, color, width, dashed = false) {
+    if (pts.length < 2) return;
     const { toX, toY } = geom;
     ctx.strokeStyle = color;
     ctx.lineWidth = width;
@@ -157,36 +184,30 @@ export function createScene(canvas, store) {
     ctx.setLineDash([]);
   }
 
-  function drawGhosts(problem, bounds) {
-    const { g, hitHeight } = problem;
+  function drawGhosts(bounds) {
     ctx.globalAlpha = 0.45;
-    drawPath(trajectory(bounds.vMin, hitHeight, g, 60), palette.bad, 1.5, true);
-    drawPath(trajectory(bounds.vMax, hitHeight, g, 60), palette.info, 1.5, true);
+    drawPath(trajectory(bounds.vMin, problem.hitHeight, problem.g, 60), palette.bad, 1.5, true);
+    drawPath(trajectory(bounds.vMax, problem.hitHeight, problem.g, 60), palette.info, 1.5, true);
     ctx.globalAlpha = 1;
   }
 
-  /** When the serve hits the net the ball stops there — it does not fly on. */
-  function stopTime(problem, result) {
-    const tEnd = flightTime(problem.hitHeight, problem.g);
-    return result.verdict === Verdict.NET ? Math.min(result.tNet, tEnd) : tEnd;
+  function pathColor(verdict) {
+    if (verdict === Verdict.IN) return palette.ok;
+    if (verdict === Verdict.NET) return palette.bad;
+    return palette.info;
   }
 
-  function drawBall(problem, result) {
+  function drawBall(result, tf) {
     const { toX, toY } = geom;
-    const t = Math.min(anim.t, stopTime(problem, result));
-    const bx = result.v * t;
-    const by = problem.hitHeight - 0.5 * problem.g * t * t;
-
+    const bx = result.v * tf;
+    const by = problem.hitHeight - 0.5 * problem.g * tf * tf;
     ctx.beginPath();
     ctx.arc(toX(bx), toY(by), 6, 0, Math.PI * 2);
     ctx.fillStyle = palette.ball;
     ctx.fill();
-    ctx.strokeStyle = palette.ball;
-    ctx.lineWidth = 1.2;
-    ctx.stroke();
   }
 
-  function drawOutcome(problem, result) {
+  function drawOutcome(result) {
     const { toX, toY, cssW } = geom;
 
     if (result.verdict === Verdict.NET) {
@@ -217,47 +238,56 @@ export function createScene(canvas, store) {
     ctx.font = font(12);
     ctx.textAlign = 'center';
     const label = `${result.xLand.toFixed(1)} m`;
-    const halfW = ctx.measureText(label).width / 2;
-    ctx.fillText(label, Math.min(Math.max(x, halfW + 4), cssW - halfW - 4), gy - 10);
-  }
-
-  function pathColor(verdict) {
-    if (verdict === Verdict.IN) return palette.ok;
-    if (verdict === Verdict.NET) return palette.bad;
-    return palette.info;
+    const half = ctx.measureText(label).width / 2;
+    ctx.fillText(label, Math.min(Math.max(x, half + 4), cssW - half - 4), gy - 10);
   }
 
   function render() {
-    const { problem, result, showGhosts } = store.get();
+    const state = store.get();
+    const { phase, result, showGhosts } = state;
     if (!geom) resize();
-    drawBackground(problem);
-    if (showGhosts) drawGhosts(problem, result.bounds);
 
-    const pts = trajectory(result.v, problem.hitHeight, problem.g);
-    const tStop = stopTime(problem, result);
-    const flown = pts.filter((p) => p.t <= tStop);
-    if (flown.length < pts.length) {
-      // what would have happened without the net, for reference only
-      ctx.globalAlpha = 0.28;
-      drawPath(pts.slice(flown.length - 1), palette.bad, 1.5, true);
-      ctx.globalAlpha = 1;
+    drawBackground();
+    drawContactMark();
+    if (showGhosts) drawGhosts(result.bounds);
+
+    if (phase !== 'aim') {
+      const tf = flightClock(phase, result);
+      const stop = stopTime(result);
+      const flown = trajectory(result.v, problem.hitHeight, problem.g).filter((p) => p.t <= tf);
+      drawPath(flown, pathColor(result.verdict), 2.5);
+      if (tf >= stop) drawOutcome(result);
+      if (clock >= SERVE_TIMELINE.contact) drawBall(result, tf);
     }
-    drawPath(flown, pathColor(result.verdict), 2.5);
 
-    drawNet(problem);
-    drawServer(problem);
-    drawOutcome(problem, result);
-    drawBall(problem, result);
+    drawNet();
+    player.draw(ctx, geom, palette, {
+      mode: phase === 'aim' ? 'aim' : 'serve',
+      t: clock,
+      speedFrac: speedFraction(state),
+      // the player only holds the ball until it is struck
+      showBall: phase === 'aim' || clock < SERVE_TIMELINE.contact,
+    });
   }
 
+  // ---------------------------------------------------------------- loop
+
   function loop(ts) {
-    const dt = anim.last ? (ts - anim.last) / 1000 : 0;
-    anim.last = ts;
-    const { problem, result } = store.get();
-    if (anim.playing) {
-      anim.t += dt * 0.5; // half speed, easier to follow
-      if (anim.t > stopTime(problem, result) + 0.6) anim.t = 0;
+    const dt = lastTs ? Math.min(0.05, (ts - lastTs) / 1000) : 0;
+    lastTs = ts;
+
+    const { phase, result } = store.get();
+    if (phase === 'serve') {
+      clock += dt;
+      const finished =
+        clock - SERVE_TIMELINE.contact >= stopTime(result) / BALL_SLOW + SETTLE &&
+        clock >= SERVE_TIMELINE.land;
+      if (finished && !landedFired) {
+        landedFired = true;
+        onLanded?.(result);
+      }
     }
+
     render();
     requestAnimationFrame(loop);
   }
@@ -272,12 +302,22 @@ export function createScene(canvas, store) {
     palette = readPalette();
     render();
   });
-  store.subscribe(() => {
-    anim.t = 0; // replay whenever a parameter changes
-  });
 
   resize();
   requestAnimationFrame(loop);
 
-  return { render, resize, replay: () => (anim.t = 0) };
+  return {
+    render,
+    resize,
+    /** Start (or restart) the serve animation. */
+    serve() {
+      clock = 0;
+      landedFired = false;
+    },
+    /** Back to the standing pose. */
+    reset() {
+      clock = 0;
+      landedFired = false;
+    },
+  };
 }

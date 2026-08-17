@@ -191,6 +191,18 @@ h3 {
 
 .primary-button:hover { opacity: 0.85; }
 
+.primary-button:disabled,
+.ghost-button:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+
+.hint-line {
+    margin-top: -4px;
+    color: var(--muted);
+    font-size: 13px;
+}
+
 .slider-row {
     display: grid;
     grid-template-columns: 30px minmax(0, 1fr) 84px;
@@ -214,6 +226,8 @@ input[type="range"] {
     width: 100%;
     accent-color: var(--ink);
 }
+
+input[type="range"]:disabled { opacity: 0.55; }
 
 input[type="range"][data-verdict="in"]  { accent-color: var(--green-ok); }
 input[type="range"][data-verdict="net"] { accent-color: var(--red); }
