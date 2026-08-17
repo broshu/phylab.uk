@@ -1,0 +1,326 @@
+/**
+ * Canvas scene: side view of the court, the server, the trajectory.
+ * Reads the store, never writes to it — phase changes are reported through
+ * callbacks so that main.js stays the only place that wires things together.
+ *
+ * Phases
+ *   'aim'   nothing has been served yet; the player stands and winds up as the
+ *           slider moves. No trajectory, no verdict.
+ *   'serve' the animation is running: toss, jump, contact, flight.
+ *   'done'  the ball has landed; the full path and the outcome stay on screen.
+ */
+import { trajectory, flightTime } from '../core/physics.js';
+import { Verdict } from '../core/evaluator.js';
+import { readPalette, onSchemeChange } from './theme.js';
+import { createPlayer, SERVE_TIMELINE } from './player.js';
+
+// World window in metres. yMin is negative to leave room for the ground labels.
+// x and y share one scale, so the parabola keeps its true shape.
+const VIEW = { xMin: -2.4, xMax: 20.4, yMin: -1.0, yMax: 3.9 };
+
+const BALL_SLOW = 0.5; // flight is played at half speed
+const SETTLE = 0.45; // pause after the ball lands before the verdict is called
+
+export function createScene(canvas, store, { onLanded } = {}) {
+  const ctx = canvas.getContext('2d');
+  const { problem } = store.get();
+  const player = createPlayer(problem);
+
+  let geom = null;
+  let palette = readPalette();
+  let clock = 0; // seconds since the serve started
+  let lastTs = 0;
+  let landedFired = false;
+
+  function resize() {
+    const cssW = canvas.parentElement.clientWidth;
+    const cssH = Math.max(190, Math.min(360, cssW / 4.6));
+    const dpr = (typeof window !== 'undefined' && window.devicePixelRatio) || 1;
+    canvas.style.width = cssW + 'px';
+    canvas.style.height = cssH + 'px';
+    canvas.width = Math.round(cssW * dpr);
+    canvas.height = Math.round(cssH * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    const worldW = VIEW.xMax - VIEW.xMin;
+    const worldH = VIEW.yMax - VIEW.yMin;
+    const scale = Math.min(cssW / worldW, cssH / worldH);
+    const offX = (cssW - worldW * scale) / 2;
+    const offY = (cssH - worldH * scale) / 2;
+    geom = {
+      cssW,
+      cssH,
+      scale,
+      toX: (x) => offX + (x - VIEW.xMin) * scale,
+      toY: (y) => cssH - offY - (y - VIEW.yMin) * scale,
+    };
+  }
+
+  const font = (size) =>
+    `${size}px Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif`;
+
+  /** Flight time at which the ball stops: the net if it does not clear. */
+  function stopTime(result) {
+    const tEnd = flightTime(problem.hitHeight, problem.g);
+    return result.verdict === Verdict.NET ? Math.min(result.tNet, tEnd) : tEnd;
+  }
+
+  /** Flight clock, seconds after contact (0 before the ball is struck). */
+  function flightClock(phase, result) {
+    if (phase === 'aim') return 0;
+    const t = Math.max(0, clock - SERVE_TIMELINE.contact) * BALL_SLOW;
+    return Math.min(t, stopTime(result));
+  }
+
+  function speedFraction(state) {
+    const s = state.problem.speed;
+    return (state.v - s.min) / (s.max - s.min);
+  }
+
+  // ---------------------------------------------------------------- drawing
+
+  function drawBackground() {
+    const { cssW, cssH, toX, toY } = geom;
+    ctx.fillStyle = palette.sky;
+    ctx.fillRect(0, 0, cssW, cssH);
+
+    const gy = toY(0);
+    ctx.fillStyle = palette.ground;
+    ctx.fillRect(0, gy, cssW, cssH - gy);
+
+    ctx.fillStyle = palette.court;
+    ctx.fillRect(toX(problem.netDistance), gy, toX(problem.courtEnd) - toX(problem.netDistance), 6);
+
+    ctx.strokeStyle = palette.groundLine;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(0, gy);
+    ctx.lineTo(cssW, gy);
+    ctx.stroke();
+
+    tick(0, 'serve line · 0 m');
+    tick(problem.courtEnd, `far baseline · ${problem.courtEnd} m`);
+
+    function tick(x, label) {
+      ctx.strokeStyle = palette.groundLine;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(toX(x), gy - 7);
+      ctx.lineTo(toX(x), gy + 7);
+      ctx.stroke();
+      ctx.fillStyle = palette.muted;
+      ctx.font = font(12);
+      ctx.textAlign = 'center';
+      ctx.fillText(label, toX(x), gy + 22);
+    }
+  }
+
+  function drawNet() {
+    const { toX, toY } = geom;
+    const x = toX(problem.netDistance);
+    const top = toY(problem.netHeight);
+
+    ctx.strokeStyle = palette.net;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(x, toY(0));
+    ctx.lineTo(x, top);
+    ctx.stroke();
+
+    ctx.fillStyle = palette.sky;
+    ctx.fillRect(x - 4, top - 5, 8, 6);
+    ctx.strokeStyle = palette.net;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x - 4, top - 5, 8, 6);
+
+    ctx.globalAlpha = 0.35;
+    const meshBottom = toY(problem.netHeight - 1.0);
+    for (let yy = top; yy < meshBottom; yy += 7) {
+      ctx.beginPath();
+      ctx.moveTo(x - 3.5, yy);
+      ctx.lineTo(x + 3.5, yy);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+
+    ctx.fillStyle = palette.ink;
+    ctx.font = font(12);
+    ctx.textAlign = 'center';
+    ctx.fillText(`net ${problem.netHeight} m`, x, top - 12);
+  }
+
+  /** Dashed marker at the contact height, so the 3.2 m is visible while aiming. */
+  function drawContactMark() {
+    const { toX, toY } = geom;
+    const y = toY(problem.hitHeight);
+    ctx.strokeStyle = palette.groundLine;
+    ctx.setLineDash([4, 4]);
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(toX(-2.1), y);
+    ctx.lineTo(toX(1.1), y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = palette.muted;
+    ctx.font = font(12);
+    ctx.textAlign = 'left';
+    ctx.fillText(`contact ${problem.hitHeight} m`, toX(-2.1), y - 7);
+  }
+
+  function drawPath(pts, color, width, dashed = false) {
+    if (pts.length < 2) return;
+    const { toX, toY } = geom;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    if (dashed) ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    pts.forEach((p, i) => {
+      const sx = toX(p.x);
+      const sy = toY(p.y);
+      i ? ctx.lineTo(sx, sy) : ctx.moveTo(sx, sy);
+    });
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  function drawGhosts(bounds) {
+    ctx.globalAlpha = 0.45;
+    drawPath(trajectory(bounds.vMin, problem.hitHeight, problem.g, 60), palette.bad, 1.5, true);
+    drawPath(trajectory(bounds.vMax, problem.hitHeight, problem.g, 60), palette.info, 1.5, true);
+    ctx.globalAlpha = 1;
+  }
+
+  function pathColor(verdict) {
+    if (verdict === Verdict.IN) return palette.ok;
+    if (verdict === Verdict.NET) return palette.bad;
+    return palette.info;
+  }
+
+  function drawBall(result, tf) {
+    const { toX, toY } = geom;
+    const bx = result.v * tf;
+    const by = problem.hitHeight - 0.5 * problem.g * tf * tf;
+    ctx.beginPath();
+    ctx.arc(toX(bx), toY(by), 6, 0, Math.PI * 2);
+    ctx.fillStyle = palette.ball;
+    ctx.fill();
+  }
+
+  function drawOutcome(result) {
+    const { toX, toY, cssW } = geom;
+
+    // too slow to even reach the net: it lands short, on this side
+    const short = result.verdict === Verdict.NET && result.xLand < problem.netDistance;
+
+    if (result.verdict === Verdict.NET && !short) {
+      const x = toX(problem.netDistance);
+      const y = toY(Math.max(0, result.heightAtNet));
+      ctx.strokeStyle = palette.bad;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x - 7, y - 7);
+      ctx.lineTo(x + 7, y + 7);
+      ctx.moveTo(x + 7, y - 7);
+      ctx.lineTo(x - 7, y + 7);
+      ctx.stroke();
+      ctx.fillStyle = palette.bad;
+      ctx.font = font(12);
+      ctx.textAlign = 'left';
+      ctx.fillText('hits the net', x + 12, y + 4);
+      return;
+    }
+
+    const gy = toY(0);
+    const x = toX(Math.min(Math.max(result.xLand, VIEW.xMin + 0.3), VIEW.xMax - 0.3));
+    ctx.fillStyle = result.verdict === Verdict.IN ? palette.ok : palette.bad;
+    ctx.beginPath();
+    ctx.ellipse(x, gy, 7, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.font = font(12);
+    ctx.textAlign = 'center';
+    const label = `${result.xLand.toFixed(1)} m`;
+    const half = ctx.measureText(label).width / 2;
+    ctx.fillText(label, Math.min(Math.max(x, half + 4), cssW - half - 4), gy - 10);
+  }
+
+  function render() {
+    const state = store.get();
+    const { phase, result, showGhosts } = state;
+    if (!geom) resize();
+
+    drawBackground();
+    drawContactMark();
+    if (showGhosts) drawGhosts(result.bounds);
+
+    if (phase !== 'aim') {
+      const tf = flightClock(phase, result);
+      const stop = stopTime(result);
+      const flown = trajectory(result.v, problem.hitHeight, problem.g).filter((p) => p.t <= tf);
+      drawPath(flown, pathColor(result.verdict), 2.5);
+      if (tf >= stop) drawOutcome(result);
+      if (clock >= SERVE_TIMELINE.contact) drawBall(result, tf);
+    }
+
+    drawNet();
+    player.draw(ctx, geom, palette, {
+      mode: phase === 'aim' ? 'aim' : 'serve',
+      t: clock,
+      speedFrac: speedFraction(state),
+      // the player only holds the ball until it is struck
+      showBall: phase === 'aim' || clock < SERVE_TIMELINE.contact,
+    });
+  }
+
+  // ---------------------------------------------------------------- loop
+
+  function loop(ts) {
+    const dt = lastTs ? Math.min(0.05, (ts - lastTs) / 1000) : 0;
+    lastTs = ts;
+
+    const { phase, result } = store.get();
+    if (phase === 'serve') {
+      clock += dt;
+      const finished =
+        clock - SERVE_TIMELINE.contact >= stopTime(result) / BALL_SLOW + SETTLE &&
+        clock >= SERVE_TIMELINE.land;
+      if (finished && !landedFired) {
+        landedFired = true;
+        onLanded?.(result);
+      }
+    }
+
+    render();
+    requestAnimationFrame(loop);
+  }
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('resize', () => {
+      resize();
+      render();
+    });
+  }
+  onSchemeChange(() => {
+    palette = readPalette();
+    render();
+  });
+
+  resize();
+  requestAnimationFrame(loop);
+
+  return {
+    render,
+    resize,
+    /** Start (or restart) the serve animation. */
+    serve() {
+      clock = 0;
+      landedFired = false;
+    },
+    /** Back to the standing pose. */
+    reset() {
+      clock = 0;
+      landedFired = false;
+    },
+  };
+}
