@@ -121,8 +121,13 @@ itself is plain static files and needs no build step.
 
 ## Notes
 
+- The canvas is the framed box itself (no panel wrapper), stretched by the grid
+  row to the same footprint as the Speed panel. `scene.js` measures that cell
+  and never assumes an aspect ratio, so it adapts to any size; because x and y
+  share one scale the court is anchored to the bottom and the spare height
+  becomes sky, which is the panel colour and so reads as padding.
 - x and y share one scale on the canvas, so the parabola is undistorted; the
-  cost is that a 0.2 m clearance over the net is only about 9 px on screen.
+  cost is that a 0.2 m clearance over the net is only about 11 px on screen.
 - Air resistance is ignored. For a real volleyball it is not negligible — worth
   raising in class.
 - Judgement: clearing the net is strict (grazing counts as a fault); a ball

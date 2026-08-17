@@ -32,12 +32,21 @@ export function createScene(canvas, store, { onLanded } = {}) {
   let lastTs = 0;
   let landedFired = false;
 
+  /**
+   * The canvas fills its cell, so the size comes from the cell — not from a
+   * hard-coded aspect ratio. Whatever vertical slack is left over is centred
+   * and painted in the panel colour, which reads as padding.
+   */
+  function measure() {
+    const box = canvas.parentElement;
+    const cssW = box.clientWidth || 640;
+    const minH = cssW / ((VIEW.xMax - VIEW.xMin) / (VIEW.yMax - VIEW.yMin));
+    return { cssW, cssH: Math.max(box.clientHeight || 0, minH) };
+  }
+
   function resize() {
-    const cssW = canvas.parentElement.clientWidth;
-    const cssH = Math.max(190, Math.min(360, cssW / 4.6));
+    const { cssW, cssH } = measure();
     const dpr = (typeof window !== 'undefined' && window.devicePixelRatio) || 1;
-    canvas.style.width = cssW + 'px';
-    canvas.style.height = cssH + 'px';
     canvas.width = Math.round(cssW * dpr);
     canvas.height = Math.round(cssH * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -46,7 +55,9 @@ export function createScene(canvas, store, { onLanded } = {}) {
     const worldH = VIEW.yMax - VIEW.yMin;
     const scale = Math.min(cssW / worldW, cssH / worldH);
     const offX = (cssW - worldW * scale) / 2;
-    const offY = (cssH - worldH * scale) / 2;
+    // the court sits on the bottom of the box; any spare height becomes sky,
+    // which is the panel colour anyway and so reads as padding
+    const offY = Math.min(4, cssH - worldH * scale);
     geom = {
       cssW,
       cssH,
@@ -198,11 +209,12 @@ export function createScene(canvas, store, { onLanded } = {}) {
   }
 
   function drawBall(result, tf) {
-    const { toX, toY } = geom;
+    const { toX, toY, scale } = geom;
     const bx = result.v * tf;
     const by = problem.hitHeight - 0.5 * problem.g * tf * tf;
     ctx.beginPath();
-    ctx.arc(toX(bx), toY(by), 6, 0, Math.PI * 2);
+    // same radius the player uses, so the ball does not change size at contact
+    ctx.arc(toX(bx), toY(by), Math.max(4, 0.105 * scale), 0, Math.PI * 2);
     ctx.fillStyle = palette.ball;
     ctx.fill();
   }

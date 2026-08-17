@@ -222,18 +222,22 @@ input[type="range"][data-verdict="out"] { accent-color: var(--blue); }
     cursor: default;
 }
 
-/* ---------- stage ---------- */
-.stage-panel {
-    display: flex;
-    align-items: center; /* the canvas keeps its own aspect; centre the slack */
-    padding: 18px;
+/* ---------- stage ----------
+   The canvas is the box: same border and radius as .panel, stretched by the
+   grid row to exactly the height of the Speed panel next to it. The element is
+   absolutely positioned so measuring the cell can never feed back into its
+   own size; scene.js reads the cell and centres the court inside it. */
+.stage {
+    position: relative;
+    min-height: 200px;
 }
 
-.stage-panel canvas { flex: 1; }
-
-canvas {
+.stage canvas {
+    position: absolute;
+    inset: 0;
     display: block;
     width: 100%;
+    height: 100%;
     border: 1px solid var(--line);
     border-radius: 8px;
     background: var(--canvas-sky);
