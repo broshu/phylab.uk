@@ -20,6 +20,8 @@ const check = (name, cond, detail = '') => results.push({ name, ok: !!cond, deta
 function harness({ attemptCount = 0 } = {}) {
   const served = [];
   const trails = [];
+  let markers = [];
+  let cleared = 0;
   const store = createStore({
     problem,
     v: problem.speed.default,
@@ -41,6 +43,14 @@ function harness({ attemptCount = 0 } = {}) {
         if (!trails.some((t) => t.v === v)) trails.push({ v, label });
       },
       clearTrails: () => trails.splice(0, trails.length),
+      mark: (list) => {
+        markers = list;
+      },
+      clearCourt: () => {
+        cleared += 1;
+        trails.splice(0, trails.length);
+        markers = [];
+      },
     },
     timing: { message: 0 },
   });
@@ -52,6 +62,12 @@ function harness({ attemptCount = 0 } = {}) {
     coach,
     served,
     trails,
+    get markers() {
+      return markers;
+    },
+    get cleared() {
+      return cleared;
+    },
     messages: () => log.children.map((c) => c.textContent),
     coachSays: () =>
       log.children.filter((c) => c.className.includes('coach')).map((c) => c.textContent),
@@ -111,7 +127,8 @@ const netResult = evaluate(problem, 15);
   await h.choose('Too slow');
   check('no further serves', h.served.length === 5);
   check('ends on the physical reason', h.said(/spends longer on that trip/i));
-  check('and tells them what to do', /try a bigger speed/i.test(h.messages().at(-1) || ''));
+  check('then moves on to how much faster', h.said(/how much faster, at least/i));
+  check('with three candidates marked', h.markers.length === 3);
 }
 
 // ---------------------------------------------------------------- net fault, right away
@@ -122,6 +139,55 @@ const netResult = evaluate(problem, 15);
   await h.choose('Too slow');
   check('correct answer skips the demonstration', h.served.length === 0);
   check('but still explains why', h.said(/arrives lower/i));
+
+  // ---- and moves straight on to "how much faster, at least?" ----
+  check('asks how much faster', h.said(/how much faster, at least/i));
+  check('clears the court for the geometry question', h.cleared === 1);
+  check('marks three candidates', h.markers.length === 3);
+  check(
+    'A is the top of the net',
+    h.markers[0].id === 'A' &&
+      h.markers[0].x === problem.netDistance &&
+      h.markers[0].y === problem.netHeight,
+    JSON.stringify(h.markers),
+  );
+  check(
+    'B is the foot of the net',
+    h.markers[1].id === 'B' && h.markers[1].x === problem.netDistance && h.markers[1].y === 0,
+  );
+  check(
+    'C is the far baseline',
+    h.markers[2].id === 'C' && h.markers[2].x === problem.courtEnd && h.markers[2].y === 0,
+  );
+  check('says the marks can be tapped', h.said(/tap them on the court/i));
+  check('offers three options', h.optionLabels().length === 3, h.optionLabels().join(' / '));
+  check('and labels them with what they are', /top of the net/i.test(h.optionLabels()[0] || ''));
+
+  // a wrong pick is corrected, then the question comes back
+  await h.choose('B — the foot of the net');
+  check('B is corrected as a serve in the net', h.said(/below the tape at the net/i));
+  check('and the question is asked again', h.optionLabels().length === 3);
+
+  // answering by clicking the court instead of the buttons
+  check('the marker click is accepted', h.coach.answer('A') === true);
+  await dom.settle();
+  check('A is confirmed', h.said(/just brushes the top of the net/i), h.messages().join(' | '));
+  check('nothing left waiting', h.optionLabels().length === 0);
+  check('an unknown answer is ignored', h.coach.answer('Z') === false);
+}
+
+// ---------------------------------------------------------------- picking C
+{
+  const h = harness({ attemptCount: 1 });
+  h.coach.reactTo(netResult);
+  await dom.settle();
+  await h.choose('Too slow');
+  await h.choose('C — the far baseline');
+  check('C is named as the other limit', h.said(/fastest\* legal|fastest.{0,3} legal/i),
+    h.messages().join(' | '));
+  check('and the question returns', h.optionLabels().length === 3);
+  await h.choose('A — the top of the net');
+  check('A accepted after a detour', h.said(/just brushes the top of the net/i));
 }
 
 // ---------------------------------------------------------------- long, and good

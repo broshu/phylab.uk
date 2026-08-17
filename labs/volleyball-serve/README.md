@@ -129,7 +129,20 @@ What it says now:
   it. Slower is worse, which is the surprise the question is for. Then it asks
   again and explains that a slower ball spends longer falling on the way to the
   net, so it has to be hit *faster*.
+- **how much faster, at least?** — the follow-up, once the student is on
+  "faster". The way in is the borderline serve: the slowest one that still
+  counts only just gets away with it, so its path must pass through one
+  particular point. The coach clears the court, marks three candidates — **A**
+  the top of the net, **B** the foot of the net, **C** the far baseline — and
+  asks which one. B is corrected as a ball already under the tape; C is
+  acknowledged as the *other* limit, where the fastest legal serve lands. The
+  answer is A. What happens after that is the next thing to write; the TODO in
+  `criticalPoint()` marks the spot.
 - **past the baseline** / **in** — one message from the rule-based `tutor.js`.
+
+The markers are clickable: `scene.js` hit-tests them and calls
+`coach.answer(id)`, which resolves the question on screen exactly as the buttons
+do. So a student can answer by pointing at the court or by pressing a button.
 
 Which answer is "correct" is derived from `bounds.vMin`, not hard-coded, so the
 script stays right if the problem data changes.
@@ -149,9 +162,11 @@ itself is plain static files and needs no build step.
 
 - **More coaching** — add an async function to `services/coach-script.js` and
   route to it from `judge()` or `reaction()`. Nothing else changes: the DSL, the
-  demo serves and the trails are already there. The place to continue is marked
-  with a TODO in `netFault()`: the student now knows to serve faster, but not yet
-  what stops them serving as hard as they like.
+  demo serves, the trails and the clickable markers are already there. The place
+  to continue is the TODO in `criticalPoint()`: point A has to become a number —
+  the 1.0 m fall from the hand to the tape gives the time to the net, and 9 m
+  divided by that time gives the slowest legal speed. After that, the other
+  boundary (point C) is still untouched.
 - **Bring back the Working panel** — add a `<section class="panel" id="…">`
   to `index.html` and one line to `main.js`:
   `createDerivation(document.querySelector('#derivation'), store)` or

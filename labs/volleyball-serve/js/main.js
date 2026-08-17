@@ -28,7 +28,8 @@ const store = createStore({
   v: problem.speed.default,
   phase: 'aim',
   showGhosts: false,
-  trails: [], // earlier serves the tutor is keeping on screen
+  trails: [], // earlier serves the coach is keeping on screen
+  markers: [], // lettered points the coach is asking about
   result: evaluate(problem, problem.speed.default),
 });
 
@@ -72,7 +73,12 @@ const scene = createScene(document.querySelector('#stage'), store, {
     attempts.record(result);
     coach.reactTo(result);
   },
+  // clicking a lettered point on the court answers the coach's question
+  onMarkerClick: (id) => coach.answer(id),
 });
+
+// the speed the student chose, so the coach's demonstrations can hand it back
+let studentSpeed = store.get().v;
 
 /** What a coach script is allowed to do to the scene. */
 const runtime = {
@@ -91,6 +97,13 @@ const runtime = {
   clearTrails() {
     store.set({ trails: [] });
   },
+  mark(markers) {
+    store.set({ markers });
+  },
+  clearCourt() {
+    store.set({ v: studentSpeed, phase: 'aim', trails: [], markers: [] });
+    scene.reset();
+  },
 };
 
 const coach = createCoach(document.querySelector('#coach'), store, {
@@ -102,10 +115,14 @@ const coach = createCoach(document.querySelector('#coach'), store, {
 createControls(document.querySelector('#controls'), store, {
   onServe: () => {
     coach.interrupt(); // the student is taking over from whatever was being said
-    store.set({ phase: 'serve', trails: [] });
+    studentSpeed = store.get().v;
+    store.set({ phase: 'serve', trails: [], markers: [] });
     scene.serve();
   },
-  onAim: () => scene.reset(),
+  onAim: () => {
+    studentSpeed = store.get().v;
+    scene.reset();
+  },
 });
 
 coach.greet();

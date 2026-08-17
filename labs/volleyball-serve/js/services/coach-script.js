@@ -7,6 +7,8 @@
  *   await serve(14, { keep: true })     a demonstration serve, resolves on landing
  *   const a = await ask('…', [...])     buttons, resolves with the id picked
  *   keep(v, label)                      leave a trajectory on screen
+ *   mark([{id, x, y}])                  lettered, clickable points on the court
+ *   clearCourt()                        wipe the paths and markers
  *
  * Two entry points: opening() before anything is served, and reaction() after
  * every serve the student makes.
@@ -68,11 +70,71 @@ async function netFault(dsl) {
         'slower ball spends longer on that trip, so it arrives lower. To get ' +
         'over, it has to reach the net sooner: serve faster.',
     );
-    // TODO next stage: lead on to the other boundary — how hard is too hard?
-    await say('Try a bigger speed.');
-  } else {
-    await say('Careful — it never got over the net, so it cannot have been too fast.');
+    return criticalPoint(dsl);
   }
+
+  await say('Careful — it never got over the net, so it cannot have been too fast.');
+}
+
+/**
+ * Now the useful question: faster, but how much faster *at least*? The way in is
+ * the borderline serve — the slowest one that still counts. It only just gets
+ * away with it, so it must pass through one particular point on the court.
+ * Three candidates are marked on the diagram and the student picks one, either
+ * with the buttons or by clicking the court itself.
+ */
+async function criticalPoint(dsl) {
+  const { say, ask, mark, clearCourt, problem } = dsl;
+
+  await say('So: faster. But how much faster, at least?');
+  await say(
+    'Think about the borderline serve — the slowest one that still counts. It ' +
+      'only just gets away with it, so its path must pass exactly through one ' +
+      'particular point.',
+  );
+
+  clearCourt();
+  mark([
+    { id: 'A', x: problem.netDistance, y: problem.netHeight },
+    { id: 'B', x: problem.netDistance, y: 0 },
+    { id: 'C', x: problem.courtEnd, y: 0 },
+  ]);
+  await say('I have marked three candidates. You can tap them on the court, too.');
+
+  let answer = await ask('Which point does the slowest legal serve go through?', [
+    { id: 'A', label: 'A — the top of the net', reply: 'A' },
+    { id: 'B', label: 'B — the foot of the net', reply: 'B' },
+    { id: 'C', label: 'C — the far baseline', reply: 'C' },
+  ]);
+
+  if (answer === 'B') {
+    await say(
+      'To reach B the ball would have to be below the tape at the net — that ' +
+        'is a serve in the net, not a legal one.',
+    );
+  } else if (answer === 'C') {
+    await say(
+      'C is a real limit, but the other one: it is where the *fastest* legal ' +
+        'serve lands. We are after the slowest.',
+    );
+  }
+
+  if (answer !== 'A') {
+    answer = await ask('So which point is the slowest legal serve pinned to?', [
+      { id: 'A', label: 'A — the top of the net', reply: 'A' },
+      { id: 'B', label: 'B — the foot of the net', reply: 'B' },
+      { id: 'C', label: 'C — the far baseline', reply: 'C' },
+    ]);
+  }
+
+  if (answer === 'A') {
+    await say('Yes — A. The slowest serve that counts is the one that just brushes the top of the net.');
+  } else {
+    await say('It is A: the ball just brushing the top of the net. Any slower and it is under the tape.');
+  }
+
+  // TODO next stage: turn point A into a number — the fall from 3.2 m to 2.2 m
+  // gives the time to the net, and 9 m divided by that time gives the speed.
 }
 
 /** Past the baseline: the flight time is fixed, so harder only means further. */

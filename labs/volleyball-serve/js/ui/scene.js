@@ -11,8 +11,11 @@
  *   'demo'  a serve played by the tutor: no jump, full-speed flight, so several
  *           of them can be shown in a row. Never sets a verdict.
  *
- * store.trails holds earlier trajectories to keep on screen (the tutor uses
+ * store.trails holds earlier trajectories to keep on screen (the coach uses
  * them to show a family of serves); each entry is { v, label? }.
+ * store.markers holds lettered points the coach wants to talk about; each entry
+ * is { id, x, y } in metres. They are clickable, which is how the student can
+ * answer a question about the court by pointing at it.
  */
 import { trajectory, flightTime } from '../core/physics.js';
 import { Verdict, evaluate } from '../core/evaluator.js';
@@ -27,7 +30,10 @@ const BALL_SLOW = 0.5; // a student's serve is played at half speed
 const SETTLE = 0.45; // pause after the ball lands before the verdict is called
 const DEMO_SETTLE = 0.3; // the tutor's serves follow each other more quickly
 
-export function createScene(canvas, store, { onLanded } = {}) {
+const MARKER_R = 11; // radius of a lettered marker, css px
+const MARKER_HIT = 20; // how close a click has to be
+
+export function createScene(canvas, store, { onLanded, onMarkerClick } = {}) {
   const ctx = canvas.getContext('2d');
   const { problem } = store.get();
   const player = createPlayer(problem);
@@ -297,9 +303,43 @@ export function createScene(canvas, store, { onLanded } = {}) {
     });
   }
 
+  /** Lettered, clickable points the coach is asking about. */
+  function drawMarkers(markers) {
+    const { toX, toY } = geom;
+    markers.forEach(({ id, x, y }) => {
+      const cx = toX(x);
+      const cy = toY(y);
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, MARKER_R, 0, Math.PI * 2);
+      ctx.fillStyle = palette.info;
+      ctx.fill();
+      ctx.strokeStyle = palette.sky;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.fillStyle = palette.sky;
+      ctx.font = `600 ${font(12)}`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(id, cx, cy + 0.5);
+      ctx.textBaseline = 'alphabetic';
+    });
+  }
+
+  /** Which marker, if any, is under a point in css pixels. */
+  function markerAt(px, py) {
+    if (!geom) return null;
+    const { toX, toY } = geom;
+    return (
+      store.get().markers?.find(({ x, y }) => Math.hypot(toX(x) - px, toY(y) - py) <= MARKER_HIT) ??
+      null
+    );
+  }
+
   function render() {
     const state = store.get();
-    const { phase, result, showGhosts, trails } = state;
+    const { phase, result, showGhosts, trails, markers } = state;
     if (!geom) resize();
 
     drawBackground();
@@ -319,6 +359,7 @@ export function createScene(canvas, store, { onLanded } = {}) {
     }
 
     drawNet();
+    if (markers?.length) drawMarkers(markers);
     player.draw(ctx, geom, palette, {
       mode: phase === 'serve' ? 'serve' : 'aim',
       t: clock,
@@ -359,6 +400,22 @@ export function createScene(canvas, store, { onLanded } = {}) {
   if (typeof window !== 'undefined') {
     window.addEventListener('resize', refit);
   }
+
+  // pointing at the court is a way of answering
+  const pointer = (e) => {
+    if (typeof e.offsetX === 'number') return { px: e.offsetX, py: e.offsetY };
+    const r = canvas.getBoundingClientRect?.() ?? { left: 0, top: 0 };
+    return { px: e.clientX - r.left, py: e.clientY - r.top };
+  };
+  canvas.addEventListener?.('click', (e) => {
+    const { px, py } = pointer(e);
+    const hit = markerAt(px, py);
+    if (hit) onMarkerClick?.(hit.id);
+  });
+  canvas.addEventListener?.('mousemove', (e) => {
+    const { px, py } = pointer(e);
+    canvas.style.cursor = markerAt(px, py) ? 'pointer' : 'default';
+  });
   // the cell also changes height when the panel beside it does (opening Help)
   if (typeof ResizeObserver === 'function' && canvas.parentElement) {
     new ResizeObserver(refit).observe(canvas.parentElement);

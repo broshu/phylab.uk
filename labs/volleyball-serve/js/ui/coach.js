@@ -35,6 +35,10 @@ export function createCoach(root, store, { tutor, attempts, runtime, timing } = 
   const log = root.querySelector('#coachLog');
   const options = root.querySelector('#coachOptions');
 
+  // the question currently on screen, so it can also be answered by clicking
+  // the court instead of the buttons
+  let pending = null;
+
   function bubble(text, who = 'coach') {
     const p = document.createElement('p');
     p.className = `msg msg-${who}`;
@@ -64,17 +68,20 @@ export function createCoach(root, store, { tutor, attempts, runtime, timing } = 
         guard(mine);
         bubble(text);
         const id = await new Promise((resolve) => {
+          const pick = (choice) => {
+            pending = null;
+            options.innerHTML = '';
+            bubble(choice.reply ?? choice.label, 'mine');
+            resolve(choice.id);
+          };
+          pending = { choices, pick };
           options.innerHTML = '';
           choices.forEach((choice) => {
             const btn = document.createElement('button');
             btn.type = 'button';
             btn.className = 'ghost-button option';
             btn.textContent = choice.label;
-            btn.addEventListener('click', () => {
-              options.innerHTML = '';
-              bubble(choice.label, 'mine');
-              resolve(choice.id);
-            });
+            btn.addEventListener('click', () => pick(choice));
             options.appendChild(btn);
           });
         });
@@ -99,6 +106,16 @@ export function createCoach(root, store, { tutor, attempts, runtime, timing } = 
       keep(v, label) {
         runtime.trail(v, label);
       },
+
+      /** Put lettered, clickable points on the court. */
+      mark(markers) {
+        runtime.mark(markers);
+      },
+
+      /** Wipe the court back to a clean standing pose. */
+      clearCourt() {
+        runtime.clearCourt();
+      },
     };
   }
 
@@ -106,6 +123,7 @@ export function createCoach(root, store, { tutor, attempts, runtime, timing } = 
   function run(script, extra = {}) {
     token += 1;
     const mine = token;
+    pending = null;
     options.innerHTML = '';
 
     const state = store.get();
@@ -135,9 +153,20 @@ export function createCoach(root, store, { tutor, attempts, runtime, timing } = 
       return run(reaction, { result, v: result.v });
     },
 
+    /**
+     * Answer the question on screen from somewhere else — clicking a marker on
+     * the court. Ignored if that id is not one of the choices being offered.
+     */
+    answer(id) {
+      const choice = pending?.choices.find((c) => c.id === id);
+      if (choice) pending.pick(choice);
+      return !!choice;
+    },
+
     /** Drop whatever is being said (the student has taken over). */
     interrupt() {
       token += 1;
+      pending = null;
       options.innerHTML = '';
     },
   };
