@@ -282,8 +282,15 @@ export function createScene(canvas, store, { onLanded } = {}) {
         if (label) {
           ctx.globalAlpha = 0.75;
           ctx.font = font(11);
-          ctx.textAlign = 'right';
-          ctx.fillText(label, toX(end.x) - 7, toY(end.y) + 4);
+          if (end.y < 0.05) {
+            // it landed short: label below the ground line, where nothing else is
+            ctx.textAlign = 'center';
+            ctx.fillText(label, toX(end.x), toY(0) + 14);
+          } else {
+            // it died on the net: label just to the left of where it stopped
+            ctx.textAlign = 'right';
+            ctx.fillText(label, toX(end.x) - 7, toY(end.y) + 4);
+          }
         }
       }
       ctx.globalAlpha = 1;

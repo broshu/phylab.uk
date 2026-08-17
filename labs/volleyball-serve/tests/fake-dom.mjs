@@ -114,5 +114,26 @@ export function installDom() {
     for (let i = 0; i < rounds; i++) await new Promise((r) => setTimeout(r, 0));
   };
 
-  return { registry, pumpFrame, pump, tick, settle, el: (sel) => document.querySelector(sel) };
+  /**
+   * Run frames while real time also passes, for code that mixes animation with
+   * real setTimeout pauses (the coach's speaking rhythm). One frame per ~4 ms of
+   * wall clock, so the animation runs a few times faster than real time.
+   */
+  async function play(realMs) {
+    const end = Date.now() + realMs;
+    while (Date.now() < end) {
+      pumpFrame();
+      await new Promise((r) => setTimeout(r, 4));
+    }
+  }
+
+  return {
+    registry,
+    pumpFrame,
+    pump,
+    tick,
+    play,
+    settle,
+    el: (sel) => document.querySelector(sel),
+  };
 }

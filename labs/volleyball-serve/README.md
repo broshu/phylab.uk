@@ -8,7 +8,7 @@ point of the exercise.
 ## Flow
 
 ```
-aim ──serve──▶ serve ──ball lands──▶ done
+aim ──serve──▶ serve ──ball lands──▶ done ──▶ the coach comments
  ▲                                    │
  └────────── move the slider ─────────┘
 ```
@@ -23,9 +23,11 @@ aim ──serve──▶ serve ──ball lands──▶ done
 - **done** — the full path, the landing mark and the verdict appear. The serve
   is logged automatically. Moving the slider returns to aim.
 
-The page itself is deliberately spare: task, speed, animation. `ui/derivation.js`
-(step-by-step numbers) and `ui/feedback.js` (coaching text) are written and
-tested but not mounted — see *Extension points*.
+There is a fourth phase, `'demo'`, for the serves the coach plays itself.
+
+The page is deliberately spare: task, animation, speed, coach.
+`ui/derivation.js` (step-by-step numbers) and `ui/feedback.js` (a static
+coaching panel) are written and tested but not mounted — see *Extension points*.
 
 ## Problem data
 
@@ -50,6 +52,11 @@ is why actual serves are hit with topspin and a downward angle rather than flat.
 
 ## Layout
 
+On screen: the task across the top; below it the animation with the speed strip
+under it on the left, and the coach on the right. The two columns are exactly
+`--work-h` tall (set in `.layout`), so the coach box is fixed and its
+conversation scrolls inside rather than stretching the page.
+
 ```
 index.html            markup only, no logic
 css/style.css         PhyLab tokens + dark mode
@@ -61,14 +68,14 @@ js/
     evaluator.js      both boundaries → one result object
     state.js          tiny store (get / set / subscribe)
   services/
-    tutor.js          coaching text (rule-based today, async interface)
-    help-script.js    what the tutor says: one async function per branch
+    tutor.js          rule-based coaching text (async interface)
+    coach-script.js   what the coach says: one async function per situation
     attempts.js       attempt log, scoring, CSV export
   ui/
     scene.js          canvas: court, net, trajectory, phase clock
     player.js         the server: standing wind-up, toss, jump, contact
-    controls.js       speed slider, Serve and Help
-    help.js           the tutor dialogue: messages, options, ✕
+    controls.js       the speed strip: value, slider, Serve
+    coach.js          the coach panel: messages, options, cancellation
     derivation.js     step-by-step working (not mounted)
     feedback.js       verdict + coaching (not mounted)
     theme.js          canvas palette read from CSS variables
@@ -76,7 +83,7 @@ tests/
   fake-dom.mjs        shared DOM/canvas stub and manual frame clock
   check.mjs           numerical self-check
   smoke.mjs           full assembly against a fake DOM
-  help-flow.mjs       the tutor script, with a stub runtime
+  coach-flow.mjs      the coach scripts, with a stub runtime
 ```
 
 Data flows one way: `config` → `store` → `evaluator` → subscribed UI modules.
@@ -84,39 +91,45 @@ UI code never does physics; `core/` never touches the DOM; modules never call
 each other, only the store. A new panel is `createXxx(root, store)` plus one
 line in `main.js`.
 
-## The tutor (Help)
+## The coach
 
-Help turns the Speed block into a conversation; the ✕ in its corner turns it
-back into the slider, restoring the speed the student had set. The tutor can
-play its own serves — phase `'demo'`: no jump, full-speed flight, so several
-land in a few seconds — and can leave earlier ones on screen as faint trails.
-Demo serves never set a verdict and are never logged as attempts.
+The coach is a permanent panel, not a button: it speaks when the page opens and
+again after every serve. It can play serves of its own — phase `'demo'`: no
+jump, full-speed flight, so several land in a few seconds — and leave earlier
+ones on screen as faint grey trails labelled with their speed. Demo serves never
+set a verdict and are never logged as attempts; the slider and Serve are locked
+while one is in the air. Serving again interrupts whatever the coach was saying.
 
-A branch is an async function in `services/help-script.js`, written as a script:
+A script is an async function in `services/coach-script.js`, and reads like the
+conversation it produces:
 
 ```js
-async function coldStart({ say, ask, serve, problem, bounds }) {
-  await say('…');
-  const first = await serve(15, { keep: true, label: '15' });  // resolves on landing
-  const answer = await ask('Too fast or too slow?', [...]);    // resolves on click
+async function netFault({ say, ask, serve, keep, v, result, bounds }) {
+  await say(`${v} m/s reached the net only …`);
+  const answer = await ask('Was that too fast, or too slow?', [...]); // waits for a click
+  if (answer !== tooFastOrSlow(v, bounds)) {
+    keep(v, `${v}`);                                                  // hold their path
+    for (const s of slowerFamily(v)) await serve(s, { keep: true });   // waits for landing
+  }
 }
 ```
 
-`ui/help.js` supplies that DSL, renders the messages and buttons, and cancels a
-running script if the panel is closed mid-sentence. `pickBranch()` chooses the
-script from what the student has done, so Help means different things at
-different moments.
+`ui/coach.js` supplies that DSL, renders messages and option buttons, and
+abandons a running script the moment something else happens.
 
-Implemented so far:
+What it says now:
 
-- **cold-start** (no serves yet) — offers to just try something, serves the
-  default 15 m/s, then asks whether that was too fast or too slow. Answer "too
-  fast" and it serves 14, 13, 12, 11, 10 in quick succession, keeping every
-  path: each one dies lower on the net and the last two do not even reach it.
-  Slower is worse, which is the point. Then it asks again and explains that a
-  slower ball spends longer falling on its way to the net.
-- **after-serves** — provisional: replays the rule-based hint from `tutor.js`
-  for the last serve. This is the next branch to write properly.
+- **on load** — introduces itself and offers a way in for a student with no idea
+  where to start: it serves the default 15 m/s itself and then treats it exactly
+  like a serve of their own. Serving cancels the offer.
+- **into the net** — names the height the ball reached at the net and how far
+  below the tape that is, then asks whether the serve was too fast or too slow.
+  Answer "too fast" and it serves five slower speeds in quick succession, keeping
+  every path: each one dies lower on the net and the slowest do not even reach
+  it. Slower is worse, which is the surprise the question is for. Then it asks
+  again and explains that a slower ball spends longer falling on the way to the
+  net, so it has to be hit *faster*.
+- **past the baseline** / **in** — one message from the rule-based `tutor.js`.
 
 Which answer is "correct" is derived from `bounds.vMin`, not hard-coded, so the
 script stays right if the problem data changes.
@@ -126,7 +139,7 @@ script stays right if the problem data changes.
 ```bash
 node tests/check.mjs      # boundary speeds, verdict flips, sample table
 node tests/smoke.mjs      # assembly + render loop against a stub DOM
-node tests/help-flow.mjs  # the tutor script, both answers, closing early
+node tests/coach-flow.mjs # the coach scripts: both answers, every verdict
 ```
 
 `package.json` exists only so node treats the `.js` files as ES modules; the lab
@@ -134,10 +147,12 @@ itself is plain static files and needs no build step.
 
 ## Extension points
 
-- **More tutor branches** — add an async function to `services/help-script.js`
-  and a case to `pickBranch()`. Nothing else changes: the DSL, the demo serves
-  and the trails are already there.
-- **Bring back Working / Coaching** — add a `<section class="panel" id="…">`
+- **More coaching** — add an async function to `services/coach-script.js` and
+  route to it from `judge()` or `reaction()`. Nothing else changes: the DSL, the
+  demo serves and the trails are already there. The place to continue is marked
+  with a TODO in `netFault()`: the student now knows to serve faster, but not yet
+  what stops them serving as hard as they like.
+- **Bring back the Working panel** — add a `<section class="panel" id="…">`
   to `index.html` and one line to `main.js`:
   `createDerivation(document.querySelector('#derivation'), store)` or
   `createFeedback(document.querySelector('#feedback'), store, { tutor, attempts })`.

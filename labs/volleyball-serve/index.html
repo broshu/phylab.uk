@@ -24,17 +24,19 @@
             <p id="taskPrompt"></p>
         </section>
 
-        <!-- one block, two faces: the speed slider, or the tutor dialogue -->
-        <section class="panel side-panel">
-            <div class="controls" id="controls"></div>
-            <div class="help" id="help" hidden></div>
-        </section>
+        <!-- left column: the animation, with the speed strip under it -->
+        <div class="stage-col">
+            <!-- no panel wrapper: the canvas itself is the framed box -->
+            <section class="stage">
+                <canvas id="stage"></canvas>
+            </section>
+            <section class="panel speed-panel">
+                <div class="strip" id="controls"></div>
+            </section>
+        </div>
 
-        <!-- no panel wrapper: the canvas itself is the framed box, so it lines
-             up with the Speed panel instead of sitting inside a second border -->
-        <section class="stage">
-            <canvas id="stage"></canvas>
-        </section>
+        <!-- right column: the coach, same height, scrolls internally -->
+        <section class="panel coach-panel" id="coach"></section>
     </main>
 
     <script type="module" src="js/main.js"></script>

@@ -5,7 +5,7 @@
 import { installDom } from './fake-dom.mjs';
 
 const dom = installDom();
-const { el, tick, settle } = dom;
+const { el, tick, play, settle } = dom;
 
 const errors = [];
 process.on('uncaughtException', (e) => errors.push(e));
@@ -22,7 +22,7 @@ const control = (sel) => el('#controls').querySelector(sel);
 check('assembly ran without errors', errors.length === 0, errors[0]?.stack || '');
 check('window.__vb exported', !!api);
 
-if (api) {
+try {
   const { store, attempts } = api;
 
   // ---- aiming ----
@@ -84,31 +84,48 @@ if (api) {
   check('phase still resolves to done', store.get().phase === 'done');
   attempts.reset();
 
-  // ---- Help swaps the block, ✕ swaps it back ----
-  slider.value = '18';
+  // ---- the coach reacts to a serve into the net ----
+  const coachLog = () => el('#coach').querySelector('#coachLog').children;
+  const coachOptions = () => el('#coach').querySelector('#coachOptions').children;
+  check('the coach greeted on load', coachLog().length > 0);
+
+  slider.value = '15';
   slider.dispatch('input');
-  control('#help').dispatch('click');
-  await settle();
-  check('help panel shown', el('#help').hidden === false);
-  check('speed block hidden', el('#controls').hidden === true);
-  check('tutor greeted the student', el('#help').querySelector('#helpLog').children.length > 0);
+  control('#serve').dispatch('click');
+  await tick(4);
+  await play(1200); // the coach speaks on a real clock
+  check('15 m/s goes into the net', store.get().result.verdict === 'net');
+  check('the coach asks a question about it', coachOptions().length === 2,
+    [...coachLog()].map((c) => c.textContent).join(' | '));
+  check(
+    'and it names the height at the net',
+    [...coachLog()].some((c) => /1\.40 m/.test(c.textContent)),
+  );
 
-  // its demo serves need frames to land, and must not touch the verdict
-  await tick(1.5);
-  check('demo serve runs in its own phase', ['demo', 'aim'].includes(store.get().phase));
+  // the wrong answer makes the coach demonstrate: several serves, no verdict
+  [...coachOptions()].find((b) => b.textContent === 'Too fast').dispatch('click');
+  await play(2600); // long enough for the first of the slower serves to land
+  check('a demonstration is running', store.get().phase === 'demo');
+  check('slider locked while the coach demonstrates', control('#speed').disabled === true);
   check('a demo never shows a verdict', el('#verdictReadout').textContent === '—');
-  check('demo serves are logged as nothing', attempts.summary().total === 0);
+  check('demo serves are not logged', attempts.summary().total === 1);
+  check('earlier paths are kept on screen', store.get().trails.length >= 2,
+    `trails: ${JSON.stringify(store.get().trails)}`);
 
-  el('#help').querySelector('.help-close').dispatch('click');
+  // taking over: serving interrupts the coach and clears its trails
+  slider.value = '21';
+  slider.dispatch('input');
+  control('#serve').dispatch('click');
+  check('the student can take over', store.get().phase === 'serve');
+  check('trails cleared when the student serves', store.get().trails.length === 0);
+  await tick(4);
   await settle();
-  check('closing brings the slider back', el('#controls').hidden === false);
-  check('help panel hidden again', el('#help').hidden === true);
-  check('the speed from before help is restored', store.get().v === 18);
-  check('trails cleared on close', store.get().trails.length === 0);
-  check('back to aiming', store.get().phase === 'aim');
+  check('their serve is judged as usual', el('#verdictReadout').textContent === 'In');
 
   await tick(0.5);
   check('render loop ran without errors', errors.length === 0, errors[0]?.stack || '');
+} catch (e) {
+  check('smoke test ran to the end', false, e?.stack || String(e));
 }
 
 let fails = 0;

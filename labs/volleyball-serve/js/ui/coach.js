@@ -1,19 +1,16 @@
 /**
- * The tutor dialogue. Pressing Help turns the Speed block into a conversation;
- * the ✕ in its corner turns it back into the slider.
+ * The coach panel: a running conversation beside the court. It speaks when the
+ * page opens and again after every serve, and it can ask a question or play a
+ * few demonstration serves of its own.
  *
  * This module is only mechanics: render messages, wait for a button, drive the
- * scene through the runtime it is given. What the tutor actually says lives in
- * services/help-script.js.
+ * scene through the runtime it is given, and abandon whatever it was saying if
+ * something new happens. What the coach actually says lives in
+ * services/coach-script.js.
  */
-import { pickBranch } from '../services/help-script.js';
+import { opening, reaction } from '../services/coach-script.js';
 
-const CANCELLED = Symbol('help-cancelled');
-
-const CLOSE_ICON =
-  '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
-  'stroke-width="2" stroke-linecap="round" aria-hidden="true">' +
-  '<path d="M6 6l12 12M18 6L6 18"/></svg>';
+const CANCELLED = Symbol('coach-cancelled');
 
 /**
  * @param {HTMLElement} root
@@ -22,30 +19,23 @@ const CLOSE_ICON =
  *   tutor: {hint: Function},
  *   attempts: {summary: Function},
  *   runtime: {serve: Function, trail: Function, clearTrails: Function},
- *   onClose?: Function,
  *   timing?: {message?: number}
  * }} deps
  */
-export function createHelp(root, store, { tutor, attempts, runtime, onClose, timing } = {}) {
+export function createCoach(root, store, { tutor, attempts, runtime, timing } = {}) {
   const messagePause = timing?.message ?? 700;
-  let token = 0; // bumped on close, so a running script unwinds
+  let token = 0; // bumped whenever a script is abandoned
 
   root.innerHTML = `
-    <div class="help-head">
-      <h2>Tutor</h2>
-      <button class="help-close" type="button" aria-label="Back to the speed slider">
-        ${CLOSE_ICON}
-      </button>
-    </div>
-    <div class="help-log" id="helpLog" aria-live="polite"></div>
-    <div class="help-options" id="helpOptions"></div>
+    <h2>Coach</h2>
+    <div class="coach-log" id="coachLog" aria-live="polite"></div>
+    <div class="coach-options" id="coachOptions"></div>
   `;
 
-  const log = root.querySelector('#helpLog');
-  const options = root.querySelector('#helpOptions');
-  root.querySelector('.help-close').addEventListener('click', () => close());
+  const log = root.querySelector('#coachLog');
+  const options = root.querySelector('#coachOptions');
 
-  function bubble(text, who = 'tutor') {
+  function bubble(text, who = 'coach') {
     const p = document.createElement('p');
     p.className = `msg msg-${who}`;
     p.textContent = text;
@@ -56,7 +46,7 @@ export function createHelp(root, store, { tutor, attempts, runtime, onClose, tim
 
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
-  /** Every step checks the session is still the current one. */
+  /** Every step checks that its script is still the current one. */
   function guard(mine) {
     if (mine !== token) throw CANCELLED;
   }
@@ -94,7 +84,7 @@ export function createHelp(root, store, { tutor, attempts, runtime, onClose, tim
         return id;
       },
 
-      /** Play a serve and resolve once the ball has stopped. */
+      /** Play a demonstration serve; resolves once the ball has stopped. */
       async serve(v, { keep = false, label = null } = {}) {
         guard(mine);
         const result = await runtime.serve(v);
@@ -104,40 +94,51 @@ export function createHelp(root, store, { tutor, attempts, runtime, onClose, tim
         guard(mine);
         return result;
       },
+
+      /** Keep a trajectory on screen without replaying it. */
+      keep(v, label) {
+        runtime.trail(v, label);
+      },
     };
   }
 
-  function open() {
+  /** Start a script, abandoning any script still running. */
+  function run(script, extra = {}) {
     token += 1;
     const mine = token;
-    log.innerHTML = '';
     options.innerHTML = '';
-    runtime.clearTrails();
 
     const state = store.get();
-    const branch = pickBranch({ attemptCount: attempts.summary().total });
-    root.dataset.branch = branch.id;
-
-    Promise.resolve(
-      branch.run({
+    return Promise.resolve(
+      script({
         ...makeDsl(mine),
         tutor,
         problem: state.problem,
         bounds: state.result.bounds,
-        result: state.result,
         attemptCount: attempts.summary().total,
+        ...extra,
       }),
     ).catch((e) => {
       if (e !== CANCELLED) throw e;
     });
   }
 
-  function close() {
-    token += 1; // unwinds any script waiting on a step
-    options.innerHTML = '';
-    runtime.clearTrails();
-    onClose?.();
-  }
+  return {
+    /** First words, before anything has been served. */
+    greet() {
+      log.innerHTML = '';
+      return run(opening);
+    },
 
-  return { open, close, get branch() { return root.dataset.branch; } };
+    /** Called after the student's ball has landed. */
+    reactTo(result) {
+      return run(reaction, { result, v: result.v });
+    },
+
+    /** Drop whatever is being said (the student has taken over). */
+    interrupt() {
+      token += 1;
+      options.innerHTML = '';
+    },
+  };
 }
