@@ -147,6 +147,34 @@ do. So a student can answer by pointing at the court or by pressing a button.
 Which answer is "correct" is derived from `bounds.vMin`, not hard-coded, so the
 script stays right if the problem data changes.
 
+## Running it locally
+
+ES modules cannot be opened over `file://`, so serve the folder. Browsers cache
+module files aggressively, and a plain reload will happily keep running the old
+copy of a script you just edited — so serve with caching switched off:
+
+```bash
+cd labs/volleyball-serve
+python3 -c "
+from http.server import SimpleHTTPRequestHandler, test
+class H(SimpleHTTPRequestHandler):
+    def end_headers(self):
+        self.send_header('Cache-Control', 'no-store')
+        SimpleHTTPRequestHandler.end_headers(self)
+test(H, port=5173)
+"
+```
+
+Otherwise: hard reload (Cmd+Shift+R), or tick *Disable cache* in the DevTools
+Network panel. To check which version the browser actually has, run this in the
+console — it bypasses the cache and reports on the file itself:
+
+```js
+fetch('js/services/coach-script.js', { cache: 'reload' })
+  .then((r) => r.text())
+  .then((t) => console.log(t.includes('how much faster') ? 'NEW' : 'OLD'));
+```
+
 ## Tests
 
 ```bash
