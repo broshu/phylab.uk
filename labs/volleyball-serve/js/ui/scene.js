@@ -8,9 +8,14 @@
  *           slider moves. No trajectory, no verdict.
  *   'serve' the animation is running: toss, jump, contact, flight.
  *   'done'  the ball has landed; the full path and the outcome stay on screen.
+ *   'demo'  a serve played by the tutor: no jump, full-speed flight, so several
+ *           of them can be shown in a row. Never sets a verdict.
+ *
+ * store.trails holds earlier trajectories to keep on screen (the tutor uses
+ * them to show a family of serves); each entry is { v, label? }.
  */
 import { trajectory, flightTime } from '../core/physics.js';
-import { Verdict } from '../core/evaluator.js';
+import { Verdict, evaluate } from '../core/evaluator.js';
 import { readPalette, onSchemeChange } from './theme.js';
 import { createPlayer, SERVE_TIMELINE } from './player.js';
 
@@ -18,8 +23,9 @@ import { createPlayer, SERVE_TIMELINE } from './player.js';
 // x and y share one scale, so the parabola keeps its true shape.
 const VIEW = { xMin: -2.4, xMax: 20.4, yMin: -1.0, yMax: 3.9 };
 
-const BALL_SLOW = 0.5; // flight is played at half speed
+const BALL_SLOW = 0.5; // a student's serve is played at half speed
 const SETTLE = 0.45; // pause after the ball lands before the verdict is called
+const DEMO_SETTLE = 0.3; // the tutor's serves follow each other more quickly
 
 export function createScene(canvas, store, { onLanded } = {}) {
   const ctx = canvas.getContext('2d');
@@ -31,6 +37,7 @@ export function createScene(canvas, store, { onLanded } = {}) {
   let clock = 0; // seconds since the serve started
   let lastTs = 0;
   let landedFired = false;
+  let demo = false;
 
   /**
    * The canvas fills its cell, so the size comes from the cell — not from a
@@ -79,7 +86,7 @@ export function createScene(canvas, store, { onLanded } = {}) {
   /** Flight clock, seconds after contact (0 before the ball is struck). */
   function flightClock(phase, result) {
     if (phase === 'aim') return 0;
-    const t = Math.max(0, clock - SERVE_TIMELINE.contact) * BALL_SLOW;
+    const t = demo ? clock : Math.max(0, clock - SERVE_TIMELINE.contact) * BALL_SLOW;
     return Math.min(t, stopTime(result));
   }
 
@@ -257,31 +264,60 @@ export function createScene(canvas, store, { onLanded } = {}) {
     ctx.fillText(label, Math.min(Math.max(x, half + 4), cssW - half - 4), gy - 10);
   }
 
+  /** Earlier serves kept on screen by the tutor: neutral colour, stop marked. */
+  function drawTrails(trails) {
+    const { toX, toY } = geom;
+    trails.forEach(({ v, label }) => {
+      const r = evaluate(problem, v);
+      const stop = stopTime(r);
+      const pts = trajectory(v, problem.hitHeight, problem.g).filter((p) => p.t <= stop);
+      ctx.globalAlpha = 0.4;
+      drawPath(pts, palette.muted, 1.5);
+      const end = pts[pts.length - 1];
+      if (end) {
+        ctx.beginPath();
+        ctx.arc(toX(end.x), toY(end.y), 2.5, 0, Math.PI * 2);
+        ctx.fillStyle = palette.muted;
+        ctx.fill();
+        if (label) {
+          ctx.globalAlpha = 0.75;
+          ctx.font = font(11);
+          ctx.textAlign = 'right';
+          ctx.fillText(label, toX(end.x) - 7, toY(end.y) + 4);
+        }
+      }
+      ctx.globalAlpha = 1;
+    });
+  }
+
   function render() {
     const state = store.get();
-    const { phase, result, showGhosts } = state;
+    const { phase, result, showGhosts, trails } = state;
     if (!geom) resize();
 
     drawBackground();
     drawContactMark();
     if (showGhosts) drawGhosts(result.bounds);
+    if (trails?.length) drawTrails(trails);
 
     if (phase !== 'aim') {
       const tf = flightClock(phase, result);
       const stop = stopTime(result);
       const flown = trajectory(result.v, problem.hitHeight, problem.g).filter((p) => p.t <= tf);
-      drawPath(flown, pathColor(result.verdict), 2.5);
-      if (tf >= stop) drawOutcome(result);
-      if (clock >= SERVE_TIMELINE.contact) drawBall(result, tf);
+      const landed = tf >= stop;
+      // neutral while it is still in the air: the colour would give the verdict away
+      drawPath(flown, landed ? pathColor(result.verdict) : palette.muted, 2.5);
+      if (landed) drawOutcome(result);
+      if (demo || clock >= SERVE_TIMELINE.contact) drawBall(result, tf);
     }
 
     drawNet();
     player.draw(ctx, geom, palette, {
-      mode: phase === 'aim' ? 'aim' : 'serve',
+      mode: phase === 'serve' ? 'serve' : 'aim',
       t: clock,
       speedFrac: speedFraction(state),
-      // the player only holds the ball until it is struck
-      showBall: phase === 'aim' || clock < SERVE_TIMELINE.contact,
+      // the player only holds the ball until it is struck, and never in a demo
+      showBall: phase === 'aim' || (phase === 'serve' && clock < SERVE_TIMELINE.contact),
     });
   }
 
@@ -292,14 +328,15 @@ export function createScene(canvas, store, { onLanded } = {}) {
     lastTs = ts;
 
     const { phase, result } = store.get();
-    if (phase === 'serve') {
+    if (phase === 'serve' || phase === 'demo') {
       clock += dt;
-      const finished =
-        clock - SERVE_TIMELINE.contact >= stopTime(result) / BALL_SLOW + SETTLE &&
-        clock >= SERVE_TIMELINE.land;
+      const finished = demo
+        ? clock >= stopTime(result) + DEMO_SETTLE
+        : clock - SERVE_TIMELINE.contact >= stopTime(result) / BALL_SLOW + SETTLE &&
+          clock >= SERVE_TIMELINE.land;
       if (finished && !landedFired) {
         landedFired = true;
-        onLanded?.(result);
+        onLanded?.(result, { demo });
       }
     }
 
@@ -307,11 +344,17 @@ export function createScene(canvas, store, { onLanded } = {}) {
     requestAnimationFrame(loop);
   }
 
+  function refit() {
+    resize();
+    render();
+  }
+
   if (typeof window !== 'undefined') {
-    window.addEventListener('resize', () => {
-      resize();
-      render();
-    });
+    window.addEventListener('resize', refit);
+  }
+  // the cell also changes height when the panel beside it does (opening Help)
+  if (typeof ResizeObserver === 'function' && canvas.parentElement) {
+    new ResizeObserver(refit).observe(canvas.parentElement);
   }
   onSchemeChange(() => {
     palette = readPalette();
@@ -323,16 +366,22 @@ export function createScene(canvas, store, { onLanded } = {}) {
 
   return {
     render,
-    resize,
-    /** Start (or restart) the serve animation. */
-    serve() {
+    resize: refit,
+    /**
+     * Start (or restart) the serve animation.
+     * @param {{demo?:boolean}} opts demo = the tutor's quick serve: no jump,
+     *        full-speed flight, so several can be played in a row.
+     */
+    serve({ demo: isDemo = false } = {}) {
       clock = 0;
       landedFired = false;
+      demo = isDemo;
     },
     /** Back to the standing pose. */
     reset() {
       clock = 0;
       landedFired = false;
+      demo = false;
     },
   };
 }

@@ -1,88 +1,23 @@
 /**
  * Smoke test: runs the whole assembly against a fake DOM/canvas, then drives
- * the animation clock through a complete serve.  node tests/smoke.mjs
+ * the animation clock through complete serves.  node tests/smoke.mjs
  */
-const noop = () => {};
+import { installDom } from './fake-dom.mjs';
 
-function makeCtx() {
-  return new Proxy(
-    {},
-    {
-      get: (t, k) => {
-        if (k === 'canvas') return { width: 1000, height: 220 };
-        if (k === 'measureText') return () => ({ width: 30 });
-        if (k in t) return t[k];
-        return typeof k === 'string' ? noop : undefined;
-      },
-      set: (t, k, v) => ((t[k] = v), true),
-    },
-  );
-}
-
-function makeEl(tag = 'div') {
-  const el = {
-    tagName: tag,
-    dataset: {},
-    style: {},
-    hidden: false,
-    disabled: false,
-    textContent: '',
-    value: '0',
-    checked: false,
-    parentElement: { clientWidth: 1000, clientHeight: 240 },
-    listeners: {},
-    set innerHTML(v) { el._html = v; },
-    get innerHTML() { return el._html || ''; },
-    addEventListener(type, fn) { (el.listeners[type] ||= []).push(fn); },
-    dispatch(type) { (el.listeners[type] || []).forEach((f) => f({ target: el })); },
-    querySelector(sel) {
-      el._q ||= {};
-      return el._q[sel] || (el._q[sel] = makeEl(sel));
-    },
-    getContext: () => makeCtx(),
-  };
-  return el;
-}
-
-const registry = {};
-global.document = {
-  documentElement: makeEl('html'),
-  querySelector(sel) {
-    return (registry[sel] ||= makeEl(sel));
-  },
-};
-global.window = { devicePixelRatio: 2, addEventListener: noop };
-
-// Controllable frame clock so the test can run the serve animation to the end.
-let rafCb = null;
-let clockMs = 0;
-global.requestAnimationFrame = (fn) => {
-  rafCb = fn;
-};
-function pump(seconds) {
-  const end = clockMs + seconds * 1000;
-  while (rafCb && clockMs <= end) {
-    const cb = rafCb;
-    rafCb = null;
-    clockMs += 16;
-    cb(clockMs);
-  }
-}
+const dom = installDom();
+const { el, tick, settle } = dom;
 
 const errors = [];
 process.on('uncaughtException', (e) => errors.push(e));
 process.on('unhandledRejection', (e) => errors.push(e));
 
 await import('../js/main.js');
-await new Promise((r) => setTimeout(r, 30));
+await settle();
 
 const api = global.window.__vb;
 const results = [];
 const check = (name, cond, detail = '') => results.push({ name, ok: !!cond, detail });
-
-const el = (sel) => document.querySelector(sel);
 const control = (sel) => el('#controls').querySelector(sel);
-const problemNetDistance = (store) => store.get().problem.netDistance;
 
 check('assembly ran without errors', errors.length === 0, errors[0]?.stack || '');
 check('window.__vb exported', !!api);
@@ -91,7 +26,7 @@ if (api) {
   const { store, attempts } = api;
 
   // ---- aiming ----
-  pump(0.5);
+  await tick(0.5);
   check('starts in the aiming phase', store.get().phase === 'aim');
   check('no verdict before serving', el('#verdictReadout').textContent === '—');
   check('serve button reads "Serve"', control('#serve').textContent === 'Serve');
@@ -100,28 +35,25 @@ if (api) {
 
   // ---- slider configured 0–30 in whole m/s ----
   const slider = control('#speed');
-  check('slider range is 0–30', /min="0"/.test(el('#controls').innerHTML) && /max="30"/.test(el('#controls').innerHTML));
-  check('slider step is 1', /step="1"/.test(el('#controls').innerHTML));
+  const markup = el('#controls').innerHTML;
+  check('slider range is 0–30', /min="0"/.test(markup) && /max="30"/.test(markup));
+  check('slider step is 1', /step="1"/.test(markup));
 
-  // ---- choose a speed through the real slider listener ----
   slider.value = '21';
   slider.dispatch('input');
   check('slider sets the speed', store.get().v === 21);
   check('speed shown as a whole number', control('#speedOut').textContent === '21');
   check('still aiming after moving the slider', store.get().phase === 'aim');
 
-  control('#help').dispatch('click'); // reserved, must not throw
-  check('help button is inert for now', errors.length === 0, errors[0]?.stack || '');
-
   // ---- serve ----
   control('#serve').dispatch('click');
   check('serving phase entered', store.get().phase === 'serve');
-  pump(0.4);
+  await tick(0.4);
   check('slider locked during flight', control('#speed').disabled === true);
   check('no verdict mid-flight', el('#verdictReadout').textContent === '—');
 
-  pump(4);
-  await new Promise((r) => setTimeout(r, 30));
+  await tick(4);
+  await settle();
   check('phase done after the ball lands', store.get().phase === 'done');
   check('verdict revealed', el('#verdictReadout').textContent === 'In');
   check('serve logged automatically', attempts.summary().total === 1);
@@ -135,8 +67,8 @@ if (api) {
   check('verdict hidden again', el('#verdictReadout').textContent === '—');
 
   control('#serve').dispatch('click');
-  pump(4);
-  await new Promise((r) => setTimeout(r, 30));
+  await tick(4);
+  await settle();
   check('second serve judged out', store.get().result.verdict === 'out');
   check('two serves logged', attempts.summary().total === 2);
   check('CSV export works', attempts.toCSV().split('\n').length === 3);
@@ -145,13 +77,37 @@ if (api) {
   slider.value = '5';
   slider.dispatch('input');
   control('#serve').dispatch('click');
-  pump(4);
-  await new Promise((r) => setTimeout(r, 30));
-  check('5 m/s lands short of the net', store.get().result.xLand < problemNetDistance(store));
+  await tick(4);
+  await settle();
+  check('5 m/s lands short of the net', store.get().result.xLand < store.get().problem.netDistance);
   check('and is judged a fault', store.get().result.verdict === 'net');
   check('phase still resolves to done', store.get().phase === 'done');
   attempts.reset();
 
+  // ---- Help swaps the block, ✕ swaps it back ----
+  slider.value = '18';
+  slider.dispatch('input');
+  control('#help').dispatch('click');
+  await settle();
+  check('help panel shown', el('#help').hidden === false);
+  check('speed block hidden', el('#controls').hidden === true);
+  check('tutor greeted the student', el('#help').querySelector('#helpLog').children.length > 0);
+
+  // its demo serves need frames to land, and must not touch the verdict
+  await tick(1.5);
+  check('demo serve runs in its own phase', ['demo', 'aim'].includes(store.get().phase));
+  check('a demo never shows a verdict', el('#verdictReadout').textContent === '—');
+  check('demo serves are logged as nothing', attempts.summary().total === 0);
+
+  el('#help').querySelector('.help-close').dispatch('click');
+  await settle();
+  check('closing brings the slider back', el('#controls').hidden === false);
+  check('help panel hidden again', el('#help').hidden === true);
+  check('the speed from before help is restored', store.get().v === 18);
+  check('trails cleared on close', store.get().trails.length === 0);
+  check('back to aiming', store.get().phase === 'aim');
+
+  await tick(0.5);
   check('render loop ran without errors', errors.length === 0, errors[0]?.stack || '');
 }
 

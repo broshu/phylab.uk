@@ -3,6 +3,8 @@
  * Adding a panel means importing one more create* here; nothing else changes.
  *
  * Flow: phase 'aim' (choose a speed) → 'serve' (animation) → 'done' (verdict).
+ * Help swaps the Speed block for the tutor dialogue, which plays its own
+ * 'demo' serves through `runtime` and never sets a verdict.
  *
  * ui/derivation.js (live working) and ui/feedback.js (coaching) are written and
  * tested but deliberately not mounted — the page is kept to task, speed and
@@ -15,6 +17,7 @@ import { createTutor } from './services/tutor.js';
 import { createAttemptLog } from './services/attempts.js';
 import { createScene } from './ui/scene.js';
 import { createControls } from './ui/controls.js';
+import { createHelp } from './ui/help.js';
 
 const problem = getProblem(DEFAULT_PROBLEM_ID);
 const tutor = createTutor();
@@ -25,6 +28,7 @@ const store = createStore({
   v: problem.speed.default,
   phase: 'aim',
   showGhosts: false,
+  trails: [], // earlier serves the tutor is keeping on screen
   result: evaluate(problem, problem.speed.default),
 });
 
@@ -49,21 +53,72 @@ const VERDICT_LABEL = {
 
 document.querySelector('#taskPrompt').textContent = problem.prompt;
 
+// A demo serve resolves this promise when the ball stops, which is how the
+// tutor script can `await serve(14)` and then talk about what happened.
+let pendingDemo = null;
+function settleDemo(result) {
+  const resolve = pendingDemo;
+  pendingDemo = null;
+  resolve?.(result);
+}
+
 const scene = createScene(document.querySelector('#stage'), store, {
-  onLanded: (result) => {
+  onLanded: (result, { demo } = {}) => {
+    if (demo) {
+      settleDemo(result);
+      return;
+    }
     store.set({ phase: 'done' });
     attempts.record(result);
   },
 });
 
-createControls(document.querySelector('#controls'), store, {
+const controlsEl = document.querySelector('#controls');
+const helpEl = document.querySelector('#help');
+
+/** What the tutor script is allowed to do to the scene. */
+const runtime = {
+  serve(v) {
+    return new Promise((resolve) => {
+      pendingDemo = resolve;
+      store.set({ v, phase: 'demo' });
+      scene.serve({ demo: true });
+    });
+  },
+  trail(v, label) {
+    store.set({ trails: [...store.get().trails, { v, label }] });
+  },
+  clearTrails() {
+    store.set({ trails: [] });
+  },
+};
+
+let speedBeforeHelp = store.get().v;
+
+const help = createHelp(helpEl, store, {
+  tutor,
+  attempts,
+  runtime,
+  onClose: () => {
+    settleDemo(store.get().result); // let an abandoned script unwind
+    helpEl.hidden = true;
+    controlsEl.hidden = false;
+    store.set({ v: speedBeforeHelp, phase: 'aim', trails: [] });
+    scene.reset();
+  },
+});
+
+createControls(controlsEl, store, {
   onServe: () => {
     store.set({ phase: 'serve' });
     scene.serve();
   },
   onAim: () => scene.reset(),
   onHelp: () => {
-    /* reserved: will hand the current state to the tutor service */
+    speedBeforeHelp = store.get().v;
+    controlsEl.hidden = true;
+    helpEl.hidden = false;
+    help.open();
   },
 });
 
@@ -74,4 +129,4 @@ store.subscribe(({ phase, result }) => {
 });
 
 // Handy in the console while developing
-window.__vb = { store, problem, attempts, tutor, scene };
+window.__vb = { store, problem, attempts, tutor, scene, help, runtime };

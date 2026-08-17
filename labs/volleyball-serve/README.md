@@ -62,17 +62,21 @@ js/
     state.js          tiny store (get / set / subscribe)
   services/
     tutor.js          coaching text (rule-based today, async interface)
+    help-script.js    what the tutor says: one async function per branch
     attempts.js       attempt log, scoring, CSV export
   ui/
     scene.js          canvas: court, net, trajectory, phase clock
     player.js         the server: standing wind-up, toss, jump, contact
     controls.js       speed slider, Serve and Help
+    help.js           the tutor dialogue: messages, options, ✕
     derivation.js     step-by-step working (not mounted)
     feedback.js       verdict + coaching (not mounted)
     theme.js          canvas palette read from CSS variables
 tests/
+  fake-dom.mjs        shared DOM/canvas stub and manual frame clock
   check.mjs           numerical self-check
   smoke.mjs           full assembly against a fake DOM
+  help-flow.mjs       the tutor script, with a stub runtime
 ```
 
 Data flows one way: `config` → `store` → `evaluator` → subscribed UI modules.
@@ -80,11 +84,49 @@ UI code never does physics; `core/` never touches the DOM; modules never call
 each other, only the store. A new panel is `createXxx(root, store)` plus one
 line in `main.js`.
 
+## The tutor (Help)
+
+Help turns the Speed block into a conversation; the ✕ in its corner turns it
+back into the slider, restoring the speed the student had set. The tutor can
+play its own serves — phase `'demo'`: no jump, full-speed flight, so several
+land in a few seconds — and can leave earlier ones on screen as faint trails.
+Demo serves never set a verdict and are never logged as attempts.
+
+A branch is an async function in `services/help-script.js`, written as a script:
+
+```js
+async function coldStart({ say, ask, serve, problem, bounds }) {
+  await say('…');
+  const first = await serve(15, { keep: true, label: '15' });  // resolves on landing
+  const answer = await ask('Too fast or too slow?', [...]);    // resolves on click
+}
+```
+
+`ui/help.js` supplies that DSL, renders the messages and buttons, and cancels a
+running script if the panel is closed mid-sentence. `pickBranch()` chooses the
+script from what the student has done, so Help means different things at
+different moments.
+
+Implemented so far:
+
+- **cold-start** (no serves yet) — offers to just try something, serves the
+  default 15 m/s, then asks whether that was too fast or too slow. Answer "too
+  fast" and it serves 14, 13, 12, 11, 10 in quick succession, keeping every
+  path: each one dies lower on the net and the last two do not even reach it.
+  Slower is worse, which is the point. Then it asks again and explains that a
+  slower ball spends longer falling on its way to the net.
+- **after-serves** — provisional: replays the rule-based hint from `tutor.js`
+  for the last serve. This is the next branch to write properly.
+
+Which answer is "correct" is derived from `bounds.vMin`, not hard-coded, so the
+script stays right if the problem data changes.
+
 ## Tests
 
 ```bash
-node tests/check.mjs    # boundary speeds, verdict flips, sample table
-node tests/smoke.mjs    # assembly + render loop against a stub DOM
+node tests/check.mjs      # boundary speeds, verdict flips, sample table
+node tests/smoke.mjs      # assembly + render loop against a stub DOM
+node tests/help-flow.mjs  # the tutor script, both answers, closing early
 ```
 
 `package.json` exists only so node treats the `.js` files as ES modules; the lab
@@ -92,9 +134,9 @@ itself is plain static files and needs no build step.
 
 ## Extension points
 
-- **The Help button** — wired to `onHelp` in `main.js` and currently a no-op.
-  The obvious implementation is to pass the current state to
-  `tutor.hint({problem, result, attempts})` and show what comes back.
+- **More tutor branches** — add an async function to `services/help-script.js`
+  and a case to `pickBranch()`. Nothing else changes: the DSL, the demo serves
+  and the trails are already there.
 - **Bring back Working / Coaching** — add a `<section class="panel" id="…">`
   to `index.html` and one line to `main.js`:
   `createDerivation(document.querySelector('#derivation'), store)` or

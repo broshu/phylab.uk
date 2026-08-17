@@ -5,6 +5,6 @@
   "type": "module",
   "description": "PhyLab · volleyball serve projectile lab. Static site — this file only exists so the node self-tests can import the ES modules.",
   "scripts": {
-    "test": "node tests/check.mjs && node tests/smoke.mjs"
+    "test": "node tests/check.mjs && node tests/smoke.mjs && node tests/help-flow.mjs"
   }
 }
