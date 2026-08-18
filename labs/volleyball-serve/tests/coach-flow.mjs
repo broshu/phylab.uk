@@ -143,7 +143,9 @@ async function finish(h, answer = '21 and 22 m/s') {
   await dom.settle(50);
   check('net fault reports the observed height', h.said(/1\.40 m/));
   await h.choose('Slower');
-  check('wrong net diagnosis triggers slower comparison serves', h.served.join(',') === '14,13,12,11,10');
+  check('wrong net diagnosis triggers two full slower serves', h.served.join(',') === '14,13');
+  check('slower comparisons keep the full player animation',
+    h.serveOptions.every((options) => options.animatePlayer === true));
   check('comparison explains the longer fall', h.said(/spends longer falling/i));
   await h.choose('Faster');
   await startLower(h, 'B — the foot of the net');
@@ -167,6 +169,11 @@ async function finish(h, answer = '21 and 22 m/s') {
   await dom.settle(50);
   check('long serve reports the overshoot', h.said(/2\.0 m beyond/i));
   await h.choose('Faster');
+  check('wrong long diagnosis triggers two full faster serves', h.served.join(',') === '26,27');
+  check('faster comparisons keep the full player animation',
+    h.serveOptions.every((options) => options.animatePlayer === true));
+  check('comparison explains the increasing overshoot', h.said(/faster serve travels farther/i));
+  await h.choose('Slower');
   check('wrong long diagnosis is corrected', h.said(/must be slower/i));
   await startUpper(h);
   await startLower(h);

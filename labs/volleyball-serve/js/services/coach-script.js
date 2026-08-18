@@ -38,6 +38,12 @@ function slowerFamily(v, min) {
   return speeds;
 }
 
+function fasterFamily(v, max) {
+  const speeds = [];
+  for (let speed = v + 1; speed <= Math.min(max, v + 5); speed++) speeds.push(speed);
+  return speeds;
+}
+
 function pointCorrection(id, target) {
   if (id === 'B') {
     return 'B is below the tape: a ball passing there is already in the net, so it is not legal.';
@@ -196,7 +202,9 @@ async function fromNetFault(dsl) {
     const examples = slowerFamily(v, problem.speed.min);
     if (examples.length) {
       await say('Let us test the idea that slower would help. Watch these slower serves.');
-      for (const speed of examples) await serve(speed, { keep: true, label: `${speed}` });
+      for (const speed of examples.slice(0, 2)) {
+        await serve(speed, { keep: true, label: `${speed}`, animatePlayer: true });
+      }
       await say('They reach the net lower, or land before it. A slower ball spends longer falling.');
     } else {
       await say('This serve is already at the slow end of the slider, so slowing down cannot help.');
@@ -217,15 +225,30 @@ async function fromNetFault(dsl) {
 
 /** An out serve starts at the upper boundary. */
 async function fromLongServe(dsl) {
-  const { say, ask, result, v } = dsl;
+  const { say, ask, serve, keep, problem, result, v } = dsl;
 
   await say(
     `At ${v} m/s the ball lands at ${fmt(result.xLand, 1)} m, ` +
       `${fmt(result.outBy, 1)} m beyond the ${result.xLand - result.outBy} m baseline.`,
   );
-  const answer = await ask('To bring that landing point back in, should the next serve be faster or slower?', FAST_SLOW);
+  let answer = await ask('To bring that landing point back in, should the next serve be faster or slower?', FAST_SLOW);
+  if (answer === 'fast') {
+    keep(v, `${v}`);
+    const examples = fasterFamily(v, problem.speed.max);
+    if (examples.length) {
+      await say('Let us test the idea that faster would help. Watch these faster serves.');
+      for (const speed of examples.slice(0, 2)) {
+        await serve(speed, { keep: true, label: `${speed}`, animatePlayer: true });
+      }
+      await say('They stay in the air for the same time, so each faster serve travels farther and lands even more out.');
+    } else {
+      await say('This serve is already at the fast end of the slider, so going faster cannot help.');
+    }
+    answer = await ask('So should a serve that goes long be faster or slower?', FAST_SLOW);
+  }
+
   if (answer === 'slow') {
-    await say('Right. The ball is in the air for the same time; a smaller speed means less horizontal distance.');
+    await say('Right. It must be slower: the ball is in the air for the same time, so a smaller speed means less horizontal distance.');
   } else {
     await say('It must be slower: the ball already passed the baseline, and more speed would carry it farther.');
   }
@@ -267,7 +290,7 @@ export async function opening(dsl) {
 
   const v = problem.speed.default;
   await say(`Let us start with ${v} m/s and use what we see.`);
-  const result = await serve(v, { keep: true, label: `${v}` });
+  const result = await serve(v, { keep: true, label: `${v}`, animatePlayer: true });
   return guideFromResult({ ...dsl, result, v });
 }
 

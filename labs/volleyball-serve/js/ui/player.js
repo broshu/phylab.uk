@@ -20,6 +20,14 @@ export const SERVE_TIMELINE = {
   land: 1.45, // feet back on the floor
 };
 
+// The server starts with the front foot clearly behind the serve line, then
+// carries the body a small distance forward during the jump. The contact
+// position is kept just in front of the line so the hand (and the projectile
+// origin at x = 0) still read as vertically aligned on screen.
+const START_X = -0.24;
+const CONTACT_X = 0.02;
+const LAND_X = 0.16;
+
 /** Body proportions in metres, roughly a 1.94 m player. */
 const BODY = {
   hip: 1.02,
@@ -101,6 +109,20 @@ export function createPlayer(problem) {
     return { jump: 0, crouch: 0.16 * Math.sin(u * Math.PI) }; // absorb the landing
   }
 
+  /** Horizontal body position: planted behind the line, then a short jump. */
+  function bodyX(mode, t) {
+    if (mode === 'aim' || t <= SERVE_TIMELINE.windup) return START_X;
+    if (t < SERVE_TIMELINE.contact) {
+      const u = (t - SERVE_TIMELINE.windup) / (SERVE_TIMELINE.contact - SERVE_TIMELINE.windup);
+      return lerp(START_X, CONTACT_X, easeInOut(u));
+    }
+    if (t < SERVE_TIMELINE.land) {
+      const u = (t - SERVE_TIMELINE.contact) / (SERVE_TIMELINE.land - SERVE_TIMELINE.contact);
+      return lerp(CONTACT_X, LAND_X, easeInOut(u));
+    }
+    return LAND_X;
+  }
+
   /**
    * Ball position while the player still has it: held in the front hand, then
    * tossed on a real parabola that arrives at the contact height exactly when
@@ -124,15 +146,16 @@ export function createPlayer(problem) {
   function skeleton(mode, t, speedFrac) {
     const { jump, crouch } = lift(mode, t, speedFrac);
     const airborne = jump > 0.02;
+    const x = bodyX(mode, t);
 
-    const hip = { x: 0, y: BODY.hip + jump - crouch };
-    const shoulder = { x: 0, y: BODY.shoulder + jump - crouch * 0.7 };
-    const head = { x: 0.02, y: BODY.headY + jump - crouch * 0.6 };
+    const hip = { x, y: BODY.hip + jump - crouch };
+    const shoulder = { x, y: BODY.shoulder + jump - crouch * 0.7 };
+    const head = { x: x + 0.02, y: BODY.headY + jump - crouch * 0.6 };
 
     // feet stay planted on the floor, and tuck up once the player is airborne
     const footY = airborne ? jump * 0.75 : 0;
-    const backFoot = { x: BODY.stanceBack + (airborne ? 0.05 : 0), y: footY };
-    const frontFoot = { x: BODY.stanceFront - (airborne ? 0.06 : 0), y: footY };
+    const backFoot = { x: x + BODY.stanceBack + (airborne ? 0.05 : 0), y: footY };
+    const frontFoot = { x: x + BODY.stanceFront - (airborne ? 0.06 : 0), y: footY };
 
     const hitDeg = hitArmAngle(mode, t, speedFrac);
     const hitElbow = fromAngle(shoulder, hitDeg + 12, BODY.upperArm);

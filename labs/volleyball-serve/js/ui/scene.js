@@ -8,8 +8,8 @@
  *           slider moves. No trajectory, no verdict.
  *   'serve' the animation is running: toss, jump, contact, flight.
  *   'done'  the ball has landed; the full path and the outcome stay on screen.
- *   'demo'  a serve played by the tutor: no jump, full-speed flight, so several
- *           of them can be shown in a row. Never sets a verdict.
+ *   'demo'  a serve played by the tutor. It can use the same full toss, jump,
+ *           contact and flight as a student's serve, but never sets a verdict.
  *
  * store.trails holds earlier trajectories to keep on screen (the coach uses
  * them to show a family of serves); each entry is { v, label? }.
@@ -499,8 +499,10 @@ export function createScene(canvas, store, { onLanded, onMarkerClick } = {}) {
     resize: refit,
     /**
      * Start (or restart) the serve animation.
-     * @param {{demo?:boolean}} opts demo = the tutor's quick serve: no jump,
-     *        full-speed flight, so several can be played in a row.
+     * @param {{demo?:boolean, animatePlayer?:boolean}} opts
+     *   `animatePlayer` keeps the complete toss → jump → contact → landing
+     *   sequence for a coach demonstration; a quick ball-only demo remains
+     *   available for callers that explicitly leave it false.
      */
     serve({ demo: isDemo = false, animatePlayer: shouldAnimatePlayer = false } = {}) {
       clock = 0;

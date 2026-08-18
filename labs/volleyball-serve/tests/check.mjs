@@ -7,6 +7,7 @@ import assert from 'node:assert/strict';
 import { getProblem } from '../js/config/problem.js';
 import { evaluate, Verdict } from '../js/core/evaluator.js';
 import { flightTime, solveBounds } from '../js/core/physics.js';
+import { createPlayer, SERVE_TIMELINE } from '../js/ui/player.js';
 
 const p = getProblem();
 const { vMin, vMax, feasible } = solveBounds(p);
@@ -57,6 +58,16 @@ check('21 and 22 m/s are both good serves', () => {
 
 check('slider range covers both bounds', () =>
   assert(p.speed.min < vMin && p.speed.max > vMax));
+
+const figure = createPlayer(p);
+const standingPose = figure.pose('aim', 0, 0.5);
+const contactPose = figure.pose('serve', SERVE_TIMELINE.contact, 0.5);
+check('server starts with the front foot behind the serve line', () =>
+  assert(standingPose.frontFoot.x < 0, `front foot at ${standingPose.frontFoot.x}`));
+check('jump carries the front foot forward', () =>
+  assert(contactPose.frontFoot.x > standingPose.frontFoot.x, 'front foot did not move forward'));
+check('contact point stays over the serve line', () =>
+  assert(near(contactPose.ball.x, 0) && near(figure.contactPoint.x, 0)));
 
 console.log('\nsample speeds:');
 for (const v of [15, 18, 20, 20.5, 21, 22, 22.5, 23, 25]) {
