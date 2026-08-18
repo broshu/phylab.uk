@@ -112,6 +112,18 @@ async function startUpper(h, answer = 'C') {
   await h.choose(answer);
 }
 
+async function solveUpperSpeed(h, answer = '22.5 m/s') {
+  check('shows only C for the limiting serve', h.markers.map((p) => p.id).join('') === 'C');
+  check('draws C horizontal and vertical construction lines',
+    h.guides.map((g) => g.kind).join(',') === 'horizontal,vertical');
+  check('C limiting serve animates the player with its speed hidden',
+    h.serveOptions.at(-1)?.animatePlayer === true && h.serveOptions.at(-1)?.hideSpeed === true,
+  );
+  check('asks for the hidden C-point speed', /speed of the serve that just lands at C/i.test(h.messages().at(-1) || ''));
+  check('offers three candidate speeds for C', h.options().length === 3);
+  await h.choose(answer);
+}
+
 async function finish(h, wrongSpeeds = []) {
   check('states the strict lower inequality', h.said(/v > 20\.1 m\/s/));
   check('states the inclusive upper inequality', h.said(/v ≤ 22\.5 m\/s/));
@@ -168,9 +180,10 @@ async function finish(h, wrongSpeeds = []) {
   check('a wrong speed shows the two-step calculation', h.said(/Write it in two steps/i));
   await h.choose('20.1 m/s');
   await startUpper(h);
+  await solveUpperSpeed(h);
   await finish(h);
   check('correct final answer is confirmed', h.said(/Exactly\. 21 m\/s and 22 m\/s/i));
-  check('court was reset for point choice, limiting serve, and upper bound', h.clearCount === 3);
+  check('court was reset for both point choices and limiting serves', h.clearCount === 4);
 }
 
 // An out serve starts with C, but still completes the lower-bound reasoning.
@@ -187,6 +200,10 @@ async function finish(h, wrongSpeeds = []) {
   await h.choose('Slower');
   check('wrong long diagnosis is corrected', h.said(/must be slower/i));
   await startUpper(h);
+  await solveUpperSpeed(h, '18.0 m/s');
+  check('a wrong C speed shows the two-step calculation in math',
+    h.said(/Write it in two steps/i) && h.said(/18.*0\.800.*22\.5/i));
+  await h.choose('22.5 m/s');
   await startLower(h);
   await solveLowerSpeed(h);
   await finish(h, ['20 m/s', '23 m/s']);
@@ -204,8 +221,9 @@ async function finish(h, wrongSpeeds = []) {
   await startLower(h);
   await solveLowerSpeed(h);
   await startUpper(h);
+  await solveUpperSpeed(h);
   await finish(h);
-  check('good-serve path completes both calculations', h.said(/lower condition/) && h.said(/v_max/));
+  check('good-serve path completes both calculations', h.said(/lower condition/) && h.said(/upper condition/));
 }
 
 // A second wrong point selection is resolved as the correct boundary point so

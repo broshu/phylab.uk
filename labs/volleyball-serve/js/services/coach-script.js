@@ -151,20 +151,65 @@ async function teachLowerBound(dsl) {
 
 /** Derive the inclusive upper bound from the trajectory through C. */
 async function teachUpperBound(dsl) {
-  const { say, problem, bounds } = dsl;
+  const { say, ask, serve, mark, guide, clearCourt, problem, bounds } = dsl;
+  const drop = problem.hitHeight;
 
   await say('There is a second boundary: how fast can the serve be before it lands beyond the far baseline?');
   await chooseBoundaryPoint(dsl, 'C');
-  const tLand = flightTime(problem.hitHeight, problem.g);
-  await say(
-    `The ball always falls from ${fmt(problem.hitHeight, 1)} m to the floor in ` +
-      `t = √(2 × ${fmt(problem.hitHeight, 1)} / ${problem.g}) = ${fmt(tLand)} s. ` +
-      'That time does not depend on speed.',
-  );
-  await say(
-    `At the limit it travels ${problem.courtEnd} m, so v_max = ${problem.courtEnd} ÷ ${fmt(tLand)} = ` +
-      `${fmt(bounds.vMax, 1)} m/s. A ball on the baseline is in, so v ≤ ${fmt(bounds.vMax, 1)} m/s.`,
-  );
+
+  await say('Watch the limiting serve. I will hide its speed: it just lands at C.');
+  clearCourt();
+  mark([{ id: 'C', x: problem.courtEnd, y: 0 }]);
+  guide([
+    {
+      kind: 'horizontal',
+      x1: 0,
+      x2: problem.courtEnd,
+      y: problem.hitHeight,
+      label: `horizontal distance · ${problem.courtEnd} m`,
+    },
+    {
+      kind: 'vertical',
+      x: problem.courtEnd - 0.55,
+      y1: 0,
+      y2: problem.hitHeight,
+      label: `vertical fall · ${fmt(drop, 1)} m`,
+    },
+  ]);
+  await serve(bounds.vMax, { animatePlayer: true, hideSpeed: true });
+  await say('The dashed lines show the horizontal distance and the vertical fall for that exact path.');
+  await say('How could you calculate its speed? What do you think the hidden speed is?');
+
+  const choices = [
+    { id: 'distance', label: `${fmt(problem.courtEnd, 1)} m/s`, reply: `${fmt(problem.courtEnd, 1)} m/s` },
+    { id: 'minimum', label: `${fmt(bounds.vMin, 1)} m/s`, reply: `${fmt(bounds.vMin, 1)} m/s` },
+    { id: 'maximum', label: `${fmt(bounds.vMax, 1)} m/s`, reply: `${fmt(bounds.vMax, 1)} m/s` },
+  ];
+  let answer = await ask('What is the speed of the serve that just lands at C?', choices);
+
+  if (answer !== 'maximum') {
+    const tLand = flightTime(drop, problem.g);
+    const tRounded = fmt(tLand, 3);
+    const vRounded = fmt(bounds.vMax, 1);
+    await say({
+      text: 'Write it in two steps:',
+      tex: String.raw`\begin{aligned}
+        t &= \sqrt{\frac{2 \times ${fmt(drop, 1)}}{${problem.g}}} \approx ${tRounded}\,\mathrm{s} \\
+        v &= \frac{${problem.courtEnd}}{${tRounded}} \approx ${vRounded}\,\mathrm{m/s}
+      \end{aligned}`,
+      fallback:
+        ` t = √(2 × ${fmt(drop, 1)} / ${problem.g}) ≈ ${tRounded} s; ` +
+        `v = ${problem.courtEnd} ÷ ${tRounded} ≈ ${vRounded} m/s`,
+    });
+    answer = await ask('Using that calculation, what is the speed that just lands at C?', choices);
+  }
+
+  if (answer === 'maximum') {
+    await say(`Yes. The hidden speed is ${fmt(bounds.vMax, 1)} m/s.`);
+  } else {
+    await say(`The limiting speed is ${fmt(bounds.vMax, 1)} m/s.`);
+  }
+  await say(`A ball on the baseline is in, so the upper condition is v ≤ ${fmt(bounds.vMax, 1)} m/s.`);
 }
 
 async function finishWindow(dsl) {
