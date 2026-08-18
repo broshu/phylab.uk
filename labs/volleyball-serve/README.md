@@ -93,59 +93,31 @@ line in `main.js`.
 
 ## The coach
 
-The coach is a permanent panel, not a button: it speaks when the page opens and
-again after every serve. It can play serves of its own — phase `'demo'`: no
-jump, full-speed flight, so several land in a few seconds — and leave earlier
-ones on screen as faint grey trails labelled with their speed. Demo serves never
-set a verdict and are never logged as attempts; the slider and Serve are locked
-while one is in the air. Serving again interrupts whatever the coach was saying.
+The coach is a permanent, interruptible teaching sequence rather than a result
+panel. A serve supplies an observation; the dialogue then derives the two
+limiting trajectories that define the answer.
 
-A script is an async function in `services/coach-script.js`, and reads like the
-conversation it produces:
+1. **A net fault** establishes that the ball must be faster. If a student says
+   slower, the coach serves a short family of slower balls as a counterexample:
+   they fall further before the net.
+2. **The lower boundary** is the slowest legal path. It must pass through **A**,
+   the top of the net. The coach turns the allowed fall into the time to the net
+   and then into `v > vMin`.
+3. **The upper boundary** is the fastest legal path. It must land at **C**, the
+   far baseline. The fixed flight time gives `v ≤ vMax`.
+4. **The conclusion** combines both inequalities and asks for the possible
+   whole-number slider values.
 
-```js
-async function netFault({ say, ask, serve, keep, v, result, bounds }) {
-  await say(`${v} m/s reached the net only …`);
-  const answer = await ask('Was that too fast, or too slow?', [...]); // waits for a click
-  if (answer !== tooFastOrSlow(v, bounds)) {
-    keep(v, `${v}`);                                                  // hold their path
-    for (const s of slowerFamily(v)) await serve(s, { keep: true });   // waits for landing
-  }
-}
-```
+An out serve enters the lesson at step 3; a successful serve is evidence and
+still leads through both boundary derivations. The canvas marks three candidate
+points — **A** the top of the net, **B** the foot of the net, and **C** the far
+baseline — and the student can answer with either a button or by clicking a mark.
 
-`ui/coach.js` supplies that DSL, renders messages and option buttons, and
-abandons a running script the moment something else happens.
-
-What it says now:
-
-- **on load** — introduces itself and offers a way in for a student with no idea
-  where to start: it serves the default 15 m/s itself and then treats it exactly
-  like a serve of their own. Serving cancels the offer.
-- **into the net** — names the height the ball reached at the net and how far
-  below the tape that is, then asks whether the serve was too fast or too slow.
-  Answer "too fast" and it serves five slower speeds in quick succession, keeping
-  every path: each one dies lower on the net and the slowest do not even reach
-  it. Slower is worse, which is the surprise the question is for. Then it asks
-  again and explains that a slower ball spends longer falling on the way to the
-  net, so it has to be hit *faster*.
-- **how much faster, at least?** — the follow-up, once the student is on
-  "faster". The way in is the borderline serve: the slowest one that still
-  counts only just gets away with it, so its path must pass through one
-  particular point. The coach clears the court, marks three candidates — **A**
-  the top of the net, **B** the foot of the net, **C** the far baseline — and
-  asks which one. B is corrected as a ball already under the tape; C is
-  acknowledged as the *other* limit, where the fastest legal serve lands. The
-  answer is A. What happens after that is the next thing to write; the TODO in
-  `criticalPoint()` marks the spot.
-- **past the baseline** / **in** — one message from the rule-based `tutor.js`.
-
-The markers are clickable: `scene.js` hit-tests them and calls
-`coach.answer(id)`, which resolves the question on screen exactly as the buttons
-do. So a student can answer by pointing at the court or by pressing a button.
-
-Which answer is "correct" is derived from `bounds.vMin`, not hard-coded, so the
-script stays right if the problem data changes.
+The coach can also play its own serves in phase `'demo'`: those fly without the
+player animation and can leave faint comparison trails. They never set a verdict
+or enter the attempt log, and the student can interrupt a demonstration by
+serving. `ui/coach.js` owns the dialogue mechanics; the sequence itself lives in
+`services/coach-script.js`.
 
 ## Running it locally
 
@@ -188,13 +160,9 @@ itself is plain static files and needs no build step.
 
 ## Extension points
 
-- **More coaching** — add an async function to `services/coach-script.js` and
-  route to it from `judge()` or `reaction()`. Nothing else changes: the DSL, the
-  demo serves, the trails and the clickable markers are already there. The place
-  to continue is the TODO in `criticalPoint()`: point A has to become a number —
-  the 1.0 m fall from the hand to the tape gives the time to the net, and 9 m
-  divided by that time gives the slowest legal speed. After that, the other
-  boundary (point C) is still untouched.
+- **More coaching** — add an async branch to `services/coach-script.js` and
+  route to it from `guideFromResult()`. The DSL, demonstrations, trails, and
+  clickable markers are already available to every branch.
 - **Bring back the Working panel** — add a `<section class="panel" id="…">`
   to `index.html` and one line to `main.js`:
   `createDerivation(document.querySelector('#derivation'), store)` or

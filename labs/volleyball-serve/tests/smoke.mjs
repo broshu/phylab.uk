@@ -102,8 +102,8 @@ try {
     [...coachLog()].some((c) => /1\.40 m/.test(c.textContent)),
   );
 
-  // the wrong answer makes the coach demonstrate: several serves, no verdict
-  [...coachOptions()].find((b) => b.textContent === 'Too fast').dispatch('click');
+  // the wrong answer makes the coach demonstrate: several slower serves, no verdict
+  [...coachOptions()].find((b) => b.textContent === 'Too slow').dispatch('click');
   await play(2600); // long enough for the first of the slower serves to land
   check('a demonstration is running', store.get().phase === 'demo');
   check('slider locked while the coach demonstrates', control('#speed').disabled === true);

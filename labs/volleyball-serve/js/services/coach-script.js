@@ -1,18 +1,18 @@
 /**
- * What the coach says — the content, kept apart from the dialogue mechanics in
- * ui/coach.js. A script is an async function driven by the little DSL it is
- * handed, so it reads top to bottom like a conversation:
+ * The coach's teaching sequence.
  *
- *   await say('…')                      one message from the coach
- *   await serve(14, { keep: true })     a demonstration serve, resolves on landing
- *   const a = await ask('…', [...])     buttons, resolves with the id picked
- *   keep(v, label)                      leave a trajectory on screen
- *   mark([{id, x, y}])                  lettered, clickable points on the court
- *   clearCourt()                        wipe the paths and markers
+ * A serve is only the starting observation. The coach takes the student to
+ * the two limiting paths that define the answer:
  *
- * Two entry points: opening() before anything is served, and reaction() after
- * every serve the student makes.
+ *   A: slowest legal serve, at the top of the net  → v > vMin
+ *   C: fastest legal serve, at the far baseline    → v ≤ vMax
+ *
+ * The surrounding UI supplies a small async DSL. Keeping this file concerned
+ * with teaching decisions and language makes the sequence easy to read, test,
+ * and change without coupling it to DOM or canvas code.
  */
+import { flightTime, timeToFall } from '../core/physics.js';
+
 const fmt = (x, n = 2) => Number(x).toFixed(n);
 
 const FAST_SLOW = [
@@ -20,171 +20,214 @@ const FAST_SLOW = [
   { id: 'slow', label: 'Too slow' },
 ];
 
-/** Read the right answer off the physics rather than hard-coding it. */
-function tooFastOrSlow(v, bounds) {
-  return v < bounds.vMin ? 'slow' : 'fast';
+const POINTS = (problem) => [
+  { id: 'A', x: problem.netDistance, y: problem.netHeight },
+  { id: 'B', x: problem.netDistance, y: 0 },
+  { id: 'C', x: problem.courtEnd, y: 0 },
+];
+
+const POINT_CHOICES = [
+  { id: 'A', label: 'A — the top of the net', reply: 'A' },
+  { id: 'B', label: 'B — the foot of the net', reply: 'B' },
+  { id: 'C', label: 'C — the far baseline', reply: 'C' },
+];
+
+function slowerFamily(v, min) {
+  const speeds = [];
+  for (let speed = v - 1; speed >= Math.max(min, v - 5); speed--) speeds.push(speed);
+  return speeds;
 }
 
-/** Five speeds below v, for showing that slower is worse. */
-function slowerFamily(v) {
-  const out = [];
-  for (let s = v - 1; s >= Math.max(1, v - 5); s--) out.push(s);
-  return out;
-}
-
-/**
- * The ball went into the net. Ask which way to move, and if the student thinks
- * the serve was too fast, show a family of slower serves: each one dies lower
- * on the net and the slowest do not even reach it. That surprise is the lesson.
- */
-async function netFault(dsl) {
-  const { say, ask, serve, keep, problem, bounds, v, result } = dsl;
-
-  await say(
-    `${v} m/s reached the net only ${fmt(result.heightAtNet)} m up — ` +
-      `${fmt(-result.netClearance)} m below the ${problem.netHeight} m tape.`,
-  );
-
-  const right = tooFastOrSlow(v, bounds);
-  let answer = await ask('Was that too fast, or too slow?', FAST_SLOW);
-
-  if (answer !== right && right === 'slow') {
-    keep(v, `${v}`); // hold the student's own serve on screen for comparison
-    await say('Let us test that. If it was too fast, slower has to be better. Watch.');
-    for (const s of slowerFamily(v)) {
-      await serve(s, { keep: true, label: `${s}` });
-    }
-    await say(
-      'Every slower serve dies lower on the net, and the slowest ones do not ' +
-        'even reach it. Slower is clearly worse.',
-    );
-    answer = await ask('So: too fast, or too slow?', FAST_SLOW);
-    if (answer !== right) {
-      await say('It was too slow — the serves you just watched were all worse.');
-    }
+function pointCorrection(id, target) {
+  if (id === 'B') {
+    return 'B is below the tape: a ball passing there is already in the net, so it is not legal.';
   }
-
-  if (right === 'slow') {
-    await say(
-      'Right. The ball falls all the way from the hand to the net, and a ' +
-        'slower ball spends longer on that trip, so it arrives lower. To get ' +
-        'over, it has to reach the net sooner: serve faster.',
-    );
-    return criticalPoint(dsl);
+  if (target === 'A' && id === 'C') {
+    return 'C is a real boundary, but it belongs to the fastest legal serve. We are finding the slowest one.';
   }
-
-  await say('Careful — it never got over the net, so it cannot have been too fast.');
+  if (target === 'C' && id === 'A') {
+    return 'A is the other boundary: it sets the slowest legal serve. We are finding the fastest one.';
+  }
+  return 'That point does not describe the limiting serve we are looking for.';
 }
 
-/**
- * Now the useful question: faster, but how much faster *at least*? The way in is
- * the borderline serve — the slowest one that still counts. It only just gets
- * away with it, so it must pass through one particular point on the court.
- * Three candidates are marked on the diagram and the student picks one, either
- * with the buttons or by clicking the court itself.
- */
-async function criticalPoint(dsl) {
+async function chooseBoundaryPoint(dsl, target) {
   const { say, ask, mark, clearCourt, problem } = dsl;
-
-  await say('So: faster. But how much faster, at least?');
-  await say(
-    'Think about the borderline serve — the slowest one that still counts. It ' +
-      'only just gets away with it, so its path must pass exactly through one ' +
-      'particular point.',
-  );
+  const isLower = target === 'A';
 
   clearCourt();
-  mark([
-    { id: 'A', x: problem.netDistance, y: problem.netHeight },
-    { id: 'B', x: problem.netDistance, y: 0 },
-    { id: 'C', x: problem.courtEnd, y: 0 },
-  ]);
-  await say('I have marked three candidates. You can tap them on the court, too.');
+  mark(POINTS(problem));
+  await say('The marked points can also be selected directly on the court.');
 
-  let answer = await ask('Which point does the slowest legal serve go through?', [
-    { id: 'A', label: 'A — the top of the net', reply: 'A' },
-    { id: 'B', label: 'B — the foot of the net', reply: 'B' },
-    { id: 'C', label: 'C — the far baseline', reply: 'C' },
-  ]);
+  const question = isLower
+    ? 'Which point does the slowest legal serve just pass through?'
+    : 'Which point does the fastest legal serve just pass through?';
+  let answer = await ask(question, POINT_CHOICES);
 
-  if (answer === 'B') {
-    await say(
-      'To reach B the ball would have to be below the tape at the net — that ' +
-        'is a serve in the net, not a legal one.',
-    );
-  } else if (answer === 'C') {
-    await say(
-      'C is a real limit, but the other one: it is where the *fastest* legal ' +
-        'serve lands. We are after the slowest.',
-    );
+  if (answer !== target) {
+    await say(pointCorrection(answer, target));
+    answer = await ask(`So which point fixes the ${isLower ? 'slowest' : 'fastest'} legal serve?`, POINT_CHOICES);
   }
 
-  if (answer !== 'A') {
-    answer = await ask('So which point is the slowest legal serve pinned to?', [
-      { id: 'A', label: 'A — the top of the net', reply: 'A' },
-      { id: 'B', label: 'B — the foot of the net', reply: 'B' },
-      { id: 'C', label: 'C — the far baseline', reply: 'C' },
-    ]);
-  }
-
-  if (answer === 'A') {
-    await say('Yes — A. The slowest serve that counts is the one that just brushes the top of the net.');
+  if (answer === target) {
+    await say(`Yes — ${target}.`);
   } else {
-    await say('It is A: the ball just brushing the top of the net. Any slower and it is under the tape.');
+    await say(`It is ${target}. ${pointCorrection(answer, target)}`);
+  }
+}
+
+/** Derive the strict lower bound from the trajectory through A. */
+async function teachLowerBound(dsl) {
+  const { say, problem, bounds } = dsl;
+  const drop = problem.hitHeight - problem.netHeight;
+
+  await say('Now find the minimum speed: the borderline path must go through A, the top of the net.');
+  await chooseBoundaryPoint(dsl, 'A');
+  await say(
+    `From the ${fmt(problem.hitHeight, 1)} m contact point to the ${fmt(problem.netHeight, 1)} m tape, ` +
+      `the ball may fall ${fmt(drop, 1)} m.`,
+  );
+
+  const tNet = timeToFall(drop, problem.g);
+  await say(
+    `For that fall, t = √(2 × ${fmt(drop, 1)} / ${problem.g}) = ${fmt(tNet)} s. ` +
+      `It must cover ${problem.netDistance} m in that time.`,
+  );
+  await say(
+    `So v_min = ${problem.netDistance} ÷ ${fmt(tNet)} = ${fmt(bounds.vMin, 1)} m/s. ` +
+      `Touching the tape is a fault, so the lower condition is v > ${fmt(bounds.vMin, 1)} m/s.`,
+  );
+}
+
+/** Derive the inclusive upper bound from the trajectory through C. */
+async function teachUpperBound(dsl) {
+  const { say, problem, bounds } = dsl;
+
+  await say('There is a second boundary: how fast can the serve be before it lands beyond the far baseline?');
+  await chooseBoundaryPoint(dsl, 'C');
+  const tLand = flightTime(problem.hitHeight, problem.g);
+  await say(
+    `The ball always falls from ${fmt(problem.hitHeight, 1)} m to the floor in ` +
+      `t = √(2 × ${fmt(problem.hitHeight, 1)} / ${problem.g}) = ${fmt(tLand)} s. ` +
+      'That time does not depend on speed.',
+  );
+  await say(
+    `At the limit it travels ${problem.courtEnd} m, so v_max = ${problem.courtEnd} ÷ ${fmt(tLand)} = ` +
+      `${fmt(bounds.vMax, 1)} m/s. A ball on the baseline is in, so v ≤ ${fmt(bounds.vMax, 1)} m/s.`,
+  );
+}
+
+async function finishWindow(dsl) {
+  const { ask, say, bounds } = dsl;
+  const min = fmt(bounds.vMin, 1);
+  const max = fmt(bounds.vMax, 1);
+
+  await say(`Both conditions must hold: v > ${min} m/s and v ≤ ${max} m/s.`);
+  await say(`So the legal interval is ${min} < v ≤ ${max} m/s.`);
+  const answer = await ask('With a whole-number slider, which speeds can work?', [
+    { id: '20-21', label: '20 and 21 m/s', reply: '20 and 21 m/s' },
+    { id: '21-22', label: '21 and 22 m/s', reply: '21 and 22 m/s' },
+    { id: '22-23', label: '22 and 23 m/s', reply: '22 and 23 m/s' },
+  ]);
+
+  if (answer === '21-22') {
+    await say('Exactly. 21 m/s and 22 m/s are the two whole-number speeds inside the interval.');
+  } else {
+    await say('The answer is 21 m/s and 22 m/s: 20 is too slow to clear the net, while 23 lands long.');
+  }
+}
+
+/** A net fault starts at the lower boundary. */
+async function fromNetFault(dsl) {
+  const { say, ask, serve, keep, problem, result, v } = dsl;
+
+  await say(
+    `At ${v} m/s the ball reaches the net at ${fmt(result.heightAtNet)} m, ` +
+      `${fmt(-result.netClearance)} m below the tape.`,
+  );
+  let answer = await ask('To clear the net, should the next serve be faster or slower?', FAST_SLOW);
+
+  if (answer === 'slow') {
+    keep(v, `${v}`);
+    const examples = slowerFamily(v, problem.speed.min);
+    if (examples.length) {
+      await say('Let us test the idea that slower would help. Watch these slower serves.');
+      for (const speed of examples) await serve(speed, { keep: true, label: `${speed}` });
+      await say('They reach the net lower, or land before it. A slower ball spends longer falling.');
+    } else {
+      await say('This serve is already at the slow end of the slider, so slowing down cannot help.');
+    }
+    answer = await ask('So should a serve that hits the net be faster or slower?', FAST_SLOW);
   }
 
-  // TODO next stage: turn point A into a number — the fall from 3.2 m to 2.2 m
-  // gives the time to the net, and 9 m divided by that time gives the speed.
+  if (answer === 'fast') {
+    await say('Right. To arrive above the tape, the ball must reach the net sooner, so it needs a larger speed.');
+  } else {
+    await say('It needs to be faster: a slower ball takes longer to reach the net and falls further.');
+  }
+
+  await teachLowerBound(dsl);
+  await teachUpperBound(dsl);
+  await finishWindow(dsl);
 }
 
-/** Past the baseline: the flight time is fixed, so harder only means further. */
-async function tooLong({ say, tutor, problem, result, attemptCount }) {
-  const hint = await tutor.hint({ problem, result, attempts: attemptCount });
-  await say(hint.body);
-  await say('Come down a little and serve again.');
+/** An out serve starts at the upper boundary. */
+async function fromLongServe(dsl) {
+  const { say, ask, result, v } = dsl;
+
+  await say(
+    `At ${v} m/s the ball lands at ${fmt(result.xLand, 1)} m, ` +
+      `${fmt(result.outBy, 1)} m beyond the ${result.xLand - result.outBy} m baseline.`,
+  );
+  const answer = await ask('To bring that landing point back in, should the next serve be faster or slower?', FAST_SLOW);
+  if (answer === 'slow') {
+    await say('Right. The ball is in the air for the same time; a smaller speed means less horizontal distance.');
+  } else {
+    await say('It must be slower: the ball already passed the baseline, and more speed would carry it farther.');
+  }
+
+  await teachUpperBound(dsl);
+  await teachLowerBound(dsl);
+  await finishWindow(dsl);
 }
 
-/** In. Say why it worked and how little room there was. */
-async function goodServe({ say, tutor, problem, result, attemptCount }) {
-  const hint = await tutor.hint({ problem, result, attempts: attemptCount });
-  await say(`${hint.title}! ${hint.body}`);
+/** A successful serve is evidence, but the coach still asks for the explanation. */
+async function fromGoodServe(dsl) {
+  const { say, result, v } = dsl;
+  await say(
+    `${v} m/s worked: it clears the tape by ${fmt(result.netClearance)} m and lands ` +
+      `${fmt(-result.outBy, 1)} m inside the baseline.`,
+  );
+  await say('That is evidence, not yet the explanation. Let us find the two boundary speeds that make it work.');
+  await teachLowerBound(dsl);
+  await teachUpperBound(dsl);
+  await finishWindow(dsl);
 }
 
-/** Route on the verdict of a serve. */
-async function judge(dsl) {
-  if (dsl.result.verdict === 'net') return netFault(dsl);
-  if (dsl.result.verdict === 'out') return tooLong(dsl);
-  return goodServe(dsl);
+async function guideFromResult(dsl) {
+  if (dsl.result.verdict === 'net') return fromNetFault(dsl);
+  if (dsl.result.verdict === 'out') return fromLongServe(dsl);
+  return fromGoodServe(dsl);
 }
 
-/**
- * Before anything has been served. Offer a way in for a student who has no
- * idea where to start: the coach serves the default speed itself and then asks
- * the same question. Serving cancels this, which is the point — the offer is
- * there if it is wanted and harmless if it is not.
- */
+/** Offer a demonstration only for students who want an initial observation. */
 export async function opening(dsl) {
   const { say, ask, serve, problem } = dsl;
 
-  await say('I am your coach. Set a speed, serve, and I will tell you what happened.');
-
-  const answer = await ask('Or shall I start you off?', [
-    { id: 'self', label: 'I will try first' },
-    { id: 'demo', label: 'I have no idea where to start' },
+  await say('I will help you turn each serve into two boundary conditions: one for the net and one for the baseline.');
+  const answer = await ask('Would you like to make the first serve, or watch one first?', [
+    { id: 'self', label: 'I will serve first' },
+    { id: 'demo', label: 'Show me an example' },
   ]);
   if (answer === 'self') return;
 
-  await say(
-    'Fair enough — that is what a physicist does too: pick a number, hit the ' +
-      'ball, and look at what happens.',
-  );
   const v = problem.speed.default;
-  await say(`Let me serve at ${v} m/s.`);
+  await say(`Let us start with ${v} m/s and use what we see.`);
   const result = await serve(v, { keep: true, label: `${v}` });
-  return judge({ ...dsl, v, result });
+  return guideFromResult({ ...dsl, result, v });
 }
 
-/** After every serve the student makes. */
+/** Every student serve joins the same sequence at the observation it produced. */
 export async function reaction(dsl) {
-  return judge(dsl);
+  return guideFromResult(dsl);
 }
