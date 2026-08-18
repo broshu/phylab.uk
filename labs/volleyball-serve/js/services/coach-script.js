@@ -15,6 +15,15 @@ import { flightTime, timeToFall } from '../core/physics.js';
 
 const fmt = (x, n = 2) => Number(x).toFixed(n);
 
+const textPart = (text) => ({ type: 'text', text });
+const mathPart = (tex, fallback, display = false) => ({
+  type: 'math',
+  tex,
+  fallback,
+  display,
+});
+const rich = (...parts) => ({ parts });
+
 const FAST_SLOW = [
   { id: 'fast', label: 'Faster' },
   { id: 'slow', label: 'Slower' },
@@ -130,7 +139,7 @@ async function teachLowerBound(dsl) {
         v &= \frac{${problem.netDistance}}{${tRounded}} \approx ${vRounded}\,\mathrm{m/s}
       \end{aligned}`,
       fallback:
-        `t = √(2 × ${fmt(drop, 1)} / ${problem.g}) ≈ ${tRounded} s; ` +
+        ` t = √(2 × ${fmt(drop, 1)} / ${problem.g}) ≈ ${tRounded} s; ` +
         `v = ${problem.netDistance} ÷ ${tRounded} ≈ ${vRounded} m/s`,
     });
     answer = await ask('Using that calculation, what is the speed that just reaches A?', choices);
@@ -152,13 +161,29 @@ async function teachUpperBound(dsl) {
   await chooseBoundaryPoint(dsl, 'C');
   const tLand = flightTime(problem.hitHeight, problem.g);
   await say(
-    `The ball always falls from ${fmt(problem.hitHeight, 1)} m to the floor in ` +
-      `t = √(2 × ${fmt(problem.hitHeight, 1)} / ${problem.g}) = ${fmt(tLand)} s. ` +
-      'That time does not depend on speed.',
+    rich(
+      textPart(`The ball always falls from ${fmt(problem.hitHeight, 1)} m to the floor in `),
+      mathPart(
+        String.raw`t = \sqrt{\frac{2 \times ${fmt(problem.hitHeight, 1)}}{${problem.g}}} = ${fmt(tLand)}\,\mathrm{s}`,
+        `t = √(2 × ${fmt(problem.hitHeight, 1)} / ${problem.g}) = ${fmt(tLand)} s`,
+      ),
+      textPart('. That time does not depend on speed.'),
+    ),
   );
   await say(
-    `At the limit it travels ${problem.courtEnd} m, so v_max = ${problem.courtEnd} ÷ ${fmt(tLand)} = ` +
-      `${fmt(bounds.vMax, 1)} m/s. A ball on the baseline is in, so v ≤ ${fmt(bounds.vMax, 1)} m/s.`,
+    rich(
+      textPart(`At the limit it travels ${problem.courtEnd} m, so `),
+      mathPart(
+        String.raw`v_{\max} = \frac{${problem.courtEnd}}{${fmt(tLand)}} = ${fmt(bounds.vMax, 1)}\,\mathrm{m/s}`,
+        `v_max = ${problem.courtEnd} ÷ ${fmt(tLand)} = ${fmt(bounds.vMax, 1)} m/s`,
+      ),
+      textPart('. A ball on the baseline is in, so '),
+      mathPart(
+        String.raw`v \le ${fmt(bounds.vMax, 1)}\,\mathrm{m/s}`,
+        `v ≤ ${fmt(bounds.vMax, 1)} m/s`,
+      ),
+      textPart('.'),
+    ),
   );
 }
 
@@ -167,8 +192,22 @@ async function finishWindow(dsl) {
   const min = fmt(bounds.vMin, 1);
   const max = fmt(bounds.vMax, 1);
 
-  await say(`Both conditions must hold: v > ${min} m/s and v ≤ ${max} m/s.`);
-  await say(`So the legal interval is ${min} < v ≤ ${max} m/s.`);
+  await say(
+    rich(
+      textPart('Both conditions must hold: '),
+      mathPart(String.raw`v > ${min}\,\mathrm{m/s}`, `v > ${min} m/s`),
+      textPart(' and '),
+      mathPart(String.raw`v \le ${max}\,\mathrm{m/s}`, `v ≤ ${max} m/s`),
+      textPart('.'),
+    ),
+  );
+  await say(
+    rich(
+      textPart('So the legal interval is '),
+      mathPart(String.raw`${min} < v \le ${max}\,\mathrm{m/s}`, `${min} < v ≤ ${max} m/s`),
+      textPart('.'),
+    ),
+  );
   const answer = await ask('With a whole-number slider, which speeds can work?', [
     { id: '20-21', label: '20 and 21 m/s', reply: '20 and 21 m/s' },
     { id: '21-22', label: '21 and 22 m/s', reply: '21 and 22 m/s' },
@@ -187,8 +226,21 @@ async function fromNetFault(dsl) {
   const { say, ask, serve, keep, problem, result, v } = dsl;
 
   await say(
-    `At ${v} m/s the ball reaches the net at ${fmt(result.heightAtNet)} m, ` +
-      `${fmt(-result.netClearance)} m below the tape.`,
+    rich(
+      textPart('At '),
+      mathPart(String.raw`${v}\,\mathrm{m/s}`, `${v} m/s`),
+      textPart(' the ball reaches the net at '),
+      mathPart(
+        String.raw`${fmt(result.heightAtNet)}\,\mathrm{m}`,
+        `${fmt(result.heightAtNet)} m`,
+      ),
+      textPart(', '),
+      mathPart(
+        String.raw`${fmt(-result.netClearance)}\,\mathrm{m}`,
+        `${fmt(-result.netClearance)} m`,
+      ),
+      textPart(' below the tape.'),
+    ),
   );
   let answer = await ask('To clear the net, should the next serve be faster or slower?', FAST_SLOW);
 
@@ -221,8 +273,21 @@ async function fromLongServe(dsl) {
   const { say, ask, result, v } = dsl;
 
   await say(
-    `At ${v} m/s the ball lands at ${fmt(result.xLand, 1)} m, ` +
-      `${fmt(result.outBy, 1)} m beyond the ${result.xLand - result.outBy} m baseline.`,
+    rich(
+      textPart('At '),
+      mathPart(String.raw`${v}\,\mathrm{m/s}`, `${v} m/s`),
+      textPart(' the ball lands at '),
+      mathPart(
+        String.raw`${fmt(result.xLand, 1)}\,\mathrm{m}`,
+        `${fmt(result.xLand, 1)} m`,
+      ),
+      textPart(', '),
+      mathPart(
+        String.raw`${fmt(result.outBy, 1)}\,\mathrm{m}`,
+        `${fmt(result.outBy, 1)} m`,
+      ),
+      textPart(` beyond the ${result.xLand - result.outBy} m baseline.`),
+    ),
   );
   const answer = await ask('To bring that landing point back in, should the next serve be faster or slower?', FAST_SLOW);
   if (answer === 'slow') {
@@ -240,8 +305,20 @@ async function fromLongServe(dsl) {
 async function fromGoodServe(dsl) {
   const { say, result, v } = dsl;
   await say(
-    `${v} m/s worked: it clears the tape by ${fmt(result.netClearance)} m and lands ` +
-      `${fmt(-result.outBy, 1)} m inside the baseline.`,
+    rich(
+      mathPart(String.raw`${v}\,\mathrm{m/s}`, `${v} m/s`),
+      textPart(' worked: it clears the tape by '),
+      mathPart(
+        String.raw`${fmt(result.netClearance)}\,\mathrm{m}`,
+        `${fmt(result.netClearance)} m`,
+      ),
+      textPart(' and lands '),
+      mathPart(
+        String.raw`${fmt(-result.outBy, 1)}\,\mathrm{m}`,
+        `${fmt(-result.outBy, 1)} m`,
+      ),
+      textPart(' inside the baseline.'),
+    ),
   );
   await say('That is evidence, not yet the explanation. Let us find the two boundary speeds that make it work.');
   await teachLowerBound(dsl);

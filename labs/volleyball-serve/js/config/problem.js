@@ -16,6 +16,7 @@
  * @property {number} netDistance   horizontal distance from server to net, m
  * @property {number} courtEnd      horizontal distance from server to far baseline, m
  * @property {{min:number,max:number,step:number,default:number}} speed slider range
+ * @property {{source:string,tex:string,fallback:string}} [promptFormula]
  * @property {Object} [adjustable]  which parameters students may change (future levels)
  */
 
@@ -29,6 +30,11 @@ export const PROBLEMS = {
       'height of 3.2 m. The net is 2.2 m high and 9 m away; the far baseline ' +
       'is 18 m away. Ignoring air resistance and taking g = 10 m/s², which ' +
       'launch speeds clear the net and still land in?',
+    promptFormula: {
+      source: 'g = 10 m/s²',
+      tex: String.raw`g = 10\,\mathrm{m/s^2}`,
+      fallback: 'g = 10 m/s²',
+    },
     g: 10,
     hitHeight: 3.2,
     netHeight: 2.2,

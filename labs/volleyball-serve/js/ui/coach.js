@@ -9,6 +9,7 @@
  * services/coach-script.js.
  */
 import { opening, reaction } from '../services/coach-script.js';
+import { renderRichText } from './math.js';
 
 const CANCELLED = Symbol('coach-cancelled');
 
@@ -44,23 +45,21 @@ export function createCoach(root, store, { tutor, attempts, runtime, timing } = 
     p.className = `msg msg-${who}`;
     if (typeof text === 'string') {
       p.textContent = text;
+    } else if (Array.isArray(text?.parts)) {
+      renderRichText(p, text.parts);
     } else {
       const source = text?.fallback ?? text?.text ?? text?.tex ?? '';
       p.textContent = source;
-      if (text?.tex && globalThis.katex?.render) {
-        // Keep the plain source as the accessible fallback while KaTeX adds
-        // the visual typesetting next to it in a real browser.
-        const math = document.createElement('span');
-        math.className = 'coach-math';
-        math.setAttribute?.('aria-label', source);
-        p.textContent = text.text ?? '';
-        p.appendChild(math);
-        globalThis.katex.render(text.tex, math, {
-          displayMode: true,
-          throwOnError: false,
-        });
-      } else if (text?.tex) {
-        p.textContent = `${text.text ?? ''} ${source}`.trim();
+      if (text?.tex) {
+        renderRichText(p, [
+          { type: 'text', text: text.text ?? '' },
+          {
+            type: 'math',
+            tex: text.tex,
+            fallback: text.fallback ?? source,
+            display: true,
+          },
+        ]);
       }
     }
     log.appendChild(p);

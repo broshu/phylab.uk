@@ -2,3 +2,6 @@
 
 # Skill / working notes (not for deployment)
 resources/READ-ME-FIRST-lesson-pdf/
+
+# Local Netlify folder
+.netlify

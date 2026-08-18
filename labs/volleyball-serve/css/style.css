@@ -146,6 +146,17 @@ h2 {
     line-height: 1.7;
 }
 
+.task-panel .katex,
+.msg .katex,
+.formula-box .katex {
+    color: inherit;
+    font-size: 1.05em;
+}
+
+.task-panel .katex {
+    color: var(--ink);
+}
+
 /* ---------- speed strip ---------- */
 .speed-panel { padding: 16px 20px; }
 
@@ -274,12 +285,26 @@ input[type="range"][data-verdict="out"] { accent-color: var(--blue); }
 
 .coach-math {
     display: block;
-    margin: 8px 0 2px;
+    margin: 8px 0 4px;
     overflow-x: auto;
     color: var(--ink);
+    line-height: 1.35;
 }
 
-.coach-math .katex-display { margin: 0.25em 0; }
+.coach-math-inline {
+    display: inline-block;
+    margin: 0 0.08em;
+    color: var(--ink);
+    white-space: nowrap;
+    vertical-align: -0.08em;
+}
+
+.coach-math .katex-display {
+    margin: 0.15em 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0.1em 0;
+}
 
 .msg-coach { color: var(--muted); }
 

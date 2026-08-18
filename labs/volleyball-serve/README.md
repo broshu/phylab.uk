@@ -126,8 +126,9 @@ ES modules cannot be opened over `file://`, so serve the folder. Browsers cache
 module files aggressively, and a plain reload will happily keep running the old
 copy of a script you just edited — so serve with caching switched off:
 
-Install the one runtime dependency first (it provides the local KaTeX formula
-renderer):
+Install the one runtime dependency first to use the local KaTeX renderer while
+developing. The deployed static page falls back to the pinned CDN asset when
+`node_modules` is not present:
 
 ```bash
 npm install
