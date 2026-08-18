@@ -272,6 +272,15 @@ input[type="range"][data-verdict="out"] { accent-color: var(--blue); }
     line-height: 1.6;
 }
 
+.coach-math {
+    display: block;
+    margin: 8px 0 2px;
+    overflow-x: auto;
+    color: var(--ink);
+}
+
+.coach-math .katex-display { margin: 0.25em 0; }
+
 .msg-coach { color: var(--muted); }
 
 .msg-mine {

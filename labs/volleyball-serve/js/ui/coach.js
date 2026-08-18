@@ -42,7 +42,27 @@ export function createCoach(root, store, { tutor, attempts, runtime, timing } = 
   function bubble(text, who = 'coach') {
     const p = document.createElement('p');
     p.className = `msg msg-${who}`;
-    p.textContent = text;
+    if (typeof text === 'string') {
+      p.textContent = text;
+    } else {
+      const source = text?.fallback ?? text?.text ?? text?.tex ?? '';
+      p.textContent = source;
+      if (text?.tex && globalThis.katex?.render) {
+        // Keep the plain source as the accessible fallback while KaTeX adds
+        // the visual typesetting next to it in a real browser.
+        const math = document.createElement('span');
+        math.className = 'coach-math';
+        math.setAttribute?.('aria-label', source);
+        p.textContent = text.text ?? '';
+        p.appendChild(math);
+        globalThis.katex.render(text.tex, math, {
+          displayMode: true,
+          throwOnError: false,
+        });
+      } else if (text?.tex) {
+        p.textContent = `${text.text ?? ''} ${source}`.trim();
+      }
+    }
     log.appendChild(p);
     log.scrollTop = log.scrollHeight;
     return p;

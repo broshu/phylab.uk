@@ -121,10 +121,18 @@ async function teachLowerBound(dsl) {
 
   if (answer !== 'minimum') {
     const tNet = timeToFall(drop, problem.g);
-    await say(
-      `Write it in two steps: t = √(2 × ${fmt(drop, 1)} / ${problem.g}) = ${fmt(tNet)} s; ` +
-        `then v = ${problem.netDistance} ÷ ${fmt(tNet)} = ${fmt(bounds.vMin, 1)} m/s.`,
-    );
+    const tRounded = fmt(tNet, 3);
+    const vRounded = fmt(bounds.vMin, 1);
+    await say({
+      text: 'Write it in two steps:',
+      tex: String.raw`\begin{aligned}
+        t &= \sqrt{\frac{2 \times ${fmt(drop, 1)}}{${problem.g}}} \approx ${tRounded}\,\mathrm{s} \\
+        v &= \frac{${problem.netDistance}}{${tRounded}} \approx ${vRounded}\,\mathrm{m/s}
+      \end{aligned}`,
+      fallback:
+        `t = √(2 × ${fmt(drop, 1)} / ${problem.g}) ≈ ${tRounded} s; ` +
+        `v = ${problem.netDistance} ÷ ${tRounded} ≈ ${vRounded} m/s`,
+    });
     answer = await ask('Using that calculation, what is the speed that just reaches A?', choices);
   }
 
