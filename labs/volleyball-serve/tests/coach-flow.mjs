@@ -83,10 +83,13 @@ function harness() {
       button.dispatch('click');
       await dom.settle(50);
     },
+    async chooseMulti(labels) {
+      for (const label of labels) await this.choose(label);
+    },
   };
 }
 
-async function startLower(h, answer = 'A — the top of the net') {
+async function startLower(h, answer = 'A') {
   check('asks for the lower-bound point', /slowest legal serve/i.test(h.messages().at(-1) || ''));
   check('marks A, B, and C', h.markers.map((p) => p.id).join('') === 'ABC');
   await h.choose(answer);
@@ -103,18 +106,26 @@ async function solveLowerSpeed(h, answer = '20.1 m/s') {
   await h.choose(answer);
 }
 
-async function startUpper(h, answer = 'C — the far baseline') {
+async function startUpper(h, answer = 'C') {
   check('asks for the upper-bound point', /fastest legal serve/i.test(h.messages().at(-1) || ''));
   check('marks A, B, and C for the upper bound', h.markers.map((p) => p.id).join('') === 'ABC');
   await h.choose(answer);
 }
 
-async function finish(h, answer = '21 and 22 m/s') {
+async function finish(h, wrongSpeeds = []) {
   check('states the strict lower inequality', h.said(/v > 20\.1 m\/s/));
   check('states the inclusive upper inequality', h.said(/v ≤ 22\.5 m\/s/));
   check('combines both inequalities', h.said(/20\.1 < v ≤ 22\.5 m\/s/));
-  check('asks for the whole-number answers', /whole-number slider/i.test(h.messages().at(-1) || ''));
-  await h.choose(answer);
+  check('asks for the whole-number answers', /whole-number speeds/i.test(h.messages().at(-1) || ''));
+  for (const wrongSpeed of wrongSpeeds) {
+    await h.chooseMulti([wrongSpeed]);
+    check('a wrong final speed is demonstrated', h.served.at(-1) === Number.parseInt(wrongSpeed, 10));
+    check(
+      'wrong final speed is explained',
+      wrongSpeed === '20 m/s' ? h.said(/still too slow to clear the net/i) : h.said(/lands long beyond the baseline/i),
+    );
+  }
+  await h.chooseMulti(['21 m/s', '22 m/s']);
 }
 
 // Opening remains optional: a student can take control, or ask for a single
@@ -148,7 +159,7 @@ async function finish(h, answer = '21 and 22 m/s') {
     h.serveOptions.every((options) => options.animatePlayer === true));
   check('comparison explains the longer fall', h.said(/spends longer falling/i));
   await h.choose('Faster');
-  await startLower(h, 'B — the foot of the net');
+  await startLower(h, 'B');
   check('wrong lower point is corrected', h.said(/below the tape/i));
   check('lower-bound question is repeated', h.options().length === 3);
   check('canvas marker answers are accepted', h.coach.answer('A') === true);
@@ -178,8 +189,9 @@ async function finish(h, answer = '21 and 22 m/s') {
   await startUpper(h);
   await startLower(h);
   await solveLowerSpeed(h);
-  await finish(h, '22 and 23 m/s');
-  check('wrong final answer is corrected with both failure modes', h.said(/20 is too slow.*23 lands long/i));
+  await finish(h, ['20 m/s', '23 m/s']);
+  check('wrong final answer is corrected with both failure modes',
+    h.said(/20 m\/s is still too slow/i) && h.said(/23 m\/s lands long/i));
 }
 
 // A good serve is evidence rather than a shortcut: it still requires both
@@ -202,8 +214,8 @@ async function finish(h, answer = '21 and 22 m/s') {
   const h = harness();
   h.coach.reactTo(evaluate(problem, 21));
   await dom.settle(50);
-  await startLower(h, 'B — the foot of the net');
-  await h.choose('C — the far baseline');
+  await startLower(h, 'B');
+  await h.choose('C');
   check('two wrong point choices are resolved as A', h.said(/We will use A/i));
   await solveLowerSpeed(h);
 }

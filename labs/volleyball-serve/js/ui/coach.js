@@ -31,10 +31,12 @@ export function createCoach(root, store, { tutor, attempts, runtime, timing } = 
     <h2>Coach</h2>
     <div class="coach-log" id="coachLog" aria-live="polite"></div>
     <div class="coach-options" id="coachOptions"></div>
+    <div class="coach-celebration" id="coachCelebration" aria-live="polite" hidden></div>
   `;
 
   const log = root.querySelector('#coachLog');
   const options = root.querySelector('#coachOptions');
+  const celebration = root.querySelector('#coachCelebration');
 
   // the question currently on screen, so it can also be answered by clicking
   // the court instead of the buttons
@@ -110,6 +112,66 @@ export function createCoach(root, store, { tutor, attempts, runtime, timing } = 
         return id;
       },
 
+      /**
+       * Ask for a set of answers. Correct choices stay selected until the
+       * complete set is chosen; a wrong choice resolves immediately so the
+       * coach can demonstrate that speed and then clear the selection.
+       */
+      async askMulti(text, choices, { correctIds = [] } = {}) {
+        guard(mine);
+        bubble(text);
+        const answer = await new Promise((resolve) => {
+          const selected = new Set();
+          const clear = () => {
+            pending = null;
+            options.innerHTML = '';
+          };
+
+          pending = null;
+          options.innerHTML = '';
+          choices.forEach((choice) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'ghost-button option multi-option';
+            btn.textContent = choice.label;
+            btn.setAttribute?.('aria-pressed', 'false');
+            btn.addEventListener('click', () => {
+              if (!correctIds.includes(choice.id)) {
+                clear();
+                bubble(choice.reply ?? choice.label, 'mine');
+                resolve({ status: 'wrong', id: choice.id, label: choice.label });
+                return;
+              }
+
+              if (selected.has(choice.id)) {
+                selected.delete(choice.id);
+                btn.dataset.selected = 'false';
+                btn.setAttribute?.('aria-pressed', 'false');
+              } else {
+                selected.add(choice.id);
+                btn.dataset.selected = 'true';
+                btn.setAttribute?.('aria-pressed', 'true');
+              }
+
+              if (correctIds.every((id) => selected.has(id))) {
+                clear();
+                const reply = choices
+                  .filter((item) => selected.has(item.id))
+                  .map((item) => item.reply ?? item.label)
+                  .join(' and ');
+                bubble(reply, 'mine');
+                resolve({ status: 'correct', ids: [...selected] });
+              }
+            });
+            options.appendChild(btn);
+          });
+        });
+        guard(mine);
+        await wait(Math.min(messagePause, 400));
+        guard(mine);
+        return answer;
+      },
+
       /** Play a demonstration serve; resolves once the ball has stopped. */
       async serve(v, { keep = false, label = null, animatePlayer = false, hideSpeed = false } = {}) {
         guard(mine);
@@ -129,6 +191,13 @@ export function createCoach(root, store, { tutor, attempts, runtime, timing } = 
       /** Put lettered, clickable points on the court. */
       mark(markers) {
         runtime.mark(markers);
+      },
+
+      /** Show a small completion celebration without interrupting the log. */
+      celebrate(message = '🎉 Correct! 🎉') {
+        guard(mine);
+        celebration.textContent = message;
+        celebration.hidden = false;
       },
 
       /** Draw construction lines while discussing a trajectory. */
@@ -151,6 +220,7 @@ export function createCoach(root, store, { tutor, attempts, runtime, timing } = 
     options.innerHTML = '';
 
     const state = store.get();
+    celebration.hidden = true;
     return Promise.resolve(
       script({
         ...makeDsl(mine),
@@ -192,6 +262,7 @@ export function createCoach(root, store, { tutor, attempts, runtime, timing } = 
       token += 1;
       pending = null;
       options.innerHTML = '';
+      celebration.hidden = true;
     },
   };
 }

@@ -320,7 +320,7 @@ input[type="range"][data-verdict="out"] { accent-color: var(--blue); }
 
 .coach-options {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(82px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(56px, 1fr));
     gap: 8px;
     flex: none;
 }
@@ -335,6 +335,32 @@ input[type="range"][data-verdict="out"] { accent-color: var(--blue); }
     font-size: 13px;
     line-height: 1.25;
     white-space: normal;
+}
+
+.multi-option[data-selected="true"] {
+    border-color: var(--ink);
+    color: var(--card);
+    background: var(--ink);
+}
+
+.coach-celebration {
+    flex: none;
+    padding: 8px 10px;
+    border: 1px solid var(--green-ok);
+    border-radius: 8px;
+    color: var(--green-ok);
+    background: var(--panel-bg);
+    font-weight: 700;
+    text-align: center;
+    animation: coach-celebrate 0.55s ease-out both;
+}
+
+.coach-celebration[hidden] { display: none; }
+
+@keyframes coach-celebrate {
+    0% { opacity: 0; transform: scale(0.92) translateY(4px); }
+    70% { opacity: 1; transform: scale(1.03) translateY(0); }
+    100% { opacity: 1; transform: scale(1); }
 }
 
 /* ---------- stage ----------

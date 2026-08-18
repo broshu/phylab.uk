@@ -27,9 +27,9 @@ const POINTS = (problem) => [
 ];
 
 const POINT_CHOICES = [
-  { id: 'A', label: 'A — the top of the net', reply: 'A' },
-  { id: 'B', label: 'B — the foot of the net', reply: 'B' },
-  { id: 'C', label: 'C — the far baseline', reply: 'C' },
+  { id: 'A', label: 'A', reply: 'A' },
+  { id: 'B', label: 'B', reply: 'B' },
+  { id: 'C', label: 'C', reply: 'C' },
 ];
 
 function slowerFamily(v, min) {
@@ -168,22 +168,36 @@ async function teachUpperBound(dsl) {
 }
 
 async function finishWindow(dsl) {
-  const { ask, say, bounds } = dsl;
+  const { askMulti, say, serve, celebrate, bounds } = dsl;
   const min = fmt(bounds.vMin, 1);
   const max = fmt(bounds.vMax, 1);
 
   await say(`Both conditions must hold: v > ${min} m/s and v ≤ ${max} m/s.`);
   await say(`So the legal interval is ${min} < v ≤ ${max} m/s.`);
-  const answer = await ask('With a whole-number slider, which speeds can work?', [
-    { id: '20-21', label: '20 and 21 m/s', reply: '20 and 21 m/s' },
-    { id: '21-22', label: '21 and 22 m/s', reply: '21 and 22 m/s' },
-    { id: '22-23', label: '22 and 23 m/s', reply: '22 and 23 m/s' },
-  ]);
+  const choices = [20, 21, 22, 23].map((speed) => ({
+    id: String(speed),
+    label: `${speed} m/s`,
+    reply: `${speed} m/s`,
+  }));
 
-  if (answer === '21-22') {
-    await say('Exactly. 21 m/s and 22 m/s are the two whole-number speeds inside the interval.');
-  } else {
-    await say('The answer is 21 m/s and 22 m/s: 20 is too slow to clear the net, while 23 lands long.');
+  while (true) {
+    const answer = await askMulti('Select all the whole-number speeds that can work.', choices, {
+      correctIds: ['21', '22'],
+    });
+    if (answer.status === 'correct') {
+      celebrate('🎉 Exactly — 21 m/s and 22 m/s work! 🎉');
+      await say('Exactly. 21 m/s and 22 m/s are the two whole-number speeds inside the interval.');
+      return;
+    }
+
+    const speed = Number(answer.id);
+    await say(`Let us test ${speed} m/s.`);
+    await serve(speed, { animatePlayer: true });
+    await say(
+      speed < 21
+        ? '20 m/s is still too slow to clear the net. Try again.'
+        : '23 m/s lands long beyond the baseline. Try again.',
+    );
   }
 }
 
