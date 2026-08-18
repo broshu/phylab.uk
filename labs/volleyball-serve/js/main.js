@@ -18,7 +18,6 @@ import { createAttemptLog } from './services/attempts.js';
 import { createScene } from './ui/scene.js';
 import { createControls } from './ui/controls.js';
 import { createCoach } from './ui/coach.js';
-import { renderRichText } from './ui/math.js';
 
 const problem = getProblem(DEFAULT_PROBLEM_ID);
 const tutor = createTutor();
@@ -55,26 +54,7 @@ const VERDICT_LABEL = {
   [Verdict.OUT]: 'Out — long',
 };
 
-const taskPrompt = document.querySelector('#taskPrompt');
-const promptFormula = problem.promptFormula;
-if (promptFormula) {
-  const at = problem.prompt.indexOf(promptFormula.source);
-  if (at >= 0) {
-    renderRichText(taskPrompt, [
-      { type: 'text', text: problem.prompt.slice(0, at) },
-      {
-        type: 'math',
-        tex: promptFormula.tex,
-        fallback: promptFormula.fallback,
-      },
-      { type: 'text', text: problem.prompt.slice(at + promptFormula.source.length) },
-    ]);
-  } else {
-    taskPrompt.textContent = problem.prompt;
-  }
-} else {
-  taskPrompt.textContent = problem.prompt;
-}
+document.querySelector('#taskPrompt').textContent = problem.prompt;
 
 // A demo serve resolves this promise when the ball stops, which is how the
 // tutor script can `await serve(14)` and then talk about what happened.

@@ -99,7 +99,7 @@ async function solveLowerSpeed(h, answer = '20.1 m/s') {
     h.serveOptions.at(-1)?.animatePlayer === true && h.serveOptions.at(-1)?.hideSpeed === true,
   );
   check('asks for the hidden A-point speed', /speed of the serve that just reaches A/i.test(h.messages().at(-1) || ''));
-  check('offers four candidate speeds', h.options().length === 4);
+  check('offers three candidate speeds', h.options().length === 3);
   await h.choose(answer);
 }
 

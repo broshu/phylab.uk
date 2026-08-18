@@ -6,12 +6,12 @@
     <title>Volleyball Serve</title>
     <meta name="description" content="Projectile motion: find the serve speeds that clear the net and still land in.">
     <link rel="stylesheet" href="css/style.css">
-    <!-- Use the local install during development; the CDN fallback keeps the
-         static GitHub Pages build working because node_modules is ignored. -->
+    <!-- KaTeX must be available before the module renders the first coach
+         message. The local asset is a fallback for offline development. -->
     <link
         rel="stylesheet"
-        href="node_modules/katex/dist/katex.min.css"
-        onerror="this.onerror=null;this.href='https://cdn.jsdelivr.net/npm/katex@0.18.4/dist/katex.min.css'"
+        href="https://cdn.jsdelivr.net/npm/katex@0.18.4/dist/katex.min.css"
+        onerror="this.onerror=null;this.href='node_modules/katex/dist/katex.min.css'"
     >
 </head>
 <body>
@@ -48,8 +48,8 @@
 
     <script
         defer
-        src="node_modules/katex/dist/katex.min.js"
-        onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/katex@0.18.4/dist/katex.min.js'"
+        src="https://cdn.jsdelivr.net/npm/katex@0.18.4/dist/katex.min.js"
+        onerror="this.onerror=null;this.src='node_modules/katex/dist/katex.min.js'"
     ></script>
     <script type="module" src="js/main.js"></script>
     <script defer src="/assets/nav.js"></script>

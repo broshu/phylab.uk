@@ -320,6 +320,7 @@ input[type="range"][data-verdict="out"] { accent-color: var(--blue); }
 
 .coach-options {
     display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(82px, 1fr));
     gap: 8px;
     flex: none;
 }
@@ -328,7 +329,12 @@ input[type="range"][data-verdict="out"] { accent-color: var(--blue); }
 
 .option {
     min-height: 36px;
+    min-width: 0;
+    padding: 6px 8px;
     text-align: center;
+    font-size: 13px;
+    line-height: 1.25;
+    white-space: normal;
 }
 
 /* ---------- stage ----------
