@@ -16,6 +16,8 @@
  * store.markers holds lettered points the coach wants to talk about; each entry
  * is { id, x, y } in metres. They are clickable, which is how the student can
  * answer a question about the court by pointing at it.
+ * store.guides holds optional construction lines; the coach uses them to show
+ * the horizontal and vertical displacements of a limiting trajectory.
  */
 import { trajectory, flightTime } from '../core/physics.js';
 import { Verdict, evaluate } from '../core/evaluator.js';
@@ -44,6 +46,7 @@ export function createScene(canvas, store, { onLanded, onMarkerClick } = {}) {
   let lastTs = 0;
   let landedFired = false;
   let demo = false;
+  let animatePlayer = false;
 
   /**
    * The canvas fills its cell, so the size comes from the cell — not from a
@@ -92,7 +95,9 @@ export function createScene(canvas, store, { onLanded, onMarkerClick } = {}) {
   /** Flight clock, seconds after contact (0 before the ball is struck). */
   function flightClock(phase, result) {
     if (phase === 'aim') return 0;
-    const t = demo ? clock : Math.max(0, clock - SERVE_TIMELINE.contact) * BALL_SLOW;
+    const t = demo && !animatePlayer
+      ? clock
+      : Math.max(0, clock - SERVE_TIMELINE.contact) * BALL_SLOW;
     return Math.min(t, stopTime(result));
   }
 
@@ -327,6 +332,63 @@ export function createScene(canvas, store, { onLanded, onMarkerClick } = {}) {
     });
   }
 
+  /** Dashed construction dimensions used while discussing a boundary path. */
+  function drawGuides(guides) {
+    if (!guides?.length) return;
+    const { toX, toY } = geom;
+
+    const arrow = (x, y, angle) => {
+      const length = 6;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x - Math.cos(angle - 0.45) * length, y - Math.sin(angle - 0.45) * length);
+      ctx.moveTo(x, y);
+      ctx.lineTo(x - Math.cos(angle + 0.45) * length, y - Math.sin(angle + 0.45) * length);
+      ctx.stroke();
+    };
+
+    guides.forEach((guide) => {
+      ctx.strokeStyle = palette.info;
+      ctx.fillStyle = palette.info;
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([5, 4]);
+
+      if (guide.kind === 'horizontal') {
+        const y = toY(guide.y);
+        const x1 = toX(guide.x1);
+        const x2 = toX(guide.x2);
+        ctx.beginPath();
+        ctx.moveTo(x1, y);
+        ctx.lineTo(x2, y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        arrow(x1, y, Math.PI);
+        arrow(x2, y, 0);
+        ctx.font = font(12);
+        ctx.textAlign = 'center';
+        ctx.fillText(guide.label, (x1 + x2) / 2, y - 9);
+        return;
+      }
+
+      if (guide.kind === 'vertical') {
+        const x = toX(guide.x);
+        const y1 = toY(guide.y1);
+        const y2 = toY(guide.y2);
+        ctx.beginPath();
+        ctx.moveTo(x, y1);
+        ctx.lineTo(x, y2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        arrow(x, y1, Math.PI / 2);
+        arrow(x, y2, -Math.PI / 2);
+        ctx.font = font(12);
+        ctx.textAlign = 'left';
+        ctx.fillText(guide.label, x + 8, (y1 + y2) / 2 + 4);
+      }
+    });
+    ctx.setLineDash([]);
+  }
+
   /** Which marker, if any, is under a point in css pixels. */
   function markerAt(px, py) {
     if (!geom) return null;
@@ -339,7 +401,7 @@ export function createScene(canvas, store, { onLanded, onMarkerClick } = {}) {
 
   function render() {
     const state = store.get();
-    const { phase, result, showGhosts, trails, markers } = state;
+    const { phase, result, showGhosts, trails, markers, guides } = state;
     if (!geom) resize();
 
     drawBackground();
@@ -355,17 +417,20 @@ export function createScene(canvas, store, { onLanded, onMarkerClick } = {}) {
       // neutral while it is still in the air: the colour would give the verdict away
       drawPath(flown, landed ? pathColor(result.verdict) : palette.muted, 2.5);
       if (landed) drawOutcome(result);
-      if (demo || clock >= SERVE_TIMELINE.contact) drawBall(result, tf);
+      if ((demo && !animatePlayer) || clock >= SERVE_TIMELINE.contact) drawBall(result, tf);
     }
 
     drawNet();
+    if (guides?.length) drawGuides(guides);
     if (markers?.length) drawMarkers(markers);
     player.draw(ctx, geom, palette, {
-      mode: phase === 'serve' ? 'serve' : 'aim',
+      mode: phase === 'serve' || animatePlayer ? 'serve' : 'aim',
       t: clock,
       speedFrac: speedFraction(state),
-      // the player only holds the ball until it is struck, and never in a demo
-      showBall: phase === 'aim' || (phase === 'serve' && clock < SERVE_TIMELINE.contact),
+      // the player only holds the ball until it is struck
+      showBall:
+        phase === 'aim' ||
+        ((phase === 'serve' || animatePlayer) && clock < SERVE_TIMELINE.contact),
     });
   }
 
@@ -378,10 +443,11 @@ export function createScene(canvas, store, { onLanded, onMarkerClick } = {}) {
     const { phase, result } = store.get();
     if (phase === 'serve' || phase === 'demo') {
       clock += dt;
-      const finished = demo
-        ? clock >= stopTime(result) + DEMO_SETTLE
-        : clock - SERVE_TIMELINE.contact >= stopTime(result) / BALL_SLOW + SETTLE &&
-          clock >= SERVE_TIMELINE.land;
+      const playerFlight = phase === 'serve' || animatePlayer;
+      const finished = playerFlight
+        ? clock - SERVE_TIMELINE.contact >= stopTime(result) / BALL_SLOW + SETTLE &&
+          clock >= SERVE_TIMELINE.land
+        : clock >= stopTime(result) + DEMO_SETTLE;
       if (finished && !landedFired) {
         landedFired = true;
         onLanded?.(result, { demo });
@@ -436,16 +502,18 @@ export function createScene(canvas, store, { onLanded, onMarkerClick } = {}) {
      * @param {{demo?:boolean}} opts demo = the tutor's quick serve: no jump,
      *        full-speed flight, so several can be played in a row.
      */
-    serve({ demo: isDemo = false } = {}) {
+    serve({ demo: isDemo = false, animatePlayer: shouldAnimatePlayer = false } = {}) {
       clock = 0;
       landedFired = false;
       demo = isDemo;
+      animatePlayer = shouldAnimatePlayer;
     },
     /** Back to the standing pose. */
     reset() {
       clock = 0;
       landedFired = false;
       demo = false;
+      animatePlayer = false;
     },
   };
 }

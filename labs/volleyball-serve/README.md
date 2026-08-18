@@ -101,8 +101,9 @@ limiting trajectories that define the answer.
    slower, the coach serves a short family of slower balls as a counterexample:
    they fall further before the net.
 2. **The lower boundary** is the slowest legal path. It must pass through **A**,
-   the top of the net. The coach turns the allowed fall into the time to the net
-   and then into `v > vMin`.
+   the top of the net. The coach serves this path with its speed hidden, draws
+   its horizontal distance and vertical fall, then asks the student to find the
+   speed. A wrong answer reveals the two-step calculation before one retry.
 3. **The upper boundary** is the fastest legal path. It must land at **C**, the
    far baseline. The fixed flight time gives `v ≤ vMax`.
 4. **The conclusion** combines both inequalities and asks for the possible

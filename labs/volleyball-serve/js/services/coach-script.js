@@ -69,34 +69,71 @@ async function chooseBoundaryPoint(dsl, target) {
     answer = await ask(`So which point fixes the ${isLower ? 'slowest' : 'fastest'} legal serve?`, POINT_CHOICES);
   }
 
-  if (answer === target) {
-    await say(`Yes — ${target}.`);
-  } else {
-    await say(`It is ${target}. ${pointCorrection(answer, target)}`);
+  // A second miss should not strand the learner without a route forward. Use
+  // the limiting point explicitly, then continue the derivation from it.
+  if (answer !== target) {
+    await say(`We will use ${target}: it is the ${isLower ? 'slowest' : 'fastest'} legal path's boundary point.`);
+    answer = target;
   }
+
+  await say(`Yes — ${target}.`);
+  return answer;
 }
 
 /** Derive the strict lower bound from the trajectory through A. */
 async function teachLowerBound(dsl) {
-  const { say, problem, bounds } = dsl;
+  const { say, ask, serve, mark, guide, clearCourt, problem, bounds } = dsl;
   const drop = problem.hitHeight - problem.netHeight;
 
   await say('Now find the minimum speed: the borderline path must go through A, the top of the net.');
   await chooseBoundaryPoint(dsl, 'A');
-  await say(
-    `From the ${fmt(problem.hitHeight, 1)} m contact point to the ${fmt(problem.netHeight, 1)} m tape, ` +
-      `the ball may fall ${fmt(drop, 1)} m.`,
-  );
 
-  const tNet = timeToFall(drop, problem.g);
-  await say(
-    `For that fall, t = √(2 × ${fmt(drop, 1)} / ${problem.g}) = ${fmt(tNet)} s. ` +
-      `It must cover ${problem.netDistance} m in that time.`,
-  );
-  await say(
-    `So v_min = ${problem.netDistance} ÷ ${fmt(tNet)} = ${fmt(bounds.vMin, 1)} m/s. ` +
-      `Touching the tape is a fault, so the lower condition is v > ${fmt(bounds.vMin, 1)} m/s.`,
-  );
+  await say('Watch the limiting serve. I will hide its speed: it just reaches A.');
+  clearCourt();
+  mark([{ id: 'A', x: problem.netDistance, y: problem.netHeight }]);
+  guide([
+    {
+      kind: 'horizontal',
+      x1: 0,
+      x2: problem.netDistance,
+      y: problem.hitHeight,
+      label: `horizontal distance · ${problem.netDistance} m`,
+    },
+    {
+      kind: 'vertical',
+      x: problem.netDistance + 0.55,
+      y1: problem.netHeight,
+      y2: problem.hitHeight,
+      label: `vertical fall · ${fmt(drop, 1)} m`,
+    },
+  ]);
+  await serve(bounds.vMin, { animatePlayer: true, hideSpeed: true });
+  await say('The dashed lines show the horizontal distance and the vertical fall for that exact path.');
+  await say('How could you calculate its speed? What do you think the hidden speed is?');
+
+  const choices = [
+    { id: 'distance', label: `${fmt(problem.netDistance, 1)} m/s`, reply: `${fmt(problem.netDistance, 1)} m/s` },
+    { id: 'minimum', label: `${fmt(bounds.vMin, 1)} m/s`, reply: `${fmt(bounds.vMin, 1)} m/s` },
+    { id: 'maximum', label: `${fmt(bounds.vMax, 1)} m/s`, reply: `${fmt(bounds.vMax, 1)} m/s` },
+    { id: 'double', label: `${fmt(bounds.vMin * 2, 1)} m/s`, reply: `${fmt(bounds.vMin * 2, 1)} m/s` },
+  ];
+  let answer = await ask('What is the speed of the serve that just reaches A?', choices);
+
+  if (answer !== 'minimum') {
+    const tNet = timeToFall(drop, problem.g);
+    await say(
+      `Write it in two steps: t = √(2 × ${fmt(drop, 1)} / ${problem.g}) = ${fmt(tNet)} s; ` +
+        `then v = ${problem.netDistance} ÷ ${fmt(tNet)} = ${fmt(bounds.vMin, 1)} m/s.`,
+    );
+    answer = await ask('Using that calculation, what is the speed that just reaches A?', choices);
+  }
+
+  if (answer === 'minimum') {
+    await say(`Yes. The hidden speed is ${fmt(bounds.vMin, 1)} m/s.`);
+  } else {
+    await say(`The limiting speed is ${fmt(bounds.vMin, 1)} m/s.`);
+  }
+  await say(`Touching the tape is a fault, so the lower condition is v > ${fmt(bounds.vMin, 1)} m/s.`);
 }
 
 /** Derive the inclusive upper bound from the trajectory through C. */

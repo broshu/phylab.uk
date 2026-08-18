@@ -46,7 +46,7 @@ export function createControls(root, store, { onServe, onAim } = {}) {
   serveBtn.addEventListener('click', () => onServe?.(store.get()));
 
   store.subscribe((state) => {
-    out.textContent = state.v.toFixed(decimals);
+    out.textContent = state.hideSpeed ? '?' : state.v.toFixed(decimals);
     if (Number(slider.value) !== state.v) slider.value = String(state.v);
 
     // locked while a ball is in the air, whether it is the student's or the coach's

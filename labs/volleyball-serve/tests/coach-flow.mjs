@@ -18,8 +18,10 @@ const check = (name, cond, detail = '') => results.push({ name, ok: !!cond, deta
 
 function harness() {
   const served = [];
+  const serveOptions = [];
   const trails = [];
   let markers = [];
+  let guides = [];
   let clearCount = 0;
   const store = createStore({
     problem,
@@ -32,8 +34,9 @@ function harness() {
   const coach = createCoach(root, store, {
     attempts: { summary: () => ({ total: 0 }) },
     runtime: {
-      async serve(v) {
+      async serve(v, options = {}) {
         served.push(v);
+        serveOptions.push(options);
         return evaluate(problem, v);
       },
       trail(v, label) {
@@ -42,10 +45,14 @@ function harness() {
       mark(list) {
         markers = list;
       },
+      guide(list) {
+        guides = list;
+      },
       clearCourt() {
         clearCount += 1;
         trails.splice(0, trails.length);
         markers = [];
+        guides = [];
       },
     },
     timing: { message: 0 },
@@ -56,12 +63,16 @@ function harness() {
   return {
     coach,
     served,
+    serveOptions,
     trails,
     get markers() {
       return markers;
     },
     get clearCount() {
       return clearCount;
+    },
+    get guides() {
+      return guides;
     },
     messages: () => log.children.map((c) => c.textContent),
     said: (pattern) => log.children.some((c) => pattern.test(c.textContent)),
@@ -78,6 +89,17 @@ function harness() {
 async function startLower(h, answer = 'A — the top of the net') {
   check('asks for the lower-bound point', /slowest legal serve/i.test(h.messages().at(-1) || ''));
   check('marks A, B, and C', h.markers.map((p) => p.id).join('') === 'ABC');
+  await h.choose(answer);
+}
+
+async function solveLowerSpeed(h, answer = '20.1 m/s') {
+  check('shows only A for the limiting serve', h.markers.map((p) => p.id).join('') === 'A');
+  check('draws horizontal and vertical construction lines', h.guides.map((g) => g.kind).join(',') === 'horizontal,vertical');
+  check('limiting serve animates the player with its speed hidden',
+    h.serveOptions.at(-1)?.animatePlayer === true && h.serveOptions.at(-1)?.hideSpeed === true,
+  );
+  check('asks for the hidden A-point speed', /speed of the serve that just reaches A/i.test(h.messages().at(-1) || ''));
+  check('offers four candidate speeds', h.options().length === 4);
   await h.choose(answer);
 }
 
@@ -129,10 +151,13 @@ async function finish(h, answer = '21 and 22 m/s') {
   check('lower-bound question is repeated', h.options().length === 3);
   check('canvas marker answers are accepted', h.coach.answer('A') === true);
   await dom.settle(50);
+  await solveLowerSpeed(h, '9.0 m/s');
+  check('a wrong speed shows the two-step calculation', h.said(/Write it in two steps/i));
+  await h.choose('20.1 m/s');
   await startUpper(h);
   await finish(h);
   check('correct final answer is confirmed', h.said(/Exactly\. 21 m\/s and 22 m\/s/i));
-  check('court was reset independently for both boundaries', h.clearCount === 2);
+  check('court was reset for point choice, limiting serve, and upper bound', h.clearCount === 3);
 }
 
 // An out serve starts with C, but still completes the lower-bound reasoning.
@@ -145,6 +170,7 @@ async function finish(h, answer = '21 and 22 m/s') {
   check('wrong long diagnosis is corrected', h.said(/must be slower/i));
   await startUpper(h);
   await startLower(h);
+  await solveLowerSpeed(h);
   await finish(h, '22 and 23 m/s');
   check('wrong final answer is corrected with both failure modes', h.said(/20 is too slow.*23 lands long/i));
 }
@@ -157,9 +183,22 @@ async function finish(h, answer = '21 and 22 m/s') {
   await dom.settle(50);
   check('good serve does not reveal the interval immediately', h.said(/evidence, not yet the explanation/i));
   await startLower(h);
+  await solveLowerSpeed(h);
   await startUpper(h);
   await finish(h);
-  check('good-serve path completes both calculations', h.said(/v_min/) && h.said(/v_max/));
+  check('good-serve path completes both calculations', h.said(/lower condition/) && h.said(/v_max/));
+}
+
+// A second wrong point selection is resolved as the correct boundary point so
+// the student is never left without another option or a way to continue.
+{
+  const h = harness();
+  h.coach.reactTo(evaluate(problem, 21));
+  await dom.settle(50);
+  await startLower(h, 'B — the foot of the net');
+  await h.choose('C — the far baseline');
+  check('two wrong point choices are resolved as A', h.said(/We will use A/i));
+  await solveLowerSpeed(h);
 }
 
 // Starting another conversation after interruption must still work.

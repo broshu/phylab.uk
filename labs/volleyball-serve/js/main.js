@@ -30,6 +30,8 @@ const store = createStore({
   showGhosts: false,
   trails: [], // earlier serves the coach is keeping on screen
   markers: [], // lettered points the coach is asking about
+  guides: [], // construction lines the coach is discussing
+  hideSpeed: false, // a boundary demonstration can keep its speed unknown
   result: evaluate(problem, problem.speed.default),
 });
 
@@ -82,11 +84,11 @@ let studentSpeed = store.get().v;
 
 /** What a coach script is allowed to do to the scene. */
 const runtime = {
-  serve(v) {
+  serve(v, { animatePlayer = false, hideSpeed = false } = {}) {
     return new Promise((resolve) => {
       pendingDemo = resolve;
-      store.set({ v, phase: 'demo' });
-      scene.serve({ demo: true });
+      store.set({ v, phase: 'demo', hideSpeed });
+      scene.serve({ demo: true, animatePlayer });
     });
   },
   trail(v, label) {
@@ -100,8 +102,11 @@ const runtime = {
   mark(markers) {
     store.set({ markers });
   },
+  guide(guides) {
+    store.set({ guides });
+  },
   clearCourt() {
-    store.set({ v: studentSpeed, phase: 'aim', trails: [], markers: [] });
+    store.set({ v: studentSpeed, phase: 'aim', trails: [], markers: [], guides: [], hideSpeed: false });
     scene.reset();
   },
 };
@@ -116,7 +121,7 @@ createControls(document.querySelector('#controls'), store, {
   onServe: () => {
     coach.interrupt(); // the student is taking over from whatever was being said
     studentSpeed = store.get().v;
-    store.set({ phase: 'serve', trails: [], markers: [] });
+    store.set({ phase: 'serve', trails: [], markers: [], guides: [], hideSpeed: false });
     scene.serve();
   },
   onAim: () => {

@@ -122,6 +122,20 @@ try {
   await settle();
   check('their serve is judged as usual', el('#verdictReadout').textContent === 'In');
 
+  // ---- a hidden-speed boundary demonstration can use the full player motion
+  //      and construction lines without becoming a student attempt ----
+  api.runtime.clearCourt();
+  api.runtime.guide([
+    { kind: 'horizontal', x1: 0, x2: 9, y: 3.2, label: 'horizontal distance · 9 m' },
+    { kind: 'vertical', x: 9.55, y1: 2.2, y2: 3.2, label: 'vertical fall · 1.0 m' },
+  ]);
+  const boundaryDemo = api.runtime.serve(20.1246118, { animatePlayer: true, hideSpeed: true });
+  await tick(4);
+  await boundaryDemo;
+  check('hidden boundary demo hides the speed readout', control('#speedOut').textContent === '?');
+  check('it remains a demo rather than a student attempt', attempts.summary().total === 2);
+  api.runtime.clearCourt();
+
   await tick(0.5);
   check('render loop ran without errors', errors.length === 0, errors[0]?.stack || '');
 } catch (e) {

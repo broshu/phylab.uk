@@ -18,7 +18,7 @@ const CANCELLED = Symbol('coach-cancelled');
  * @param {{
  *   tutor: {hint: Function},
  *   attempts: {summary: Function},
- *   runtime: {serve: Function, trail: Function, clearTrails: Function},
+ *   runtime: {serve: Function, trail: Function, clearTrails: Function, guide: Function},
  *   timing?: {message?: number}
  * }} deps
  */
@@ -92,9 +92,9 @@ export function createCoach(root, store, { tutor, attempts, runtime, timing } = 
       },
 
       /** Play a demonstration serve; resolves once the ball has stopped. */
-      async serve(v, { keep = false, label = null } = {}) {
+      async serve(v, { keep = false, label = null, animatePlayer = false, hideSpeed = false } = {}) {
         guard(mine);
-        const result = await runtime.serve(v);
+        const result = await runtime.serve(v, { animatePlayer, hideSpeed });
         guard(mine);
         if (keep) runtime.trail(v, label);
         await wait(Math.min(messagePause, 350));
@@ -110,6 +110,11 @@ export function createCoach(root, store, { tutor, attempts, runtime, timing } = 
       /** Put lettered, clickable points on the court. */
       mark(markers) {
         runtime.mark(markers);
+      },
+
+      /** Draw construction lines while discussing a trajectory. */
+      guide(guides) {
+        runtime.guide(guides);
       },
 
       /** Wipe the court back to a clean standing pose. */
