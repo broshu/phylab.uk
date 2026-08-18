@@ -16,8 +16,8 @@ import { flightTime, timeToFall } from '../core/physics.js';
 const fmt = (x, n = 2) => Number(x).toFixed(n);
 
 const FAST_SLOW = [
-  { id: 'fast', label: 'Too fast' },
-  { id: 'slow', label: 'Too slow' },
+  { id: 'fast', label: 'Faster' },
+  { id: 'slow', label: 'Slower' },
 ];
 
 const POINTS = (problem) => [

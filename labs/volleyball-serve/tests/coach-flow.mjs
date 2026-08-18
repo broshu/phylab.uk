@@ -142,10 +142,10 @@ async function finish(h, answer = '21 and 22 m/s') {
   h.coach.reactTo(evaluate(problem, 15));
   await dom.settle(50);
   check('net fault reports the observed height', h.said(/1\.40 m/));
-  await h.choose('Too slow');
+  await h.choose('Slower');
   check('wrong net diagnosis triggers slower comparison serves', h.served.join(',') === '14,13,12,11,10');
   check('comparison explains the longer fall', h.said(/spends longer falling/i));
-  await h.choose('Too fast');
+  await h.choose('Faster');
   await startLower(h, 'B — the foot of the net');
   check('wrong lower point is corrected', h.said(/below the tape/i));
   check('lower-bound question is repeated', h.options().length === 3);
@@ -166,7 +166,7 @@ async function finish(h, answer = '21 and 22 m/s') {
   h.coach.reactTo(evaluate(problem, 25));
   await dom.settle(50);
   check('long serve reports the overshoot', h.said(/2\.0 m beyond/i));
-  await h.choose('Too fast');
+  await h.choose('Faster');
   check('wrong long diagnosis is corrected', h.said(/must be slower/i));
   await startUpper(h);
   await startLower(h);

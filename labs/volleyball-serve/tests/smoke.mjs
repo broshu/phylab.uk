@@ -103,7 +103,7 @@ try {
   );
 
   // the wrong answer makes the coach demonstrate: several slower serves, no verdict
-  [...coachOptions()].find((b) => b.textContent === 'Too slow').dispatch('click');
+  [...coachOptions()].find((b) => b.textContent === 'Slower').dispatch('click');
   await play(2600); // long enough for the first of the slower serves to land
   check('a demonstration is running', store.get().phase === 'demo');
   check('slider locked while the coach demonstrates', control('#speed').disabled === true);
