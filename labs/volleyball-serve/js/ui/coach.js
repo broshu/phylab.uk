@@ -20,7 +20,7 @@ const CANCELLED = Symbol('coach-cancelled');
  *   tutor: {hint: Function},
  *   attempts: {summary: Function},
  *   runtime: {serve: Function, trail: Function, clearTrails: Function, guide: Function},
- *   ai?: {ask: Function, getSavedToken?: Function},
+ *   ai?: {ask: Function},
  *   timing?: {message?: number}
  * }} deps
  */
@@ -38,28 +38,22 @@ export function createCoach(root, store, { tutor, attempts, runtime, ai, timing 
         <strong id="coachAiTitle">Ask AI Coach</strong>
         <span>Test</span>
       </div>
-      <label class="coach-ai-access">
-        <span>Access code</span>
-        <input id="coachAiToken" type="password" autocomplete="off" placeholder="For invited testers">
-      </label>
       <div class="coach-ai-composer">
         <textarea id="coachAiQuestion" rows="2" maxlength="600" aria-label="Question for AI Coach" placeholder="Ask about this experiment…"></textarea>
         <button id="coachAiSend" type="button">Ask</button>
       </div>
       <p class="coach-ai-status" id="coachAiStatus" aria-live="polite"></p>
-      <p class="coach-ai-privacy">Access stays in this tab. Anonymous Q&amp;A is retained for 30 days.</p>
+      <p class="coach-ai-privacy">Anonymous questions and answers are retained for 30 days.</p>
     </section>
   `;
 
   const log = root.querySelector('#coachLog');
   const options = root.querySelector('#coachOptions');
   const celebration = root.querySelector('#coachCelebration');
-  const aiToken = root.querySelector('#coachAiToken');
   const aiQuestion = root.querySelector('#coachAiQuestion');
   const aiSend = root.querySelector('#coachAiSend');
   const aiStatus = root.querySelector('#coachAiStatus');
   const recentCoach = [];
-  aiToken.value = ai?.getSavedToken?.() || '';
 
   // the question currently on screen, so it can also be answered by clicking
   // the court instead of the buttons
@@ -147,15 +141,9 @@ export function createCoach(root, store, { tutor, attempts, runtime, ai, timing 
 
   async function sendToAi() {
     const question = aiQuestion.value.trim();
-    const accessCode = aiToken.value.trim();
     if (!question) {
       aiStatus.textContent = 'Enter a question for Coach.';
       aiQuestion.focus?.();
-      return;
-    }
-    if (!accessCode) {
-      aiStatus.textContent = 'Enter the AI test access code.';
-      aiToken.focus?.();
       return;
     }
     if (!ai?.ask) {
@@ -172,7 +160,6 @@ export function createCoach(root, store, { tutor, attempts, runtime, ai, timing 
     try {
       const response = await ai.ask({
         question,
-        token: accessCode,
         context: currentAiContext(),
       });
       renderAiReply(response.reply, response.mode);

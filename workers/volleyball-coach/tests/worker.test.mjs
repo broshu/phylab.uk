@@ -188,17 +188,70 @@ test('health reports AI and anonymous-recording readiness separately', async () 
   assert.equal(body.ok, true);
   assert.equal(body.mode, 'preset-only');
   assert.equal(body.aiReady, false);
+  assert.equal(body.publicStudentReady, false);
+  assert.equal(body.testConsoleReady, false);
   assert.equal(body.recordsReady, true);
 });
 
-test('health reports a locked AI when only the provider key exists', async () => {
+test('health reports public student AI readiness without a test token', async () => {
   /** @type {Env} */
-  const lockedEnv = { ...env, DEEPSEEK_API_KEY: 'not-a-real-key' };
-  const response = await dispatch(new Request('https://example.test/health'), lockedEnv);
+  const publicEnv = { ...env, DEEPSEEK_API_KEY: 'not-a-real-key' };
+  const response = await dispatch(new Request('https://example.test/health'), publicEnv);
   const body = await response.json();
 
-  assert.equal(body.mode, 'ai-locked');
-  assert.equal(body.aiReady, false);
+  assert.equal(body.mode, 'ai-ready');
+  assert.equal(body.aiReady, true);
+  assert.equal(body.publicStudentReady, true);
+  assert.equal(body.testConsoleReady, false);
+});
+
+test('an allowed student origin can use AI without a test token', async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () =>
+    Response.json({
+      choices: [
+        {
+          finish_reason: 'stop',
+          message: { content: '用 \\(t_{\\mathrm{net}}=9/v\\) 计算到网时间。' },
+        },
+      ],
+      usage: { prompt_tokens: 100, completion_tokens: 20, total_tokens: 120 },
+    });
+
+  try {
+    const response = await dispatch(
+      new Request('https://example.test/coach', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Origin: 'https://phylab.uk' },
+        body: JSON.stringify({
+          question: '到球网的时间怎么算？',
+          sessionId: 'public-student-session',
+          context: { phase: 'done', verdict: 'in', speed: 21 },
+        }),
+      }),
+      { ...env, DEEPSEEK_API_KEY: 'not-a-real-key' },
+    );
+    const body = await response.json();
+
+    assert.equal(response.status, 200);
+    assert.equal(body.mode, 'ai-assisted');
+    assert.match(body.reply, /t_/);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('direct callers still need the private test token', async () => {
+  const response = await dispatch(
+    new Request('https://example.test/coach', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question: '测试', context: {} }),
+    }),
+    { ...env, DEEPSEEK_API_KEY: 'not-a-real-key' },
+  );
+
+  assert.equal(response.status, 503);
 });
 
 test('successful coach replies are recorded and protected by an admin token', async () => {

@@ -269,13 +269,17 @@ async function handleCoach(request, env, ctx) {
     );
   }
 
-  if (!settings.testToken) {
-    return json({ error: 'AI is locked until COACH_TEST_TOKEN is configured.' }, 503, cors);
-  }
+  const origin = request.headers.get('Origin');
+  const isPublicStudentOrigin = Boolean(origin && settings.allowedOrigins.has(origin));
+  if (!isPublicStudentOrigin) {
+    if (!settings.testToken) {
+      return json({ error: 'AI is locked until COACH_TEST_TOKEN is configured.' }, 503, cors);
+    }
 
-  const providedToken = request.headers.get('X-Coach-Test-Token') || '';
-  if (!(await secureEqual(providedToken, settings.testToken))) {
-    return json({ error: 'Invalid test token.' }, 401, cors);
+    const providedToken = request.headers.get('X-Coach-Test-Token') || '';
+    if (!(await secureEqual(providedToken, settings.testToken))) {
+      return json({ error: 'Invalid test token.' }, 401, cors);
+    }
   }
 
   let upstream;
@@ -446,12 +450,18 @@ export default {
       }
 
       if (request.method === 'GET' && url.pathname === '/health') {
-        const aiReady = Boolean(settings.apiKey && settings.testToken);
+        const publicStudentReady = Boolean(
+          settings.apiKey && settings.allowedOrigins.size > 0,
+        );
+        const testConsoleReady = Boolean(settings.apiKey && settings.testToken);
+        const aiReady = publicStudentReady || testConsoleReady;
         return json({
           ok: true,
           service: 'phylab-coach',
           mode: aiReady ? 'ai-ready' : settings.apiKey ? 'ai-locked' : 'preset-only',
           aiReady,
+          publicStudentReady,
+          testConsoleReady,
           model: settings.model,
           recordsReady: Boolean(settings.adminToken && env.COACH_DB),
         });

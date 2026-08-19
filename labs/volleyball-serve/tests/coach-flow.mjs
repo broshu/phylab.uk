@@ -274,7 +274,6 @@ async function finish(h, wrongSpeeds = []) {
       clearCourt() {},
     },
     ai: {
-      getSavedToken: () => 'invited-test-code',
       async ask(request) {
         calls.push(request);
         return {
@@ -293,10 +292,6 @@ async function finish(h, wrongSpeeds = []) {
   const optionCount = options.children.length;
   const question = root.querySelector('#coachAiQuestion');
   const send = root.querySelector('#coachAiSend');
-  check(
-    'AI test access code is restored for the current tab',
-    root.querySelector('#coachAiToken').value === 'invited-test-code',
-  );
   question.value = 'How do I calculate time to the net?';
   send.dispatch('click');
   await dom.settle(50);

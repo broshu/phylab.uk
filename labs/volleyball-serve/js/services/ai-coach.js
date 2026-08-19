@@ -1,15 +1,14 @@
 /**
  * Browser client for the private Volleyball AI Coach Worker.
  *
- * The provider key never reaches the browser. Invited testers enter the
- * disposable Coach access code, which is kept only for the current tab.
+ * The provider key never reaches the browser. The Worker accepts this public
+ * student client only from the configured PhyLab website origins.
  */
 
 export const AI_COACH_ENDPOINT =
   'https://phylab-coach.dgxwmk9dbm.workers.dev/coach';
 
 const SESSION_KEY = 'phylab-volleyball-ai-session';
-const TOKEN_KEY = 'phylab-volleyball-ai-token';
 const VALID_SESSION_ID = /^[A-Za-z0-9_-]{8,80}$/;
 
 function fallbackSessionId() {
@@ -57,22 +56,15 @@ export function createAiCoachClient({
   safeWrite(storage, SESSION_KEY, sessionId);
 
   return {
-    getSavedToken() {
-      return safeRead(storage, TOKEN_KEY);
-    },
-
     /**
      * @param {{
      *   question: string,
-     *   token: string,
      *   context: Record<string, unknown>
      * }} request
      */
-    async ask({ question, token, context }) {
+    async ask({ question, context }) {
       const cleanQuestion = String(question || '').trim();
-      const cleanToken = String(token || '').trim();
       if (!cleanQuestion) throw new Error('Enter a question for Coach.');
-      if (!cleanToken) throw new Error('Enter the AI test access code.');
       if (typeof fetchImpl !== 'function') {
         throw new Error('AI Coach is unavailable in this browser.');
       }
@@ -81,7 +73,6 @@ export function createAiCoachClient({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Coach-Test-Token': cleanToken,
         },
         body: JSON.stringify({
           question: cleanQuestion,
@@ -105,7 +96,6 @@ export function createAiCoachClient({
         throw new Error('AI Coach returned an empty response.');
       }
 
-      safeWrite(storage, TOKEN_KEY, cleanToken);
       return {
         reply: data.reply.trim(),
         mode: typeof data.mode === 'string' ? data.mode : 'preset-fallback',

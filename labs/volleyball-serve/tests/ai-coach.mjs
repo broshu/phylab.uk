@@ -30,17 +30,15 @@ const client = createAiCoachClient({
 
 const result = await client.ask({
   question: 'How is time calculated?',
-  token: 'private-test-code',
   context: { phase: 'done', verdict: 'in', speed: 21 },
 });
 const body = JSON.parse(request.options.body);
 
 assert.equal(request.url, 'https://coach.example/coach');
-assert.equal(request.options.headers['X-Coach-Test-Token'], 'private-test-code');
+assert.equal('X-Coach-Test-Token' in request.options.headers, false);
 assert.equal(body.sessionId, 'student-session-123');
 assert.equal(body.context.speed, 21);
 assert.equal(result.mode, 'ai-assisted');
-assert.equal(client.getSavedToken(), 'private-test-code');
 
 const reused = createAiCoachClient({
   storage,
@@ -49,7 +47,6 @@ const reused = createAiCoachClient({
   },
   fetchImpl: async () => Response.json({ reply: 'ok', mode: 'ai-assisted' }),
 });
-assert.equal(reused.getSavedToken(), 'private-test-code');
 
 global.document = { createElement: (tag) => makeEl(tag) };
 const rendered = [];

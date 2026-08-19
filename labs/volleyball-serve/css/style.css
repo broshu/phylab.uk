@@ -417,16 +417,6 @@ input[type="range"][data-verdict="out"] { accent-color: var(--blue); }
     text-transform: uppercase;
 }
 
-.coach-ai-access {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    align-items: center;
-    gap: 8px;
-    color: var(--muted);
-    font-size: 11px;
-}
-
-.coach-ai input,
 .coach-ai textarea {
     width: 100%;
     border: 1px solid var(--line);
@@ -435,12 +425,6 @@ input[type="range"][data-verdict="out"] { accent-color: var(--blue); }
     background: var(--card);
     font: inherit;
     outline: none;
-}
-
-.coach-ai input {
-    min-height: 30px;
-    padding: 5px 8px;
-    font-size: 12px;
 }
 
 .coach-ai textarea {
@@ -452,7 +436,6 @@ input[type="range"][data-verdict="out"] { accent-color: var(--blue); }
     line-height: 1.4;
 }
 
-.coach-ai input:focus,
 .coach-ai textarea:focus {
     border-color: var(--green-ok);
     box-shadow: 0 0 0 2px color-mix(in srgb, var(--green-ok) 18%, transparent);

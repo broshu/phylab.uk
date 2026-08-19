@@ -16,8 +16,12 @@ current `phylab.uk` site.
 
 ## Safety defaults
 
-- No model call is possible until both `DEEPSEEK_API_KEY` and
-  `COACH_TEST_TOKEN` are configured as Worker secrets.
+- A model call always requires `DEEPSEEK_API_KEY` inside the Worker. Browsers
+  from the configured PhyLab origins can ask without entering a student key;
+  direct callers and the Worker test console still require `COACH_TEST_TOKEN`.
+- The origin allowlist is a modest cross-site misuse barrier, not strong user
+  authentication. With provider auto-recharge disabled, the prepaid DeepSeek
+  balance remains the practical spending ceiling.
 - Request bodies are capped at 8 KiB and questions at 600 characters.
 - The model cannot change the canonical result or scoring.
 - Replies are short, non-streaming, and non-searching. DeepSeek uses low-effort
@@ -42,7 +46,8 @@ current `phylab.uk` site.
 Set the following in the Cloudflare dashboard for the `phylab-coach` Worker:
 
 - `DEEPSEEK_API_KEY`: the DeepSeek API key.
-- `COACH_TEST_TOKEN`: a disposable password for the private test console.
+- `COACH_TEST_TOKEN`: a disposable password for direct API tests and the
+  private Worker test console. Students on the PhyLab page do not enter it.
 - `COACH_ADMIN_TOKEN`: a separate password for reading conversation records.
 
 The Worker also needs the `COACH_DB` D1 binding defined in

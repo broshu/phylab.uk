@@ -147,8 +147,10 @@ export const TEST_PAGE = String.raw`<!doctype html>
     async function checkHealth() {
       const response = await fetch('/health', { cache: 'no-store' });
       const data = await response.json();
-      document.querySelector('#health').textContent = data.aiReady
+      document.querySelector('#health').textContent = data.testConsoleReady
         ? 'Worker 正常 · AI 已配置 · 需要测试口令'
+        : data.publicStudentReady
+          ? 'Worker 正常 · 学生端 AI 已开放 · 此测试页仍需测试口令'
         : data.mode === 'ai-locked'
           ? 'Worker 正常 · AI 密钥已配置 · 等待配置测试口令'
           : 'Worker 正常 · 当前为预设模式 · 尚未配置 AI 密钥';
