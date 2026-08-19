@@ -2,7 +2,7 @@
 
 export const CONVERSATION_RETENTION_DAYS = 30;
 export const CONVERSATION_PAGE_SIZE = 25;
-export const PROMPT_VERSION = 'volleyball-coach-v1';
+export const PROMPT_VERSION = 'volleyball-coach-v2';
 
 /**
  * @typedef {object} ConversationRecord

@@ -138,6 +138,8 @@ export function normalizeCoachInput(value) {
       phase: VALID_PHASES.has(phaseText) ? phaseText : 'unknown',
       verdict: VALID_VERDICTS.has(verdictText) ? verdictText : 'unknown',
       speed: finiteNumber(rawContext.speed),
+      speedHidden: rawContext.speedHidden === true,
+      uiState: cleanText(rawContext.uiState, 320),
       heightAtNet: finiteNumber(rawContext.heightAtNet),
       netClearance: finiteNumber(rawContext.netClearance),
       xLand: finiteNumber(rawContext.xLand),
@@ -173,6 +175,14 @@ Rules:
   and total flight time (0.8 s). Never call all of them simply "the time".
 - Use the learner's current serve as an example when its measurements help,
   but answer the learner's question rather than forcing the preset sequence.
+- Read the current speed and uiState from the supplied lab context before
+  answering. Use them when the learner refers to “this speed”, “the screen”,
+  “what happened”, or the most recent serve.
+- Interpret phase precisely: aim means the selected speed has not been served;
+  serve means the student's ball is still in flight; done means the displayed
+  student result actually occurred; demo is a preset Coach demonstration and
+  is not a scored student attempt. Never claim a predicted verdict has already
+  happened when phase is aim or serve.
 - Keep the final response concise: usually 2-5 short sentences. A calculation
   may be longer when the intermediate steps are necessary.
 - Write prose as ordinary text, but write every mathematical expression as

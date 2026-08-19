@@ -291,16 +291,54 @@ async function finish(h, wrongSpeeds = []) {
   const options = root.querySelector('#coachOptions');
   const optionCount = options.children.length;
   const question = root.querySelector('#coachAiQuestion');
-  const send = root.querySelector('#coachAiSend');
+  check('AI composer has no title, test badge, or retention notice',
+    !/Ask AI Coach|>Test<|retained for 30 days/.test(root.innerHTML));
+  check('AI composer starts as one row', /rows="1"/.test(root.innerHTML));
   question.value = 'How do I calculate time to the net?';
-  send.dispatch('click');
+  let prevented = false;
+  question.dispatch('keydown', {
+    key: 'Enter',
+    shiftKey: false,
+    isComposing: false,
+    preventDefault() { prevented = true; },
+  });
   await dom.settle(50);
 
+  check('Enter sends the AI question', prevented && calls.length === 1);
   check('AI question uses the current experimental speed', calls[0]?.context.speed === 21);
   check('AI question includes the current serve verdict', calls[0]?.context.verdict === 'in');
+  check('AI receives a description of what happened on screen', /finished|landed in bounds/.test(calls[0]?.context.uiState || ''));
   check('AI question includes the attempt count', calls[0]?.context.attemptCount === 3);
   check('AI receives recent preset Coach guidance', calls[0]?.context.recentCoach.length > 0);
   check('AI exchange does not remove preset answer buttons', options.children.length === optionCount);
+
+  let shiftPrevented = false;
+  question.value = 'Keep writing';
+  question.dispatch('keydown', {
+    key: 'Enter',
+    shiftKey: true,
+    isComposing: false,
+    preventDefault() { shiftPrevented = true; },
+  });
+  check('Shift+Enter keeps editing instead of sending', !shiftPrevented && calls.length === 1);
+
+  store.set({ v: 25, phase: 'aim' });
+  question.value = 'What is happening now?';
+  question.scrollHeight = 72;
+  question.dispatch('input');
+  check('the question box grows with its text', question.style.height === '72px');
+  question.dispatch('keydown', {
+    key: 'Enter',
+    shiftKey: false,
+    isComposing: false,
+    preventDefault() {},
+  });
+  await dom.settle(50);
+  check('AI reads a newly selected current speed', calls[1]?.context.speed === 25);
+  check('AI does not invent a result before the student serves',
+    calls[1]?.context.verdict === 'unknown' && calls[1]?.context.heightAtNet === null);
+  check('AI knows the selected speed has not been served',
+    /has not served|no result is visible/.test(calls[1]?.context.uiState || ''));
   check(
     'AI answer is appended to the same Coach log',
     root

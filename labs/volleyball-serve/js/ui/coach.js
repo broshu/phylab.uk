@@ -33,17 +33,12 @@ export function createCoach(root, store, { tutor, attempts, runtime, ai, timing 
     <div class="coach-log" id="coachLog" aria-live="polite"></div>
     <div class="coach-options" id="coachOptions"></div>
     <div class="coach-celebration" id="coachCelebration" aria-live="polite" hidden></div>
-    <section class="coach-ai" aria-labelledby="coachAiTitle">
-      <div class="coach-ai-head">
-        <strong id="coachAiTitle">Ask AI Coach</strong>
-        <span>Test</span>
-      </div>
+    <section class="coach-ai" aria-label="AI Coach">
       <div class="coach-ai-composer">
-        <textarea id="coachAiQuestion" rows="2" maxlength="600" aria-label="Question for AI Coach" placeholder="Ask about this experiment…"></textarea>
+        <textarea id="coachAiQuestion" rows="1" maxlength="600" aria-label="Question for AI Coach" placeholder="Ask about what happened…"></textarea>
         <button id="coachAiSend" type="button">Ask</button>
       </div>
       <p class="coach-ai-status" id="coachAiStatus" aria-live="polite"></p>
-      <p class="coach-ai-privacy">Anonymous questions and answers are retained for 30 days.</p>
     </section>
   `;
 
@@ -126,17 +121,44 @@ export function createCoach(root, store, { tutor, attempts, runtime, ai, timing 
   function currentAiContext() {
     const state = store.get();
     const result = state.result || {};
+    const phase = state.phase || 'unknown';
+    const speed = Number.isFinite(state.v) ? state.v : null;
+    const hasStudentResult = phase === 'done';
+    const speedText = speed == null ? 'an unknown speed' : `${speed} m/s`;
+    const verdictText = {
+      net: 'went into the net',
+      in: 'landed in bounds',
+      out: 'landed beyond the far baseline',
+    }[result.verdict] || 'has no visible verdict';
+    const uiState = {
+      aim: `The speed control is currently set to ${speedText}. The student has not served this selection yet, so no result is visible.`,
+      serve: `The student has served at ${speedText}; the ball is in flight and no result is visible yet.`,
+      done: `The student's ${speedText} serve has finished and ${verdictText}.`,
+      demo: `The preset Coach is demonstrating ${state.hideSpeed ? 'a hidden-speed serve' : `a ${speedText} serve`}. This is not a scored student attempt.`,
+    }[phase] || 'The current interface event is unknown.';
+
     return {
-      phase: state.phase || 'unknown',
-      verdict: result.verdict || 'unknown',
-      speed: Number.isFinite(state.v) ? state.v : null,
-      heightAtNet: Number.isFinite(result.heightAtNet) ? result.heightAtNet : null,
-      netClearance: Number.isFinite(result.netClearance) ? result.netClearance : null,
-      xLand: Number.isFinite(result.xLand) ? result.xLand : null,
-      outBy: Number.isFinite(result.outBy) ? result.outBy : null,
+      phase,
+      verdict: hasStudentResult ? result.verdict || 'unknown' : 'unknown',
+      speed,
+      speedHidden: Boolean(state.hideSpeed),
+      uiState,
+      heightAtNet: hasStudentResult && Number.isFinite(result.heightAtNet) ? result.heightAtNet : null,
+      netClearance: hasStudentResult && Number.isFinite(result.netClearance) ? result.netClearance : null,
+      xLand: hasStudentResult && Number.isFinite(result.xLand) ? result.xLand : null,
+      outBy: hasStudentResult && Number.isFinite(result.outBy) ? result.outBy : null,
       attemptCount: attempts.summary().total,
       recentCoach: recentCoach.slice(-6),
     };
+  }
+
+  function resizeAiQuestion() {
+    const minHeight = 36;
+    const maxHeight = 96;
+    aiQuestion.style.height = `${minHeight}px`;
+    const contentHeight = Math.max(minHeight, aiQuestion.scrollHeight || 0);
+    aiQuestion.style.height = `${Math.min(contentHeight, maxHeight)}px`;
+    aiQuestion.style.overflowY = contentHeight > maxHeight ? 'auto' : 'hidden';
   }
 
   async function sendToAi() {
@@ -156,6 +178,7 @@ export function createCoach(root, store, { tutor, attempts, runtime, ai, timing 
     aiStatus.textContent = 'AI Coach is thinking…';
     bubble(question, 'mine').className += ' msg-ai-question';
     aiQuestion.value = '';
+    resizeAiQuestion();
 
     try {
       const response = await ai.ask({
@@ -163,7 +186,7 @@ export function createCoach(root, store, { tutor, attempts, runtime, ai, timing 
         context: currentAiContext(),
       });
       renderAiReply(response.reply, response.mode);
-      aiStatus.textContent = response.notice || 'Answer added above.';
+      aiStatus.textContent = response.notice || '';
     } catch (error) {
       const message = error instanceof Error ? error.message : 'AI Coach request failed.';
       renderAiReply(message, 'error');
@@ -176,12 +199,14 @@ export function createCoach(root, store, { tutor, attempts, runtime, ai, timing 
   }
 
   aiSend.addEventListener('click', sendToAi);
+  aiQuestion.addEventListener('input', resizeAiQuestion);
   aiQuestion.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+    if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
       event.preventDefault?.();
       sendToAi();
     }
   });
+  resizeAiQuestion();
 
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 

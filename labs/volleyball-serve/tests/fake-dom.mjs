@@ -54,8 +54,8 @@ export function makeEl(tag = 'div') {
     addEventListener(type, fn) {
       (el.listeners[type] ||= []).push(fn);
     },
-    dispatch(type) {
-      (el.listeners[type] || []).slice().forEach((fn) => fn({ target: el }));
+    dispatch(type, event = {}) {
+      (el.listeners[type] || []).slice().forEach((fn) => fn({ target: el, ...event }));
     },
     querySelector(sel) {
       el._q ||= {};

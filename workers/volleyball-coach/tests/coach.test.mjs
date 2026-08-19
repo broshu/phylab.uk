@@ -17,6 +17,8 @@ test('normalizes bounded learner context', () => {
       phase: 'done',
       verdict: 'net',
       speed: 15,
+      speedHidden: true,
+      uiState: 'The student\'s 15 m/s serve went into the net.',
       heightAtNet: 1.4,
       recentCoach: ['one', 2, 'two'],
     },
@@ -26,6 +28,8 @@ test('normalizes bounded learner context', () => {
   assert.equal(input.sessionId, 'valid_session-123');
   assert.equal(input.context.verdict, 'net');
   assert.equal(input.context.speed, 15);
+  assert.equal(input.context.speedHidden, true);
+  assert.match(input.context.uiState, /went into the net/);
   assert.deepEqual(input.context.recentCoach, ['one', 'two']);
 });
 
@@ -58,6 +62,8 @@ test('anchors AI messages to canonical preset physics', () => {
   assert.match(messages[0].content, /t_net = 9 \/ v/);
   assert.match(messages[0].content, /t_floor = sqrt\(2 \* 3\.2 \/ 10\) = 0\.8 s/);
   assert.match(messages[0].content, /Do not replace\s+a specific calculation question/);
+  assert.match(messages[0].content, /Read the current speed and uiState/);
+  assert.match(messages[0].content, /aim means the selected speed has not been served/);
   assert.match(messages[0].content, /KaTeX-compatible LaTeX/);
   assert.ok(messages[0].content.includes('Use \\(...\\) for inline math'));
   assert.match(messages[0].content, /Do not use dollar-sign delimiters/);
