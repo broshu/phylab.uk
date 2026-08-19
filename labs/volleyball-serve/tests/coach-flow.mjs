@@ -140,23 +140,14 @@ async function finish(h, wrongSpeeds = []) {
   await h.chooseMulti(['21 m/s', '22 m/s']);
 }
 
-// Opening remains optional: a student can take control, or ask for a single
-// observation which then enters the same teaching sequence as a real serve.
+// Opening is deliberately quiet: the student begins by trying a serve.
 {
   const h = harness();
   h.coach.greet();
   await dom.settle(50);
-  check('opening frames two boundary conditions', h.said(/two boundary conditions/i));
-  await h.choose('I will serve first');
-  check('declining the demo does not serve for the student', h.served.length === 0);
-}
-{
-  const h = harness();
-  h.coach.greet();
-  await dom.settle(50);
-  await h.choose('Show me an example');
-  check('opening demo uses the default speed', h.served.join(',') === '15');
-  check('demo enters the net diagnosis', /faster or slower/i.test(h.messages().at(-1) || ''));
+  check('opening gives a short welcome', h.said(/Welcome.*Have a try.*Good luck/i));
+  check('opening offers no choices', h.options().length === 0);
+  check('opening does not run a demonstration', h.served.length === 0);
 }
 
 // A net fault teaches why slower is worse, then derives A before C.

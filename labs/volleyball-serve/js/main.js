@@ -15,10 +15,10 @@ import { createStore } from './core/state.js';
 import { evaluate, Verdict } from './core/evaluator.js';
 import { createTutor } from './services/tutor.js';
 import { createAttemptLog } from './services/attempts.js';
-import { createAiCoachClient } from './services/ai-coach.js?v=20260819-2';
+import { createAiCoachClient } from './services/ai-coach.js?v=20260819-3';
 import { createScene } from './ui/scene.js';
 import { createControls } from './ui/controls.js';
-import { createCoach } from './ui/coach.js?v=20260819-2';
+import { createCoach } from './ui/coach.js?v=20260819-3';
 
 const problem = getProblem(DEFAULT_PROBLEM_ID);
 const tutor = createTutor();

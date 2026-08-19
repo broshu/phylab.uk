@@ -88,6 +88,7 @@ try {
   const coachLog = () => el('#coach').querySelector('#coachLog').children;
   const coachOptions = () => el('#coach').querySelector('#coachOptions').children;
   check('the coach greeted on load', coachLog().length > 0);
+  check('the opening has no answer choices', coachOptions().length === 0);
 
   slider.value = '15';
   slider.dispatch('input');

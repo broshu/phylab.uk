@@ -411,7 +411,10 @@ input[type="range"][data-verdict="out"] { accent-color: var(--blue); }
     max-height: 96px;
     padding: 8px 9px;
     resize: none;
+    overflow-x: hidden;
     overflow-y: hidden;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
     font-size: 12px;
     line-height: 1.4;
 }

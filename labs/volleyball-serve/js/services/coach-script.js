@@ -336,21 +336,9 @@ async function guideFromResult(dsl) {
   return fromGoodServe(dsl);
 }
 
-/** Offer a demonstration only for students who want an initial observation. */
+/** A quiet welcome: the student starts by trying the experiment. */
 export async function opening(dsl) {
-  const { say, ask, serve, problem } = dsl;
-
-  await say('I will help you turn each serve into two boundary conditions: one for the net and one for the baseline.');
-  const answer = await ask('Would you like to make the first serve, or watch one first?', [
-    { id: 'self', label: 'I will serve first' },
-    { id: 'demo', label: 'Show me an example' },
-  ]);
-  if (answer === 'self') return;
-
-  const v = problem.speed.default;
-  await say(`Let us start with ${v} m/s and use what we see.`);
-  const result = await serve(v, { keep: true, label: `${v}`, animatePlayer: true });
-  return guideFromResult({ ...dsl, result, v });
+  await dsl.say('Welcome! Have a try. Good luck!');
 }
 
 /** Every student serve joins the same sequence at the observation it produced. */
