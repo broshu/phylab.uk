@@ -241,8 +241,9 @@ async function finish(h, wrongSpeeds = []) {
   check('a later conversation starts cleanly', h.said(/21 m\/s worked/i));
 }
 
-// The optional AI composer appends a separate exchange without clearing or
-// resolving the deterministic multiple-choice question above it.
+// An AI question pauses the deterministic multiple-choice path. After the AI
+// reply, one acknowledgement restores the exact preset choices that were on
+// screen so the learner can continue without mixing two contexts.
 {
   const calls = [];
   const store = createStore({
@@ -276,11 +277,11 @@ async function finish(h, wrongSpeeds = []) {
     },
     timing: { message: 0 },
   });
-  coach.greet();
+  coach.reactTo(evaluate(problem, 21));
   await dom.settle(50);
 
   const options = root.querySelector('#coachOptions');
-  const optionCount = options.children.length;
+  const originalOptions = options.children.map((item) => item.textContent);
   const question = root.querySelector('#coachAiQuestion');
   check('AI composer has no title, test badge, or retention notice',
     !/Ask AI Coach|>Test<|retained for 30 days/.test(root.innerHTML));
@@ -301,7 +302,15 @@ async function finish(h, wrongSpeeds = []) {
   check('AI receives a description of what happened on screen', /finished|landed in bounds/.test(calls[0]?.context.uiState || ''));
   check('AI question includes the attempt count', calls[0]?.context.attemptCount === 3);
   check('AI receives recent preset Coach guidance', calls[0]?.context.recentCoach.length > 0);
-  check('AI exchange does not remove preset answer buttons', options.children.length === optionCount);
+  check('AI reply replaces the preset choices with one continuation action',
+    options.children.map((item) => item.textContent).join(',') === '知道了，继续');
+  check('AI composer stays paused until the learner acknowledges the reply',
+    question.disabled === true);
+  options.children[0].dispatch('click');
+  await dom.settle(10);
+  check('acknowledgement restores the exact preset choices',
+    options.children.map((item) => item.textContent).join(',') === originalOptions.join(','));
+  check('acknowledgement returns focus to the AI composer', question.disabled === false);
 
   let shiftPrevented = false;
   question.value = 'Keep writing';
@@ -330,6 +339,10 @@ async function finish(h, wrongSpeeds = []) {
     calls[1]?.context.verdict === 'unknown' && calls[1]?.context.heightAtNet === null);
   check('AI knows the selected speed has not been served',
     /has not served|no result is visible/.test(calls[1]?.context.uiState || ''));
+  check('each AI interruption uses the same single continuation action',
+    options.children.map((item) => item.textContent).join(',') === '知道了，继续');
+  options.children[0].dispatch('click');
+  await dom.settle(10);
   check(
     'AI answer is appended to the same Coach log',
     root

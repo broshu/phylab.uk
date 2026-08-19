@@ -53,6 +53,7 @@ export function createCoach(root, store, { tutor, attempts, runtime, ai, timing 
   // the question currently on screen, so it can also be answered by clicking
   // the court instead of the buttons
   let pending = null;
+  let aiPause = null;
 
   function plainMessage(text) {
     if (typeof text === 'string') return text;
@@ -161,6 +162,56 @@ export function createCoach(root, store, { tutor, attempts, runtime, ai, timing 
     aiQuestion.style.overflowY = contentHeight > maxHeight ? 'auto' : 'hidden';
   }
 
+  function unlockAiComposer() {
+    aiSend.disabled = false;
+    aiQuestion.disabled = false;
+    aiQuestion.focus?.();
+  }
+
+  function pausePresetOptions() {
+    if (aiPause || options.children.length === 0) return null;
+    const pause = {
+      token,
+      pending,
+      buttons: Array.from(options.children),
+    };
+    aiPause = pause;
+    options.innerHTML = '';
+    return pause;
+  }
+
+  function isCurrentAiPause(pause) {
+    return aiPause === pause && token === pause.token && pending === pause.pending;
+  }
+
+  function showContinueButton(pause) {
+    if (!pause || !isCurrentAiPause(pause)) {
+      if (aiPause === pause) aiPause = null;
+      unlockAiComposer();
+      return;
+    }
+
+    options.innerHTML = '';
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'ghost-button option coach-ai-continue';
+    button.textContent = '知道了，继续';
+    button.addEventListener('click', () => {
+      if (!isCurrentAiPause(pause)) return;
+      aiPause = null;
+      options.innerHTML = '';
+      pause.buttons.forEach((original) => options.appendChild(original));
+      unlockAiComposer();
+    });
+    options.appendChild(button);
+  }
+
+  function abandonAiPause() {
+    const wasActive = Boolean(aiPause || aiSend.disabled || aiQuestion.disabled);
+    aiPause = null;
+    if (wasActive) unlockAiComposer();
+  }
+
   async function sendToAi() {
     const question = aiQuestion.value.trim();
     if (!question) {
@@ -175,6 +226,7 @@ export function createCoach(root, store, { tutor, attempts, runtime, ai, timing 
 
     aiSend.disabled = true;
     aiQuestion.disabled = true;
+    const pausedOptions = pausePresetOptions();
     aiStatus.textContent = 'AI Coach is thinking…';
     bubble(question, 'mine').className += ' msg-ai-question';
     aiQuestion.value = '';
@@ -192,9 +244,11 @@ export function createCoach(root, store, { tutor, attempts, runtime, ai, timing 
       renderAiReply(message, 'error');
       aiStatus.textContent = 'The preset Coach above is still available.';
     } finally {
-      aiSend.disabled = false;
-      aiQuestion.disabled = false;
-      aiQuestion.focus?.();
+      if (pausedOptions) {
+        showContinueButton(pausedOptions);
+      } else {
+        unlockAiComposer();
+      }
     }
   }
 
@@ -355,6 +409,7 @@ export function createCoach(root, store, { tutor, attempts, runtime, ai, timing 
   function run(script, extra = {}) {
     token += 1;
     const mine = token;
+    abandonAiPause();
     pending = null;
     options.innerHTML = '';
 
@@ -391,6 +446,7 @@ export function createCoach(root, store, { tutor, attempts, runtime, ai, timing 
      * the court. Ignored if that id is not one of the choices being offered.
      */
     answer(id) {
+      if (aiPause) return false;
       const choice = pending?.choices.find((c) => c.id === id);
       if (choice) pending.pick(choice);
       return !!choice;
@@ -399,6 +455,7 @@ export function createCoach(root, store, { tutor, attempts, runtime, ai, timing 
     /** Drop whatever is being said (the student has taken over). */
     interrupt() {
       token += 1;
+      abandonAiPause();
       pending = null;
       options.innerHTML = '';
       celebration.hidden = true;
