@@ -6,6 +6,13 @@
   "compatibility_flags": ["nodejs_compat"],
   "workers_dev": true,
   "preview_urls": true,
+  "rules": [
+    {
+      "type": "Text",
+      "globs": ["**/*.md"],
+      "fallthrough": true
+    }
+  ],
   "secrets": {
     "required": ["DEEPSEEK_API_KEY", "COACH_TEST_TOKEN", "COACH_ADMIN_TOKEN"]
   },

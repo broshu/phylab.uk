@@ -14,6 +14,14 @@ A deliberately small Cloudflare Worker for testing a hybrid teaching model:
 The Worker also serves a test console at `/`. It does not host or modify the
 current `phylab.uk` site.
 
+## Maintain the Coach prompt
+
+Edit `prompts/volleyball-coach.md` to change the AI's reply rules, canonical
+problem and solution, or deterministic preset answers. The five headings under
+`Preset Answers` (`time`, `net`, `out`, `in`, and `unknown`) are parsed by the
+Worker, so keep those heading keys unchanged. Wrangler imports the Markdown as
+a text module; there is no duplicate long prompt string to update in JavaScript.
+
 ## Safety defaults
 
 - A model call always requires `DEEPSEEK_API_KEY` inside the Worker. Browsers

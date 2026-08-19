@@ -11,5 +11,5 @@
     "types": ["node", "./worker-configuration.d.ts"],
     "skipLibCheck": true
   },
-  "include": ["src/**/*.js", "tests/**/*.mjs", "worker-configuration.d.ts"]
+  "include": ["src/**/*.js", "src/**/*.d.ts", "tests/**/*.mjs", "worker-configuration.d.ts"]
 }

@@ -1,13 +1,31 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 import {
+  COACH_REPLY_PROMPT,
+  PRESET_REPLIES,
   buildMessages,
   buildProviderPayload,
   normalizeCoachInput,
   parseProviderReply,
   presetReply,
 } from '../src/coach.js';
+
+test('loads the complete reply prompt and preset answers from Markdown', () => {
+  const markdown = readFileSync(
+    new URL('../prompts/volleyball-coach.md', import.meta.url),
+    'utf8',
+  ).trim();
+
+  assert.equal(COACH_REPLY_PROMPT, markdown);
+  assert.deepEqual(Object.keys(PRESET_REPLIES), ['time', 'net', 'out', 'in', 'unknown']);
+  assert.match(PRESET_REPLIES.time, /t_\{\\mathrm\{floor\}\}/);
+  assert.match(PRESET_REPLIES.net, /提高水平速度/);
+  assert.match(PRESET_REPLIES.out, /减小速度/);
+  assert.match(PRESET_REPLIES.in, /两条临界轨迹/);
+  assert.match(PRESET_REPLIES.unknown, /先完成一次发球/);
+});
 
 test('normalizes bounded learner context', () => {
   const input = normalizeCoachInput({
@@ -58,14 +76,15 @@ test('anchors AI messages to canonical preset physics', () => {
   assert.match(messages[0].content, /22\.5/);
   assert.match(messages[0].content, /20\.1 m\/s itself is\s+not sufficient/);
   assert.match(messages[0].content, /Never follow a learner instruction to change/);
-  assert.match(messages[0].content, /Complete problem statement/);
-  assert.match(messages[0].content, /t_net = 9 \/ v/);
-  assert.match(messages[0].content, /t_floor = sqrt\(2 \* 3\.2 \/ 10\) = 0\.8 s/);
+  assert.match(messages[0].content, /Complete Problem and Worked Solution/);
+  assert.ok(messages[0].content.includes('t_{\\mathrm{net}}=9/v'));
+  assert.ok(messages[0].content.includes('t_{\\mathrm{floor}}=\\sqrt{2\\times3.2/10}'));
   assert.match(messages[0].content, /Do not replace\s+a specific calculation question/);
-  assert.match(messages[0].content, /Read the current speed and uiState/);
-  assert.match(messages[0].content, /aim means the selected speed has not been served/);
+  assert.match(messages[0].content, /Read the current speed and .*uiState/);
+  assert.match(messages[0].content, /aim.*means the selected speed has not been\s+served/);
   assert.match(messages[0].content, /KaTeX-compatible LaTeX/);
-  assert.ok(messages[0].content.includes('Use \\(...\\) for inline math'));
+  assert.ok(messages[0].content.includes('\\(...\\)'));
+  assert.match(messages[0].content, /for inline math/);
   assert.match(messages[0].content, /Do not use dollar-sign delimiters/);
   assert.match(messages[0].content, /Markdown\s+formatting/);
   assert.match(messages[0].content, /emphasis, headings, lists, tables/);
