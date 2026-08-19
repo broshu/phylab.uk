@@ -66,7 +66,7 @@ export const TEST_PAGE = String.raw`<!doctype html>
       <p class="lede">预设脚本负责物理结论，AI 根据当前发球和你的问题补充解释。尚未配置密钥时，这里会明确显示“预设模式”。</p>
       <p class="meta" id="math-preview">公式显示：\(t_{\mathrm{net}} = 9/v\)</p>
       <p class="meta" id="health">正在检查 Worker…</p>
-      <p class="meta">为改进教学，成功的匿名提问、回答和当时的实验数据会保存 30 天；不会保存姓名、邮箱、IP 地址或浏览器指纹。<a href="/admin">查看管理员记录页</a></p>
+      <p class="meta">为改进教学，成功的匿名提问、回答和当时的实验数据会保存 30 天；不会保存姓名、邮箱、IP 地址或浏览器指纹。</p>
 
       <div class="scenarios" id="scenarios"></div>
 

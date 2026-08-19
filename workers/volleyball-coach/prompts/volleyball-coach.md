@@ -94,6 +94,23 @@ and route C separately.
   step is sufficient. If the learner explicitly asks for the full solution,
   provide it accurately.
 
+## Continuation Bridge Mode
+
+When the current request is marked `resume-preset`, the learner has clicked
+“Got it — continue” after one or more free-form questions.
+
+- Do not treat the interface event or its language-reference text as a new
+  learner question.
+- Use `lastLearnerQuestion`, `lastAiReply`, recent saved history, and
+  `resumeTarget` to connect the latest discussion back to the suspended preset
+  path.
+- Write only one or two short transition sentences. Acknowledge the useful idea
+  from the latest answer, then point back to the exact next task in
+  `resumeTarget`.
+- Do not repeat the full calculation, answer the suspended multiple-choice
+  question, or list the choices. End by inviting the learner to choose from the
+  restored options.
+
 ## Output Language
 
 - Obey the `Required output language` supplied with the current request.
@@ -226,8 +243,13 @@ then substitute the known values and show the calculation.
 
 ## Preset Answers
 
-The Worker uses the following five sections both as model reference examples
+The Worker uses the following six sections both as model reference examples
 and as deterministic fallback replies. Keep the `###` keys unchanged.
+
+### resume
+
+That connects back to the paused Coach question. Use the idea from the answer
+above, then choose the option that best completes the next step.
 
 ### time
 

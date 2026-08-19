@@ -58,11 +58,12 @@ export function createAiCoachClient({
   return {
     /**
      * @param {{
+     *   requestType?: 'question' | 'resume',
      *   question: string,
      *   context: Record<string, unknown>
      * }} request
      */
-    async ask({ question, context }) {
+    async ask({ requestType = 'question', question, context }) {
       const cleanQuestion = String(question || '').trim();
       if (!cleanQuestion) throw new Error('Enter a question for Coach.');
       if (typeof fetchImpl !== 'function') {
@@ -75,6 +76,7 @@ export function createAiCoachClient({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          requestType: requestType === 'resume' ? 'resume' : 'question',
           question: cleanQuestion,
           sessionId,
           context,

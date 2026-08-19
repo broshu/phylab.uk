@@ -29,17 +29,17 @@ export const ADMIN_PAGE = String.raw`<!doctype html>
     * { box-sizing: border-box; }
     body { margin: 0; background: #f4f5f1; color: #171817; }
     main { width: min(980px, calc(100% - 32px)); margin: 40px auto 72px; }
-    header, .login, .record { border: 1px solid #d8d9d2; border-radius: 14px; background: #fff; }
-    header, .login { padding: 20px; margin-bottom: 14px; }
+    header, .toolbar, .record { border: 1px solid #d8d9d2; border-radius: 14px; background: #fff; }
+    header, .toolbar { padding: 20px; margin-bottom: 14px; }
     h1 { margin: 0 0 8px; font-size: 25px; }
     p { line-height: 1.6; }
     .muted, .metadata, #status { color: #666b67; font-size: 13px; }
-    .controls { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
-    input, button { min-height: 42px; padding: 9px 12px; border: 1px solid #c8cbc5; border-radius: 8px; background: #fff; color: inherit; font: inherit; }
+    .controls { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    button { min-height: 42px; padding: 9px 12px; border: 1px solid #c8cbc5; border-radius: 8px; background: #fff; color: inherit; font: inherit; }
     button { cursor: pointer; font-weight: 700; }
     button.primary { border-color: #183d30; background: #183d30; color: #fff; }
     button:disabled { opacity: .5; cursor: default; }
-    #status { min-height: 21px; margin: 10px 0 0; }
+    #status { min-height: 21px; margin: 0; }
     #records { display: grid; gap: 12px; }
     .record { padding: 18px; }
     .question, .reply { margin-top: 10px; padding: 12px; border-radius: 9px; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.65; }
@@ -49,12 +49,12 @@ export const ADMIN_PAGE = String.raw`<!doctype html>
     .reply .katex-display { margin: .55em 0; overflow-x: auto; overflow-y: hidden; }
     .pager { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 18px; }
     a { color: #245c45; }
-    @media (max-width: 600px) { .controls { grid-template-columns: 1fr; } }
+    @media (max-width: 600px) { .controls { align-items: stretch; flex-direction: column; } }
     @media (prefers-color-scheme: dark) {
       body { background: #151816; color: #edf0ed; }
-      header, .login, .record { border-color: #353a36; background: #202421; }
+      header, .toolbar, .record { border-color: #353a36; background: #202421; }
       .muted, .metadata, #status { color: #a8afa9; }
-      input, button { border-color: #434944; background: #282d29; }
+      button { border-color: #434944; background: #282d29; }
       button.primary { background: #7bb397; color: #10271d; }
       .question { background: #282d29; }
       .reply { background: #25312b; }
@@ -67,15 +67,14 @@ export const ADMIN_PAGE = String.raw`<!doctype html>
     <header>
       <h1>Coach 对话记录</h1>
       <p class="muted">这里只保存匿名会话编号、学生问题、Coach 回答和当时的物理实验数据。不会保存姓名、邮箱、IP 地址或浏览器指纹；原文保留 30 天。</p>
-      <a href="/">返回 Coach 测试页</a>
+      <p class="muted">完整网址就是访问凭证。请勿转发、公开或放入网页链接。</p>
     </header>
 
-    <section class="login">
+    <section class="toolbar">
       <div class="controls">
-        <input id="admin-token" type="password" autocomplete="off" placeholder="输入管理员口令" aria-label="管理员口令">
-        <button class="primary" id="load" type="button">读取记录</button>
+        <p id="status" aria-live="polite">正在读取…</p>
+        <button class="primary" id="load" type="button">刷新记录</button>
       </div>
-      <p id="status" aria-live="polite">管理员口令只用于这次请求，不会写入网址或浏览器存储。</p>
     </section>
 
     <section id="records" aria-live="polite"></section>
@@ -86,7 +85,6 @@ export const ADMIN_PAGE = String.raw`<!doctype html>
     </nav>
   </main>
   <script>
-    const token = document.querySelector('#admin-token');
     const load = document.querySelector('#load');
     const status = document.querySelector('#status');
     const records = document.querySelector('#records');
@@ -95,6 +93,7 @@ export const ADMIN_PAGE = String.raw`<!doctype html>
     const pageLabel = document.querySelector('#page');
     let currentPage = 1;
     let totalPages = 1;
+    const adminPath = location.pathname.replace(/\/+$/, '');
 
     function renderMath(root) {
       if (typeof globalThis.renderMathInElement === 'function') {
@@ -145,20 +144,12 @@ export const ADMIN_PAGE = String.raw`<!doctype html>
     }
 
     async function loadPage(page) {
-      const adminToken = token.value;
-      if (!adminToken) {
-        status.textContent = '请输入管理员口令。';
-        token.focus();
-        return;
-      }
-
       load.disabled = true;
       previous.disabled = true;
       next.disabled = true;
       status.textContent = '正在读取…';
       try {
-        const response = await fetch('/admin/conversations?page=' + encodeURIComponent(page), {
-          headers: { 'X-Coach-Admin-Token': adminToken },
+        const response = await fetch(adminPath + '/conversations?page=' + encodeURIComponent(page), {
           cache: 'no-store'
         });
         const data = await response.json();
@@ -185,11 +176,9 @@ export const ADMIN_PAGE = String.raw`<!doctype html>
     }
 
     load.addEventListener('click', () => loadPage(1));
-    token.addEventListener('keydown', (event) => {
-      if (event.key === 'Enter') loadPage(1);
-    });
     previous.addEventListener('click', () => loadPage(currentPage - 1));
     next.addEventListener('click', () => loadPage(currentPage + 1));
+    loadPage(1);
   </script>
 </body>
 </html>`;

@@ -146,7 +146,7 @@ const env = {
   ALLOWED_ORIGINS: 'https://phylab.uk,https://www.phylab.uk',
   DEEPSEEK_API_KEY: '',
   COACH_TEST_TOKEN: '',
-  COACH_ADMIN_TOKEN: 'admin-test-token',
+  COACH_ADMIN_PATH: 'records-private-path-for-worker-tests-123',
   COACH_DB: database,
 };
 
@@ -184,17 +184,26 @@ test('test console and admin console load KaTeX safely', async () => {
   assert.match(html, /replyRoot\.textContent = reply/);
   assert.match(html, /sessionStorage\.getItem/);
   assert.match(html, /保存 30 天/);
+  assert.doesNotMatch(html, /href="\/admin"/);
   assert.match(html, /trust: false/);
   assert.match(csp, /script-src 'unsafe-inline' https:\/\/cdn\.jsdelivr\.net/);
 
-  const adminResponse = await dispatch(new Request('https://example.test/admin'));
+  const publicAdminResponse = await dispatch(new Request('https://example.test/admin'));
+  assert.equal(publicAdminResponse.status, 404);
+
+  const adminResponse = await dispatch(
+    new Request('https://example.test/records-private-path-for-worker-tests-123'),
+  );
   const adminHtml = await adminResponse.text();
   assert.equal(adminResponse.status, 200);
   assert.match(adminHtml, /Coach 对话记录/);
   assert.match(adminHtml, /element\.textContent =/);
-  assert.match(adminHtml, /X-Coach-Admin-Token/);
+  assert.match(adminHtml, /adminPath \+ '\/conversations/);
+  assert.match(adminHtml, /loadPage\(1\);/);
+  assert.doesNotMatch(adminHtml, /admin-token|X-Coach-Admin-Token|管理员口令/);
   assert.match(adminHtml, /trust: false/);
   assert.doesNotMatch(adminHtml, /localStorage/);
+  assert.match(adminResponse.headers.get('X-Robots-Tag') || '', /noindex/);
 });
 
 test('health reports AI and anonymous-recording readiness separately', async () => {
@@ -291,6 +300,61 @@ test('an allowed student origin can use AI without a test token', async () => {
       /I already know that the lower boundary uses point A/,
     );
     assert.match(providerMessagesText, /Two Parallel Routes/);
+  } finally {
+    globalThis.fetch = originalFetch;
+    storedRows.length = 0;
+  }
+});
+
+test('a continuation bridge calls AI without recording a synthetic learner question', async () => {
+  const originalFetch = globalThis.fetch;
+  storedRows.length = 0;
+  let providerPayloadText = '';
+  globalThis.fetch = async (_url, init) => {
+    providerPayloadText = String(init?.body || '');
+    return Response.json({
+      choices: [
+        {
+          finish_reason: 'stop',
+          message: {
+            content: 'That time calculation is the key idea. Now return to the paused boundary question and choose the next step.',
+          },
+        },
+      ],
+      usage: { prompt_tokens: 100, completion_tokens: 20, total_tokens: 120 },
+    });
+  };
+
+  try {
+    const response = await dispatch(
+      new Request('https://example.test/coach', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Origin: 'https://phylab.uk' },
+        body: JSON.stringify({
+          requestType: 'resume',
+          question: 'Why does a shorter time help?',
+          sessionId: 'resume-bridge-session',
+          context: {
+            phase: 'done',
+            verdict: 'net',
+            speed: 20,
+            resumeTarget: 'Which boundary point represents the slowest legal serve?',
+            resumeOptions: ['A', 'B', 'C'],
+            lastLearnerQuestion: 'Why does a shorter time help?',
+            lastAiReply: 'A shorter time means less vertical fall.',
+          },
+        }),
+      }),
+      { ...env, DEEPSEEK_API_KEY: 'not-a-real-key' },
+    );
+    const body = await response.json();
+
+    assert.equal(response.status, 200);
+    assert.equal(body.mode, 'ai-assisted');
+    assert.match(body.reply, /return to the paused boundary question/);
+    assert.match(providerPayloadText, /resume-preset/);
+    assert.match(providerPayloadText, /Which boundary point represents the slowest legal serve/);
+    assert.equal(storedRows.length, 0);
   } finally {
     globalThis.fetch = originalFetch;
     storedRows.length = 0;
@@ -403,7 +467,7 @@ test('direct callers still need the private test token', async () => {
   assert.equal(response.status, 503);
 });
 
-test('successful coach replies are recorded and protected by an admin token', async () => {
+test('successful coach replies are recorded and protected by a secret admin URL', async () => {
   storedRows.length = 0;
   const response = await dispatch(
     new Request('https://example.test/coach', {
@@ -427,21 +491,32 @@ test('successful coach replies are recorded and protected by an admin token', as
   assert.equal('ip' in storedRows[0], false);
   assert.equal('userAgent' in storedRows[0], false);
 
-  const unauthenticated = await dispatch(
+  const oldPublicRoute = await dispatch(
     new Request('https://example.test/admin/conversations'),
   );
-  assert.equal(unauthenticated.status, 401);
+  assert.equal(oldPublicRoute.status, 404);
 
-  const authenticated = await dispatch(
-    new Request('https://example.test/admin/conversations?page=1', {
-      headers: { 'X-Coach-Admin-Token': 'admin-test-token' },
+  const wrongPrivateRoute = await dispatch(
+    new Request('https://example.test/records-private-path-for-worker-tests-124/conversations'),
+  );
+  assert.equal(wrongPrivateRoute.status, 404);
+
+  const crossOrigin = await dispatch(
+    new Request('https://example.test/records-private-path-for-worker-tests-123/conversations', {
+      headers: { Origin: 'https://attacker.example' },
     }),
   );
-  const recordsBody = await authenticated.json();
-  assert.equal(authenticated.status, 200);
+  assert.equal(crossOrigin.status, 403);
+
+  const privateResponse = await dispatch(
+    new Request('https://example.test/records-private-path-for-worker-tests-123/conversations?page=1'),
+  );
+  const recordsBody = await privateResponse.json();
+  assert.equal(privateResponse.status, 200);
   assert.equal(recordsBody.pagination.total, 1);
   assert.equal(recordsBody.retentionDays, 30);
   assert.equal(recordsBody.records[0].question, '为什么慢球更容易挂网？');
+  assert.match(privateResponse.headers.get('X-Robots-Tag') || '', /noindex/);
 });
 
 test('rejects oversized and non-JSON requests without recording them', async () => {

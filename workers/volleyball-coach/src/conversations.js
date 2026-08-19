@@ -3,7 +3,7 @@
 export const CONVERSATION_RETENTION_DAYS = 30;
 export const CONVERSATION_PAGE_SIZE = 25;
 export const CONVERSATION_HISTORY_LIMIT = 4;
-export const PROMPT_VERSION = 'volleyball-coach-v6';
+export const PROMPT_VERSION = 'volleyball-coach-v7';
 
 /**
  * @typedef {object} ConversationHistoryTurn

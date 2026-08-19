@@ -14,7 +14,7 @@
     }
   ],
   "secrets": {
-    "required": ["DEEPSEEK_API_KEY", "COACH_TEST_TOKEN", "COACH_ADMIN_TOKEN"]
+    "required": ["DEEPSEEK_API_KEY", "COACH_TEST_TOKEN", "COACH_ADMIN_PATH"]
   },
   "d1_databases": [
     {

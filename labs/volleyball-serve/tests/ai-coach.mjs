@@ -37,6 +37,7 @@ const body = JSON.parse(request.options.body);
 assert.equal(request.url, 'https://coach.example/coach');
 assert.equal('X-Coach-Test-Token' in request.options.headers, false);
 assert.equal(body.sessionId, 'student-session-123');
+assert.equal(body.requestType, 'question');
 assert.equal(body.context.speed, 21);
 assert.equal(result.mode, 'ai-assisted');
 

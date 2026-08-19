@@ -22,7 +22,8 @@ test('loads the complete reply prompt and preset answers from Markdown', () => {
 
   assert.equal(COACH_REPLY_PROMPT, markdown);
   assert.doesNotMatch(COACH_REPLY_PROMPT, /[\u3400-\u9fff]/);
-  assert.deepEqual(Object.keys(PRESET_REPLIES), ['time', 'net', 'out', 'in', 'unknown']);
+  assert.deepEqual(Object.keys(PRESET_REPLIES), ['resume', 'time', 'net', 'out', 'in', 'unknown']);
+  assert.match(PRESET_REPLIES.resume, /paused Coach question/);
   assert.match(PRESET_REPLIES.time, /t_\{\\mathrm\{floor\}\}/);
   assert.match(PRESET_REPLIES.net, /route A/);
   assert.match(PRESET_REPLIES.out, /route C/);
@@ -46,6 +47,7 @@ test('normalizes bounded learner context', () => {
   });
 
   assert.equal(input.question, '为什么慢球更容易挂网？');
+  assert.equal(input.requestType, 'question');
   assert.equal(input.sessionId, 'valid_session-123');
   assert.equal(input.replyLanguage, 'learner-language');
   assert.equal(input.context.verdict, 'net');
@@ -75,6 +77,28 @@ test('classifies English questions and detects non-English reply scripts', () =>
   assert.equal(hasNonEnglishScript('Use \\(t_A=\\sqrt{0.2}\\) seconds.'), false);
   assert.equal(hasNonEnglishScript('先计算时间。'), true);
   assert.equal(hasNonEnglishScript('Сначала найдите время.'), true);
+});
+
+test('normalizes a bounded continuation bridge request', () => {
+  const input = normalizeCoachInput({
+    requestType: 'resume',
+    question: 'Why does a shorter time help?',
+    context: {
+      resumeTarget: 'Which boundary point represents the slowest legal serve?',
+      resumeOptions: ['A', 'B', 3, 'C'],
+      lastLearnerQuestion: 'Why does a shorter time help?',
+      lastAiReply: 'A shorter time means less vertical fall.',
+    },
+  });
+
+  assert.equal(input.requestType, 'resume');
+  assert.equal(input.replyLanguage, 'English');
+  assert.deepEqual(input.context.resumeOptions, ['A', 'B', 'C']);
+  assert.match(input.context.resumeTarget, /slowest legal serve/);
+  assert.match(input.context.lastAiReply, /less vertical fall/);
+  assert.match(presetReply(input), /paused Coach question/);
+  assert.match(buildMessages(input)[1].content, /resume-preset/);
+  assert.match(buildMessages(input)[1].content, /Do not answer the suspended multiple-choice question/);
 });
 
 test('anchors AI messages to canonical preset physics', () => {

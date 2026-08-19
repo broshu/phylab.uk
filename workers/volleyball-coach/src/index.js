@@ -25,9 +25,19 @@ const SECURITY_HEADERS = Object.freeze({
   'X-Content-Type-Options': 'nosniff',
   'X-Frame-Options': 'DENY',
 });
+const ADMIN_RESPONSE_HEADERS = Object.freeze({
+  'X-Robots-Tag': 'noindex, nofollow, noarchive',
+});
 
 const HTML_CONTENT_SECURITY_POLICY =
   "default-src 'none'; connect-src 'self'; style-src 'unsafe-inline' https://cdn.jsdelivr.net; script-src 'unsafe-inline' https://cdn.jsdelivr.net; font-src https://cdn.jsdelivr.net; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
+
+/** @param {unknown} value */
+function normalizeAdminPath(value) {
+  if (typeof value !== 'string') return '';
+  const slug = value.trim().replace(/^\/+|\/+$/g, '');
+  return /^[A-Za-z0-9_-]{32,128}$/.test(slug) ? `/${slug}` : '';
+}
 
 /** @param {Env} env */
 function config(env) {
@@ -42,7 +52,7 @@ function config(env) {
     ),
     apiKey: env.DEEPSEEK_API_KEY || '',
     testToken: env.COACH_TEST_TOKEN || '',
-    adminToken: env.COACH_ADMIN_TOKEN || '',
+    adminPath: normalizeAdminPath(env.COACH_ADMIN_PATH),
   };
 }
 
@@ -204,36 +214,38 @@ function coachResponse(
     ...(notice ? { notice } : {}),
   };
 
-  const { context } = input;
-  const write = recordConversation(env.COACH_DB, {
-    id: crypto.randomUUID(),
-    sessionId: input.sessionId || crypto.randomUUID(),
-    question: input.question,
-    reply,
-    mode,
-    model,
-    phase: context.phase,
-    verdict: context.verdict,
-    speed: context.speed,
-    heightAtNet: context.heightAtNet,
-    netClearance: context.netClearance,
-    xLand: context.xLand,
-    outBy: context.outBy,
-    attemptCount: context.attemptCount,
-    promptVersion: PROMPT_VERSION,
-    inputTokens: usage?.inputTokens ?? null,
-    outputTokens: usage?.outputTokens ?? null,
-    totalTokens: usage?.totalTokens ?? null,
-    latencyMs: Math.max(0, Date.now() - startedAt),
-  }).catch((error) => {
-    console.error(
-      JSON.stringify({
-        event: 'coach_conversation_write_error',
-        error: error instanceof Error ? error.name : 'Unknown database error',
-      }),
-    );
-  });
-  ctx.waitUntil(write);
+  if (input.requestType !== 'resume') {
+    const { context } = input;
+    const write = recordConversation(env.COACH_DB, {
+      id: crypto.randomUUID(),
+      sessionId: input.sessionId || crypto.randomUUID(),
+      question: input.question,
+      reply,
+      mode,
+      model,
+      phase: context.phase,
+      verdict: context.verdict,
+      speed: context.speed,
+      heightAtNet: context.heightAtNet,
+      netClearance: context.netClearance,
+      xLand: context.xLand,
+      outBy: context.outBy,
+      attemptCount: context.attemptCount,
+      promptVersion: PROMPT_VERSION,
+      inputTokens: usage?.inputTokens ?? null,
+      outputTokens: usage?.outputTokens ?? null,
+      totalTokens: usage?.totalTokens ?? null,
+      latencyMs: Math.max(0, Date.now() - startedAt),
+    }).catch((error) => {
+      console.error(
+        JSON.stringify({
+          event: 'coach_conversation_write_error',
+          error: error instanceof Error ? error.name : 'Unknown database error',
+        }),
+      );
+    });
+    ctx.waitUntil(write);
+  }
 
   return json(body, 200, cors);
 }
@@ -436,22 +448,12 @@ async function handleCoach(request, env, ctx) {
 
 /** @param {Request} request @param {Env} env */
 async function handleAdminConversations(request, env) {
-  const settings = config(env);
   const origin = request.headers.get('Origin');
   if (origin && origin !== new URL(request.url).origin) {
     return json({ error: 'Origin is not allowed.' }, 403);
   }
-  if (!settings.adminToken) {
-    return json({ error: 'Admin access is not configured.' }, 503);
-  }
-
-  const providedToken = request.headers.get('X-Coach-Admin-Token') || '';
-  if (!(await secureEqual(providedToken, settings.adminToken))) {
-    return json({ error: '管理员口令错误。' }, 401);
-  }
-
   const pageValue = Number.parseInt(new URL(request.url).searchParams.get('page') || '1', 10);
-  return json(await listConversations(env.COACH_DB, pageValue));
+  return json(await listConversations(env.COACH_DB, pageValue), 200, ADMIN_RESPONSE_HEADERS);
 }
 
 /** @satisfies {ExportedHandler<Env>} */
@@ -464,20 +466,11 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const settings = config(env);
+    const requestPath = url.pathname.length > 1 ? url.pathname.replace(/\/+$/, '') : url.pathname;
 
     try {
       if (request.method === 'GET' && url.pathname === '/') {
         return new Response(TEST_PAGE, {
-          headers: {
-            ...SECURITY_HEADERS,
-            'Content-Type': 'text/html; charset=utf-8',
-            'Content-Security-Policy': HTML_CONTENT_SECURITY_POLICY,
-          },
-        });
-      }
-
-      if (request.method === 'GET' && url.pathname === '/admin') {
-        return new Response(ADMIN_PAGE, {
           headers: {
             ...SECURITY_HEADERS,
             'Content-Type': 'text/html; charset=utf-8',
@@ -500,12 +493,30 @@ export default {
           publicStudentReady,
           testConsoleReady,
           model: settings.model,
-          recordsReady: Boolean(settings.adminToken && env.COACH_DB),
+          recordsReady: Boolean(settings.adminPath && env.COACH_DB),
         });
       }
 
-      if (request.method === 'GET' && url.pathname === '/admin/conversations') {
-        return await handleAdminConversations(request, env);
+      if (request.method === 'GET' && settings.adminPath) {
+        const [isAdminPage, isAdminData] = await Promise.all([
+          secureEqual(requestPath, settings.adminPath),
+          secureEqual(requestPath, `${settings.adminPath}/conversations`),
+        ]);
+
+        if (isAdminPage) {
+          return new Response(ADMIN_PAGE, {
+            headers: {
+              ...SECURITY_HEADERS,
+              ...ADMIN_RESPONSE_HEADERS,
+              'Content-Type': 'text/html; charset=utf-8',
+              'Content-Security-Policy': HTML_CONTENT_SECURITY_POLICY,
+            },
+          });
+        }
+
+        if (isAdminData) {
+          return await handleAdminConversations(request, env);
+        }
       }
 
       if (url.pathname === '/coach' && request.method === 'OPTIONS') {

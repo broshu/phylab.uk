@@ -246,6 +246,7 @@ async function finish(h, wrongSpeeds = []) {
 // screen so the learner can continue without mixing two contexts.
 {
   const calls = [];
+  let failNextResume = false;
   const store = createStore({
     problem,
     v: 21,
@@ -268,8 +269,14 @@ async function finish(h, wrongSpeeds = []) {
     ai: {
       async ask(request) {
         calls.push(request);
+        if (failNextResume && request.requestType === 'resume') {
+          failNextResume = false;
+          throw new Error('Temporary AI failure');
+        }
         return {
-          reply: 'Use \\(t_{\\mathrm{net}} = 9/v\\).',
+          reply: request.requestType === 'resume'
+            ? 'That time calculation explains the serve. Now return to the paused boundary question and choose the next step.'
+            : 'Use \\(t_{\\mathrm{net}} = 9/v\\).',
           mode: 'ai-assisted',
           notice: '',
         };
@@ -286,6 +293,8 @@ async function finish(h, wrongSpeeds = []) {
   check('AI composer has no title, test badge, or retention notice',
     !/Ask AI Coach|>Test<|retained for 30 days/.test(root.innerHTML));
   check('AI composer starts as one row', /rows="1"/.test(root.innerHTML));
+  check('AI thinking status is above the question box',
+    root.innerHTML.indexOf('coach-ai-status') < root.innerHTML.indexOf('coach-ai-composer'));
   question.value = 'How do I calculate time to the net?';
   let prevented = false;
   question.dispatch('keydown', {
@@ -304,13 +313,37 @@ async function finish(h, wrongSpeeds = []) {
   check('AI receives recent preset Coach guidance', calls[0]?.context.recentCoach.length > 0);
   check('AI reply replaces the preset choices with one continuation action',
     options.children.map((item) => item.textContent).join(',') === 'Got it — continue');
-  check('AI composer stays paused until the learner acknowledges the reply',
-    question.disabled === true);
+  check('AI composer reopens before the learner acknowledges the reply',
+    question.disabled === false);
+
+  question.value = 'Why does a shorter time help the ball clear the net?';
+  question.dispatch('keydown', {
+    key: 'Enter',
+    shiftKey: false,
+    isComposing: false,
+    preventDefault() {},
+  });
+  await dom.settle(50);
+  check('the learner can ask another question without acknowledging first',
+    calls.length === 2 && calls[1]?.requestType === 'question');
+  check('the continuation action remains while follow-up questions stay open',
+    options.children.map((item) => item.textContent).join(',') === 'Got it — continue' && question.disabled === false);
+
   options.children[0].dispatch('click');
-  await dom.settle(10);
-  check('acknowledgement restores the exact preset choices',
+  check('acknowledgement shows thinking above the input while AI makes the bridge',
+    root.querySelector('#coachAiStatus').textContent === 'AI Coach is thinking…');
+  await dom.settle(50);
+  check('acknowledgement calls AI in continuation bridge mode',
+    calls.length === 3 && calls[2]?.requestType === 'resume');
+  check('continuation receives the paused prompt and latest AI exchange',
+    calls[2]?.context.resumeTarget &&
+      calls[2]?.context.lastLearnerQuestion === 'Why does a shorter time help the ball clear the net?' &&
+      /t_/.test(calls[2]?.context.lastAiReply || ''));
+  check('AI bridge restores the exact preset choices',
     options.children.map((item) => item.textContent).join(',') === originalOptions.join(','));
-  check('acknowledgement returns focus to the AI composer', question.disabled === false);
+  check('AI bridge returns focus to the AI composer', question.disabled === false);
+  check('AI bridge is appended before the restored choices',
+    root.querySelector('#coachLog').children.some((item) => /return to the paused boundary question/i.test(item.textContent)));
 
   let shiftPrevented = false;
   question.value = 'Keep writing';
@@ -320,7 +353,7 @@ async function finish(h, wrongSpeeds = []) {
     isComposing: false,
     preventDefault() { shiftPrevented = true; },
   });
-  check('Shift+Enter keeps editing instead of sending', !shiftPrevented && calls.length === 1);
+  check('Shift+Enter keeps editing instead of sending', !shiftPrevented && calls.length === 3);
 
   store.set({ v: 25, phase: 'aim' });
   question.value = 'What is happening now?';
@@ -334,15 +367,21 @@ async function finish(h, wrongSpeeds = []) {
     preventDefault() {},
   });
   await dom.settle(50);
-  check('AI reads a newly selected current speed', calls[1]?.context.speed === 25);
+  check('AI reads a newly selected current speed', calls[3]?.context.speed === 25);
   check('AI does not invent a result before the student serves',
-    calls[1]?.context.verdict === 'unknown' && calls[1]?.context.heightAtNet === null);
+    calls[3]?.context.verdict === 'unknown' && calls[3]?.context.heightAtNet === null);
   check('AI knows the selected speed has not been served',
-    /has not served|no result is visible/.test(calls[1]?.context.uiState || ''));
+    /has not served|no result is visible/.test(calls[3]?.context.uiState || ''));
   check('each AI interruption uses the same single continuation action',
     options.children.map((item) => item.textContent).join(',') === 'Got it — continue');
+  failNextResume = true;
   options.children[0].dispatch('click');
-  await dom.settle(10);
+  await dom.settle(50);
+  check('each acknowledgement gets its own contextual AI bridge',
+    calls.length === 5 && calls[4]?.requestType === 'resume');
+  check('a failed AI bridge still shows a transition before restoring the choices',
+    root.querySelector('#coachLog').children.some((item) => /connects to the paused Coach question/i.test(item.textContent)) &&
+      options.children.map((item) => item.textContent).join(',') === originalOptions.join(','));
   check(
     'AI answer is appended to the same Coach log',
     root

@@ -12,6 +12,8 @@ import { opening, reaction } from '../services/coach-script.js?v=20260819-3';
 import { renderDelimitedMath, renderRichText } from './math.js?v=20260819-3';
 
 const CANCELLED = Symbol('coach-cancelled');
+const CONTINUE_FALLBACK =
+  'That connects to the paused Coach question. Use the idea above, then choose the option that best completes the next step.';
 
 /**
  * @param {HTMLElement} root
@@ -34,11 +36,11 @@ export function createCoach(root, store, { tutor, attempts, runtime, ai, timing 
     <div class="coach-options" id="coachOptions"></div>
     <div class="coach-celebration" id="coachCelebration" aria-live="polite" hidden></div>
     <section class="coach-ai" aria-label="AI Coach">
+      <p class="coach-ai-status" id="coachAiStatus" aria-live="polite"></p>
       <div class="coach-ai-composer">
         <textarea id="coachAiQuestion" rows="1" maxlength="600" aria-label="Question for AI Coach" placeholder="Ask about what happened…"></textarea>
         <button id="coachAiSend" type="button">Ask</button>
       </div>
-      <p class="coach-ai-status" id="coachAiStatus" aria-live="polite"></p>
     </section>
   `;
 
@@ -54,6 +56,14 @@ export function createCoach(root, store, { tutor, attempts, runtime, ai, timing 
   // the court instead of the buttons
   let pending = null;
   let aiPause = null;
+  let lastAiExchange = null;
+
+  function rememberCoach(text) {
+    const spoken = plainMessage(text).trim();
+    if (!spoken) return;
+    recentCoach.push(spoken.slice(0, 280));
+    if (recentCoach.length > 6) recentCoach.shift();
+  }
 
   function plainMessage(text) {
     if (typeof text === 'string') return text;
@@ -93,13 +103,7 @@ export function createCoach(root, store, { tutor, attempts, runtime, ai, timing 
     }
     log.appendChild(p);
     log.scrollTop = log.scrollHeight;
-    if (who === 'coach') {
-      const spoken = plainMessage(text).trim();
-      if (spoken) {
-        recentCoach.push(spoken.slice(0, 280));
-        if (recentCoach.length > 6) recentCoach.shift();
-      }
-    }
+    if (who === 'coach') rememberCoach(text);
     return p;
   }
 
@@ -117,6 +121,7 @@ export function createCoach(root, store, { tutor, attempts, runtime, ai, timing 
     p.setAttribute?.('aria-label', `${label}: ${reply}`);
     log.appendChild(p);
     log.scrollTop = log.scrollHeight;
+    rememberCoach(reply);
   }
 
   function currentAiContext() {
@@ -174,6 +179,8 @@ export function createCoach(root, store, { tutor, attempts, runtime, ai, timing 
       token,
       pending,
       buttons: Array.from(options.children),
+      resumeTarget: recentCoach.at(-1) || '',
+      resumeOptions: Array.from(options.children).map((button) => button.textContent || ''),
     };
     aiPause = pause;
     options.innerHTML = '';
@@ -198,12 +205,57 @@ export function createCoach(root, store, { tutor, attempts, runtime, ai, timing 
     button.textContent = 'Got it — continue';
     button.addEventListener('click', () => {
       if (!isCurrentAiPause(pause)) return;
-      aiPause = null;
-      options.innerHTML = '';
-      pause.buttons.forEach((original) => options.appendChild(original));
-      unlockAiComposer();
+      void continuePresetPath(pause);
     });
     options.appendChild(button);
+    unlockAiComposer();
+  }
+
+  function restorePresetOptions(pause) {
+    if (!isCurrentAiPause(pause)) return;
+    aiPause = null;
+    options.innerHTML = '';
+    pause.buttons.forEach((original) => options.appendChild(original));
+    unlockAiComposer();
+  }
+
+  async function continuePresetPath(pause) {
+    if (!isCurrentAiPause(pause)) return;
+
+    if (!ai?.ask) {
+      renderAiReply(CONTINUE_FALLBACK, 'preset-fallback');
+      restorePresetOptions(pause);
+      return;
+    }
+
+    aiSend.disabled = true;
+    aiQuestion.disabled = true;
+    options.innerHTML = '';
+    aiStatus.textContent = 'AI Coach is thinking…';
+
+    const exchange = lastAiExchange;
+    try {
+      const response = await ai.ask({
+        requestType: 'resume',
+        question: exchange?.question || 'Continue the lesson.',
+        context: {
+          ...currentAiContext(),
+          resumeTarget: pause.resumeTarget,
+          resumeOptions: pause.resumeOptions,
+          lastLearnerQuestion: exchange?.question || '',
+          lastAiReply: exchange?.reply || '',
+        },
+      });
+      if (!isCurrentAiPause(pause)) return;
+      renderAiReply(response.reply, response.mode);
+      aiStatus.textContent = response.notice || '';
+    } catch {
+      if (!isCurrentAiPause(pause)) return;
+      renderAiReply(CONTINUE_FALLBACK, 'preset-fallback');
+      aiStatus.textContent = '';
+    } finally {
+      restorePresetOptions(pause);
+    }
   }
 
   function abandonAiPause() {
@@ -234,10 +286,12 @@ export function createCoach(root, store, { tutor, attempts, runtime, ai, timing 
 
     try {
       const response = await ai.ask({
+        requestType: 'question',
         question,
         context: currentAiContext(),
       });
       renderAiReply(response.reply, response.mode);
+      lastAiExchange = { question, reply: response.reply };
       aiStatus.textContent = response.notice || '';
     } catch (error) {
       const message = error instanceof Error ? error.message : 'AI Coach request failed.';
