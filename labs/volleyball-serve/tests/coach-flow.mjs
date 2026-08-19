@@ -303,7 +303,7 @@ async function finish(h, wrongSpeeds = []) {
   check('AI question includes the attempt count', calls[0]?.context.attemptCount === 3);
   check('AI receives recent preset Coach guidance', calls[0]?.context.recentCoach.length > 0);
   check('AI reply replaces the preset choices with one continuation action',
-    options.children.map((item) => item.textContent).join(',') === '知道了，继续');
+    options.children.map((item) => item.textContent).join(',') === 'Got it — continue');
   check('AI composer stays paused until the learner acknowledges the reply',
     question.disabled === true);
   options.children[0].dispatch('click');
@@ -340,7 +340,7 @@ async function finish(h, wrongSpeeds = []) {
   check('AI knows the selected speed has not been served',
     /has not served|no result is visible/.test(calls[1]?.context.uiState || ''));
   check('each AI interruption uses the same single continuation action',
-    options.children.map((item) => item.textContent).join(',') === '知道了，继续');
+    options.children.map((item) => item.textContent).join(',') === 'Got it — continue');
   options.children[0].dispatch('click');
   await dom.settle(10);
   check(

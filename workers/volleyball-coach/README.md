@@ -24,6 +24,9 @@ a text module; there is no duplicate long prompt string to update in JavaScript.
 Keep the prompt itself in English; it tells the model to answer in the learner's
 language. The Worker also supplies up to four recent turns from the same
 anonymous session so the model can track route A and route C independently.
+Questions written in English are marked `English only`; a reply containing a
+non-English script is retried once and then replaced by the English preset
+fallback if the provider still violates the language requirement.
 
 ## Safety defaults
 

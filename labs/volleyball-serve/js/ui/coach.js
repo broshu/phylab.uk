@@ -195,7 +195,7 @@ export function createCoach(root, store, { tutor, attempts, runtime, ai, timing 
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'ghost-button option coach-ai-continue';
-    button.textContent = '知道了，继续';
+    button.textContent = 'Got it — continue';
     button.addEventListener('click', () => {
       if (!isCurrentAiPause(pause)) return;
       aiPause = null;

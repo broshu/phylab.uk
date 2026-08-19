@@ -2,6 +2,7 @@
 
 import {
   buildProviderPayload,
+  hasNonEnglishScript,
   normalizeCoachInput,
   parseProviderReply,
   presetReply,
@@ -137,15 +138,18 @@ async function secureEqual(provided, expected) {
  * @param {ReturnType<typeof normalizeCoachInput>} input
  * @param {boolean} thinking
  * @param {Awaited<ReturnType<typeof getRecentConversationHistory>>} history
+ * @param {boolean} [strictEnglishRetry]
  */
-async function requestAI(settings, input, thinking, history) {
+async function requestAI(settings, input, thinking, history, strictEnglishRetry = false) {
   return fetch(`${settings.baseUrl}/chat/completions`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${settings.apiKey}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(buildProviderPayload(input, settings.model, thinking, history)),
+    body: JSON.stringify(
+      buildProviderPayload(input, settings.model, thinking, history, strictEnglishRetry),
+    ),
     signal: AbortSignal.timeout(20_000),
   });
 }
@@ -154,6 +158,16 @@ async function requestAI(settings, input, thinking, history) {
 async function readProviderReply(response) {
   const providerText = await readLimitedText(response.body, MAX_PROVIDER_BYTES);
   return parseProviderReply(JSON.parse(providerText));
+}
+
+/**
+ * @param {ReturnType<typeof normalizeCoachInput>} input
+ * @param {ReturnType<typeof parseProviderReply>} parsed
+ */
+function violatesEnglishOnly(input, parsed) {
+  return Boolean(
+    parsed && input.replyLanguage === 'English' && hasNonEnglishScript(parsed.reply),
+  );
 }
 
 /**
@@ -355,14 +369,19 @@ async function handleCoach(request, env, ctx) {
     );
   }
 
-  if (!parsed || parsed.finishReason === 'length') {
-    const retryReason = parsed?.finishReason === 'length' ? 'truncated' : 'empty';
+  const firstLanguageViolation = violatesEnglishOnly(input, parsed);
+  if (!parsed || parsed.finishReason === 'length' || firstLanguageViolation) {
+    const retryReason = firstLanguageViolation
+      ? 'wrong-language'
+      : parsed?.finishReason === 'length'
+        ? 'truncated'
+        : 'empty';
     console.warn(
       JSON.stringify({ event: 'deepseek_answer_retry', reason: retryReason, mode: 'non-thinking' }),
     );
     parsed = null;
     try {
-      const retry = await requestAI(settings, input, false, history);
+      const retry = await requestAI(settings, input, false, history, firstLanguageViolation);
       if (retry.ok) {
         parsed = await readProviderReply(retry);
       } else {
@@ -384,7 +403,8 @@ async function handleCoach(request, env, ctx) {
     }
   }
 
-  if (!parsed || parsed.finishReason === 'length') {
+  const finalLanguageViolation = violatesEnglishOnly(input, parsed);
+  if (!parsed || parsed.finishReason === 'length' || finalLanguageViolation) {
     return coachResponse(
       input,
       env,
@@ -395,7 +415,9 @@ async function handleCoach(request, env, ctx) {
       'preset-fallback',
       null,
       null,
-      'AI did not return a complete response.',
+      finalLanguageViolation
+        ? 'AI did not return a valid English response.'
+        : 'AI did not return a complete response.',
     );
   }
 

@@ -297,6 +297,99 @@ test('an allowed student origin can use AI without a test token', async () => {
   }
 });
 
+test('an English question retries a non-English provider reply in English-only mode', async () => {
+  const originalFetch = globalThis.fetch;
+  let providerCalls = 0;
+  let retryPayloadText = '';
+  globalThis.fetch = async (_url, init) => {
+    providerCalls += 1;
+    if (providerCalls === 2) retryPayloadText = String(init?.body || '');
+    return Response.json({
+      choices: [
+        {
+          finish_reason: 'stop',
+          message: {
+            content:
+              providerCalls === 1
+                ? '先计算球下落到 A 点所需的时间。'
+                : 'First calculate the time needed to fall to point A.',
+          },
+        },
+      ],
+      usage: { prompt_tokens: 100, completion_tokens: 20, total_tokens: 120 },
+    });
+  };
+
+  try {
+    const response = await dispatch(
+      new Request('https://example.test/coach', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Origin: 'https://phylab.uk' },
+        body: JSON.stringify({
+          question: 'How do I calculate the speed at point A?',
+          sessionId: 'english-retry-session',
+          context: { phase: 'done', verdict: 'net', speed: 20 },
+        }),
+      }),
+      { ...env, DEEPSEEK_API_KEY: 'not-a-real-key' },
+    );
+    const body = await response.json();
+
+    assert.equal(response.status, 200);
+    assert.equal(body.mode, 'ai-assisted');
+    assert.equal(providerCalls, 2);
+    assert.doesNotMatch(body.reply, /[\u3400-\u9fff]/);
+    assert.match(body.reply, /First calculate/);
+    assert.match(retryPayloadText, /previous draft violated the English-only rule/);
+  } finally {
+    globalThis.fetch = originalFetch;
+    storedRows.length = 0;
+  }
+});
+
+test('an English question falls back to an English preset after two language violations', async () => {
+  const originalFetch = globalThis.fetch;
+  let providerCalls = 0;
+  globalThis.fetch = async () => {
+    providerCalls += 1;
+    return Response.json({
+      choices: [
+        {
+          finish_reason: 'stop',
+          message: { content: '先计算时间，再计算速度。' },
+        },
+      ],
+      usage: { prompt_tokens: 100, completion_tokens: 20, total_tokens: 120 },
+    });
+  };
+
+  try {
+    const response = await dispatch(
+      new Request('https://example.test/coach', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Origin: 'https://phylab.uk' },
+        body: JSON.stringify({
+          question: 'Why did this serve hit the net?',
+          sessionId: 'english-fallback-session',
+          context: { phase: 'done', verdict: 'net', speed: 20 },
+        }),
+      }),
+      { ...env, DEEPSEEK_API_KEY: 'not-a-real-key' },
+    );
+    const body = await response.json();
+
+    assert.equal(response.status, 200);
+    assert.equal(body.mode, 'preset-fallback');
+    assert.equal(providerCalls, 2);
+    assert.doesNotMatch(body.reply, /[\u3400-\u9fff]/);
+    assert.match(body.reply, /route A/);
+    assert.match(body.notice, /valid English response/);
+  } finally {
+    globalThis.fetch = originalFetch;
+    storedRows.length = 0;
+  }
+});
+
 test('direct callers still need the private test token', async () => {
   const response = await dispatch(
     new Request('https://example.test/coach', {

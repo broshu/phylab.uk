@@ -7,6 +7,8 @@ import {
   PRESET_REPLIES,
   buildMessages,
   buildProviderPayload,
+  hasNonEnglishScript,
+  isEnglishQuestion,
   normalizeCoachInput,
   parseProviderReply,
   presetReply,
@@ -45,6 +47,7 @@ test('normalizes bounded learner context', () => {
 
   assert.equal(input.question, '为什么慢球更容易挂网？');
   assert.equal(input.sessionId, 'valid_session-123');
+  assert.equal(input.replyLanguage, 'learner-language');
   assert.equal(input.context.verdict, 'net');
   assert.equal(input.context.speed, 15);
   assert.equal(input.context.speedHidden, true);
@@ -63,6 +66,15 @@ test('discards malformed anonymous session identifiers', () => {
 test('rejects blank and oversized questions', () => {
   assert.throws(() => normalizeCoachInput({ question: '  ' }), /required/i);
   assert.throws(() => normalizeCoachInput({ question: 'a'.repeat(601) }), /at most 600/i);
+});
+
+test('classifies English questions and detects non-English reply scripts', () => {
+  assert.equal(isEnglishQuestion('How do I calculate the time to point A?'), true);
+  assert.equal(isEnglishQuestion('How do I calculate 到 A?'), false);
+  assert.equal(isEnglishQuestion('如何计算到 A 的时间？'), false);
+  assert.equal(hasNonEnglishScript('Use \\(t_A=\\sqrt{0.2}\\) seconds.'), false);
+  assert.equal(hasNonEnglishScript('先计算时间。'), true);
+  assert.equal(hasNonEnglishScript('Сначала найдите время.'), true);
 });
 
 test('anchors AI messages to canonical preset physics', () => {
@@ -104,6 +116,7 @@ test('anchors AI messages to canonical preset physics', () => {
   assert.match(messages[0].content, /emphasis, headings, lists,\s+tables/);
   assert.match(messages[1].content, /"verdict":"out"/);
   assert.match(messages[1].content, /I already identified A as the lower boundary point/);
+  assert.match(messages[1].content, /English only\. Every prose word must be English/);
 });
 
 test('preset fallback covers all three serve outcomes', () => {
@@ -132,6 +145,23 @@ test('provider payload has a bounded non-thinking recovery mode', () => {
   assert.deepEqual(recovery.thinking, { type: 'disabled' });
   assert.equal('reasoning_effort' in recovery, false);
   assert.equal(recovery.max_tokens, 800);
+
+  const englishInput = normalizeCoachInput({
+    question: 'How do I calculate the time to point A?',
+    context: { verdict: 'net', speed: 20 },
+  });
+  const languageRecovery = buildProviderPayload(
+    englishInput,
+    'deepseek-v4-flash',
+    false,
+    [],
+    true,
+  );
+  assert.equal(englishInput.replyLanguage, 'English');
+  assert.match(
+    languageRecovery.messages[1].content,
+    /previous draft violated the English-only rule/,
+  );
 });
 
 test('parses a valid provider reply and rejects malformed data', () => {
