@@ -18,6 +18,8 @@ function appendText(parent, value) {
   parent.appendChild(span);
 }
 
+const DELIMITED_MATH = /\\\[([\s\S]*?)\\\]|\\\(([\s\S]*?)\\\)/g;
+
 /**
  * @typedef {{type?: 'text'|'math', text?: string, tex?: string, fallback?: string, display?: boolean}} RichPart
  */
@@ -84,3 +86,47 @@ export function renderFormula(target, tex, fallback, display = false) {
   return renderRichText(target, [{ type: 'math', tex, fallback, display }]);
 }
 
+/**
+ * Safely render model output that uses only \(...\) and \[...\] delimiters.
+ * Prose is always inserted as text; model-provided HTML is never interpreted.
+ *
+ * @param {HTMLElement} target
+ * @param {string} source
+ */
+export function renderDelimitedMath(target, source) {
+  const value = String(source ?? '');
+  target.textContent = value;
+  if (!hasKaTeX()) return false;
+
+  const pattern = new RegExp(DELIMITED_MATH.source, 'g');
+  target.textContent = '';
+  let cursor = 0;
+  let rendered = false;
+  let match;
+
+  while ((match = pattern.exec(value))) {
+    appendText(target, value.slice(cursor, match.index));
+    const display = match[1] !== undefined;
+    const tex = display ? match[1] : match[2];
+    const math = document.createElement('span');
+    math.className = display ? 'coach-math' : 'coach-math-inline';
+    math.setAttribute?.('aria-label', match[0]);
+    try {
+      globalThis.katex.render(tex, math, {
+        displayMode: display,
+        throwOnError: false,
+        strict: 'ignore',
+        trust: false,
+        maxExpand: 100,
+      });
+      target.appendChild(math);
+      rendered = true;
+    } catch {
+      appendText(target, match[0]);
+    }
+    cursor = pattern.lastIndex;
+  }
+
+  appendText(target, value.slice(cursor));
+  return rendered;
+}

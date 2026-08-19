@@ -5,7 +5,7 @@
   "type": "module",
   "description": "PhyLab · volleyball serve projectile lab. Static site — this file only exists so the node self-tests can import the ES modules.",
   "scripts": {
-    "test": "node tests/check.mjs && node tests/smoke.mjs && node tests/coach-flow.mjs"
+    "test": "node tests/check.mjs && node tests/ai-coach.mjs && node tests/smoke.mjs && node tests/coach-flow.mjs"
   },
   "dependencies": {
     "katex": "^0.18.4"

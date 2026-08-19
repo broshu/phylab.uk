@@ -1,0 +1,4 @@
+# Copy to .dev.vars for local development. Never commit real values.
+DEEPSEEK_API_KEY=""
+COACH_TEST_TOKEN=""
+COACH_ADMIN_TOKEN=""

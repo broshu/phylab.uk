@@ -15,6 +15,7 @@ import { createStore } from './core/state.js';
 import { evaluate, Verdict } from './core/evaluator.js';
 import { createTutor } from './services/tutor.js';
 import { createAttemptLog } from './services/attempts.js';
+import { createAiCoachClient } from './services/ai-coach.js';
 import { createScene } from './ui/scene.js';
 import { createControls } from './ui/controls.js';
 import { createCoach } from './ui/coach.js';
@@ -22,6 +23,7 @@ import { createCoach } from './ui/coach.js';
 const problem = getProblem(DEFAULT_PROBLEM_ID);
 const tutor = createTutor();
 const attempts = createAttemptLog({ problemId: problem.id });
+const aiCoach = createAiCoachClient();
 
 const store = createStore({
   problem,
@@ -115,6 +117,7 @@ const coach = createCoach(document.querySelector('#coach'), store, {
   tutor,
   attempts,
   runtime,
+  ai: aiCoach,
 });
 
 createControls(document.querySelector('#controls'), store, {
@@ -139,4 +142,4 @@ store.subscribe(({ phase, result }) => {
 });
 
 // Handy in the console while developing
-window.__vb = { store, problem, attempts, tutor, scene, coach, runtime };
+window.__vb = { store, problem, attempts, tutor, scene, coach, runtime, aiCoach };

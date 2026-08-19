@@ -9,7 +9,7 @@
  * services/coach-script.js.
  */
 import { opening, reaction } from '../services/coach-script.js';
-import { renderRichText } from './math.js';
+import { renderDelimitedMath, renderRichText } from './math.js';
 
 const CANCELLED = Symbol('coach-cancelled');
 
@@ -20,10 +20,11 @@ const CANCELLED = Symbol('coach-cancelled');
  *   tutor: {hint: Function},
  *   attempts: {summary: Function},
  *   runtime: {serve: Function, trail: Function, clearTrails: Function, guide: Function},
+ *   ai?: {ask: Function, getSavedToken?: Function},
  *   timing?: {message?: number}
  * }} deps
  */
-export function createCoach(root, store, { tutor, attempts, runtime, timing } = {}) {
+export function createCoach(root, store, { tutor, attempts, runtime, ai, timing } = {}) {
   const messagePause = timing?.message ?? 700;
   let token = 0; // bumped whenever a script is abandoned
 
@@ -32,15 +33,51 @@ export function createCoach(root, store, { tutor, attempts, runtime, timing } = 
     <div class="coach-log" id="coachLog" aria-live="polite"></div>
     <div class="coach-options" id="coachOptions"></div>
     <div class="coach-celebration" id="coachCelebration" aria-live="polite" hidden></div>
+    <section class="coach-ai" aria-labelledby="coachAiTitle">
+      <div class="coach-ai-head">
+        <strong id="coachAiTitle">Ask AI Coach</strong>
+        <span>Test</span>
+      </div>
+      <label class="coach-ai-access">
+        <span>Access code</span>
+        <input id="coachAiToken" type="password" autocomplete="off" placeholder="For invited testers">
+      </label>
+      <div class="coach-ai-composer">
+        <textarea id="coachAiQuestion" rows="2" maxlength="600" aria-label="Question for AI Coach" placeholder="Ask about this experiment…"></textarea>
+        <button id="coachAiSend" type="button">Ask</button>
+      </div>
+      <p class="coach-ai-status" id="coachAiStatus" aria-live="polite"></p>
+      <p class="coach-ai-privacy">Access stays in this tab. Anonymous Q&amp;A is retained for 30 days.</p>
+    </section>
   `;
 
   const log = root.querySelector('#coachLog');
   const options = root.querySelector('#coachOptions');
   const celebration = root.querySelector('#coachCelebration');
+  const aiToken = root.querySelector('#coachAiToken');
+  const aiQuestion = root.querySelector('#coachAiQuestion');
+  const aiSend = root.querySelector('#coachAiSend');
+  const aiStatus = root.querySelector('#coachAiStatus');
+  const recentCoach = [];
+  aiToken.value = ai?.getSavedToken?.() || '';
 
   // the question currently on screen, so it can also be answered by clicking
   // the court instead of the buttons
   let pending = null;
+
+  function plainMessage(text) {
+    if (typeof text === 'string') return text;
+    if (Array.isArray(text?.parts)) {
+      return text.parts
+        .map((part) =>
+          typeof part === 'string'
+            ? part
+            : part?.fallback ?? part?.text ?? part?.tex ?? '',
+        )
+        .join('');
+    }
+    return text?.fallback ?? text?.text ?? text?.tex ?? '';
+  }
 
   function bubble(text, who = 'coach') {
     const p = document.createElement('p');
@@ -66,8 +103,98 @@ export function createCoach(root, store, { tutor, attempts, runtime, timing } = 
     }
     log.appendChild(p);
     log.scrollTop = log.scrollHeight;
+    if (who === 'coach') {
+      const spoken = plainMessage(text).trim();
+      if (spoken) {
+        recentCoach.push(spoken.slice(0, 280));
+        if (recentCoach.length > 6) recentCoach.shift();
+      }
+    }
     return p;
   }
+
+  function renderAiReply(reply, mode) {
+    const labels = {
+      'ai-assisted': 'AI + preset',
+      'preset-fallback': 'Preset fallback',
+      'preset-only': 'Preset only',
+    };
+    const label = labels[mode] || 'AI Coach';
+    const p = document.createElement('p');
+    p.className = 'msg msg-coach msg-ai';
+    p.dataset.label = label;
+    renderDelimitedMath(p, reply);
+    p.setAttribute?.('aria-label', `${label}: ${reply}`);
+    log.appendChild(p);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function currentAiContext() {
+    const state = store.get();
+    const result = state.result || {};
+    return {
+      phase: state.phase || 'unknown',
+      verdict: result.verdict || 'unknown',
+      speed: Number.isFinite(state.v) ? state.v : null,
+      heightAtNet: Number.isFinite(result.heightAtNet) ? result.heightAtNet : null,
+      netClearance: Number.isFinite(result.netClearance) ? result.netClearance : null,
+      xLand: Number.isFinite(result.xLand) ? result.xLand : null,
+      outBy: Number.isFinite(result.outBy) ? result.outBy : null,
+      attemptCount: attempts.summary().total,
+      recentCoach: recentCoach.slice(-6),
+    };
+  }
+
+  async function sendToAi() {
+    const question = aiQuestion.value.trim();
+    const accessCode = aiToken.value.trim();
+    if (!question) {
+      aiStatus.textContent = 'Enter a question for Coach.';
+      aiQuestion.focus?.();
+      return;
+    }
+    if (!accessCode) {
+      aiStatus.textContent = 'Enter the AI test access code.';
+      aiToken.focus?.();
+      return;
+    }
+    if (!ai?.ask) {
+      aiStatus.textContent = 'AI Coach is not configured.';
+      return;
+    }
+
+    aiSend.disabled = true;
+    aiQuestion.disabled = true;
+    aiStatus.textContent = 'AI Coach is thinking…';
+    bubble(question, 'mine').className += ' msg-ai-question';
+    aiQuestion.value = '';
+
+    try {
+      const response = await ai.ask({
+        question,
+        token: accessCode,
+        context: currentAiContext(),
+      });
+      renderAiReply(response.reply, response.mode);
+      aiStatus.textContent = response.notice || 'Answer added above.';
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'AI Coach request failed.';
+      renderAiReply(message, 'error');
+      aiStatus.textContent = 'The preset Coach above is still available.';
+    } finally {
+      aiSend.disabled = false;
+      aiQuestion.disabled = false;
+      aiQuestion.focus?.();
+    }
+  }
+
+  aiSend.addEventListener('click', sendToAi);
+  aiQuestion.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+      event.preventDefault?.();
+      sendToAi();
+    }
+  });
 
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 

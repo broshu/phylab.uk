@@ -70,6 +70,7 @@ js/
   services/
     tutor.js          rule-based coaching text (async interface)
     coach-script.js   what the coach says: one async function per situation
+    ai-coach.js       private Worker client + tab-scoped test access
     attempts.js       attempt log, scoring, CSV export
   ui/
     scene.js          canvas: court, net, trajectory, phase clock
@@ -82,6 +83,7 @@ js/
 tests/
   fake-dom.mjs        shared DOM/canvas stub and manual frame clock
   check.mjs           numerical self-check
+  ai-coach.mjs        Worker request shape + safe model-math rendering
   smoke.mjs           full assembly against a fake DOM
   coach-flow.mjs      the coach scripts, with a stub runtime
 ```
@@ -119,6 +121,17 @@ player animation and can leave faint comparison trails. They never set a verdict
 or enter the attempt log, and the student can interrupt a demonstration by
 serving. `ui/coach.js` owns the dialogue mechanics; the sequence itself lives in
 `services/coach-script.js`.
+
+An independent **Ask AI Coach** composer sits at the bottom of the same panel.
+It does not interrupt, answer, or remove the deterministic choices above it.
+The request includes the current speed, verdict, net clearance, landing point,
+attempt count, and the six most recent preset Coach messages. Invited testers
+enter the disposable access code once per browser tab; the DeepSeek key remains
+inside the Cloudflare Worker. Successful anonymous questions and answers are
+stored in D1 for 30 days.
+
+Model output is inserted as text and only explicit `\\(...\\)` and
+`\\[...\\]` expressions are passed to KaTeX with `trust: false`.
 
 ## Running it locally
 
@@ -160,6 +173,7 @@ fetch('js/services/coach-script.js', { cache: 'reload' })
 
 ```bash
 node tests/check.mjs      # boundary speeds, verdict flips, sample table
+node tests/ai-coach.mjs   # Worker request + safe KaTeX rendering
 node tests/smoke.mjs      # assembly + render loop against a stub DOM
 node tests/coach-flow.mjs # the coach scripts: both answers, every verdict
 ```
@@ -180,9 +194,9 @@ itself is plain static files and needs no build step.
 - **Boundary paths** — `scene.js` still draws the two limiting trajectories
   when `showGhosts` is true in the store; there is simply no control for it.
   `__vb.store.set({ showGhosts: true })` in the console turns it on.
-- **Real model instead of the rule-based tutor** — replace the body of
-  `createTutor()`; keep returning `{title, body, level, scaffold?}`.
-  `feedback.js` already awaits it and discards stale responses.
+- **Expand AI access** — keep the provider key in the Worker. Replace the
+  disposable test-code gate with the chosen login or rate-limit policy before
+  making the AI composer public.
 - **Report attempts to a server** — replace `save()` in `attempts.js`;
   `record/summary/toCSV` are the stable interface.
 - **More steps in the working panel** — add a `row(label, value, ok)` call.

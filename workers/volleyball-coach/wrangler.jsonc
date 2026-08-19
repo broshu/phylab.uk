@@ -1,0 +1,36 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "phylab-coach",
+  "main": "src/index.js",
+  "compatibility_date": "2026-08-19",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "preview_urls": true,
+  "secrets": {
+    "required": ["DEEPSEEK_API_KEY", "COACH_TEST_TOKEN", "COACH_ADMIN_TOKEN"]
+  },
+  "d1_databases": [
+    {
+      "binding": "COACH_DB",
+      "database_name": "phylab-coach-conversations",
+      "database_id": "d3757daa-76cd-4e25-b6c8-142bd9699e2e",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "vars": {
+    "AI_BASE_URL": "https://api.deepseek.com",
+    "AI_MODEL": "deepseek-v4-flash",
+    "ALLOWED_ORIGINS": "https://phylab.uk,https://www.phylab.uk"
+  },
+  "observability": {
+    "enabled": true,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1
+    },
+    "traces": {
+      "enabled": true,
+      "head_sampling_rate": 0.01
+    }
+  }
+}

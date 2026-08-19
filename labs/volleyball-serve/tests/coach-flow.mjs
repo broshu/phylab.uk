@@ -250,6 +250,70 @@ async function finish(h, wrongSpeeds = []) {
   check('a later conversation starts cleanly', h.said(/21 m\/s worked/i));
 }
 
+// The optional AI composer appends a separate exchange without clearing or
+// resolving the deterministic multiple-choice question above it.
+{
+  const calls = [];
+  const store = createStore({
+    problem,
+    v: 21,
+    phase: 'done',
+    trails: [],
+    result: evaluate(problem, 21),
+  });
+  const root = makeEl('div');
+  const coach = createCoach(root, store, {
+    attempts: { summary: () => ({ total: 3 }) },
+    runtime: {
+      async serve(v) {
+        return evaluate(problem, v);
+      },
+      trail() {},
+      mark() {},
+      guide() {},
+      clearCourt() {},
+    },
+    ai: {
+      getSavedToken: () => 'invited-test-code',
+      async ask(request) {
+        calls.push(request);
+        return {
+          reply: 'Use \\(t_{\\mathrm{net}} = 9/v\\).',
+          mode: 'ai-assisted',
+          notice: '',
+        };
+      },
+    },
+    timing: { message: 0 },
+  });
+  coach.greet();
+  await dom.settle(50);
+
+  const options = root.querySelector('#coachOptions');
+  const optionCount = options.children.length;
+  const question = root.querySelector('#coachAiQuestion');
+  const send = root.querySelector('#coachAiSend');
+  check(
+    'AI test access code is restored for the current tab',
+    root.querySelector('#coachAiToken').value === 'invited-test-code',
+  );
+  question.value = 'How do I calculate time to the net?';
+  send.dispatch('click');
+  await dom.settle(50);
+
+  check('AI question uses the current experimental speed', calls[0]?.context.speed === 21);
+  check('AI question includes the current serve verdict', calls[0]?.context.verdict === 'in');
+  check('AI question includes the attempt count', calls[0]?.context.attemptCount === 3);
+  check('AI receives recent preset Coach guidance', calls[0]?.context.recentCoach.length > 0);
+  check('AI exchange does not remove preset answer buttons', options.children.length === optionCount);
+  check(
+    'AI answer is appended to the same Coach log',
+    root
+      .querySelector('#coachLog')
+      .children.some((item) => /t_\{\\mathrm\{net\}\}/.test(item.textContent)),
+  );
+}
+
 let failures = 0;
 for (const result of results) {
   console.log(`  ${result.ok ? 'ok  ' : 'FAIL'} ${result.name}${result.ok ? '' : `\n       ${result.detail}`}`);
