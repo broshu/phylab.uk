@@ -9,6 +9,7 @@ import {
 import { ADMIN_PAGE } from './admin-page.js';
 import {
   PROMPT_VERSION,
+  getRecentConversationHistory,
   listConversations,
   recordConversation,
 } from './conversations.js';
@@ -135,15 +136,16 @@ async function secureEqual(provided, expected) {
  * @param {ReturnType<typeof config>} settings
  * @param {ReturnType<typeof normalizeCoachInput>} input
  * @param {boolean} thinking
+ * @param {Awaited<ReturnType<typeof getRecentConversationHistory>>} history
  */
-async function requestAI(settings, input, thinking) {
+async function requestAI(settings, input, thinking, history) {
   return fetch(`${settings.baseUrl}/chat/completions`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${settings.apiKey}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(buildProviderPayload(input, settings.model, thinking)),
+    body: JSON.stringify(buildProviderPayload(input, settings.model, thinking, history)),
     signal: AbortSignal.timeout(20_000),
   });
 }
@@ -282,9 +284,22 @@ async function handleCoach(request, env, ctx) {
     }
   }
 
+  /** @type {Awaited<ReturnType<typeof getRecentConversationHistory>>} */
+  let history = [];
+  try {
+    history = await getRecentConversationHistory(env.COACH_DB, input.sessionId);
+  } catch (error) {
+    console.error(
+      JSON.stringify({
+        event: 'coach_history_read_error',
+        error: error instanceof Error ? error.name : 'Unknown database error',
+      }),
+    );
+  }
+
   let upstream;
   try {
-    upstream = await requestAI(settings, input, true);
+    upstream = await requestAI(settings, input, true, history);
   } catch (error) {
     console.error(
       JSON.stringify({
@@ -347,7 +362,7 @@ async function handleCoach(request, env, ctx) {
     );
     parsed = null;
     try {
-      const retry = await requestAI(settings, input, false);
+      const retry = await requestAI(settings, input, false, history);
       if (retry.ok) {
         parsed = await readProviderReply(retry);
       } else {

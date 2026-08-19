@@ -2,7 +2,17 @@
 
 export const CONVERSATION_RETENTION_DAYS = 30;
 export const CONVERSATION_PAGE_SIZE = 25;
-export const PROMPT_VERSION = 'volleyball-coach-v3';
+export const CONVERSATION_HISTORY_LIMIT = 4;
+export const PROMPT_VERSION = 'volleyball-coach-v5';
+
+/**
+ * @typedef {object} ConversationHistoryTurn
+ * @property {string} question
+ * @property {string} reply
+ * @property {string} phase
+ * @property {string} verdict
+ * @property {number | null} speed
+ */
 
 /**
  * @typedef {object} ConversationRecord
@@ -85,6 +95,45 @@ export async function recordConversation(db, record) {
       }),
     );
   }
+}
+
+/**
+ * Read a small, bounded history for learning-state inference. The oldest turn
+ * is returned first so the model can follow how the learner's two routes have
+ * developed. No request metadata is stored or returned.
+ * @param {D1Database} db
+ * @param {string | null} sessionId
+ * @returns {Promise<ConversationHistoryTurn[]>}
+ */
+export async function getRecentConversationHistory(db, sessionId) {
+  if (!sessionId) return [];
+
+  const result = await db
+    .prepare(
+      'SELECT question, reply, phase, verdict, speed ' +
+        'FROM coach_conversations WHERE session_id = ? ' +
+        'ORDER BY created_at DESC LIMIT ?',
+    )
+    .bind(sessionId, CONVERSATION_HISTORY_LIMIT)
+    .all();
+
+  /** @type {ConversationHistoryTurn[]} */
+  const history = [];
+  for (const value of result.results.slice().reverse()) {
+    const row = /** @type {Record<string, unknown>} */ (value);
+    const question = typeof row.question === 'string' ? row.question.trim().slice(0, 300) : '';
+    const reply = typeof row.reply === 'string' ? row.reply.trim().slice(0, 500) : '';
+    if (!question || !reply) continue;
+
+    history.push({
+      question,
+      reply,
+      phase: typeof row.phase === 'string' ? row.phase.slice(0, 16) : 'unknown',
+      verdict: typeof row.verdict === 'string' ? row.verdict.slice(0, 16) : 'unknown',
+      speed: typeof row.speed === 'number' && Number.isFinite(row.speed) ? row.speed : null,
+    });
+  }
+  return history;
 }
 
 /**

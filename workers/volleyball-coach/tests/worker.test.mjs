@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import worker from '../src/index.js';
+import { getRecentConversationHistory } from '../src/conversations.js';
 
 /** @type {Array<Record<string, unknown>>} */
 const storedRows = [];
@@ -90,6 +91,22 @@ async function execute(statement) {
   }
 
   if (sql.startsWith('DELETE FROM coach_conversations')) return d1Result([]);
+  if (sql.startsWith('SELECT question, reply, phase, verdict, speed')) {
+    const sessionId = String(bindings[0]);
+    const limit = Number(bindings[1]);
+    return d1Result(
+      storedRows
+        .filter((row) => row.sessionId === sessionId)
+        .slice(0, limit)
+        .map(({ question, reply, phase, verdict, speed }) => ({
+          question,
+          reply,
+          phase,
+          verdict,
+          speed,
+        })),
+    );
+  }
   if (sql.startsWith('SELECT COUNT(*) AS total')) {
     return d1Result([{ total: storedRows.length }]);
   }
@@ -205,10 +222,42 @@ test('health reports public student AI readiness without a test token', async ()
   assert.equal(body.testConsoleReady, false);
 });
 
+test('recent learning history is bounded and returned oldest first', async () => {
+  storedRows.length = 0;
+  for (const number of [5, 4, 3, 2, 1]) {
+    storedRows.push({
+      sessionId: 'history-session-123',
+      question: `question-${number}`,
+      reply: `reply-${number}`,
+      phase: 'done',
+      verdict: number % 2 ? 'net' : 'out',
+      speed: 20 + number / 10,
+    });
+  }
+
+  const history = await getRecentConversationHistory(database, 'history-session-123');
+  assert.deepEqual(
+    history.map((turn) => turn.question),
+    ['question-2', 'question-3', 'question-4', 'question-5'],
+  );
+  storedRows.length = 0;
+});
+
 test('an allowed student origin can use AI without a test token', async () => {
   const originalFetch = globalThis.fetch;
-  globalThis.fetch = async () =>
-    Response.json({
+  storedRows.unshift({
+    sessionId: 'public-student-session',
+    question: 'I already know that the lower boundary uses point A.',
+    reply: 'Good. The next step on route A is to calculate the vertical fall.',
+    phase: 'done',
+    verdict: 'net',
+    speed: 20,
+  });
+  let providerMessagesText = '';
+  globalThis.fetch = async (_url, init) => {
+    const providerPayload = JSON.parse(String(init?.body || '{}'));
+    providerMessagesText = JSON.stringify(providerPayload.messages || []);
+    return Response.json({
       choices: [
         {
           finish_reason: 'stop',
@@ -217,6 +266,7 @@ test('an allowed student origin can use AI without a test token', async () => {
       ],
       usage: { prompt_tokens: 100, completion_tokens: 20, total_tokens: 120 },
     });
+  };
 
   try {
     const response = await dispatch(
@@ -236,8 +286,14 @@ test('an allowed student origin can use AI without a test token', async () => {
     assert.equal(response.status, 200);
     assert.equal(body.mode, 'ai-assisted');
     assert.match(body.reply, /t_/);
+    assert.match(
+      providerMessagesText,
+      /I already know that the lower boundary uses point A/,
+    );
+    assert.match(providerMessagesText, /Two Parallel Routes/);
   } finally {
     globalThis.fetch = originalFetch;
+    storedRows.length = 0;
   }
 });
 
@@ -271,7 +327,7 @@ test('successful coach replies are recorded and protected by an admin token', as
 
   assert.equal(response.status, 200);
   assert.equal(body.mode, 'preset-only');
-  assert.match(body.reply, /下落更少/);
+  assert.match(body.reply, /route A/);
   assert.equal(storedRows.length, 1);
   assert.equal(storedRows[0].question, '为什么慢球更容易挂网？');
   assert.equal(storedRows[0].sessionId, 'student-session-123');
