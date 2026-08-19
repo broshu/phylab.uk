@@ -45,6 +45,18 @@
 
   .wrap { position: relative; z-index: 1; width: 100%; max-width: 1332px; }
 
+  .page-actions { display: flex; justify-content: flex-end; margin-bottom: 14px; }
+  .home-button {
+    display: inline-flex; align-items: center; justify-content: center; min-height: 40px;
+    padding: 0 14px; border: 1px solid var(--line); border-radius: 9px;
+    background: var(--card); color: var(--green); text-decoration: none;
+    font-size: .84rem; font-weight: 500; box-shadow: var(--shadow);
+    transition: transform .2s ease, border-color .2s ease, color .2s ease;
+  }
+  .home-button:hover, .home-button:focus-visible {
+    border-color: var(--accent); color: var(--green-2); transform: translateY(-2px); outline: none;
+  }
+
   .page-title {
     font-family: "Cormorant Garamond", serif;
     font-size: clamp(2.2rem, 5vw, 3.4rem);
@@ -145,8 +157,13 @@
 </head>
 <body>
   <main class="wrap">
+    <div class="page-actions"><a class="home-button" href="/" aria-label="Return to home page">Home</a></div>
     <h1 class="page-title">Labs</h1>
     <div class="blocks">
+      <a class="block" href="/labs/volleyball-serve/">
+        <h2>Volleyball Serve</h2>
+        <img src="volleyball-serve/screenshot.png" alt="Volleyball Serve preview" loading="lazy">
+      </a>
       <a class="block" href="/labs/electric-potential-3d/">
         <h2>Electric Potential 3D</h2>
         <img src="electric-potential-3d/screenshot.png" alt="Electric Potential 3D preview" loading="lazy">
@@ -175,17 +192,7 @@
         <h2>Alternating Field Release</h2>
         <img src="alternating-field-release/screenshot.png" alt="Alternating Field Release preview" loading="lazy">
       </a>
-      <a class="block" href="/labs/volleyball-serve/">
-        <h2>Volleyball Serve</h2>
-        <img src="volleyball-serve/screenshot.png" alt="Volleyball Serve preview" loading="lazy">
-      </a>
-
       <!-- Beta / experimental — kept at the end -->
-      <a class="block" href="/labs/volleyball-serve-beta/">
-        <span class="badge">Beta</span>
-        <h2>Volleyball Serve — beta</h2>
-        <img src="volleyball-serve-beta/screenshot.png" alt="Volleyball Serve beta preview" loading="lazy">
-      </a>
       <a class="block" href="/labs/ar-electric-field/">
         <span class="badge">Beta</span>
         <h2>AR Electric Field</h2>
@@ -198,6 +205,5 @@
       </a>
     </div>
   </main>
-  <script defer src="/assets/nav.js"></script>
 </body>
 </html>

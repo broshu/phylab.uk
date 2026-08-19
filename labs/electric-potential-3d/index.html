@@ -18,8 +18,11 @@
     color:var(--ink); background:var(--bg);
   }
   .top-bar{
+    display:flex; align-items:flex-start; justify-content:space-between; gap:18px;
     width:min(1280px,calc(100% - 48px)); margin:0 auto; padding:24px 0 14px;
   }
+  .home-button{display:inline-flex;align-items:center;justify-content:center;flex:none;min-height:40px;padding:0 14px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);text-decoration:none;font-size:13px;font-weight:600;transition:background .15s ease,border-color .15s ease;}
+  .home-button:hover,.home-button:focus-visible{background:var(--soft-line);border-color:var(--ink);outline:none;}
   .top-bar h1{margin:0 0 6px; font-size:28px; line-height:1.15; font-weight:700; letter-spacing:-.01em;}
   .lede{margin:0; max-width:820px; color:var(--muted); font-size:14px; line-height:1.5;}
   .layout{
@@ -91,8 +94,11 @@
 </head>
 <body>
   <header class="top-bar">
-    <h1>Electric Potential 3D</h1>
-    <p class="lede">Point charges create a potential field. On the left, the 2D plane shows field lines and equipotential contours; on the right, the same potential is lifted into a true 3D surface. The height is exactly V = &Sigma; kq/r &mdash; nothing is clamped, so each charge becomes an infinitely sharp spike: a peak shooting up over a positive charge, a well plunging down at a negative one. Because a real 1/r singularity is infinitely thin, the spikes taper to invisible needles all on their own. Or switch the right panel to <em>equipotential surfaces</em> &mdash; the true level sets V(x,y,z) = const drawn as nested shells in space. Drag the charges on the left, or drag the 3D view to orbit.</p>
+    <div>
+      <h1>Electric Potential 3D</h1>
+      <p class="lede">Point charges create a potential field. On the left, the 2D plane shows field lines and equipotential contours; on the right, the same potential is lifted into a true 3D surface. The height is exactly V = &Sigma; kq/r &mdash; nothing is clamped, so each charge becomes an infinitely sharp spike: a peak shooting up over a positive charge, a well plunging down at a negative one. Because a real 1/r singularity is infinitely thin, the spikes taper to invisible needles all on their own. Or switch the right panel to <em>equipotential surfaces</em> &mdash; the true level sets V(x,y,z) = const drawn as nested shells in space. Drag the charges on the left, or drag the 3D view to orbit.</p>
+    </div>
+    <a class="home-button" href="/" aria-label="Return to home page">Home</a>
   </header>
 
   <main class="layout">
@@ -179,6 +185,5 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="js/marching-cubes.js"></script>
   <script src="js/main.js"></script>
-  <script defer src="/assets/nav.js"></script>
 </body>
 </html>

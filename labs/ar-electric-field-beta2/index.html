@@ -79,6 +79,9 @@
     .crumb{position:fixed;top:14px;left:16px;font-size:13px;z-index:60;}
     .crumb a{color:var(--green);text-decoration:none;}
     .crumb a:hover{text-decoration:underline;}
+    .gate-actions{align-self:stretch;display:flex;justify-content:flex-end;margin-bottom:16px;pointer-events:auto;}
+    .home-button{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 14px;border:1px solid var(--line);border-radius:9px;background:var(--card);color:var(--green);text-decoration:none;font-size:.84rem;font-weight:500;box-shadow:var(--shadow);transition:transform .2s ease,border-color .2s ease,color .2s ease;}
+    .home-button:hover,.home-button:focus-visible{border-color:var(--accent);color:var(--green);transform:translateY(-2px);outline:none;}
     .links{margin-top:16px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center;pointer-events:auto;}
     .links a,.links button{font-family:"Inter",sans-serif;color:var(--ink);text-decoration:none;background:var(--card);
       border:1px solid var(--line);border-radius:12px;padding:10px 16px;font-size:13px;cursor:pointer;
@@ -91,6 +94,7 @@
   <div class="crumb"><a href="/labs/">← Labs</a></div>
 
   <div id="gate">
+    <div class="gate-actions"><a class="home-button" href="/" aria-label="Return to home page">Home</a></div>
     <h1>AR Electric Field <span class="beta">beta 2</span></h1>
     <p>Print the barcode cards and lay them <b>flat on the desk</b>. Every card has the same edge
        length <i>d</i>. In AR, each <b style="color:#c0392b">+q</b> / <b style="color:#2b6cb0">−q</b> charge floats
@@ -128,6 +132,5 @@
   </div>
 
   <script src="app.js?v=8"></script>
-  <script defer src="/assets/nav.js"></script>
 </body>
 </html>
