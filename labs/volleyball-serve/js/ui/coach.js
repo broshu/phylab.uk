@@ -8,8 +8,8 @@
  * something new happens. What the coach actually says lives in
  * services/coach-script.js.
  */
-import { opening, reaction } from '../services/coach-script.js';
-import { renderDelimitedMath, renderRichText } from './math.js';
+import { opening, reaction } from '../services/coach-script.js?v=20260819-2';
+import { renderDelimitedMath, renderRichText } from './math.js?v=20260819-2';
 
 const CANCELLED = Symbol('coach-cancelled');
 
