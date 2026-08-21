@@ -8,6 +8,9 @@
 export const AI_COACH_ENDPOINT =
   'https://phylab-coach.dgxwmk9dbm.workers.dev/coach';
 
+/** Internal-test shortcut to the anonymous Q&A-record review page. */
+export const AI_COACH_RECORDS_ENDPOINT = new URL('/result', AI_COACH_ENDPOINT).href;
+
 const SESSION_KEY = 'phylab-volleyball-ai-session';
 const VALID_SESSION_ID = /^[A-Za-z0-9_-]{8,80}$/;
 

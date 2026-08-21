@@ -173,7 +173,7 @@ async function dispatch(request, environment = env) {
   return response;
 }
 
-test('test console and admin console load KaTeX safely', async () => {
+test('test console and record-review pages load KaTeX safely', async () => {
   const response = await dispatch(new Request('https://example.test/'));
   const html = await response.text();
   const csp = response.headers.get('Content-Security-Policy') || '';
@@ -204,6 +204,12 @@ test('test console and admin console load KaTeX safely', async () => {
   assert.match(adminHtml, /trust: false/);
   assert.doesNotMatch(adminHtml, /localStorage/);
   assert.match(adminResponse.headers.get('X-Robots-Tag') || '', /noindex/);
+
+  const internalResultsResponse = await dispatch(
+    new Request('https://example.test/result'),
+  );
+  assert.equal(internalResultsResponse.status, 200);
+  assert.match(await internalResultsResponse.text(), /Coach 对话记录/);
 });
 
 test('health reports AI and anonymous-recording readiness separately', async () => {
@@ -467,7 +473,7 @@ test('direct callers still need the private test token', async () => {
   assert.equal(response.status, 503);
 });
 
-test('successful coach replies are recorded and protected by a secret admin URL', async () => {
+test('successful coach replies are recorded and available from the internal result shortcut', async () => {
   storedRows.length = 0;
   const response = await dispatch(
     new Request('https://example.test/coach', {
@@ -517,6 +523,13 @@ test('successful coach replies are recorded and protected by a secret admin URL'
   assert.equal(recordsBody.retentionDays, 30);
   assert.equal(recordsBody.records[0].question, '为什么慢球更容易挂网？');
   assert.match(privateResponse.headers.get('X-Robots-Tag') || '', /noindex/);
+
+  const internalResultResponse = await dispatch(
+    new Request('https://example.test/result/conversations?page=1'),
+  );
+  const internalRecordsBody = await internalResultResponse.json();
+  assert.equal(internalResultResponse.status, 200);
+  assert.equal(internalRecordsBody.pagination.total, 1);
 });
 
 test('rejects oversized and non-JSON requests without recording them', async () => {

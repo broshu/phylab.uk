@@ -6,6 +6,12 @@ import { installDom } from './fake-dom.mjs';
 
 const dom = installDom();
 const { el, tick, play, settle } = dom;
+let navigatedTo = '';
+global.window.location = {
+  assign(url) {
+    navigatedTo = url;
+  },
+};
 
 const errors = [];
 process.on('uncaughtException', (e) => errors.push(e));
@@ -21,6 +27,11 @@ const control = (sel) => el('#controls').querySelector(sel);
 
 check('assembly ran without errors', errors.length === 0, errors[0]?.stack || '');
 check('window.__vb exported', !!api);
+el('#resultShortcut').dispatch('click');
+check(
+  'Result opens the internal Q&A record page',
+  navigatedTo === 'https://phylab-coach.dgxwmk9dbm.workers.dev/result',
+);
 
 try {
   const { store, attempts } = api;

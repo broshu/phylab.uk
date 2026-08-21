@@ -102,6 +102,18 @@ h1, h2, h3, p {
     text-align: right;
 }
 
+.result-shortcut {
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+}
+
+.result-shortcut:hover,
+.result-shortcut:focus-visible {
+    border-color: #9aa999;
+    outline: none;
+}
+
 .readout span {
     color: var(--muted);
     font-size: 12px;

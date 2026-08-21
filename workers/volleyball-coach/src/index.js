@@ -18,6 +18,7 @@ import { TEST_PAGE } from './test-page.js';
 
 const MAX_REQUEST_BYTES = 8 * 1024;
 const MAX_PROVIDER_BYTES = 64 * 1024;
+const INTERNAL_RESULTS_PATH = '/result';
 
 const SECURITY_HEADERS = Object.freeze({
   'Cache-Control': 'no-store',
@@ -502,8 +503,10 @@ export default {
           secureEqual(requestPath, settings.adminPath),
           secureEqual(requestPath, `${settings.adminPath}/conversations`),
         ]);
+        const isInternalResultsPage = requestPath === INTERNAL_RESULTS_PATH;
+        const isInternalResultsData = requestPath === `${INTERNAL_RESULTS_PATH}/conversations`;
 
-        if (isAdminPage) {
+        if (isAdminPage || isInternalResultsPage) {
           return new Response(ADMIN_PAGE, {
             headers: {
               ...SECURITY_HEADERS,
@@ -514,7 +517,7 @@ export default {
           });
         }
 
-        if (isAdminData) {
+        if (isAdminData || isInternalResultsData) {
           return await handleAdminConversations(request, env);
         }
       }

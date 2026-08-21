@@ -15,7 +15,10 @@ import { createStore } from './core/state.js';
 import { evaluate, Verdict } from './core/evaluator.js';
 import { createTutor } from './services/tutor.js';
 import { createAttemptLog } from './services/attempts.js';
-import { createAiCoachClient } from './services/ai-coach.js?v=20260820-1';
+import {
+  AI_COACH_RECORDS_ENDPOINT,
+  createAiCoachClient,
+} from './services/ai-coach.js?v=20260820-1';
 import { createScene } from './ui/scene.js';
 import { createControls } from './ui/controls.js';
 import { createCoach } from './ui/coach.js?v=20260820-1';
@@ -57,6 +60,10 @@ const VERDICT_LABEL = {
 };
 
 document.querySelector('#taskPrompt').textContent = problem.prompt;
+
+document.querySelector('#resultShortcut').addEventListener('click', () => {
+  window.location.assign(AI_COACH_RECORDS_ENDPOINT);
+});
 
 // A demo serve resolves this promise when the ball stops, which is how the
 // tutor script can `await serve(14)` and then talk about what happened.

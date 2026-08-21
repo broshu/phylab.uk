@@ -76,9 +76,11 @@ fallback if the provider still violates the language requirement.
   store a name, email address, IP address, User-Agent, or browser fingerprint.
 - Conversation text is retained for 30 days. Each successful write performs a
   best-effort cleanup of older rows.
-- The admin page and its data endpoint are available only below the secret path
-  stored in `COACH_ADMIN_PATH`. There is no token form or public admin link;
-  possession of the complete URL grants access.
+- The admin page and its data endpoint are available below the secret path
+  stored in `COACH_ADMIN_PATH`. For the current internal volleyball test,
+  `/result` is also an intentionally exposed shortcut from the lab's Result
+  card. It has no additional authentication and must be removed or protected
+  before opening the lab to external users.
 - Mathematical expressions use KaTeX-compatible `\\(...\\)` and `\\[...\\]`
   delimiters. The test console inserts every reply as text first, then renders
   only those delimited expressions with pinned KaTeX assets and `trust: false`.

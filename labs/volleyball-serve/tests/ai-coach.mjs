@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 
-import { createAiCoachClient } from '../js/services/ai-coach.js';
+import {
+  AI_COACH_RECORDS_ENDPOINT,
+  createAiCoachClient,
+} from '../js/services/ai-coach.js';
 import { renderDelimitedMath } from '../js/ui/math.js';
 import { makeEl } from './fake-dom.mjs';
 
@@ -35,6 +38,10 @@ const result = await client.ask({
 const body = JSON.parse(request.options.body);
 
 assert.equal(request.url, 'https://coach.example/coach');
+assert.equal(
+  AI_COACH_RECORDS_ENDPOINT,
+  'https://phylab-coach.dgxwmk9dbm.workers.dev/result',
+);
 assert.equal('X-Coach-Test-Token' in request.options.headers, false);
 assert.equal(body.sessionId, 'student-session-123');
 assert.equal(body.requestType, 'question');
