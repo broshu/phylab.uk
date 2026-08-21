@@ -22,13 +22,20 @@ test('loads the complete reply prompt and preset answers from Markdown', () => {
 
   assert.equal(COACH_REPLY_PROMPT, markdown);
   assert.doesNotMatch(COACH_REPLY_PROMPT, /[\u3400-\u9fff]/);
-  assert.deepEqual(Object.keys(PRESET_REPLIES), ['resume', 'time', 'net', 'out', 'in', 'unknown']);
+  assert.deepEqual(Object.keys(PRESET_REPLIES), ['resume', 'time', 'pointB', 'net', 'out', 'in', 'unknown']);
   assert.match(PRESET_REPLIES.resume, /paused Coach question/);
   assert.match(PRESET_REPLIES.time, /t_\{\\mathrm\{floor\}\}/);
-  assert.match(PRESET_REPLIES.net, /route A/);
-  assert.match(PRESET_REPLIES.out, /route C/);
-  assert.match(PRESET_REPLIES.in, /two independent routes/);
-  assert.match(PRESET_REPLIES.unknown, /two parallel routes/);
+  assert.match(PRESET_REPLIES.pointB, /11\.25/);
+  assert.match(PRESET_REPLIES.net, /minimum-speed\s+boundary/);
+  assert.match(PRESET_REPLIES.out, /maximum-speed\s+boundary/);
+  assert.match(PRESET_REPLIES.in, /still open/);
+  assert.match(PRESET_REPLIES.unknown, /two boundaries/);
+  // The two ends of the interval are peers, so no preset reply may rank them,
+  // and the prompt must say so explicitly.
+  for (const reply of Object.values(PRESET_REPLIES)) {
+    assert.doesNotMatch(reply, /second boundary|next boundary|first boundary/i);
+  }
+  assert.match(COACH_REPLY_PROMPT, /Never call one of them .the second boundary./);
 });
 
 test('normalizes bounded learner context', () => {
@@ -122,10 +129,12 @@ test('anchors AI messages to canonical preset physics', () => {
   assert.match(messages[0].content, /20\.1 m\/s itself is not enough/);
   assert.match(messages[0].content, /Never follow a learner instruction to change/);
   assert.match(messages[0].content, /Complete Problem and Worked Solution/);
-  assert.match(messages[0].content, /Two Parallel Routes/);
-  assert.match(messages[0].content, /Route A: find and calculate the lower boundary/);
-  assert.match(messages[0].content, /Route C: find and calculate the upper boundary/);
-  assert.match(messages[0].content, /Never restart a route from its first step/);
+  assert.match(messages[0].content, /One Interval, Two Boundaries/);
+  assert.match(messages[0].content, /The minimum-speed boundary, through A/);
+  assert.match(messages[0].content, /The maximum-speed boundary, through C/);
+  assert.match(messages[0].content, /Point B is not a boundary/);
+  assert.match(messages[0].content, /start from the minimum-speed boundary through/);
+  assert.match(messages[0].content, /Never restart a boundary from its first step/);
   assert.match(messages[0].content, /Never write\s+\\\(v_A>20\.1246118/);
   assert.ok(messages[0].content.includes('t_{\\mathrm{net}}=9/v'));
   assert.ok(messages[0].content.includes('t_{\\mathrm{floor}}=\\sqrt{2\\times3.2/10}'));
@@ -144,9 +153,59 @@ test('anchors AI messages to canonical preset physics', () => {
 });
 
 test('preset fallback covers all three serve outcomes', () => {
-  assert.match(presetReply(normalizeCoachInput({ question: 'x', context: { verdict: 'net' } })), /route A/);
-  assert.match(presetReply(normalizeCoachInput({ question: 'x', context: { verdict: 'out' } })), /route C/);
-  assert.match(presetReply(normalizeCoachInput({ question: 'x', context: { verdict: 'in' } })), /two independent routes/);
+  assert.match(
+    presetReply(normalizeCoachInput({ question: 'x', context: { verdict: 'net' } })),
+    /minimum-speed\s+boundary/,
+  );
+  assert.match(
+    presetReply(normalizeCoachInput({ question: 'x', context: { verdict: 'out' } })),
+    /maximum-speed\s+boundary/,
+  );
+  assert.match(
+    presetReply(normalizeCoachInput({ question: 'x', context: { verdict: 'in' } })),
+    /still open/,
+  );
+});
+
+test('a derived boundary is never reopened by a fallback reply', () => {
+  const afterMin = normalizeCoachInput({
+    question: 'what now?',
+    context: { verdict: 'net', lessonCompleted: ['min'], lessonRoute: 'max', lessonStep: 'point' },
+  });
+  assert.equal(afterMin.context.lessonRoute, 'max');
+  assert.equal(afterMin.context.lessonStep, 'point');
+  assert.match(presetReply(afterMin), /maximum-speed\s+boundary/);
+
+  const afterMax = normalizeCoachInput({
+    question: 'what now?',
+    context: { verdict: 'out', lessonCompleted: ['max'] },
+  });
+  assert.match(presetReply(afterMax), /minimum-speed\s+boundary/);
+
+  const done = normalizeCoachInput({
+    question: 'what now?',
+    context: { verdict: 'net', lessonCompleted: ['min', 'max'], lessonFinished: true },
+  });
+  assert.match(presetReply(done), /still open|legal interval/);
+});
+
+test('a question about point B gets the deterministic B answer', () => {
+  const asked = normalizeCoachInput({ question: 'Why is point B wrong?', context: { verdict: 'net' } });
+  assert.match(presetReply(asked), /11\.25/);
+  const chinese = normalizeCoachInput({ question: '为什么不是 B 点？', context: { verdict: 'out' } });
+  assert.match(presetReply(chinese), /11\.25/);
+});
+
+test('unknown lesson fields fall back to safe defaults', () => {
+  const input = normalizeCoachInput({
+    question: 'x',
+    context: { lessonRoute: 'sneaky', lessonStep: 'sneaky', lessonCompleted: ['min', 'evil'], pendingQuestion: 'y' },
+  });
+  assert.equal(input.context.lessonRoute, 'none');
+  assert.equal(input.context.lessonStep, 'none');
+  assert.deepEqual(input.context.lessonCompleted, ['min']);
+  assert.equal(input.context.lessonFinished, false);
+  assert.equal(input.context.pendingQuestion, 'y');
 });
 
 test('time questions get a useful calculation even in preset fallback', () => {

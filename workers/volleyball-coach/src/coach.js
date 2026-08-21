@@ -7,6 +7,20 @@ export const MAX_QUESTION_CHARS = 600;
 const VALID_VERDICTS = new Set(['net', 'out', 'in', 'unknown']);
 const VALID_PHASES = new Set(['aim', 'serve', 'done', 'demo', 'unknown']);
 const VALID_REQUEST_TYPES = new Set(['question', 'resume']);
+const VALID_LESSON_ROUTES = new Set(['min', 'max', 'fast-track', 'interval', 'none']);
+const VALID_LESSON_STEPS = new Set([
+  'diagnose',
+  'point',
+  'demo',
+  'calculate',
+  'rule',
+  'speeds',
+  'points',
+  'final',
+  'none',
+]);
+const VALID_COMPLETED = new Set(['min', 'max']);
+const POINT_B_QUESTION = /\bpoints?\s*b\b|\bb\s*point\b|b\s*点|选\s*b/i;
 const NON_ENGLISH_SCRIPT =
   /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Script=Cyrillic}\p{Script=Arabic}\p{Script=Hebrew}\p{Script=Devanagari}\p{Script=Thai}]/u;
 
@@ -40,6 +54,7 @@ function presetSection(markdown, key) {
 export const PRESET_REPLIES = Object.freeze({
   resume: presetSection(COACH_REPLY_PROMPT, 'resume'),
   time: presetSection(COACH_REPLY_PROMPT, 'time'),
+  pointB: presetSection(COACH_REPLY_PROMPT, 'pointB'),
   net: presetSection(COACH_REPLY_PROMPT, 'net'),
   out: presetSection(COACH_REPLY_PROMPT, 'out'),
   in: presetSection(COACH_REPLY_PROMPT, 'in'),
@@ -110,6 +125,13 @@ export function normalizeCoachInput(value) {
         .filter(Boolean)
     : [];
   const lastLearnerQuestion = cleanText(rawContext.lastLearnerQuestion, MAX_QUESTION_CHARS);
+  const lessonRouteText = cleanText(rawContext.lessonRoute, 16);
+  const lessonStepText = cleanText(rawContext.lessonStep, 16);
+  const lessonCompleted = Array.isArray(rawContext.lessonCompleted)
+    ? rawContext.lessonCompleted
+        .filter((item) => typeof item === 'string' && VALID_COMPLETED.has(item))
+        .slice(0, 2)
+    : [];
 
   return {
     requestType,
@@ -130,6 +152,11 @@ export function normalizeCoachInput(value) {
       outBy: finiteNumber(rawContext.outBy),
       attemptCount: finiteNumber(rawContext.attemptCount),
       recentCoach,
+      lessonRoute: VALID_LESSON_ROUTES.has(lessonRouteText) ? lessonRouteText : 'none',
+      lessonStep: VALID_LESSON_STEPS.has(lessonStepText) ? lessonStepText : 'none',
+      lessonCompleted,
+      lessonFinished: rawContext.lessonFinished === true,
+      pendingQuestion: cleanText(rawContext.pendingQuestion, 320),
       resumeTarget: cleanText(rawContext.resumeTarget, 320),
       resumeOptions,
       lastLearnerQuestion,
@@ -208,11 +235,27 @@ export function presetReply(input) {
   if (input.requestType === 'resume') return PRESET_REPLIES.resume;
 
   const normalizedQuestion = input.question.toLocaleLowerCase('zh-CN');
+
+  // A question about the B marker has one deterministic answer, and it is the
+  // same answer wherever the learner is in the lesson.
+  if (POINT_B_QUESTION.test(input.question)) {
+    return PRESET_REPLIES.pointB;
+  }
   if (/时间|多久|time|秒|second|到网|落地/.test(normalizedQuestion)) {
     return PRESET_REPLIES.time;
   }
 
   const { context } = input;
+  // A boundary already derived should never be reopened by a fallback reply.
+  if (context.lessonFinished) {
+    return PRESET_REPLIES.in;
+  }
+  if (context.lessonCompleted.includes('min') && !context.lessonCompleted.includes('max')) {
+    return PRESET_REPLIES.out;
+  }
+  if (context.lessonCompleted.includes('max') && !context.lessonCompleted.includes('min')) {
+    return PRESET_REPLIES.net;
+  }
   if (context.verdict === 'net') {
     return PRESET_REPLIES.net;
   }

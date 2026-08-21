@@ -19,13 +19,38 @@ current `phylab.uk` site.
 ## Maintain the Coach prompt
 
 Edit `prompts/volleyball-coach.md` to change the AI's reply rules, canonical
-problem and solution, or deterministic preset answers. The five headings under
-`Preset Answers` (`time`, `net`, `out`, `in`, and `unknown`) are parsed by the
-Worker, so keep those heading keys unchanged. Wrangler imports the Markdown as
-a text module; there is no duplicate long prompt string to update in JavaScript.
-Keep the prompt itself in English; it tells the model to answer in the learner's
-language. The Worker also supplies up to four recent turns from the same
-anonymous session so the model can track route A and route C independently.
+problem and solution, or deterministic preset answers. The seven headings under
+`Preset Answers` (`resume`, `time`, `pointB`, `net`, `out`, `in`, and `unknown`)
+are parsed by the Worker, so keep those heading keys unchanged. Wrangler imports
+the Markdown as a text module; there is no duplicate long prompt string to update
+in JavaScript. Keep the prompt itself in English; it tells the model to answer in
+the learner's language. The Worker also supplies up to four recent turns from the
+same anonymous session, plus the lesson-progress fields below, so the model can
+track the two speed boundaries independently.
+
+## Teaching model
+
+The answer is one interval with two peer boundaries: the minimum-speed boundary
+through A, the top of the net (`v > 20.1246118 m/s`, strict because touching the
+tape is a fault), and the maximum-speed boundary through C, the far baseline
+(`v ≤ 22.5 m/s`, inclusive because a line ball is in). Neither is a sequel to the
+other, and the prompt forbids wording that ranks them. B, the foot of the net,
+is a marked distractor worth `9 / 0.8 = 11.25 m/s`; its explanation is a preset
+section rather than something the model improvises.
+
+The lab page sends its own teaching state with every request, and
+`normalizeCoachInput` validates each field against a whitelist:
+
+- `lessonRoute`: `min`, `max`, `fast-track`, `interval`, or `none`.
+- `lessonStep`: `diagnose`, `point`, `demo`, `calculate`, `rule`, `speeds`,
+  `points`, `final`, or `none`.
+- `lessonCompleted`: the boundaries already derived, for example `["min"]`.
+- `lessonFinished`: whether the whole interval has been established.
+- `pendingQuestion`: the preset question currently waiting on screen.
+
+Preset fallbacks respect this state too: a boundary listed in `lessonCompleted`
+is never reopened by a fallback reply, and a question about point B always gets
+the deterministic B answer.
 Questions written in English are marked `English only`; a reply containing a
 non-English script is retried once and then replaced by the English preset
 fallback if the provider still violates the language requirement.

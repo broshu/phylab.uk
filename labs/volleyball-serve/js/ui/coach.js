@@ -8,8 +8,8 @@
  * something new happens. What the coach actually says lives in
  * services/coach-script.js.
  */
-import { opening, reaction } from '../services/coach-script.js?v=20260819-3';
-import { renderDelimitedMath, renderRichText } from './math.js?v=20260819-3';
+import { opening, reaction } from '../services/coach-script.js?v=20260820-1';
+import { renderDelimitedMath, renderRichText } from './math.js?v=20260820-1';
 
 const CANCELLED = Symbol('coach-cancelled');
 const CONTINUE_FALLBACK =
@@ -57,6 +57,30 @@ export function createCoach(root, store, { tutor, attempts, runtime, ai, timing 
   let pending = null;
   let aiPause = null;
   let lastAiExchange = null;
+
+  // Teaching progress outlives any single script run. A student who serves
+  // again mid-lesson must not be sent back through a boundary they already
+  // derived, so `reactTo` resumes from here instead of restarting.
+  const progress = {
+    min: false, // the minimum-speed boundary, through A, is derived
+    max: false, // the maximum-speed boundary, through C, is derived
+    fastTrackTried: false,
+    complete: false,
+  };
+
+  // Where the lesson currently stands. The AI Coach receives this so a
+  // free-form answer can be written into the same place in the sequence.
+  const lesson = { route: null, step: null, question: '' };
+
+  function resetProgress() {
+    progress.min = false;
+    progress.max = false;
+    progress.fastTrackTried = false;
+    progress.complete = false;
+    lesson.route = null;
+    lesson.step = null;
+    lesson.question = '';
+  }
 
   function rememberCoach(text) {
     const spoken = plainMessage(text).trim();
@@ -155,6 +179,11 @@ export function createCoach(root, store, { tutor, attempts, runtime, ai, timing 
       outBy: hasStudentResult && Number.isFinite(result.outBy) ? result.outBy : null,
       attemptCount: attempts.summary().total,
       recentCoach: recentCoach.slice(-6),
+      lessonRoute: lesson.route || 'none',
+      lessonStep: lesson.step || 'none',
+      lessonCompleted: [progress.min ? 'min' : null, progress.max ? 'max' : null].filter(Boolean),
+      lessonFinished: progress.complete,
+      pendingQuestion: lesson.question,
     };
   }
 
@@ -335,9 +364,11 @@ export function createCoach(root, store, { tutor, attempts, runtime, ai, timing 
       async ask(text, choices) {
         guard(mine);
         bubble(text);
+        lesson.question = plainMessage(text);
         const id = await new Promise((resolve) => {
           const pick = (choice) => {
             pending = null;
+            lesson.question = '';
             options.innerHTML = '';
             bubble(choice.reply ?? choice.label, 'mine');
             resolve(choice.id);
@@ -364,13 +395,20 @@ export function createCoach(root, store, { tutor, attempts, runtime, ai, timing 
        * complete set is chosen; a wrong choice resolves immediately so the
        * coach can demonstrate that speed and then clear the selection.
        */
-      async askMulti(text, choices, { correctIds = [] } = {}) {
+      async askMulti(text, choices, { correctIds = [], preselectedIds = [] } = {}) {
         guard(mine);
         bubble(text);
+        lesson.question = plainMessage(text);
         const answer = await new Promise((resolve) => {
-          const selected = new Set();
+          // A selection the student has already demonstrated (a speed they
+          // just served, say) starts pressed, so the question reads as
+          // "what else" rather than "start again".
+          const selected = new Set(
+            preselectedIds.filter((id) => correctIds.includes(id)),
+          );
           const clear = () => {
             pending = null;
+            lesson.question = '';
             options.innerHTML = '';
           };
 
@@ -381,7 +419,9 @@ export function createCoach(root, store, { tutor, attempts, runtime, ai, timing 
             btn.type = 'button';
             btn.className = 'ghost-button option multi-option';
             btn.textContent = choice.label;
-            btn.setAttribute?.('aria-pressed', 'false');
+            const pressed = selected.has(choice.id);
+            btn.dataset.selected = pressed ? 'true' : 'false';
+            btn.setAttribute?.('aria-pressed', pressed ? 'true' : 'false');
             btn.addEventListener('click', () => {
               if (!correctIds.includes(choice.id)) {
                 clear();
@@ -456,6 +496,28 @@ export function createCoach(root, store, { tutor, attempts, runtime, ai, timing 
       clearCourt() {
         runtime.clearCourt();
       },
+
+      /** Record where the lesson is, so the AI Coach can answer in place. */
+      stage(route, step) {
+        lesson.route = route;
+        lesson.step = step;
+      },
+
+      /** Mark a boundary as derived; it will not be taught twice. */
+      completeRoute(route) {
+        if (route in progress) progress[route] = true;
+        lesson.route = null;
+        lesson.step = null;
+      },
+
+      /** The whole interval has been established; later serves only comment. */
+      finishLesson() {
+        progress.min = true;
+        progress.max = true;
+        progress.complete = true;
+        lesson.route = null;
+        lesson.step = null;
+      },
     };
   }
 
@@ -476,6 +538,7 @@ export function createCoach(root, store, { tutor, attempts, runtime, ai, timing 
         problem: state.problem,
         bounds: state.result.bounds,
         attemptCount: attempts.summary().total,
+        progress,
         ...extra,
       }),
     ).catch((e) => {
@@ -487,6 +550,7 @@ export function createCoach(root, store, { tutor, attempts, runtime, ai, timing 
     /** First words, before anything has been served. */
     greet() {
       log.innerHTML = '';
+      resetProgress();
       return run(opening);
     },
 
@@ -511,8 +575,14 @@ export function createCoach(root, store, { tutor, attempts, runtime, ai, timing 
       token += 1;
       abandonAiPause();
       pending = null;
+      lesson.question = '';
       options.innerHTML = '';
       celebration.hidden = true;
+    },
+
+    /** Read-only view of how far the lesson has come (used by tests). */
+    progress() {
+      return { ...progress, route: lesson.route, step: lesson.step };
     },
   };
 }

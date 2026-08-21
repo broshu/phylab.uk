@@ -257,7 +257,7 @@ test('an allowed student origin can use AI without a test token', async () => {
   storedRows.unshift({
     sessionId: 'public-student-session',
     question: 'I already know that the lower boundary uses point A.',
-    reply: 'Good. The next step on route A is to calculate the vertical fall.',
+    reply: 'Good. The next step on the minimum-speed boundary is to calculate the vertical fall.',
     phase: 'done',
     verdict: 'net',
     speed: 20,
@@ -299,7 +299,7 @@ test('an allowed student origin can use AI without a test token', async () => {
       providerMessagesText,
       /I already know that the lower boundary uses point A/,
     );
-    assert.match(providerMessagesText, /Two Parallel Routes/);
+    assert.match(providerMessagesText, /One Interval, Two Boundaries/);
   } finally {
     globalThis.fetch = originalFetch;
     storedRows.length = 0;
@@ -446,7 +446,7 @@ test('an English question falls back to an English preset after two language vio
     assert.equal(body.mode, 'preset-fallback');
     assert.equal(providerCalls, 2);
     assert.doesNotMatch(body.reply, /[\u3400-\u9fff]/);
-    assert.match(body.reply, /route A/);
+    assert.match(body.reply, /minimum-speed\s+boundary/);
     assert.match(body.notice, /valid English response/);
   } finally {
     globalThis.fetch = originalFetch;
@@ -484,7 +484,7 @@ test('successful coach replies are recorded and protected by a secret admin URL'
 
   assert.equal(response.status, 200);
   assert.equal(body.mode, 'preset-only');
-  assert.match(body.reply, /route A/);
+  assert.match(body.reply, /minimum-speed\s+boundary/);
   assert.equal(storedRows.length, 1);
   assert.equal(storedRows[0].question, '为什么慢球更容易挂网？');
   assert.equal(storedRows[0].sessionId, 'student-session-123');

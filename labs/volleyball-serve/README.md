@@ -40,9 +40,11 @@ coaching panel) are written and tested but not mounted — see *Extension points
 | g | 10 m/s² |
 
 - time of flight t = √(2h/g) = 0.80 s, **independent of v**
-- upper bound (stay in): 18 ÷ 0.8 = **22.5 m/s**
-- lower bound (clear the net): the ball may fall 1.0 m before the net, so
-  t₁ = √0.2 s and v = 9 ÷ t₁ = 9√5 ≈ **20.12 m/s**
+- maximum-speed boundary (stay in): 18 ÷ 0.8 = **22.5 m/s**, inclusive, because
+  a ball on the line is in
+- minimum-speed boundary (clear the net): the ball may fall 1.0 m before the
+  net, so t₁ = √0.2 s and v = 9 ÷ t₁ = 9√5 ≈ **20.12 m/s**, strict, because
+  touching the tape is a fault
 - legal window **20.1 – 22.5 m/s**; the slider runs 0–30 m/s in steps of 1, so
   the whole-number answers a student can land on are 21 and 22 m/s
 
@@ -96,25 +98,43 @@ line in `main.js`.
 ## The coach
 
 The coach is a permanent, interruptible teaching sequence rather than a result
-panel. A serve supplies an observation; the dialogue then derives the two
-limiting trajectories that define the answer.
+panel. A serve supplies an observation; the dialogue then derives the two ends
+of the legal interval.
 
-1. **A net fault** establishes that the ball must be faster. If a student says
-   slower, the coach serves a short family of slower balls as a counterexample:
-   they fall further before the net.
-2. **The lower boundary** is the slowest legal path. It must pass through **A**,
-   the top of the net. The coach serves this path with its speed hidden, draws
-   its horizontal distance and vertical fall, then asks the student to find the
-   speed. A wrong answer reveals the two-step calculation before one retry.
-3. **The upper boundary** is the fastest legal path. It must land at **C**, the
-   far baseline. The fixed flight time gives `v ≤ vMax`.
+The two ends are peers. The **minimum-speed boundary** is the slowest legal
+path, through **A** at the top of the net; the **maximum-speed boundary** is the
+fastest legal path, landing at **C** on the far baseline. Both are derived by
+the same four moves — name the boundary point, watch the limiting serve with its
+speed hidden, calculate that speed, state the inequality — so one function
+handles both and nothing in the wording ranks them.
+
+Which end opens first is decided by the student:
+
+1. **A net fault** first establishes that the ball must be faster (if the
+   student says slower, the coach serves a family of slower balls as a
+   counterexample), then opens the minimum-speed boundary.
+2. **A long serve** first establishes that the ball must be slower, then opens
+   the maximum-speed boundary.
+3. **A legal serve** opens the fast track: the coach asks the student to select
+   every whole-number speed that works — with the one they just served already
+   selected — and then to select both boundary points in a single question. Two
+   correct answers end the lesson with the interval and a celebration; any wrong
+   answer demonstrates the failure and hands the student back to the full
+   derivation, so both ends still get thought about.
 4. **The conclusion** combines both inequalities and asks for the possible
    whole-number slider values.
 
-An out serve enters the lesson at step 3; a successful serve is evidence and
-still leads through both boundary derivations. The canvas marks three candidate
-points — **A** the top of the net, **B** the foot of the net, and **C** the far
-baseline — and the student can answer with either a button or by clicking a mark.
+Whichever end opens first, the coach then works on the one still open, and
+finally combines them. Teaching progress survives a new serve: a boundary that
+is already derived is never taught twice, and once both ends are established a
+further serve only gets a short comment.
+
+The canvas marks three candidate points — **A** the top of the net, **B** the
+foot of the net, and **C** the far baseline — and the student can answer with
+either a button or by clicking a mark. **B** is a distractor rather than a third
+boundary: reaching it means falling the whole 3.2 m within 9 m, which takes the
+full 0.8 s, so that path is only 11.25 m/s. That explanation is a fixed preset
+in both the lab script and the Worker prompt, never improvised by the model.
 
 The coach can also play its own serves in phase `'demo'`: those fly without the
 player animation and can leave faint comparison trails. They never set a verdict
@@ -125,7 +145,9 @@ serving. `ui/coach.js` owns the dialogue mechanics; the sequence itself lives in
 An independent **Ask AI Coach** composer sits at the bottom of the same panel.
 It does not interrupt, answer, or remove the deterministic choices above it.
 The request includes the current speed, verdict, net clearance, landing point,
-attempt count, and the six most recent preset Coach messages. Students do not
+attempt count, the six most recent preset Coach messages, and where the lesson
+stands: which boundary is open, which step of it, which boundaries are already
+derived, and the preset question waiting on screen. Students do not
 enter an API key or access code: the DeepSeek key remains inside the Cloudflare
 Worker, which accepts the public student client from configured PhyLab origins.
 Successful anonymous questions and answers are stored in D1 for 30 days.
