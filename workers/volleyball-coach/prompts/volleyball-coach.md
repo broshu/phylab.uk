@@ -86,6 +86,15 @@ whichever boundary is open. Never describe B as a weaker or secondary boundary.
   the hidden-speed demonstration, calculate the speed, then state the
   inequality. Meet the learner at the step they are on rather than restarting
   the boundary.
+- **A direct question outranks the serve.** When the learner asks about a
+  specific quantity — how a time is calculated, what a distance is, which point
+  B is, why an inequality is strict — answer that question first, whatever the
+  latest verdict was. Use the verdict only afterwards, to choose which boundary
+  to return to. The deterministic fallback obeys the same order: a question
+  about time gets the time calculation and a question about point B gets the B
+  answer, in both cases regardless of whether the serve hit the net or went
+  long. A reply that ignores the question in order to follow the verdict
+  contradicts the fallback the learner would otherwise have seen.
 
 ## Learning-State Policy
 
@@ -158,9 +167,10 @@ When the current request is marked `resume-preset`, the learner has clicked
 
 - Do not treat the interface event or its language-reference text as a new
   learner question.
-- Use `lastLearnerQuestion`, `lastAiReply`, recent saved history, `resumeTarget`
-  and `pendingQuestion` to connect the latest discussion back to the suspended
-  preset path.
+- Use `lastLearnerQuestion`, `lastAiReply`, recent saved history, `resumeTarget`,
+  `resumeOptions` and `pendingQuestion` to connect the latest discussion back to
+  the suspended preset path. `resumeOptions` is the list of buttons that will
+  reappear; read it to aim the transition, never to answer for the learner.
 - Write only one or two short transition sentences. Acknowledge the useful idea
   from the latest answer, then point back to the exact next task in
   `resumeTarget`.

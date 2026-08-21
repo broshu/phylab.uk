@@ -142,6 +142,12 @@ flowchart TD
 
 Worker 的 `normalizeCoachInput` 对这些字段做白名单校验，模型无法用它们改变判分；prompt 则规定：已在 `lessonCompleted` 里的边界不得重讲，`fast-track` 状态下不要退回逐步推导。
 
+### 6.1 提问优先于判罚
+
+`presetReply()` 里的兜底优先级是：点 B 的问题 → 时间类问题 → 已完成的边界 → verdict。也就是说学生刚出界、却问「到网要多久」，兜底给的是时间计算而不是上界引导。
+
+这条优先级原本只存在于代码里，而 DeepSeek 只能看到 prompt（系统消息是整份 `volleyball-coach.md`，用户消息只有语言要求、交互类型、历史与 context）。若不写进 prompt，AI 路径和兜底路径会给出方向不同的回答，学生换一次网络状况就换一套逻辑。现已写入 prompt 的「Which Boundary To Work On」小节，并由 `tests/coach.test.mjs` 断言这段文字确实进入了系统消息。
+
 ## 7. 文档—实现对照
 
 | 本文节点 | 实现位置 | 覆盖测试 |

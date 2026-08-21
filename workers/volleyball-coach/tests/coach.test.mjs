@@ -135,6 +135,12 @@ test('anchors AI messages to canonical preset physics', () => {
   assert.match(messages[0].content, /Point B is not a boundary/);
   assert.match(messages[0].content, /start from the minimum-speed boundary through/);
   assert.match(messages[0].content, /Never restart a boundary from its first step/);
+  // The fallback's precedence rules must be visible to the model too: it is the
+  // only place the model can learn them, and a divergent AI reply would
+  // contradict the preset the learner would otherwise have seen.
+  assert.match(messages[0].content, /A direct question outranks the serve/);
+  assert.match(messages[0].content, /a question\s+about time gets the time calculation/);
+  assert.match(messages[0].content, /a question about point B gets the B\s+answer/);
   assert.match(messages[0].content, /Never write\s+\\\(v_A>20\.1246118/);
   assert.ok(messages[0].content.includes('t_{\\mathrm{net}}=9/v'));
   assert.ok(messages[0].content.includes('t_{\\mathrm{floor}}=\\sqrt{2\\times3.2/10}'));
