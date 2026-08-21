@@ -18,7 +18,7 @@ import { createAttemptLog } from './services/attempts.js';
 import {
   AI_COACH_RECORDS_ENDPOINT,
   createAiCoachClient,
-} from './services/ai-coach.js?v=20260820-1';
+} from './services/ai-coach.js?v=20260821-1';
 import { createScene } from './ui/scene.js';
 import { createControls } from './ui/controls.js';
 import { createCoach } from './ui/coach.js?v=20260820-1';
