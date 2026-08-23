@@ -22,6 +22,8 @@ assert.equal(control.textContent, '发球');
 assert.match(dom.el('#taskPrompt').textContent, /一名球员/);
 assert.match(coachLog.children[0]?.textContent || '', /欢迎/);
 assert.equal(dom.el('#verdictReadout').textContent, '—');
+assert.equal(dom.el('#homeButton').textContent, 'English');
+assert.match(dom.el('#homeButton').href, /\?lang=en/);
 
 const slider = dom.el('#controls').querySelector('#speed');
 slider.value = '15';

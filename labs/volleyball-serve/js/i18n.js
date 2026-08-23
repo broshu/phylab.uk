@@ -13,8 +13,23 @@ export function isSimplifiedChineseSystemLanguage(language) {
   return typeof language === 'string' && SIMPLIFIED_CHINESE.test(language.trim());
 }
 
-export function getUiLanguage() {
-  return isSimplifiedChineseSystemLanguage(globalThis.navigator?.language)
+/** @param {unknown} search */
+export function isEnglishLanguageOverride(search) {
+  if (typeof search !== 'string') return false;
+  return new URLSearchParams(search).get('lang') === 'en';
+}
+
+/**
+ * `?lang=en` is the one explicit user override. It can only keep the page in
+ * English; Chinese still requires a confirmed Simplified-Chinese system tag.
+ * @param {{systemLanguage?: unknown, search?: unknown}} [options]
+ */
+export function getUiLanguage({
+  systemLanguage = globalThis.navigator?.language,
+  search = globalThis.location?.search ?? globalThis.window?.location?.search,
+} = {}) {
+  if (isEnglishLanguageOverride(search)) return 'en';
+  return isSimplifiedChineseSystemLanguage(systemLanguage)
     ? 'zh-Hans'
     : 'en';
 }
@@ -28,6 +43,7 @@ const UI_COPY = {
     internalRecords: 'Internal records',
     labs: 'Labs',
     returnToLabs: 'Return to Labs',
+    switchToEnglish: 'Switch to English',
     task: 'Task',
     coach: 'Coach',
     aiCoach: 'AI Coach',
@@ -80,6 +96,7 @@ const UI_COPY = {
     internalRecords: '内部记录',
     labs: '实验',
     returnToLabs: '返回实验列表',
+    switchToEnglish: '切换为英文',
     task: '任务',
     coach: '教练',
     aiCoach: 'AI 教练',
@@ -159,7 +176,7 @@ export function translateCoachMessage(message, language = getUiLanguage()) {
     'Welcome! Have a try. Good luck!': '欢迎！试着发一次球吧，祝你顺利！',
     'The marked points can also be selected directly on the court.': '标出的点也可以直接在球场图中点击选择。',
     'The dashed lines show the horizontal distance and the vertical fall for that exact path.': '虚线标出了这条临界轨迹的水平距离和竖直下落高度。',
-    'How could you calculate its speed? What do you think the hidden speed is?': '怎样计算它的速度？你认为隐藏的速度是多少？',
+    'How could you calculate its speed? What do you think the hidden speed is?': '怎样计算这次发球的速度？你认为此时的发球速度是多少？',
     'Write it in two steps:': '分两步计算：',
     'One speed that works is a start. How much room does the serve actually have?': '一个可行速度只是开始；这次发球实际有多少余量？',
     'Select every whole-number speed that works. Yours is already selected.': '选出所有可行的整数速度。你刚才的速度已经被选中。',
@@ -188,15 +205,15 @@ export function translateCoachMessage(message, language = getUiLanguage()) {
   if ((match = /^The window has two edges we have not found yet\. Let us locate them\.$/.exec(message))) return '这个区间还有两个尚未找到的边界。我们来定位它们。';
   if ((match = /^Exactly\. A fixes the minimum-speed boundary at ([\d.]+) m\/s, and touching the tape is a fault, so (.+)\.$/.exec(message))) return `正确。A 点确定 ${match[1]} m/s 的最小速度边界；碰到球网带算失误，所以 ${match[2]}。`;
   if ((match = /^C fixes the maximum-speed boundary at ([\d.]+) m\/s, and a ball on the line is in, so (.+)\.$/.exec(message))) return `C 点确定 ${match[1]} m/s 的最大速度边界；压线球算界内，所以 ${match[2]}。`;
-  if ((match = /^Watch that limiting serve\. I will hide its speed: it (just reaches A|just lands at C)\.$/.exec(message))) return `观察这次临界发球。我会隐藏它的速度：它${match[1] === 'just reaches A' ? '恰好到达 A 点' : '恰好落在 C 点'}。`;
+  if ((match = /^Watch that limiting serve\. I will hide its speed: it (just reaches A|just lands at C)\.$/.exec(message))) return `观察这次临界发球。它${match[1] === 'just reaches A' ? '恰好到达 A 点' : '恰好落在 C 点'}；你认为此时的发球速度是多少？`;
   if ((match = /^We will use ([AC]): it is where the (slowest|fastest) legal serve reaches its limit\.$/.exec(message))) return `我们使用 ${match[1]} 点：${match[2] === 'slowest' ? '最慢' : '最快'}的合法发球会恰好到达这里。`;
   if ((match = /^So which point fixes the (minimum-speed|maximum-speed) boundary\?$/.exec(message))) return `那么，哪个点决定${match[1] === 'minimum-speed' ? '最小速度' : '最大速度'}边界？`;
   if ((match = /^Which point does the (slowest|fastest) legal serve just (pass through|land on)\?$/.exec(message))) return `哪一个点是${match[1] === 'slowest' ? '最慢' : '最快'}合法发球恰好${match[2] === 'pass through' ? '通过' : '落在'}的位置？`;
   if ((match = /^What is the speed of the serve that just (reaches A|lands at C)\?$/.exec(message))) return `恰好${match[1] === 'reaches A' ? '到达 A 点' : '落在 C 点'}的发球速度是多少？`;
   if ((match = /^Using that calculation, what is the speed that just (reaches A|lands at C)\?$/.exec(message))) return `根据刚才的计算，恰好${match[1] === 'reaches A' ? '到达 A 点' : '落在 C 点'}的速度是多少？`;
-  if ((match = /^The hidden speed is ([\d.]+) m\/s\.$/.exec(message))) return `隐藏的速度是 ${match[1]} m/s。`;
+  if ((match = /^The hidden speed is ([\d.]+) m\/s\.$/.exec(message))) return `此时的发球速度是 ${match[1]} m/s。`;
   if ((match = /^The limiting speed is ([\d.]+) m\/s\.$/.exec(message))) return `临界速度是 ${match[1]} m/s。`;
-  if ((match = /^Yes\. The hidden speed is ([\d.]+) m\/s\.$/.exec(message))) return `对。隐藏的速度是 ${match[1]} m/s。`;
+  if ((match = /^Yes\. The hidden speed is ([\d.]+) m\/s\.$/.exec(message))) return `对。此时的发球速度是 ${match[1]} m/s。`;
   if ((match = /^B is on the floor at the foot of the net\. To arrive there the ball has to fall the whole ([\d.]+) m within ([\d.]+) m, which takes the full ([\d.]+) s, so that path is only ([\d.]+) m\/s\. That serve is buried in the net, not on the edge of anything\. A boundary point is the exact place where legal turns into illegal\.$/.exec(message))) return `B 在球网脚下的地面上。球要到达 B，必须在 ${match[2]} m 内下落完整的 ${match[1]} m，需用时 ${match[3]} s，因此这条轨迹的速度只有 ${match[4]} m/s。它会深深挂在网上，不是任何边界。边界点是合法与不合法恰好转换的位置。`;
   if ((match = /^([AC]) is the other boundary point, and it matters just as much — but it fixes the (slowest|fastest) legal serve\. Here we want the (slowest|fastest) legal serve\.$/.exec(message))) return `${match[1]} 是另一个边界点，也同样重要——但它决定的是${match[2] === 'slowest' ? '最慢' : '最快'}的合法发球。这里我们要找的是${match[3] === 'slowest' ? '最慢' : '最快'}的合法发球。`;
   if ((match = /^That point does not describe the (slowest|fastest) legal serve\.$/.exec(message))) return `这个点不能描述${match[1] === 'slowest' ? '最慢' : '最快'}的合法发球。`;

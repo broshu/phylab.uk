@@ -11,7 +11,7 @@
  * animation. Mount them by adding one line each, as below.
  */
 import { getProblem, DEFAULT_PROBLEM_ID } from './config/problem.js?v=20260823-1';
-import { createLocalizer } from './i18n.js?v=20260823-1';
+import { createLocalizer } from './i18n.js?v=20260823-4';
 import { createStore } from './core/state.js';
 import { evaluate, Verdict } from './core/evaluator.js';
 import { createTutor } from './services/tutor.js';
@@ -22,7 +22,7 @@ import {
 } from './services/ai-coach.js?v=20260823-1';
 import { createScene } from './ui/scene.js?v=20260823-1';
 import { createControls } from './ui/controls.js?v=20260823-1';
-import { createCoach } from './ui/coach.js?v=20260823-1';
+import { createCoach } from './ui/coach.js?v=20260823-4';
 
 const localizer = createLocalizer();
 const { language } = localizer;
@@ -71,8 +71,22 @@ document.querySelector('#resultLabel').textContent = t('result');
 document.querySelector('#taskHeading').textContent = t('task');
 document.querySelector('#resultShortcut').setAttribute?.('aria-label', t('resultRecords'));
 document.querySelector('#resultShortcut').title = t('internalRecords');
-document.querySelector('#homeButton').setAttribute?.('aria-label', t('returnToLabs'));
-document.querySelector('#homeButton').title = t('labs');
+const homeButton = document.querySelector('#homeButton');
+if (language === 'zh-Hans') {
+  const currentUrl = new URL(
+    globalThis.location?.href ?? '/labs/volleyball-serve/',
+    globalThis.location?.origin ?? 'https://phylab.uk',
+  );
+  currentUrl.searchParams.set('lang', 'en');
+  homeButton.href = `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`;
+  homeButton.className += ' language-switch';
+  homeButton.textContent = 'English';
+  homeButton.setAttribute?.('aria-label', t('switchToEnglish'));
+  homeButton.title = t('switchToEnglish');
+} else {
+  homeButton.setAttribute?.('aria-label', t('returnToLabs'));
+  homeButton.title = t('labs');
+}
 document.querySelector('#taskPrompt').textContent = problem.prompt;
 
 document.querySelector('#resultShortcut').addEventListener('click', () => {

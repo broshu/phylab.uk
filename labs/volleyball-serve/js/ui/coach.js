@@ -10,7 +10,7 @@
  */
 import { opening, reaction } from '../services/coach-script.js?v=20260820-1';
 import { renderDelimitedMath, renderRichText } from './math.js?v=20260820-1';
-import { createLocalizer, translateCoachMessage } from '../i18n.js?v=20260823-1';
+import { createLocalizer, translateCoachMessage } from '../i18n.js?v=20260823-4';
 
 const CANCELLED = Symbol('coach-cancelled');
 
