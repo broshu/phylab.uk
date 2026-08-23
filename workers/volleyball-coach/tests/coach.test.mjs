@@ -7,6 +7,7 @@ import {
   PRESET_REPLIES,
   buildMessages,
   buildProviderPayload,
+  hasChineseScript,
   hasNonEnglishScript,
   isEnglishQuestion,
   normalizeCoachInput,
@@ -56,7 +57,8 @@ test('normalizes bounded learner context', () => {
   assert.equal(input.question, '为什么慢球更容易挂网？');
   assert.equal(input.requestType, 'question');
   assert.equal(input.sessionId, 'valid_session-123');
-  assert.equal(input.replyLanguage, 'learner-language');
+  assert.equal(input.replyLanguage, 'English');
+  assert.equal(input.context.uiLanguage, 'en');
   assert.equal(input.context.verdict, 'net');
   assert.equal(input.context.speed, 15);
   assert.equal(input.context.speedHidden, true);
@@ -83,6 +85,8 @@ test('classifies English questions and detects non-English reply scripts', () =>
   assert.equal(isEnglishQuestion('如何计算到 A 的时间？'), false);
   assert.equal(hasNonEnglishScript('Use \\(t_A=\\sqrt{0.2}\\) seconds.'), false);
   assert.equal(hasNonEnglishScript('先计算时间。'), true);
+  assert.equal(hasChineseScript('先计算时间。'), true);
+  assert.equal(hasChineseScript('First calculate the time.'), false);
   assert.equal(hasNonEnglishScript('Сначала найдите время.'), true);
 });
 
@@ -106,6 +110,23 @@ test('normalizes a bounded continuation bridge request', () => {
   assert.match(presetReply(input), /paused Coach question/);
   assert.match(buildMessages(input)[1].content, /resume-preset/);
   assert.match(buildMessages(input)[1].content, /Do not answer the suspended multiple-choice question/);
+});
+
+test('uses Simplified Chinese only when the lab explicitly confirms it', () => {
+  const chinese = normalizeCoachInput({
+    question: 'Why did this serve hit the net?',
+    context: { uiLanguage: 'zh-Hans', verdict: 'net' },
+  });
+  const unconfirmed = normalizeCoachInput({
+    question: '为什么速度慢更容易挂网？',
+    context: { uiLanguage: 'zh', verdict: 'net' },
+  });
+
+  assert.equal(chinese.replyLanguage, 'Simplified Chinese');
+  assert.match(buildMessages(chinese)[1].content, /Simplified Chinese only/);
+  assert.match(presetReply(chinese), /最小速度边界/);
+  assert.equal(unconfirmed.replyLanguage, 'English');
+  assert.match(presetReply(unconfirmed), /minimum-speed\s+boundary/);
 });
 
 test('anchors AI messages to canonical preset physics', () => {

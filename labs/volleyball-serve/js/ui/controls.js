@@ -4,20 +4,17 @@
  * compute physics. Sliders for hitHeight / netHeight are anticipated by
  * problem.adjustable and can be added here for later levels.
  */
-const SERVE_LABEL = {
-  aim: 'Serve',
-  serve: 'Serving…',
-  demo: 'Watch…',
-  done: 'Serve again',
-};
+import { createLocalizer } from '../i18n.js?v=20260823-1';
 
-export function createControls(root, store, { onServe, onAim } = {}) {
+export function createControls(root, store, { onServe, onAim, localizer } = {}) {
+  const resolvedLocalizer = localizer ?? createLocalizer('en');
+  const t = resolvedLocalizer.t.bind(resolvedLocalizer);
   const { problem } = store.get();
   const s = problem.speed;
   const decimals = Number.isInteger(s.step) ? 0 : 1;
 
   root.innerHTML = `
-    <h2 class="strip-title">Speed</h2>
+    <h2 class="strip-title">${t('speed')}</h2>
 
     <div class="speed-value">
       <output id="speedOut">${store.get().v.toFixed(decimals)}</output>
@@ -28,11 +25,11 @@ export function createControls(root, store, { onServe, onAim } = {}) {
       <span class="tick">${s.min}</span>
       <input id="speed" type="range" min="${s.min}" max="${s.max}"
              step="${s.step}" value="${store.get().v}"
-             aria-label="Launch speed in ${s.unit ?? 'm/s'}">
+             aria-label="${t('launchSpeed', { unit: s.unit ?? 'm/s' })}">
       <span class="tick">${s.max}</span>
     </div>
 
-    <button id="serve" class="primary-button" type="button">Serve</button>
+    <button id="serve" class="primary-button" type="button">${t('serve')}</button>
   `;
 
   const slider = root.querySelector('#speed');
@@ -53,7 +50,12 @@ export function createControls(root, store, { onServe, onAim } = {}) {
     const busy = state.phase === 'serve' || state.phase === 'demo';
     slider.disabled = busy;
     serveBtn.disabled = busy;
-    serveBtn.textContent = SERVE_LABEL[state.phase];
+    serveBtn.textContent = t({
+      aim: 'serve',
+      serve: 'serving',
+      demo: 'watch',
+      done: 'serveAgain',
+    }[state.phase] ?? 'serve');
     slider.dataset.verdict = state.phase === 'done' ? state.result.verdict : '';
   });
 

@@ -23,6 +23,7 @@ import { trajectory, flightTime } from '../core/physics.js';
 import { Verdict, evaluate } from '../core/evaluator.js';
 import { readPalette, onSchemeChange } from './theme.js';
 import { createPlayer, SERVE_TIMELINE } from './player.js';
+import { createLocalizer, translateCoachMessage } from '../i18n.js?v=20260823-1';
 
 // World window in metres. yMin is negative to leave room for the ground labels.
 // x and y share one scale, so the parabola keeps its true shape.
@@ -35,7 +36,10 @@ const DEMO_SETTLE = 0.3; // the tutor's serves follow each other more quickly
 const MARKER_R = 11; // radius of a lettered marker, css px
 const MARKER_HIT = 20; // how close a click has to be
 
-export function createScene(canvas, store, { onLanded, onMarkerClick } = {}) {
+export function createScene(canvas, store, { onLanded, onMarkerClick, localizer } = {}) {
+  const resolvedLocalizer = localizer ?? createLocalizer('en');
+  const { language } = resolvedLocalizer;
+  const t = resolvedLocalizer.t.bind(resolvedLocalizer);
   const ctx = canvas.getContext('2d');
   const { problem } = store.get();
   const player = createPlayer(problem);
@@ -127,8 +131,8 @@ export function createScene(canvas, store, { onLanded, onMarkerClick } = {}) {
     ctx.lineTo(cssW, gy);
     ctx.stroke();
 
-    tick(0, 'serve line · 0 m');
-    tick(problem.courtEnd, `far baseline · ${problem.courtEnd} m`);
+    tick(0, t('serveLine'));
+    tick(problem.courtEnd, t('farBaseline', { value: problem.courtEnd }));
 
     function tick(x, label) {
       ctx.strokeStyle = palette.groundLine;
@@ -175,7 +179,7 @@ export function createScene(canvas, store, { onLanded, onMarkerClick } = {}) {
     ctx.fillStyle = palette.ink;
     ctx.font = font(12);
     ctx.textAlign = 'center';
-    ctx.fillText(`net ${problem.netHeight} m`, x, top - 12);
+    ctx.fillText(t('net', { value: problem.netHeight }), x, top - 12);
   }
 
   /** Dashed marker at the contact height, so the 3.2 m is visible while aiming. */
@@ -194,7 +198,7 @@ export function createScene(canvas, store, { onLanded, onMarkerClick } = {}) {
     ctx.fillStyle = palette.muted;
     ctx.font = font(12);
     ctx.textAlign = 'left';
-    ctx.fillText(`contact ${problem.hitHeight} m`, toX(-2.1), y - 7);
+    ctx.fillText(t('contact', { value: problem.hitHeight }), toX(-2.1), y - 7);
   }
 
   function drawPath(pts, color, width, dashed = false) {
@@ -257,7 +261,7 @@ export function createScene(canvas, store, { onLanded, onMarkerClick } = {}) {
       ctx.fillStyle = palette.bad;
       ctx.font = font(12);
       ctx.textAlign = 'left';
-      ctx.fillText('hits the net', x + 12, y + 4);
+      ctx.fillText(t('hitsNet'), x + 12, y + 4);
       return;
     }
 
@@ -366,7 +370,7 @@ export function createScene(canvas, store, { onLanded, onMarkerClick } = {}) {
         arrow(x2, y, 0);
         ctx.font = font(12);
         ctx.textAlign = 'center';
-        ctx.fillText(guide.label, (x1 + x2) / 2, y - 9);
+        ctx.fillText(translateCoachMessage(guide.label, language), (x1 + x2) / 2, y - 9);
         return;
       }
 
@@ -383,7 +387,7 @@ export function createScene(canvas, store, { onLanded, onMarkerClick } = {}) {
         arrow(x, y2, -Math.PI / 2);
         ctx.font = font(12);
         ctx.textAlign = 'left';
-        ctx.fillText(guide.label, x + 8, (y1 + y2) / 2 + 4);
+        ctx.fillText(translateCoachMessage(guide.label, language), x + 8, (y1 + y2) / 2 + 4);
       }
     });
     ctx.setLineDash([]);

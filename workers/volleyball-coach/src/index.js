@@ -2,6 +2,7 @@
 
 import {
   buildProviderPayload,
+  hasChineseScript,
   hasNonEnglishScript,
   normalizeCoachInput,
   parseProviderReply,
@@ -175,10 +176,16 @@ async function readProviderReply(response) {
  * @param {ReturnType<typeof normalizeCoachInput>} input
  * @param {ReturnType<typeof parseProviderReply>} parsed
  */
-function violatesEnglishOnly(input, parsed) {
-  return Boolean(
-    parsed && input.replyLanguage === 'English' && hasNonEnglishScript(parsed.reply),
-  );
+function violatesLanguageRequirement(input, parsed) {
+  if (!parsed) return false;
+  return input.replyLanguage === 'English'
+    ? hasNonEnglishScript(parsed.reply)
+    : !hasChineseScript(parsed.reply);
+}
+
+/** @param {ReturnType<typeof normalizeCoachInput>} input @param {string} english @param {string} simplifiedChinese */
+function languageNotice(input, english, simplifiedChinese) {
+  return input.replyLanguage === 'Simplified Chinese' ? simplifiedChinese : english;
 }
 
 /**
@@ -294,7 +301,7 @@ async function handleCoach(request, env, ctx) {
       'preset-only',
       null,
       null,
-      'DEEPSEEK_API_KEY is not configured.',
+      languageNotice(input, 'DEEPSEEK_API_KEY is not configured.', 'AI 教练尚未配置。'),
     );
   }
 
@@ -344,7 +351,7 @@ async function handleCoach(request, env, ctx) {
       'preset-fallback',
       null,
       null,
-      'AI provider is temporarily unavailable.',
+      languageNotice(input, 'AI provider is temporarily unavailable.', 'AI 服务暂时不可用。'),
     );
   }
 
@@ -366,7 +373,7 @@ async function handleCoach(request, env, ctx) {
       'preset-fallback',
       null,
       null,
-      'AI provider is temporarily unavailable.',
+      languageNotice(input, 'AI provider is temporarily unavailable.', 'AI 服务暂时不可用。'),
     );
   }
 
@@ -382,7 +389,7 @@ async function handleCoach(request, env, ctx) {
     );
   }
 
-  const firstLanguageViolation = violatesEnglishOnly(input, parsed);
+  const firstLanguageViolation = violatesLanguageRequirement(input, parsed);
   if (!parsed || parsed.finishReason === 'length' || firstLanguageViolation) {
     const retryReason = firstLanguageViolation
       ? 'wrong-language'
@@ -416,7 +423,7 @@ async function handleCoach(request, env, ctx) {
     }
   }
 
-  const finalLanguageViolation = violatesEnglishOnly(input, parsed);
+  const finalLanguageViolation = violatesLanguageRequirement(input, parsed);
   if (!parsed || parsed.finishReason === 'length' || finalLanguageViolation) {
     return coachResponse(
       input,
@@ -429,8 +436,12 @@ async function handleCoach(request, env, ctx) {
       null,
       null,
       finalLanguageViolation
-        ? 'AI did not return a valid English response.'
-        : 'AI did not return a complete response.',
+        ? input.replyLanguage === 'Simplified Chinese'
+          ? 'AI 未返回有效的简体中文回复。'
+          : 'AI did not return a valid English response.'
+        : input.replyLanguage === 'Simplified Chinese'
+          ? 'AI 未返回完整回复。'
+          : 'AI did not return a complete response.',
     );
   }
 

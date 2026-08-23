@@ -24,11 +24,16 @@ export const PROBLEMS = {
   'serve-basic': {
     id: 'serve-basic',
     title: 'Volleyball Serve',
+    titleZh: '排球发球',
     prompt:
       'A player jumps at the baseline and hits the ball horizontally from a ' +
       'height of 3.2 m. The net is 2.2 m high and 9 m away; the far baseline ' +
       'is 18 m away. Ignoring air resistance and taking g = 10 m/s², which ' +
       'launch speeds clear the net and still land in?',
+    promptZh:
+      '一名球员在底线处起跳，从 3.2 m 高处水平击球。球网高 2.2 m，' +
+      '距离击球点 9 m；对方底线距离 18 m。忽略空气阻力，取 g = 10 m/s²，' +
+      '哪些初速度既能越过球网，又能落在界内？',
     g: 10,
     hitHeight: 3.2,
     netHeight: 2.2,
@@ -46,8 +51,14 @@ export const PROBLEMS = {
 export const DEFAULT_PROBLEM_ID = 'serve-basic';
 
 /** Return a shallow copy so runtime code cannot mutate the config. */
-export function getProblem(id = DEFAULT_PROBLEM_ID) {
+export function getProblem(id = DEFAULT_PROBLEM_ID, language = 'en') {
   const p = PROBLEMS[id];
   if (!p) throw new Error(`Unknown problem id: ${id}`);
-  return { ...p, speed: { ...p.speed }, adjustable: { ...p.adjustable } };
+  return {
+    ...p,
+    title: language === 'zh-Hans' ? p.titleZh : p.title,
+    prompt: language === 'zh-Hans' ? p.promptZh : p.prompt,
+    speed: { ...p.speed },
+    adjustable: { ...p.adjustable },
+  };
 }

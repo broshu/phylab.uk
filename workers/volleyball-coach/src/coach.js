@@ -20,6 +20,7 @@ const VALID_LESSON_STEPS = new Set([
   'none',
 ]);
 const VALID_COMPLETED = new Set(['min', 'max']);
+const VALID_UI_LANGUAGES = new Set(['en', 'zh-Hans']);
 const POINT_B_QUESTION = /\bpoints?\s*b\b|\bb\s*point\b|b\s*点|选\s*b/i;
 const NON_ENGLISH_SCRIPT =
   /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Script=Cyrillic}\p{Script=Arabic}\p{Script=Hebrew}\p{Script=Devanagari}\p{Script=Thai}]/u;
@@ -61,6 +62,25 @@ export const PRESET_REPLIES = Object.freeze({
   unknown: presetSection(COACH_REPLY_PROMPT, 'unknown'),
 });
 
+/** Deterministic fallbacks must follow the same language rule as the lab UI. */
+export const SIMPLIFIED_CHINESE_PRESET_REPLIES = Object.freeze({
+  resume: '这与暂停的教练问题相关。请运用上面的思路，再从恢复的选项中选择最能完成下一步的一项。',
+  time:
+    '预设计算：到达球网的时间取决于速度，\\(t_{\\mathrm{net}}=9/v\\)。从 3.2 m 高处落地的总时间为\n' +
+    '\\[t_{\\mathrm{floor}}=\\sqrt{\\frac{2h}{g}}=\\sqrt{\\frac{2\\times3.2}{10}}=0.80\\,\\mathrm{s}.\\]\n' +
+    '先判断你需要的是到 A 点（球网顶端）的下落时间，还是到 C 点（地面）的完整下落时间。',
+  pointB:
+    '预设教练：B 在球网脚下的地面上。要到达 B，球必须在 9 m 内下落完整的 \\(3.2\\,\\mathrm{m}\\)，耗时完整的 \\(0.8\\,\\mathrm{s}\\)，所以该轨迹的速度只有 \\(9/0.8=11.25\\,\\mathrm{m/s}\\)——球会深深挂在网上，并不处于任何边界。边界点是合法与不合法恰好转换的位置：A 在球网顶端，C 在对方底线。',
+  net:
+    '预设教练：球到达球网前下落得太多。更大的水平速度会缩短到达球网的时间，所以我们研究最小速度边界：最慢的合法发球恰好通过哪个点？',
+  out:
+    '预设教练：从 3.2 m 高处到地面的总飞行时间固定为 0.80 s，所以更大的水平速度会让球飞得更远。我们研究最大速度边界：最快的合法发球恰好落在哪个点？',
+  in:
+    '预设教练：这次发球说明它的速度在合法区间内，但完整解释仍需要两个边界。继续推导尚未完成的边界：经过 A 点的最小速度边界，或经过 C 点的最大速度边界。',
+  unknown:
+    '预设教练：合法速度由两个边界确定。最小速度边界是恰好通过球网顶端 A 点的最慢合法发球；最大速度边界是恰好落在 C 点的最快合法发球。请继续推导尚未完成的那个边界。',
+});
+
 /** @param {unknown} value */
 function finiteNumber(value) {
   return typeof value === 'number' && Number.isFinite(value) ? value : null;
@@ -82,6 +102,11 @@ export function isEnglishQuestion(text) {
 /** @param {string} text */
 export function hasNonEnglishScript(text) {
   return NON_ENGLISH_SCRIPT.test(text);
+}
+
+/** @param {string} text */
+export function hasChineseScript(text) {
+  return /\p{Script=Han}/u.test(text);
 }
 
 /**
@@ -132,15 +157,20 @@ export function normalizeCoachInput(value) {
         .filter((item) => typeof item === 'string' && VALID_COMPLETED.has(item))
         .slice(0, 2)
     : [];
+  const uiLanguageText = cleanText(rawContext.uiLanguage, 16);
+  const uiLanguage = VALID_UI_LANGUAGES.has(uiLanguageText) ? uiLanguageText : 'en';
 
   return {
     requestType,
     question,
     sessionId,
-    replyLanguage: isEnglishQuestion(lastLearnerQuestion || question)
-      ? 'English'
-      : 'learner-language',
+    // The browser makes this conservative determination from its *primary*
+    // system-language tag.  Do not infer language from the learner's text:
+    // an English-system user may ask a question in Chinese and still expects
+    // the all-English lab experience.
+    replyLanguage: uiLanguage === 'zh-Hans' ? 'Simplified Chinese' : 'English',
     context: {
+      uiLanguage,
       phase: VALID_PHASES.has(phaseText) ? phaseText : 'unknown',
       verdict: VALID_VERDICTS.has(verdictText) ? verdictText : 'unknown',
       speed: finiteNumber(rawContext.speed),
@@ -174,7 +204,7 @@ export function buildMessages(input, history = [], strictEnglishRetry = false) {
   const languageRequirement =
     input.replyLanguage === 'English'
       ? 'English only. Every prose word must be English, even if saved history, recentCoach, or uiState contains another language.'
-      : 'Use the language of the current learner question.';
+      : 'Simplified Chinese only. Every prose word must be Simplified Chinese, even if saved history, recentCoach, or uiState contains another language.';
   const interactionInstruction =
     input.requestType === 'resume'
       ? 'resume-preset: The learner clicked "Got it — continue". Write a brief transition from the most recent learner question and AI answer to context.resumeTarget. Do not treat this interface event as a new learner question. Do not answer the suspended multiple-choice question; invite the learner to use the restored choices.'
@@ -182,7 +212,11 @@ export function buildMessages(input, history = [], strictEnglishRetry = false) {
   const user = `
 Required output language:
 ${languageRequirement}
-${strictEnglishRetry ? 'A previous draft violated the English-only rule. Rewrite the answer in English only.' : ''}
+${strictEnglishRetry
+  ? input.replyLanguage === 'English'
+    ? 'A previous draft violated the English-only rule. Rewrite the answer in English only.'
+    : 'A previous draft violated the Simplified-Chinese-only rule. Rewrite the answer in Simplified Chinese only.'
+  : ''}
 
 Interaction type:
 ${interactionInstruction}
@@ -232,40 +266,43 @@ export function buildProviderPayload(
 
 /** @param {ReturnType<typeof normalizeCoachInput>} input */
 export function presetReply(input) {
-  if (input.requestType === 'resume') return PRESET_REPLIES.resume;
+  const presets = input.replyLanguage === 'Simplified Chinese'
+    ? SIMPLIFIED_CHINESE_PRESET_REPLIES
+    : PRESET_REPLIES;
+  if (input.requestType === 'resume') return presets.resume;
 
   const normalizedQuestion = input.question.toLocaleLowerCase('zh-CN');
 
   // A question about the B marker has one deterministic answer, and it is the
   // same answer wherever the learner is in the lesson.
   if (POINT_B_QUESTION.test(input.question)) {
-    return PRESET_REPLIES.pointB;
+    return presets.pointB;
   }
   if (/时间|多久|time|秒|second|到网|落地/.test(normalizedQuestion)) {
-    return PRESET_REPLIES.time;
+    return presets.time;
   }
 
   const { context } = input;
   // A boundary already derived should never be reopened by a fallback reply.
   if (context.lessonFinished) {
-    return PRESET_REPLIES.in;
+    return presets.in;
   }
   if (context.lessonCompleted.includes('min') && !context.lessonCompleted.includes('max')) {
-    return PRESET_REPLIES.out;
+    return presets.out;
   }
   if (context.lessonCompleted.includes('max') && !context.lessonCompleted.includes('min')) {
-    return PRESET_REPLIES.net;
+    return presets.net;
   }
   if (context.verdict === 'net') {
-    return PRESET_REPLIES.net;
+    return presets.net;
   }
   if (context.verdict === 'out') {
-    return PRESET_REPLIES.out;
+    return presets.out;
   }
   if (context.verdict === 'in') {
-    return PRESET_REPLIES.in;
+    return presets.in;
   }
-  return PRESET_REPLIES.unknown;
+  return presets.unknown;
 }
 
 /** @param {unknown} value */

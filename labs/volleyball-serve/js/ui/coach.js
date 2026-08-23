@@ -10,10 +10,9 @@
  */
 import { opening, reaction } from '../services/coach-script.js?v=20260820-1';
 import { renderDelimitedMath, renderRichText } from './math.js?v=20260820-1';
+import { createLocalizer, translateCoachMessage } from '../i18n.js?v=20260823-1';
 
 const CANCELLED = Symbol('coach-cancelled');
-const CONTINUE_FALLBACK =
-  'That connects to the paused Coach question. Use the idea above, then choose the option that best completes the next step.';
 
 /**
  * @param {HTMLElement} root
@@ -26,20 +25,23 @@ const CONTINUE_FALLBACK =
  *   timing?: {message?: number}
  * }} deps
  */
-export function createCoach(root, store, { tutor, attempts, runtime, ai, timing } = {}) {
+export function createCoach(root, store, { tutor, attempts, runtime, ai, timing, localizer } = {}) {
+  const resolvedLocalizer = localizer ?? createLocalizer('en');
+  const { language } = resolvedLocalizer;
+  const t = resolvedLocalizer.t.bind(resolvedLocalizer);
   const messagePause = timing?.message ?? 700;
   let token = 0; // bumped whenever a script is abandoned
 
   root.innerHTML = `
-    <h2>Coach</h2>
+    <h2>${t('coach')}</h2>
     <div class="coach-log" id="coachLog" aria-live="polite"></div>
     <div class="coach-options" id="coachOptions"></div>
     <div class="coach-celebration" id="coachCelebration" aria-live="polite" hidden></div>
-    <section class="coach-ai" aria-label="AI Coach">
+    <section class="coach-ai" aria-label="${t('aiCoach')}">
       <p class="coach-ai-status" id="coachAiStatus" aria-live="polite"></p>
       <div class="coach-ai-composer">
-        <textarea id="coachAiQuestion" rows="1" maxlength="600" aria-label="Question for AI Coach" placeholder="Ask about what happened…"></textarea>
-        <button id="coachAiSend" type="button">Ask</button>
+        <textarea id="coachAiQuestion" rows="1" maxlength="600" aria-label="${t('aiQuestion')}" placeholder="${t('askPlaceholder')}"></textarea>
+        <button id="coachAiSend" type="button">${t('ask')}</button>
       </div>
     </section>
   `;
@@ -103,23 +105,48 @@ export function createCoach(root, store, { tutor, attempts, runtime, ai, timing 
     return text?.fallback ?? text?.text ?? text?.tex ?? '';
   }
 
+  function localizedMessage(text) {
+    if (typeof text === 'string') return translateCoachMessage(text, language);
+    if (Array.isArray(text?.parts)) {
+      return {
+        ...text,
+        parts: text.parts.map((part) =>
+          typeof part === 'string'
+            ? translateCoachMessage(part, language)
+            : {
+              ...part,
+              ...(part?.text ? { text: translateCoachMessage(part.text, language) } : {}),
+              ...(part?.fallback ? { fallback: translateCoachMessage(part.fallback, language) } : {}),
+            },
+        ),
+      };
+    }
+    if (!text || typeof text !== 'object') return text;
+    return {
+      ...text,
+      ...(text.text ? { text: translateCoachMessage(text.text, language) } : {}),
+      ...(text.fallback ? { fallback: translateCoachMessage(text.fallback, language) } : {}),
+    };
+  }
+
   function bubble(text, who = 'coach') {
+    const localized = who === 'coach' ? localizedMessage(text) : text;
     const p = document.createElement('p');
     p.className = `msg msg-${who}`;
-    if (typeof text === 'string') {
-      p.textContent = text;
-    } else if (Array.isArray(text?.parts)) {
-      renderRichText(p, text.parts);
+    if (typeof localized === 'string') {
+      p.textContent = localized;
+    } else if (Array.isArray(localized?.parts)) {
+      renderRichText(p, localized.parts);
     } else {
-      const source = text?.fallback ?? text?.text ?? text?.tex ?? '';
+      const source = localized?.fallback ?? localized?.text ?? localized?.tex ?? '';
       p.textContent = source;
-      if (text?.tex) {
+      if (localized?.tex) {
         renderRichText(p, [
-          { type: 'text', text: text.text ?? '' },
+          { type: 'text', text: localized.text ?? '' },
           {
             type: 'math',
-            tex: text.tex,
-            fallback: text.fallback ?? source,
+            tex: localized.tex,
+            fallback: localized.fallback ?? source,
             display: true,
           },
         ]);
@@ -127,17 +154,17 @@ export function createCoach(root, store, { tutor, attempts, runtime, ai, timing 
     }
     log.appendChild(p);
     log.scrollTop = log.scrollHeight;
-    if (who === 'coach') rememberCoach(text);
+    if (who === 'coach') rememberCoach(localized);
     return p;
   }
 
   function renderAiReply(reply, mode) {
     const labels = {
-      'ai-assisted': 'AI + preset',
-      'preset-fallback': 'Preset fallback',
-      'preset-only': 'Preset only',
+      'ai-assisted': t('aiAssisted'),
+      'preset-fallback': t('presetFallback'),
+      'preset-only': t('presetOnly'),
     };
-    const label = labels[mode] || 'AI Coach';
+    const label = labels[mode] || t('aiCoach');
     const p = document.createElement('p');
     p.className = 'msg msg-coach msg-ai';
     p.dataset.label = label;
@@ -168,6 +195,7 @@ export function createCoach(root, store, { tutor, attempts, runtime, ai, timing 
     }[phase] || 'The current interface event is unknown.';
 
     return {
+      uiLanguage: language,
       phase,
       verdict: hasStudentResult ? result.verdict || 'unknown' : 'unknown',
       speed,
@@ -231,7 +259,7 @@ export function createCoach(root, store, { tutor, attempts, runtime, ai, timing 
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'ghost-button option coach-ai-continue';
-    button.textContent = 'Got it — continue';
+    button.textContent = t('gotItContinue');
     button.addEventListener('click', () => {
       if (!isCurrentAiPause(pause)) return;
       void continuePresetPath(pause);
@@ -252,7 +280,7 @@ export function createCoach(root, store, { tutor, attempts, runtime, ai, timing 
     if (!isCurrentAiPause(pause)) return;
 
     if (!ai?.ask) {
-      renderAiReply(CONTINUE_FALLBACK, 'preset-fallback');
+      renderAiReply(t('continueFallback'), 'preset-fallback');
       restorePresetOptions(pause);
       return;
     }
@@ -260,7 +288,7 @@ export function createCoach(root, store, { tutor, attempts, runtime, ai, timing 
     aiSend.disabled = true;
     aiQuestion.disabled = true;
     options.innerHTML = '';
-    aiStatus.textContent = 'AI Coach is thinking…';
+    aiStatus.textContent = t('aiThinking');
 
     const exchange = lastAiExchange;
     try {
@@ -280,7 +308,7 @@ export function createCoach(root, store, { tutor, attempts, runtime, ai, timing 
       aiStatus.textContent = response.notice || '';
     } catch {
       if (!isCurrentAiPause(pause)) return;
-      renderAiReply(CONTINUE_FALLBACK, 'preset-fallback');
+      renderAiReply(t('continueFallback'), 'preset-fallback');
       aiStatus.textContent = '';
     } finally {
       restorePresetOptions(pause);
@@ -296,19 +324,19 @@ export function createCoach(root, store, { tutor, attempts, runtime, ai, timing 
   async function sendToAi() {
     const question = aiQuestion.value.trim();
     if (!question) {
-      aiStatus.textContent = 'Enter a question for Coach.';
+      aiStatus.textContent = t('enterQuestion');
       aiQuestion.focus?.();
       return;
     }
     if (!ai?.ask) {
-      aiStatus.textContent = 'AI Coach is not configured.';
+      aiStatus.textContent = t('notConfigured');
       return;
     }
 
     aiSend.disabled = true;
     aiQuestion.disabled = true;
     const pausedOptions = pausePresetOptions();
-    aiStatus.textContent = 'AI Coach is thinking…';
+    aiStatus.textContent = t('aiThinking');
     bubble(question, 'mine').className += ' msg-ai-question';
     aiQuestion.value = '';
     resizeAiQuestion();
@@ -323,9 +351,9 @@ export function createCoach(root, store, { tutor, attempts, runtime, ai, timing 
       lastAiExchange = { question, reply: response.reply };
       aiStatus.textContent = response.notice || '';
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'AI Coach request failed.';
+      const message = error instanceof Error ? error.message : t('requestFailed');
       renderAiReply(message, 'error');
-      aiStatus.textContent = 'The preset Coach above is still available.';
+      aiStatus.textContent = t('presetStillAvailable');
     } finally {
       if (pausedOptions) {
         showContinueButton(pausedOptions);
@@ -379,7 +407,7 @@ export function createCoach(root, store, { tutor, attempts, runtime, ai, timing 
             const btn = document.createElement('button');
             btn.type = 'button';
             btn.className = 'ghost-button option';
-            btn.textContent = choice.label;
+            btn.textContent = translateCoachMessage(choice.label, language);
             btn.addEventListener('click', () => pick(choice));
             options.appendChild(btn);
           });
@@ -418,7 +446,7 @@ export function createCoach(root, store, { tutor, attempts, runtime, ai, timing 
             const btn = document.createElement('button');
             btn.type = 'button';
             btn.className = 'ghost-button option multi-option';
-            btn.textContent = choice.label;
+            btn.textContent = translateCoachMessage(choice.label, language);
             const pressed = selected.has(choice.id);
             btn.dataset.selected = pressed ? 'true' : 'false';
             btn.setAttribute?.('aria-pressed', pressed ? 'true' : 'false');
@@ -481,9 +509,9 @@ export function createCoach(root, store, { tutor, attempts, runtime, ai, timing 
       },
 
       /** Show a small completion celebration without interrupting the log. */
-      celebrate(message = '🎉 Correct! 🎉') {
+      celebrate(message = t('correct')) {
         guard(mine);
-        celebration.textContent = message;
+        celebration.textContent = translateCoachMessage(message, language);
         celebration.hidden = false;
       },
 

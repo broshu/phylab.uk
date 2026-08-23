@@ -4,20 +4,17 @@
  * tutor.hint is async and stale responses are discarded, so a real model call
  * can be dropped in without touching this file.
  */
-const WAITING = {
-  aim: {
-    title: 'Ready to serve',
-    body: 'Pick a launch speed with the slider — watch the player wind up as it grows — then press Serve. The verdict appears once the ball lands.',
-  },
-  serve: {
-    title: 'Ball in the air…',
-    body: 'Watch where it crosses the net and where it lands.',
-  },
-};
+import { createLocalizer } from '../i18n.js?v=20260823-1';
 
-export function createFeedback(root, store, { tutor, attempts }) {
+export function createFeedback(root, store, { tutor, attempts, localizer } = {}) {
+  const resolvedLocalizer = localizer ?? createLocalizer('en');
+  const t = resolvedLocalizer.t.bind(resolvedLocalizer);
+  const WAITING = {
+    aim: { title: t('readyToServe'), body: t('readyToServeBody') },
+    serve: { title: t('ballInAir'), body: t('ballInAirBody') },
+  };
   root.innerHTML = `
-    <div class="section-title"><h2>Coaching</h2><span id="progress" class="progress"></span></div>
+    <div class="section-title"><h2>${t('coaching')}</h2><span id="progress" class="progress"></span></div>
     <p id="hintTitle" class="hint-title"></p>
     <p id="hintBody" class="hint-body"></p>
     <p id="hintScaffold" class="hint-scaffold" hidden></p>
@@ -62,9 +59,12 @@ export function createFeedback(root, store, { tutor, attempts }) {
   function renderProgress() {
     const s = attempts.summary();
     progressEl.textContent = s.total
-      ? `${s.total} served · ${s.successes} good` +
-        (s.solved ? ` · first on serve ${s.firstSuccessAt}` : '')
-      : 'Every serve is logged.';
+      ? t('serveProgress', {
+        total: s.total,
+        successes: s.successes,
+        first: s.solved ? t('firstSuccess', { attempt: s.firstSuccessAt }) : '',
+      })
+      : t('everyServeLogged');
   }
 
   store.subscribe(update);

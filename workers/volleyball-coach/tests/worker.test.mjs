@@ -291,7 +291,7 @@ test('an allowed student origin can use AI without a test token', async () => {
         body: JSON.stringify({
           question: '到球网的时间怎么算？',
           sessionId: 'public-student-session',
-          context: { phase: 'done', verdict: 'in', speed: 21 },
+          context: { uiLanguage: 'zh-Hans', phase: 'done', verdict: 'in', speed: 21 },
         }),
       }),
       { ...env, DEEPSEEK_API_KEY: 'not-a-real-key' },

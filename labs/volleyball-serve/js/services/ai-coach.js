@@ -13,6 +13,22 @@ export const AI_COACH_RECORDS_ENDPOINT = new URL('/result', AI_COACH_ENDPOINT).h
 
 const SESSION_KEY = 'phylab-volleyball-ai-session';
 const VALID_SESSION_ID = /^[A-Za-z0-9_-]{8,80}$/;
+const ERROR_COPY = {
+  en: {
+    emptyQuestion: 'Enter a question for Coach.',
+    unavailable: 'AI Coach is unavailable in this browser.',
+    unreadable: 'AI Coach returned an unreadable response.',
+    failed: 'AI Coach request failed.',
+    emptyReply: 'AI Coach returned an empty response.',
+  },
+  'zh-Hans': {
+    emptyQuestion: '请先向教练输入问题。',
+    unavailable: '此浏览器无法使用 AI 教练。',
+    unreadable: 'AI 教练返回了无法读取的回复。',
+    failed: 'AI 教练请求失败。',
+    emptyReply: 'AI 教练返回了空回复。',
+  },
+};
 
 function fallbackSessionId() {
   return `session-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
@@ -39,7 +55,8 @@ function safeWrite(storage, key, value) {
  *   endpoint?: string,
  *   fetchImpl?: typeof fetch,
  *   storage?: Storage,
- *   idFactory?: () => string
+ *   idFactory?: () => string,
+ *   language?: 'en' | 'zh-Hans'
  * }} [options]
  */
 export function createAiCoachClient({
@@ -47,7 +64,9 @@ export function createAiCoachClient({
   fetchImpl = globalThis.fetch?.bind(globalThis),
   storage = globalThis.sessionStorage,
   idFactory = () => globalThis.crypto?.randomUUID?.() || fallbackSessionId(),
+  language = 'en',
 } = {}) {
+  const errors = ERROR_COPY[language === 'zh-Hans' ? 'zh-Hans' : 'en'];
   const savedSessionId = safeRead(storage, SESSION_KEY);
   let sessionId = savedSessionId;
   if (!VALID_SESSION_ID.test(sessionId)) {
@@ -68,9 +87,9 @@ export function createAiCoachClient({
      */
     async ask({ requestType = 'question', question, context }) {
       const cleanQuestion = String(question || '').trim();
-      if (!cleanQuestion) throw new Error('Enter a question for Coach.');
+      if (!cleanQuestion) throw new Error(errors.emptyQuestion);
       if (typeof fetchImpl !== 'function') {
-        throw new Error('AI Coach is unavailable in this browser.');
+        throw new Error(errors.unavailable);
       }
 
       const response = await fetchImpl(endpoint, {
@@ -90,15 +109,15 @@ export function createAiCoachClient({
       try {
         data = await response.json();
       } catch {
-        throw new Error('AI Coach returned an unreadable response.');
+        throw new Error(errors.unreadable);
       }
       if (!response.ok) {
         throw new Error(
-          typeof data?.error === 'string' ? data.error : 'AI Coach request failed.',
+          typeof data?.error === 'string' ? data.error : errors.failed,
         );
       }
       if (typeof data?.reply !== 'string' || !data.reply.trim()) {
-        throw new Error('AI Coach returned an empty response.');
+        throw new Error(errors.emptyReply);
       }
 
       return {

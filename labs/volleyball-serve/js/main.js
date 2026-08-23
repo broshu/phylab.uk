@@ -10,7 +10,8 @@
  * tested but deliberately not mounted — the page is kept to task, speed and
  * animation. Mount them by adding one line each, as below.
  */
-import { getProblem, DEFAULT_PROBLEM_ID } from './config/problem.js';
+import { getProblem, DEFAULT_PROBLEM_ID } from './config/problem.js?v=20260823-1';
+import { createLocalizer } from './i18n.js?v=20260823-1';
 import { createStore } from './core/state.js';
 import { evaluate, Verdict } from './core/evaluator.js';
 import { createTutor } from './services/tutor.js';
@@ -18,15 +19,18 @@ import { createAttemptLog } from './services/attempts.js';
 import {
   AI_COACH_RECORDS_ENDPOINT,
   createAiCoachClient,
-} from './services/ai-coach.js?v=20260821-1';
-import { createScene } from './ui/scene.js';
-import { createControls } from './ui/controls.js';
-import { createCoach } from './ui/coach.js?v=20260820-1';
+} from './services/ai-coach.js?v=20260823-1';
+import { createScene } from './ui/scene.js?v=20260823-1';
+import { createControls } from './ui/controls.js?v=20260823-1';
+import { createCoach } from './ui/coach.js?v=20260823-1';
 
-const problem = getProblem(DEFAULT_PROBLEM_ID);
+const localizer = createLocalizer();
+const { language } = localizer;
+const t = localizer.t.bind(localizer);
+const problem = getProblem(DEFAULT_PROBLEM_ID, language);
 const tutor = createTutor();
 const attempts = createAttemptLog({ problemId: problem.id });
-const aiCoach = createAiCoachClient();
+const aiCoach = createAiCoachClient({ language });
 
 const store = createStore({
   problem,
@@ -54,11 +58,21 @@ store.set = (patch) => {
 };
 
 const VERDICT_LABEL = {
-  [Verdict.IN]: 'In',
-  [Verdict.NET]: 'Into the net',
-  [Verdict.OUT]: 'Out — long',
+  [Verdict.IN]: t('in'),
+  [Verdict.NET]: t('intoNet'),
+  [Verdict.OUT]: t('outLong'),
 };
 
+document.documentElement.lang = language === 'zh-Hans' ? 'zh-CN' : 'en';
+document.title = t('pageTitle');
+document.querySelector('#pageTitle').textContent = t('pageTitle');
+document.querySelector('#pageDescription').content = t('pageDescription');
+document.querySelector('#resultLabel').textContent = t('result');
+document.querySelector('#taskHeading').textContent = t('task');
+document.querySelector('#resultShortcut').setAttribute?.('aria-label', t('resultRecords'));
+document.querySelector('#resultShortcut').title = t('internalRecords');
+document.querySelector('#homeButton').setAttribute?.('aria-label', t('returnToLabs'));
+document.querySelector('#homeButton').title = t('labs');
 document.querySelector('#taskPrompt').textContent = problem.prompt;
 
 document.querySelector('#resultShortcut').addEventListener('click', () => {
@@ -75,6 +89,7 @@ function settleDemo(result) {
 }
 
 const scene = createScene(document.querySelector('#stage'), store, {
+  localizer,
   onLanded: (result, { demo } = {}) => {
     if (demo) {
       settleDemo(result);
@@ -125,9 +140,11 @@ const coach = createCoach(document.querySelector('#coach'), store, {
   attempts,
   runtime,
   ai: aiCoach,
+  localizer,
 });
 
 createControls(document.querySelector('#controls'), store, {
+  localizer,
   onServe: () => {
     coach.interrupt(); // the student is taking over from whatever was being said
     studentSpeed = store.get().v;
