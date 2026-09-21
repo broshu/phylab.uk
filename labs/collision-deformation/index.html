@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Deformation in Collisions</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <h1>Deformation in Collisions</h1>
+      <p class="lede">A ball hits a thin plate clamped at both ends. The particles in the plate interact through the molecular force curve F(r), so the rebound, the bending and the breaking are all computed step by step. Nothing is pre-animated.</p>
+    </div>
+    <a class="home-button" href="/labs/" aria-label="Return to Labs" title="Labs"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9.5 21v-6h5v6"/></svg></a>
+  </header>
+
+  <main class="app">
+    <section class="panel controls-panel">
+      <div class="mode-tabs" role="group" aria-label="Material">
+        <button class="mode-button active" id="metalMode" type="button" data-material="metal">Metal<small>ductile · re-bonds</small></button>
+        <button class="mode-button" id="glassMode" type="button" data-material="glass">Glass<small>brittle · bonds stay broken</small></button>
+      </div>
+
+      <div class="control-block">
+        <div class="block-heading">
+          <h2>Impact</h2>
+          <span class="status-pill neutral" id="statusPill">Ready</span>
+        </div>
+        <div class="preset-row" role="group" aria-label="Quick demos">
+          <button class="preset-button" type="button" data-speed="0.08">Light<small>elastic</small></button>
+          <button class="preset-button" type="button" data-speed="0.19">Medium<small>metal bends · glass cracks</small></button>
+          <button class="preset-button" type="button" data-speed="0.26">Hard<small>both break</small></button>
+        </div>
+        <label class="slider-row">
+          <span>Impact speed</span>
+          <input id="speedInput" type="range" min="0.04" max="0.32" step="0.01" value="0.08">
+          <strong id="speedValue">4.0</strong>
+        </label>
+        <div class="button-row">
+          <button class="primary-button" id="launchButton" type="button">Launch</button>
+          <button class="secondary-button" id="resetButton" type="button">Reset</button>
+        </div>
+      </div>
+
+      <div class="control-block">
+        <div class="block-heading">
+          <h2>Observation</h2>
+          <span class="status-pill neutral" id="timeScaleText">Normal speed</span>
+        </div>
+        <label class="slider-row">
+          <span>Playback</span>
+          <input id="timeScale" type="range" min="0" max="3" step="1" value="2">
+          <strong id="timeValue">×1</strong>
+        </label>
+        <button class="secondary-button" id="pauseButton" type="button">Pause</button>
+        <label class="check-row"><input id="showBonds" type="checkbox" checked><span>Show bonds between particles</span></label>
+        <label class="check-row"><input id="showBroken" type="checkbox" checked><span>Mark broken bonds</span></label>
+        <p class="hint-text">Keys: <kbd>Space</kbd> launch / pause, <kbd>R</kbd> reset, <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> presets, <kbd>M</kbd> switch material</p>
+      </div>
+
+      <div class="metrics">
+        <div class="metric">
+          <span>Ball kinetic energy (vs. before impact)</span>
+          <strong id="keMetric">100%</strong>
+        </div>
+        <div class="metric">
+          <span>Original bonds broken</span>
+          <strong id="brokenMetric">0</strong>
+        </div>
+        <div class="metric">
+          <span>New bonds formed (new neighbours)</span>
+          <strong id="formedMetric">0</strong>
+        </div>
+        <div class="metric verdict">
+          <span>Conclusion</span>
+          <strong id="verdictMetric">Choose a material and an impact speed, then launch.</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="stage-panel">
+      <div class="stage-header">
+        <div>
+          <h2 id="stageTitle">Microscopic view · metal plate</h2>
+          <p id="stageSubtitle">Each dot is one particle (an atom or molecule). Lines show the interaction between neighbouring particles.</p>
+        </div>
+        <div class="legend">
+          <span><i class="legend-line compress"></i>Compressed</span>
+          <span><i class="legend-line stretch"></i>Stretched</span>
+          <span><i class="legend-line danger"></i><em>Beyond r<sub>m</sub></em></span>
+          <span><i class="legend-line newbond"></i>New bond</span>
+          <span><i class="legend-line broken"></i>Broken</span>
+          <span><i class="legend-dot clamp"></i>Clamped</span>
+        </div>
+      </div>
+      <canvas id="latticeCanvas" aria-label="Particles in the plate and the ball"></canvas>
+      <div class="readout-strip">
+        <span id="timeReadout">t = 0</span>
+        <span id="narrative">Press Launch or the space bar to start.</span>
+      </div>
+    </section>
+
+    <section class="panel graphs-panel">
+      <div class="graph-card">
+        <div class="stage-header">
+          <div>
+            <h2>Molecular force F–r</h2>
+            <p>Each dot is one pair of neighbouring particles: its current separation and force. F &gt; 0 is repulsion, F &lt; 0 is attraction.</p>
+          </div>
+        </div>
+        <canvas id="forceCanvas" aria-label="Molecular force against separation"></canvas>
+      </div>
+      <div class="graph-card">
+        <div class="stage-header">
+          <div>
+            <h2>Where the energy goes</h2>
+            <p>100% = the ball's kinetic energy before impact.</p>
+          </div>
+        </div>
+        <canvas id="energyCanvas" aria-label="Energy against time"></canvas>
+      </div>
+    </section>
+
+    <section class="panel explanation-panel">
+      <h2>Key Ideas</h2>
+      <div class="concept-grid">
+        <div>
+          <h3><span class="tag elastic">1</span>Elastic deformation</h3>
+          <p>Particles move only slightly from the equilibrium spacing r<sub>0</sub> and keep the same neighbours. Where the plate is compressed the force is repulsive; where it is stretched the force is attractive. Both point back towards r<sub>0</sub>. Near r<sub>0</sub>, F is roughly proportional to Δr, which is Hooke's law at the particle level. Remove the load and the plate recovers: kinetic energy → molecular potential energy → kinetic energy, a nearly elastic collision.</p>
+        </div>
+        <div>
+          <h3><span class="tag plastic">2</span>Plastic deformation</h3>
+          <p>With a larger force, a whole row of particles slides past by one spacing and settles into new equilibrium positions with new neighbours (the green bonds). At every moment some bonds still hold, so the plate does not crack. It cannot go back, so it stays bent, and part of the kinetic energy becomes random vibration of the particles (internal energy). The collision is inelastic.</p>
+        </div>
+        <div>
+          <h3><span class="tag fracture">3</span>Fracture</h3>
+          <p>Somewhere a spacing is pulled past r<sub>m</sub>, where the attraction is greatest. Beyond r<sub>m</sub> the attraction gets weaker as the particles separate, so once the load exceeds the maximum attraction there is no equilibrium left and the gap keeps opening. The crack starts on the bottom surface, which is the stretched side: fracture means pulling apart, not crushing.</p>
+        </div>
+      </div>
+      <div class="concept-grid two">
+        <div>
+          <h3>Metal and glass</h3>
+          <p>Both materials use the same F–r curve. The only difference: in the metal, any two particles that come close attract, so particles can re-bond with new neighbours and the metal can slip and bend. In the glass, a broken bond never re-forms, so there is no plastic stage; it goes straight from elastic deformation to fracture.</p>
+        </div>
+        <div>
+          <h3>About the model</h3>
+          <p>A 2D teaching model of about 370 particles. The F–r curve has the textbook shape; the numbers are illustrative. The ball is rigid, and the particles start at rest (thermal motion is ignored). Real materials contain defects and usually break there first, at forces far below this ideal value.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/physics.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
