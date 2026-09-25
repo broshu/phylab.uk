@@ -59,6 +59,14 @@
     color:#fff; background:var(--accent); padding:2px 8px; border-radius:999px; }
   .rel { position:relative; }
 
+
+  /* paper figure strip: 3 square cells */
+  .figs { display:grid; grid-template-columns:repeat(3,1fr); gap:2px; background:var(--line); border-bottom:1px solid var(--line); }
+  .figs img { width:100%; aspect-ratio:1/1; object-fit:cover; object-position:center; display:block; background:#fff; border:0; }
+  .figs img.wide { grid-column:span 2; aspect-ratio:auto; height:100%; object-position:center bottom; }
+  .paper .t { padding:12px 14px 13px; }
+  .paper h3 { font-size:1rem; line-height:1.35; }
+  .figs img.chart { object-fit:contain; padding:6px; background:#fff; }
   .lesson img { aspect-ratio:16/9; object-fit:cover; object-position:center; }
   .lesson .t { padding:9px 12px 11px; }
   .lesson h3 { font-size:.84rem; font-weight:500; }
@@ -86,15 +94,15 @@
       <div class="head"><h2 class="serif">Research</h2><a href="/research/">All papers →</a></div>
       <div class="grid g3">
         <a class="tile paper" href="https://doi.org/10.1088/1361-6552/ae92c8" target="_blank" rel="noopener">
-          <img src="/research/No_Left-Hander_Left_Behind/thermal_left.jpeg" alt="" loading="lazy">
+          <div class="figs"><img src="/research/No_Left-Hander_Left_Behind/thermal_left.jpeg" alt="" loading="lazy"><img src="/research/No_Left-Hander_Left_Behind/deviation_raincloud.png" class="chart" alt="" loading="lazy"><img src="/research/No_Left-Hander_Left_Behind/operate_time_boxplot.png" class="chart" alt="" loading="lazy"></div>
           <div class="t"><h3>No Left-Hander Left Behind: Finding the Right Way in the Physics Laboratory</h3><div class="v"><span class="pub">Physics Education · 2026</span></div></div>
         </a>
         <a class="tile paper" href="/research/When_the_Pattern_Comes_Too_Easily.pdf">
-          <img src="/research/When_the_Pattern_Comes_Too_Easily/white-light.jpeg" alt="" loading="lazy">
+          <div class="figs"><img src="/research/When_the_Pattern_Comes_Too_Easily/single-slit-student-built-optical-path.jpeg" alt="" loading="lazy"><img src="/research/When_the_Pattern_Comes_Too_Easily/filtered.jpeg" alt="" loading="lazy"><img src="/research/When_the_Pattern_Comes_Too_Easily/white-light.jpeg" alt="" loading="lazy"></div>
           <div class="t"><h3>When the Pattern Comes Too Easily: What an AI Simulation Takes Away in the Optics Lab</h3><div class="v">Manuscript</div></div>
         </a>
         <a class="tile paper" href="/research/Letting_Time_Lie_Down.pdf">
-          <img src="/research/Letting_Time_Lie_Down/analog_apparatus.png" alt="" loading="lazy">
+          <div class="figs"><img src="/research/Letting_Time_Lie_Down/analog_apparatus.png" alt="" loading="lazy"><img src="/research/Letting_Time_Lie_Down/k_400g.png" class="wide" alt="" loading="lazy"></div>
           <div class="t"><h3>Letting Time Lie Down: Visualizing and Quantifying Simple Harmonic Motion</h3><div class="v">Manuscript</div></div>
         </a>
       </div>
