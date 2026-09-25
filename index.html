@@ -55,10 +55,8 @@
   .arrows button:hover:not(:disabled) { border-color:var(--accent); }
   .arrows button svg { display:block; }
   .arrows button:disabled { opacity:.35; cursor:default; }
-  .figs.txt { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; aspect-ratio:3/1;
-    background:linear-gradient(135deg, color-mix(in srgb,var(--green) 12%,var(--card)), var(--card)); }
-  .figs.txt b { font-family:"Cormorant Garamond",serif; font-size:1.7rem; font-weight:600; color:var(--green); line-height:1; }
-  .figs.txt span { font-size:.7rem; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
+  .figs.ga { display:block; position:relative; aspect-ratio:3/1; background:#fff; }
+  .figs.ga img { position:absolute; inset:0; width:100%; height:100%; aspect-ratio:auto; object-fit:contain; padding:6px; }
   .g4 { grid-template-columns:repeat(4,1fr); }
   .g5 { grid-template-columns:repeat(6,1fr); gap:14px; }
 
@@ -94,7 +92,7 @@
   footer a { color:var(--green); }
 
   @media (max-width:1000px){ .g4{ grid-template-columns:repeat(3,1fr);} .g5{ grid-template-columns:repeat(3,1fr);} }
-  @media (max-width:760px){ .g3{ grid-template-columns:1fr;} .scroller{ grid-auto-columns:86%; gap:14px; } .arrows{ display:none; } .paper img{ aspect-ratio:16/9; } .g4,.g5{ grid-template-columns:repeat(2,1fr);} .head h2{ font-size:1.8rem; } }
+  @media (max-width:760px){ .g3{ grid-template-columns:1fr;} .scroller{ grid-auto-columns:86%; gap:14px; } .figs.ga{ aspect-ratio:16/3; } .arrows{ display:none; } .paper img{ aspect-ratio:16/9; } .g4,.g5{ grid-template-columns:repeat(2,1fr);} .head h2{ font-size:1.8rem; } }
   @media (max-width:460px){ .nav ul{ gap:14px; font-size:.84rem; } .grid{ gap:12px; } .tile h3{ font-size:.88rem; } }
 </style>
 </head>
@@ -121,11 +119,11 @@
           <div class="t"><h3>Letting Time Lie Down: Visualizing and Quantifying Simple Harmonic Motion</h3><div class="v">Manuscript</div></div>
         </a>
         <a class="tile paper" title="Conversion of P-Type SnO to N-Type SnO₂ Via Oxidation and the Band Offset and Rectification of an All-Tin Oxide P-N Junction Structure" href="https://www.sciencedirect.com/science/article/abs/pii/S016943322300973X" target="_blank" rel="noopener">
-          <div class="figs txt"><b>p-SnO / n-SnO₂</b><span>Materials physics</span></div>
+          <div class="figs ga"><img src="/research/materials/SnO_SnO2_graphical_abstract.jpg" alt="Graphical abstract: p-SnO/n-SnO₂ device, band alignment and I–V rectification" loading="lazy"></div>
           <div class="t"><h3>Conversion of P-Type SnO to N-Type SnO₂ Via Oxidation and the Band Offset and Rectification of an All-Tin Oxide P-N Junction Structure</h3><div class="v"><span class="pub">Applied Surface Science · 2023</span></div></div>
         </a>
         <a class="tile paper" title="Improving the p–type conductivity of Cu₂O thin films by Ni doping and their heterojunction with n–ZnO" href="https://www.sciencedirect.com/science/article/abs/pii/S0169433222006146" target="_blank" rel="noopener">
-          <div class="figs txt"><b>Ni:Cu₂O / n-ZnO</b><span>Materials physics</span></div>
+          <div class="figs ga"><img src="/research/materials/Cu2O_graphical_abstract.jpg" alt="Graphical abstract: hole concentration, mobility and resistivity of Ni-doped Cu₂O" loading="lazy"></div>
           <div class="t"><h3>Improving the p–type conductivity of Cu₂O thin films by Ni doping and their heterojunction with n–ZnO</h3><div class="v"><span class="pub">Applied Surface Science · 2022</span></div></div>
         </a>
       </div>
