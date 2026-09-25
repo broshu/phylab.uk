@@ -42,6 +42,22 @@
 
   .grid { display:grid; gap:20px; }
   .g3 { grid-template-columns:repeat(3,1fr); }
+  /* research: 3 cards per view, rest scroll sideways */
+  .scroller { display:grid; grid-auto-flow:column; grid-auto-columns:calc((100% - 40px) / 3); gap:20px;
+    overflow-x:auto; scroll-snap-type:x mandatory; scroll-padding:0 4px; scroll-behavior:smooth; scrollbar-width:none;
+    padding:4px 4px 22px; margin:-4px -4px -22px; }
+  .scroller::-webkit-scrollbar { display:none; }
+  .scroller > * { scroll-snap-align:start; }
+  .head-r { display:flex; align-items:center; gap:14px; }
+  .arrows { display:flex; gap:6px; }
+  .arrows button { width:32px; height:32px; border-radius:50%; border:1px solid var(--line); background:var(--card);
+    color:var(--green); font-size:1rem; line-height:1; cursor:pointer; display:grid; place-items:center; transition:border-color .2s,opacity .2s; }
+  .arrows button:hover:not(:disabled) { border-color:var(--accent); }
+  .arrows button:disabled { opacity:.35; cursor:default; }
+  .figs.txt { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; aspect-ratio:3/1;
+    background:linear-gradient(135deg, color-mix(in srgb,var(--green) 12%,var(--card)), var(--card)); }
+  .figs.txt b { font-family:"Cormorant Garamond",serif; font-size:1.7rem; font-weight:600; color:var(--green); line-height:1; }
+  .figs.txt span { font-size:.7rem; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
   .g4 { grid-template-columns:repeat(4,1fr); }
   .g5 { grid-template-columns:repeat(6,1fr); gap:14px; }
 
@@ -65,21 +81,19 @@
   .figs img { width:100%; aspect-ratio:1/1; object-fit:cover; object-position:center; display:block; background:#fff; border:0; }
   .figs img.wide { grid-column:span 2; aspect-ratio:auto; height:100%; object-position:center bottom; }
   .paper .t { padding:12px 14px 13px; }
-  .paper h3 { font-size:.92rem; line-height:1.35; }
+  .paper h3 { font-size:.92rem; line-height:1.35; display:-webkit-box; -webkit-line-clamp:2; line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
   .figs img.chart { object-fit:contain; padding:6px; background:#fff; }
   .lesson img { aspect-ratio:16/9; object-fit:cover; object-position:center; }
   .lesson .t { padding:9px 12px 11px; }
   .lesson h3 { font-size:.84rem; font-weight:500; }
 
-  .also { margin-top:14px; font-size:.84rem; color:var(--muted); }
-  .also a { color:var(--green); }
 
   footer { margin-top:64px; border-top:1px solid var(--line); padding:24px 0 40px; font-size:.84rem; color:var(--muted);
     display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; }
   footer a { color:var(--green); }
 
   @media (max-width:1000px){ .g4{ grid-template-columns:repeat(3,1fr);} .g5{ grid-template-columns:repeat(3,1fr);} }
-  @media (max-width:760px){ .g3{ grid-template-columns:1fr;} .paper img{ aspect-ratio:16/9; } .g4,.g5{ grid-template-columns:repeat(2,1fr);} .head h2{ font-size:1.8rem; } }
+  @media (max-width:760px){ .g3{ grid-template-columns:1fr;} .scroller{ grid-auto-columns:86%; gap:14px; } .arrows{ display:none; } .paper img{ aspect-ratio:16/9; } .g4,.g5{ grid-template-columns:repeat(2,1fr);} .head h2{ font-size:1.8rem; } }
   @media (max-width:460px){ .nav ul{ gap:14px; font-size:.84rem; } .grid{ gap:12px; } .tile h3{ font-size:.88rem; } }
 </style>
 </head>
@@ -91,22 +105,29 @@
     </nav>
 
     <section>
-      <div class="head"><h2 class="serif">Research</h2><a href="/research/">All papers →</a></div>
-      <div class="grid g3">
-        <a class="tile paper" href="https://doi.org/10.1088/1361-6552/ae92c8" target="_blank" rel="noopener">
+      <div class="head"><h2 class="serif">Research</h2><div class="head-r"><div class="arrows"><button type="button" data-dir="-1" aria-label="Previous papers">‹</button><button type="button" data-dir="1" aria-label="More papers">›</button></div><a href="/research/">All papers →</a></div></div>
+      <div class="scroller" id="papers">
+        <a class="tile paper" title="No Left-Hander Left Behind: Finding the Right Way in the Physics Laboratory" href="https://doi.org/10.1088/1361-6552/ae92c8" target="_blank" rel="noopener">
           <div class="figs"><img src="/research/No_Left-Hander_Left_Behind/thermal_left.jpeg" alt="" loading="lazy"><img src="/research/No_Left-Hander_Left_Behind/deviation_raincloud.png" class="chart" alt="" loading="lazy"><img src="/research/No_Left-Hander_Left_Behind/operate_time_boxplot.png" class="chart" alt="" loading="lazy"></div>
           <div class="t"><h3>No Left-Hander Left Behind: Finding the Right Way in the Physics Laboratory</h3><div class="v"><span class="pub">Physics Education · 2026</span></div></div>
         </a>
-        <a class="tile paper" href="/research/When_the_Pattern_Comes_Too_Easily.pdf">
+        <a class="tile paper" title="When the Pattern Comes Too Easily: What an AI Simulation Takes Away in the Optics Lab" href="/research/When_the_Pattern_Comes_Too_Easily.pdf">
           <div class="figs"><img src="/research/When_the_Pattern_Comes_Too_Easily/white-light.jpeg" alt="" loading="lazy"><img src="/research/When_the_Pattern_Comes_Too_Easily/single-slit-student-built-optical-path.jpeg" alt="" loading="lazy"><img src="/research/When_the_Pattern_Comes_Too_Easily/34.png" alt="" loading="lazy"></div>
           <div class="t"><h3>When the Pattern Comes Too Easily: What an AI Simulation Takes Away in the Optics Lab</h3><div class="v">Manuscript</div></div>
         </a>
-        <a class="tile paper" href="/research/Letting_Time_Lie_Down.pdf">
+        <a class="tile paper" title="Letting Time Lie Down: Visualizing and Quantifying Simple Harmonic Motion" href="/research/Letting_Time_Lie_Down.pdf">
           <div class="figs"><img src="/research/Letting_Time_Lie_Down/analog_apparatus.png" alt="" loading="lazy"><img src="/research/Letting_Time_Lie_Down/k_400g.png" class="wide" alt="" loading="lazy"></div>
           <div class="t"><h3>Letting Time Lie Down: Visualizing and Quantifying Simple Harmonic Motion</h3><div class="v">Manuscript</div></div>
         </a>
+        <a class="tile paper" title="Conversion of P-Type SnO to N-Type SnO₂ Via Oxidation and the Band Offset and Rectification of an All-Tin Oxide P-N Junction Structure" href="https://www.sciencedirect.com/science/article/abs/pii/S016943322300973X" target="_blank" rel="noopener">
+          <div class="figs txt"><b>p-SnO / n-SnO₂</b><span>Materials physics</span></div>
+          <div class="t"><h3>Conversion of P-Type SnO to N-Type SnO₂ Via Oxidation and the Band Offset and Rectification of an All-Tin Oxide P-N Junction Structure</h3><div class="v"><span class="pub">Applied Surface Science · 2023</span></div></div>
+        </a>
+        <a class="tile paper" title="Improving the p–type conductivity of Cu₂O thin films by Ni doping and their heterojunction with n–ZnO" href="https://www.sciencedirect.com/science/article/abs/pii/S0169433222006146" target="_blank" rel="noopener">
+          <div class="figs txt"><b>Ni:Cu₂O / n-ZnO</b><span>Materials physics</span></div>
+          <div class="t"><h3>Improving the p–type conductivity of Cu₂O thin films by Ni doping and their heterojunction with n–ZnO</h3><div class="v"><span class="pub">Applied Surface Science · 2022</span></div></div>
+        </a>
       </div>
-      <p class="also">Also: 2 materials physics papers in <em>Applied Surface Science</em> · <a href="/research/">see all</a></p>
     </section>
 
     <section>
@@ -140,5 +161,20 @@
       <a href="/contact/">Contact →</a>
     </footer>
   </div>
+<script>
+(function () {
+  var row = document.getElementById('papers');
+  var btns = document.querySelectorAll('.arrows button');
+  function step() { var c = row.firstElementChild; return c ? c.getBoundingClientRect().width + 20 : row.clientWidth; }
+  function update() {
+    btns[0].disabled = row.scrollLeft < 4;
+    btns[1].disabled = row.scrollLeft + row.clientWidth > row.scrollWidth - 4;
+  }
+  btns.forEach(function (b) { b.addEventListener('click', function () { row.scrollBy({ left: step() * +b.dataset.dir }); }); });
+  row.addEventListener('scroll', update, { passive: true });
+  window.addEventListener('resize', update);
+  update();
+})();
+</script>
 </body>
 </html>
