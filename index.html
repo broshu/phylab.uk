@@ -6,100 +6,131 @@
 <title>PhyLab</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
 <style>
   :root {
-    --ink:    #1c2b25;
-    --green:  #2f5d4f;
-    --green-2:#3f7060;
-    --accent: #8a9a5b;
-    --paper:  #f4f1e8;
-    --card:   #faf8f1;
-    --line:   #d8d2c0;
-    --muted:  #6b7269;
-    --shadow: 0 1px 2px rgba(28,43,37,.05), 0 12px 32px -16px rgba(28,43,37,.28);
+    --ink:#1c2b25; --green:#2f5d4f; --green-2:#3f7060; --accent:#8a9a5b;
+    --paper:#f4f1e8; --card:#faf8f1; --line:#d8d2c0; --muted:#6b7269;
+    --shadow:0 1px 2px rgba(28,43,37,.05),0 12px 32px -16px rgba(28,43,37,.28);
   }
+  @media (prefers-color-scheme: dark) {
+    :root { --ink:#e7e8ea; --green:#8fb8a8; --green-2:#a6c8ba; --accent:#a3b06e;
+      --paper:#14161a; --card:#1d2024; --line:#363a41; --muted:#9aa0a8;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 32px -16px rgba(0,0,0,.7); }
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:"Inter",sans-serif; background:var(--paper); color:var(--ink); -webkit-font-smoothing:antialiased; line-height:1.5; }
+  a { color:inherit; text-decoration:none; }
+  .serif { font-family:"Cormorant Garamond",serif; font-weight:600; }
+  .wrap { max-width:1180px; margin:0 auto; padding:0 24px; }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  /* compact header */
+  .nav { display:flex; justify-content:space-between; align-items:center; gap:16px; padding:26px 0 8px; flex-wrap:wrap; }
+  .brand { display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; }
+  .brand b { font-size:1.9rem; color:var(--green); }
+  .brand span { font-size:.88rem; color:var(--muted); }
+  .nav ul { list-style:none; display:flex; gap:24px; font-size:.92rem; color:var(--muted); }
+  .nav ul a:hover { color:var(--green); }
 
-  body {
-    font-family: "Inter", sans-serif;
-    background: var(--paper);
-    color: var(--ink);
-    min-height: 100vh;
-    display: grid;
-    place-items: center;
-    padding: 48px 24px;
-    -webkit-font-smoothing: antialiased;
-  }
+  /* sections */
+  section { padding-top:44px; }
+  .head { display:flex; justify-content:space-between; align-items:baseline; gap:16px; margin-bottom:18px;
+    padding-bottom:10px; border-bottom:1px solid var(--line); }
+  .head h2 { font-size:2.1rem; line-height:1; }
+  .head a { font-size:.88rem; color:var(--green); font-weight:500; white-space:nowrap; }
+  .head a:hover { text-decoration:underline; }
 
-  body::before {
-    content: "";
-    position: fixed; inset: 0;
-    background:
-      radial-gradient(circle at 20% 15%, rgba(47,93,79,.05), transparent 45%),
-      radial-gradient(circle at 85% 80%, rgba(138,154,91,.06), transparent 50%);
-    pointer-events: none; z-index: 0;
-  }
+  .grid { display:grid; gap:20px; }
+  .g3 { grid-template-columns:repeat(3,1fr); }
+  .g4 { grid-template-columns:repeat(4,1fr); }
+  .g5 { grid-template-columns:repeat(6,1fr); gap:14px; }
 
-  .wrap { position: relative; z-index: 1; width: 100%; max-width: 880px; }
+  .tile { background:var(--card); border:1px solid var(--line); border-radius:14px; overflow:hidden; box-shadow:var(--shadow);
+    display:flex; flex-direction:column; transition:transform .3s,border-color .3s; }
+  .tile:hover { transform:translateY(-4px); border-color:var(--accent); }
+  .tile img { width:100%; aspect-ratio:16/10; object-fit:cover; object-position:top; background:#fff; border-bottom:1px solid var(--line); display:block; }
+  .tile .t { padding:12px 14px 14px; }
+  .tile h3 { font-size:.98rem; font-weight:600; line-height:1.3; }
+  .tile .v { font-size:.78rem; color:var(--muted); margin-top:4px; }
+  .paper img { aspect-ratio:3/2; object-position:center; }
+  .paper h3 { font-size:1.05rem; }
+  .v .pub { color:var(--accent); font-weight:600; }
+  .badge { position:absolute; top:10px; right:10px; font-size:.66rem; font-weight:600; letter-spacing:.08em; text-transform:uppercase;
+    color:#fff; background:var(--accent); padding:2px 8px; border-radius:999px; }
+  .rel { position:relative; }
 
-  .page-title {
-    font-family: "Cormorant Garamond", serif;
-    font-size: clamp(2.2rem, 5vw, 3.4rem);
-    font-weight: 600; color: var(--ink);
-    text-align: center; letter-spacing: .5px;
-    margin-bottom: 40px;
-  }
+  .lesson img { aspect-ratio:16/9; object-fit:cover; object-position:center; }
+  .lesson .t { padding:9px 12px 11px; }
+  .lesson h3 { font-size:.84rem; font-weight:500; }
 
-  .blocks {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 24px;
-  }
+  .also { margin-top:14px; font-size:.84rem; color:var(--muted); }
+  .also a { color:var(--green); }
 
-  .block {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 230px;
-    padding: 32px;
-    text-decoration: none;
-    background: var(--card);
-    border: 1px solid var(--line);
-    border-radius: 16px;
-    box-shadow: var(--shadow);
-    color: var(--ink);
-    overflow: hidden;
-    transition: transform .3s ease, box-shadow .3s ease, border-color .3s;
-  }
-  .block:hover {
-    transform: translateY(-5px);
-    border-color: var(--accent);
-    box-shadow: 0 22px 48px -20px rgba(28,43,37,.45);
-  }
+  footer { margin-top:64px; border-top:1px solid var(--line); padding:24px 0 40px; font-size:.84rem; color:var(--muted);
+    display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+  footer a { color:var(--green); }
 
-  .block h2 {
-    font-family: "Cormorant Garamond", serif;
-    font-size: 2.6rem; font-weight: 600; color: var(--green);
-    letter-spacing: .5px; line-height: 1; text-align: center;
-  }
-  @media (max-width: 640px) {
-    .blocks { grid-template-columns: 1fr; gap: 18px; }
-    .block { min-height: 170px; }
-  }
+  @media (max-width:1000px){ .g4{ grid-template-columns:repeat(3,1fr);} .g5{ grid-template-columns:repeat(3,1fr);} }
+  @media (max-width:760px){ .g3{ grid-template-columns:1fr;} .paper img{ aspect-ratio:16/9; } .g4,.g5{ grid-template-columns:repeat(2,1fr);} .head h2{ font-size:1.8rem; } }
+  @media (max-width:460px){ .nav ul{ gap:14px; font-size:.84rem; } .grid{ gap:12px; } .tile h3{ font-size:.88rem; } }
 </style>
 </head>
 <body>
-  <main class="wrap">
-    <h1 class="page-title">Welcome to physics lab</h1>
-    <div class="blocks">
-      <a class="block" href="/labs/"><h2>Labs</h2></a>
-      <a class="block" href="/research/"><h2>Research</h2></a>
-      <a class="block" href="/resources/"><h2>Resources</h2></a>
-      <a class="block" href="/contact/"><h2>Contact</h2></a>
-    </div>
-  </main>
+  <div class="wrap">
+    <nav class="nav">
+      <a class="brand" href="/"><b class="serif">PhyLab</b><span>Xingyu Shu · Physics teacher</span></a>
+      <ul><li><a href="/research/">Research</a></li><li><a href="/labs/">Labs</a></li><li><a href="/resources/">Resources</a></li><li><a href="/contact/">Contact</a></li></ul>
+    </nav>
+
+    <section>
+      <div class="head"><h2 class="serif">Research</h2><a href="/research/">All papers →</a></div>
+      <div class="grid g3">
+        <a class="tile paper" href="https://doi.org/10.1088/1361-6552/ae92c8" target="_blank" rel="noopener">
+          <img src="/research/No_Left-Hander_Left_Behind/thermal_left.jpeg" alt="" loading="lazy">
+          <div class="t"><h3>No Left-Hander Left Behind: Finding the Right Way in the Physics Laboratory</h3><div class="v"><span class="pub">Physics Education · 2026</span></div></div>
+        </a>
+        <a class="tile paper" href="/research/When_the_Pattern_Comes_Too_Easily.pdf">
+          <img src="/research/When_the_Pattern_Comes_Too_Easily/white-light.jpeg" alt="" loading="lazy">
+          <div class="t"><h3>When the Pattern Comes Too Easily: What an AI Simulation Takes Away in the Optics Lab</h3><div class="v">Manuscript</div></div>
+        </a>
+        <a class="tile paper" href="/research/Letting_Time_Lie_Down.pdf">
+          <img src="/research/Letting_Time_Lie_Down/analog_apparatus.png" alt="" loading="lazy">
+          <div class="t"><h3>Letting Time Lie Down: Visualizing and Quantifying Simple Harmonic Motion</h3><div class="v">Manuscript</div></div>
+        </a>
+      </div>
+      <p class="also">Also: 2 materials physics papers in <em>Applied Surface Science</em> · <a href="/research/">see all</a></p>
+    </section>
+
+    <section>
+      <div class="head"><h2 class="serif">Labs</h2><a href="/labs/">All 12 labs →</a></div>
+      <div class="grid g4">
+        <a class="tile" href="/labs/volleyball-serve/"><img src="/labs/volleyball-serve/screenshot.png" alt="" loading="lazy"><div class="t"><h3>Volleyball Serve</h3></div></a>
+        <a class="tile" href="/labs/frame-sequencer/"><img src="/labs/frame-sequencer/screenshot.png" alt="" loading="lazy"><div class="t"><h3>Frame Sequencer</h3></div></a>
+        <a class="tile" href="/labs/electric-potential-3d/"><img src="/labs/electric-potential-3d/screenshot.png" alt="" loading="lazy"><div class="t"><h3>Electric Potential 3D</h3></div></a>
+        <a class="tile" href="/labs/oscilloscope-principle/"><img src="/labs/oscilloscope-principle/screenshot.png" alt="" loading="lazy"><div class="t"><h3>Oscilloscope Principle</h3></div></a>
+        <a class="tile" href="/labs/collision-deformation/"><img src="/labs/collision-deformation/screenshot.png" alt="" loading="lazy"><div class="t"><h3>Deformation in Collisions</h3></div></a>
+        <a class="tile" href="/labs/microscopic-current/"><img src="/labs/microscopic-current/screenshot.png" alt="" loading="lazy"><div class="t"><h3>Microscopic Current</h3></div></a>
+        <a class="tile" href="/labs/electric-field-lines/"><img src="/labs/electric-field-lines/screenshot.png" alt="" loading="lazy"><div class="t"><h3>Electric Field Lines</h3></div></a>
+        <a class="tile" href="/labs/vernier-caliper/"><img src="/labs/vernier-caliper/screenshot.png" alt="" loading="lazy"><div class="t"><h3>Vernier Caliper</h3></div></a>
+      </div>
+    </section>
+
+    <section>
+      <div class="head"><h2 class="serif">Lessons</h2><a href="/resources/">All 15 decks →</a></div>
+      <div class="grid g5">
+        <a class="tile lesson" href="/resources/gravitation.pdf"><img src="/resources/thumbs/gravitation.jpg" alt="" loading="lazy"><div class="t"><h3>Universal Gravitation</h3></div></a>
+        <a class="tile lesson" href="/resources/capacitance.pdf"><img src="/resources/thumbs/capacitance.jpg" alt="" loading="lazy"><div class="t"><h3>Capacitance</h3></div></a>
+        <a class="tile lesson" href="/resources/newtons-third-law.pdf"><img src="/resources/thumbs/newtons-third-law.jpg" alt="" loading="lazy"><div class="t"><h3>Newton's Third Law</h3></div></a>
+        <a class="tile lesson" href="/resources/voltage.pdf"><img src="/resources/thumbs/voltage.jpg" alt="" loading="lazy"><div class="t"><h3>Voltage &amp; Equipotentials</h3></div></a>
+        <a class="tile lesson" href="/resources/equilibrium.pdf"><img src="/resources/thumbs/equilibrium.jpg" alt="" loading="lazy"><div class="t"><h3>Forces in Balance</h3></div></a>
+        <a class="tile lesson" href="/resources/meters.pdf"><img src="/resources/thumbs/meters.jpg" alt="" loading="lazy"><div class="t"><h3>Voltmeters &amp; Ammeters</h3></div></a>
+      </div>
+    </section>
+
+    <footer>
+      <span>© 2026 PhyLab · Free to use and adapt</span>
+      <a href="/contact/">Contact →</a>
+    </footer>
+  </div>
 </body>
 </html>

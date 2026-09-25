@@ -5,3 +5,7 @@ resources/READ-ME-FIRST-lesson-pdf/
 
 # Local Netlify folder
 .netlify
+
+# Homepage design drafts (local preview only)
+_home-drafts/
+Claude outputs/
