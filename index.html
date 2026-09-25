@@ -51,8 +51,9 @@
   .head-r { display:flex; align-items:center; gap:14px; }
   .arrows { display:flex; gap:6px; }
   .arrows button { width:32px; height:32px; border-radius:50%; border:1px solid var(--line); background:var(--card);
-    color:var(--green); font-size:1rem; line-height:1; cursor:pointer; display:grid; place-items:center; transition:border-color .2s,opacity .2s; }
+    color:var(--green); padding:0; cursor:pointer; display:grid; place-items:center; transition:border-color .2s,opacity .2s; }
   .arrows button:hover:not(:disabled) { border-color:var(--accent); }
+  .arrows button svg { display:block; }
   .arrows button:disabled { opacity:.35; cursor:default; }
   .figs.txt { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; aspect-ratio:3/1;
     background:linear-gradient(135deg, color-mix(in srgb,var(--green) 12%,var(--card)), var(--card)); }
@@ -105,7 +106,7 @@
     </nav>
 
     <section>
-      <div class="head"><h2 class="serif">Research</h2><div class="head-r"><div class="arrows"><button type="button" data-dir="-1" aria-label="Previous papers">‹</button><button type="button" data-dir="1" aria-label="More papers">›</button></div><a href="/research/">All papers →</a></div></div>
+      <div class="head"><h2 class="serif">Research</h2><div class="head-r"><div class="arrows"><button type="button" data-dir="-1" aria-label="Previous papers"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button><button type="button" data-dir="1" aria-label="More papers"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></div><a href="/research/">All papers →</a></div></div>
       <div class="scroller" id="papers">
         <a class="tile paper" title="No Left-Hander Left Behind: Finding the Right Way in the Physics Laboratory" href="https://doi.org/10.1088/1361-6552/ae92c8" target="_blank" rel="noopener">
           <div class="figs"><img src="/research/No_Left-Hander_Left_Behind/thermal_left.jpeg" alt="" loading="lazy"><img src="/research/No_Left-Hander_Left_Behind/deviation_raincloud.png" class="chart" alt="" loading="lazy"><img src="/research/No_Left-Hander_Left_Behind/operate_time_boxplot.png" class="chart" alt="" loading="lazy"></div>
