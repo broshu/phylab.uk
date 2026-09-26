@@ -11,7 +11,7 @@
  * animation. Mount them by adding one line each, as below.
  */
 import { getProblem, DEFAULT_PROBLEM_ID } from './config/problem.js?v=20260823-1';
-import { createLocalizer } from './i18n.js?v=20260823-4';
+import { createLocalizer } from './i18n.js?v=20260926-1';
 import { createStore } from './core/state.js';
 import { evaluate, Verdict } from './core/evaluator.js';
 import { createTutor } from './services/tutor.js';
@@ -20,9 +20,9 @@ import {
   AI_COACH_RECORDS_ENDPOINT,
   createAiCoachClient,
 } from './services/ai-coach.js?v=20260823-1';
-import { createScene } from './ui/scene.js?v=20260823-1';
-import { createControls } from './ui/controls.js?v=20260823-1';
-import { createCoach } from './ui/coach.js?v=20260823-4';
+import { createScene } from './ui/scene.js?v=20260926-1';
+import { createControls } from './ui/controls.js?v=20260926-1';
+import { createCoach } from './ui/coach.js?v=20260926-1';
 
 const localizer = createLocalizer();
 const { language } = localizer;

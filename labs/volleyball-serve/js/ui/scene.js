@@ -23,7 +23,7 @@ import { trajectory, flightTime } from '../core/physics.js';
 import { Verdict, evaluate } from '../core/evaluator.js';
 import { readPalette, onSchemeChange } from './theme.js';
 import { createPlayer, SERVE_TIMELINE } from './player.js';
-import { createLocalizer, translateCoachMessage } from '../i18n.js?v=20260823-1';
+import { createLocalizer, translateCoachMessage } from '../i18n.js?v=20260926-1';
 
 // World window in metres. yMin is negative to leave room for the ground labels.
 // x and y share one scale, so the parabola keeps its true shape.

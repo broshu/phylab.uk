@@ -9,7 +9,13 @@
  * Neither is a follow-up to the other. Both are found by the same four moves
  * (name the boundary point, watch the limiting serve, calculate its speed,
  * state the inequality), so `teachBoundary` handles both and nothing in the
- * wording implies an order. Which one comes first is decided by the student:
+ * wording implies an order. The calculation is itself broken into the three
+ * quantities students most often confuse — horizontal distance, vertical fall,
+ * and fall time — before the speed. Whole-number quantities are typed by the
+ * student; anything else is chosen, because typing 0.447 against 0.45 is a
+ * rounding argument rather than physics.
+ *
+ * Which one comes first is decided by the student:
  * a net fault opens the minimum-speed boundary, a long serve opens the
  * maximum-speed boundary, and a student who has not served anything starts at
  * the minimum-speed boundary.
@@ -22,9 +28,38 @@ import { flightTime, timeToFall } from '../core/physics.js';
 
 const fmt = (x, n = 2) => Number(x).toFixed(n);
 
+/** Floating-point tidy-up: 3.2 − 2.2 is 1.0000000000000004 in binary. */
+const tidy = (x) => Math.round(Number(x) * 1e6) / 1e6;
+
+/** A whole-number answer is typed by the student; anything else is chosen. */
+const isWhole = (x) => Number.isInteger(tidy(x));
+
+const sameValue = (a, b) => Math.abs(tidy(a) - tidy(b)) < 1e-6;
+
+/** Horizontal distances read as the problem states them: 9 m, 18 m. */
+const fmtDistance = (x) => String(tidy(x));
+
+/** Heights and falls keep one decimal, as the problem does: 1.0 m, 3.2 m. */
+const fmtHeight = (x) => fmt(x, 1);
+
+/** Fall times keep two decimals: 0.45 s, 0.80 s. */
+const fmtTime = (x) => fmt(x, 2);
+
+/** Speeds keep exact short values (11.25, 22.5) and round the rest (20.1). */
+function fmtSpeed(x) {
+  const hundredths = x * 100;
+  if (Math.abs(hundredths - Math.round(hundredths)) < 1e-6) return String(Math.round(hundredths) / 100);
+  return fmt(x, 1);
+}
+
 const FAST_SLOW = [
   { id: 'fast', label: 'Faster' },
   { id: 'slow', label: 'Slower' },
+];
+
+const BOTH_OR_ONE = [
+  { id: 'both', label: 'Both at once' },
+  { id: 'one', label: 'One is enough' },
 ];
 
 const POINTS = (problem) => [
@@ -61,22 +96,64 @@ const BOUNDARIES = {
     drop: (p) => p.hitHeight - p.netHeight,
     speed: (bounds) => bounds.vMin,
     marker: (p) => ({ id: 'A', x: p.netDistance, y: p.netHeight }),
-    guides: (p) => [
+    /**
+     * @param {any} p
+     * @param {{span: boolean, drop: boolean}} shown  values the student has already found
+     */
+    guides: (p, shown = { span: true, drop: true }) => [
       {
         kind: 'horizontal',
         x1: 0,
         x2: p.netDistance,
         y: p.hitHeight,
-        label: `horizontal distance · ${p.netDistance} m`,
+        label: `horizontal distance · ${shown.span ? fmtDistance(p.netDistance) : '?'} m`,
       },
       {
         kind: 'vertical',
         x: p.netDistance + 0.55,
         y1: p.netHeight,
         y2: p.hitHeight,
-        label: `vertical fall · ${fmt(p.hitHeight - p.netHeight, 1)} m`,
+        label: `vertical fall · ${shown.drop ? fmtHeight(p.hitHeight - p.netHeight) : '?'} m`,
       },
     ],
+    /** @param {any} p */
+    distanceStep: (p) => ({
+      question: 'How far does the ball travel horizontally from the hit point to A?',
+      retry: 'Try again: how far is A horizontally from the hit point?',
+      unit: 'm',
+      answer: p.netDistance,
+      format: fmtDistance,
+      distractors: [
+        {
+          value: p.courtEnd,
+          note: `${fmtDistance(p.courtEnd)} m takes the ball all the way to the far baseline. A is at the net.`,
+        },
+      ],
+      miss: 'Follow the dashed horizontal line from the hit point to the net.',
+    }),
+    /** @param {any} p */
+    fallStep: (p) => ({
+      question: 'How far does the ball fall between the hit point and A?',
+      retry: 'Try again: how far has the ball dropped when it reaches A?',
+      unit: 'm',
+      answer: p.hitHeight - p.netHeight,
+      format: fmtHeight,
+      distractors: [
+        {
+          value: p.netHeight,
+          note:
+            `${fmtHeight(p.netHeight)} m is how high A is above the floor, not how far the ball has fallen. ` +
+            `The ball starts ${fmtHeight(p.hitHeight)} m up.`,
+        },
+        {
+          value: p.hitHeight,
+          note:
+            `${fmtHeight(p.hitHeight)} m is the fall all the way to the floor. ` +
+            `At A the ball is still ${fmtHeight(p.netHeight)} m above the floor.`,
+        },
+      ],
+      miss: 'Compare the height of the hit point with the height of A.',
+    }),
     rule: (v) =>
       `Touching the tape is a fault, so the minimum-speed boundary is strict: v > ${v} m/s.`,
   },
@@ -96,22 +173,64 @@ const BOUNDARIES = {
     drop: (p) => p.hitHeight,
     speed: (bounds) => bounds.vMax,
     marker: (p) => ({ id: 'C', x: p.courtEnd, y: 0 }),
-    guides: (p) => [
+    /**
+     * @param {any} p
+     * @param {{span: boolean, drop: boolean}} shown  values the student has already found
+     */
+    guides: (p, shown = { span: true, drop: true }) => [
       {
         kind: 'horizontal',
         x1: 0,
         x2: p.courtEnd,
         y: p.hitHeight,
-        label: `horizontal distance · ${p.courtEnd} m`,
+        label: `horizontal distance · ${shown.span ? fmtDistance(p.courtEnd) : '?'} m`,
       },
       {
         kind: 'vertical',
         x: p.courtEnd - 0.55,
         y1: 0,
         y2: p.hitHeight,
-        label: `vertical fall · ${fmt(p.hitHeight, 1)} m`,
+        label: `vertical fall · ${shown.drop ? fmtHeight(p.hitHeight) : '?'} m`,
       },
     ],
+    /** @param {any} p */
+    distanceStep: (p) => ({
+      question: 'How far does the ball travel horizontally from the hit point to C?',
+      retry: 'Try again: how far is C horizontally from the hit point?',
+      unit: 'm',
+      answer: p.courtEnd,
+      format: fmtDistance,
+      distractors: [
+        {
+          value: p.netDistance,
+          note: `${fmtDistance(p.netDistance)} m only reaches the net. C is on the far baseline, a full court away.`,
+        },
+      ],
+      miss: 'Follow the dashed horizontal line from the hit point to the far baseline.',
+    }),
+    /** @param {any} p */
+    fallStep: (p) => ({
+      question: 'How far does the ball fall between the hit point and C?',
+      retry: 'Try again: how far has the ball dropped when it lands at C?',
+      unit: 'm',
+      answer: p.hitHeight,
+      format: fmtHeight,
+      distractors: [
+        {
+          value: p.hitHeight - p.netHeight,
+          note:
+            `${fmtHeight(p.hitHeight - p.netHeight)} m only takes the ball down to the top of the net. ` +
+            'C is on the floor.',
+        },
+        {
+          value: p.netHeight,
+          note:
+            `${fmtHeight(p.netHeight)} m is the height of the net. ` +
+            'C is on the floor, so the ball falls the full height of the hit point.',
+        },
+      ],
+      miss: 'Compare the height of the hit point with the height of C.',
+    }),
     rule: (v) =>
       `A ball on the baseline is in, so the maximum-speed boundary includes its own value: v ≤ ${v} m/s.`,
   },
@@ -211,9 +330,142 @@ async function chooseBoundaryPoint(dsl, boundary) {
 }
 
 /**
+ * The three fall times a student can reach for on this court. Only one of them
+ * is right for a given boundary; the other two are the classic mistakes:
+ * using the whole flight time at the net (the ball would already be on the
+ * floor there), or using the net's height as the fall.
+ * @param {any} p
+ */
+function fallTimes(p) {
+  return {
+    toNetTop: timeToFall(p.hitHeight - p.netHeight, p.g),
+    netHeight: timeToFall(p.netHeight, p.g),
+    toFloor: timeToFall(p.hitHeight, p.g),
+  };
+}
+
+/** @param {any} p @param {any} boundary */
+function timeStep(p, boundary) {
+  const drop = boundary.drop(p);
+  const times = fallTimes(p);
+  const netTop = fmtHeight(p.hitHeight - p.netHeight);
+  const common = {
+    question: `How long does the ball take to fall ${fmtHeight(drop)} m?`,
+    retry: `So how long does the ball take to reach ${boundary.point}?`,
+    unit: 's',
+    format: fmtTime,
+    miss: 'Use the vertical fall you just found, not the horizontal distance.',
+    explain: {
+      text: 'The fall time depends only on the vertical fall:',
+      tex: String.raw`t = \sqrt{\frac{2\,\Delta h}{g}} = \sqrt{\frac{2 \times ${fmtHeight(drop)}}{${p.g}}}`,
+      fallback: ` t = √(2Δh / g) = √(2 × ${fmtHeight(drop)} / ${p.g})`,
+    },
+  };
+
+  if (boundary.key === 'min') {
+    return {
+      ...common,
+      answer: times.toNetTop,
+      distractors: [
+        {
+          value: times.toFloor,
+          note:
+            `${fmtTime(times.toFloor)} s is the time to fall all the way to the floor. ` +
+            `The ball reaches A much sooner, after falling only ${netTop} m.`,
+        },
+        {
+          value: times.netHeight,
+          note:
+            `${fmtTime(times.netHeight)} s is the time to fall ${fmtHeight(p.netHeight)} m, ` +
+            'the height of the net, not the fall to A.',
+        },
+      ],
+    };
+  }
+
+  return {
+    ...common,
+    answer: times.toFloor,
+    distractors: [
+      {
+        value: times.toNetTop,
+        note:
+          `${fmtTime(times.toNetTop)} s only covers the first ${netTop} m, down to the top of the net. ` +
+          `To reach C the ball falls the whole ${fmtHeight(p.hitHeight)} m.`,
+      },
+      {
+        value: times.netHeight,
+        note:
+          `${fmtTime(times.netHeight)} s is the time to fall ${fmtHeight(p.netHeight)} m, the height of the net. ` +
+          `To reach C the ball falls the whole ${fmtHeight(p.hitHeight)} m.`,
+      },
+    ],
+  };
+}
+
+/**
+ * Ask for one quantity on the way to a boundary speed.
+ *
+ * A whole-number answer (9 m, 18 m, 1.0 m) is typed; anything else (3.2 m,
+ * 0.45 s) is chosen from the correct value and the values the common mistakes
+ * produce. A named mistake gets its own diagnosis, then one more try; a second
+ * miss states the value so the student is never stranded.
+ *
+ * @param {any} dsl
+ * @param {{
+ *   question: string, retry: string, unit: string, answer: number,
+ *   format: (x: number) => string,
+ *   distractors: {value: number, note: string}[],
+ *   miss: string,
+ *   explain?: any,
+ * }} spec
+ * @returns {Promise<boolean>} whether the student reached the value
+ */
+async function askValue(dsl, spec) {
+  const { say, ask, askNumber } = dsl;
+  const label = (x) => `${spec.format(x)} ${spec.unit}`;
+  const typed = isWhole(spec.answer);
+
+  /** @type {{id: string, label: string, reply: string, value: number}[]} */
+  const choices = [];
+  if (!typed) {
+    for (const value of [spec.answer, ...spec.distractors.map((d) => d.value)].sort((a, b) => a - b)) {
+      const text = label(value);
+      if (!choices.some((c) => c.id === text)) choices.push({ id: text, label: text, reply: text, value });
+    }
+  }
+
+  const matches = (a, b) => (typed ? sameValue(a, b) : spec.format(a) === spec.format(b));
+
+  const answerOnce = async (question) => {
+    if (typed) return askNumber(question, { unit: spec.unit });
+    const id = await ask(question, choices);
+    return choices.find((c) => c.id === id)?.value ?? NaN;
+  };
+
+  let value = await answerOnce(spec.question);
+  if (!matches(value, spec.answer)) {
+    const known = spec.distractors.find((d) => matches(value, d.value));
+    await say(known ? known.note : spec.miss);
+    if (spec.explain) await say(spec.explain);
+    value = await answerOnce(spec.retry);
+  }
+
+  if (matches(value, spec.answer)) {
+    await say(`Yes — ${label(spec.answer)}.`);
+    return true;
+  }
+  await say(`We will use ${label(spec.answer)}.`);
+  return false;
+}
+
+/**
  * One end of the interval, whichever end it is. The four moves are the same:
  * name the point, watch the limiting serve, calculate its speed, state the
- * inequality that the point implies.
+ * inequality that the point implies. The calculation goes through the
+ * horizontal distance, the vertical fall and the fall time, in that order, so
+ * the two classic slips — using the whole flight time at the net, and using
+ * the net's height as the fall — surface as answers the coach can respond to.
  */
 async function teachBoundary(dsl, key, { alone = false } = {}) {
   const { say, ask, serve, mark, guide, clearCourt, stage, completeRoute, problem, bounds } = dsl;
@@ -221,6 +473,8 @@ async function teachBoundary(dsl, key, { alone = false } = {}) {
   const span = boundary.span(problem);
   const drop = boundary.drop(problem);
   const limitSpeed = boundary.speed(bounds);
+  const shown = { span: false, drop: false };
+  const drawGuides = () => guide(boundary.guides(problem, shown));
 
   await say(
     alone
@@ -235,38 +489,52 @@ async function teachBoundary(dsl, key, { alone = false } = {}) {
   await say(`Watch that limiting serve. I will hide its speed: ${boundary.demo}.`);
   clearCourt();
   mark([boundary.marker(problem)]);
-  guide(boundary.guides(problem));
+  drawGuides();
   await serve(limitSpeed, { animatePlayer: true, hideSpeed: true });
   await say('The dashed lines show the horizontal distance and the vertical fall for that exact path.');
+  await say('Work out the hidden speed from those two lines, one step at a time.');
+
+  stage(key, 'distance');
+  await askValue(dsl, boundary.distanceStep(problem));
+  shown.span = true;
+  drawGuides();
+
+  stage(key, 'fall');
+  await askValue(dsl, boundary.fallStep(problem));
+  shown.drop = true;
+  drawGuides();
+
+  stage(key, 'time');
+  await askValue(dsl, timeStep(problem, boundary));
 
   stage(key, 'calculate');
-  await say('How could you calculate its speed? What do you think the hidden speed is?');
-
-  const choices = [
-    { id: 'span', label: `${fmt(span, 1)} m/s`, reply: `${fmt(span, 1)} m/s` },
-    { id: 'min', label: `${fmt(bounds.vMin, 1)} m/s`, reply: `${fmt(bounds.vMin, 1)} m/s` },
-    { id: 'max', label: `${fmt(bounds.vMax, 1)} m/s`, reply: `${fmt(bounds.vMax, 1)} m/s` },
-  ];
+  const correctLabel = `${fmtSpeed(limitSpeed)} m/s`;
+  /** @type {{id: string, label: string, reply: string}[]} */
+  const choices = [];
+  for (const t of Object.values(fallTimes(problem)).map((t) => span / t).sort((a, b) => a - b)) {
+    const text = `${fmtSpeed(t)} m/s`;
+    if (!choices.some((c) => c.id === text)) choices.push({ id: text, label: text, reply: text });
+  }
   let answer = await ask(boundary.speedQuestion, choices);
 
-  if (answer !== key) {
+  if (answer !== correctLabel) {
     const t = timeToFall(drop, problem.g);
     const tRounded = fmt(t, 3);
     const vRounded = fmt(limitSpeed, 1);
     await say({
       text: 'Write it in two steps:',
       tex: String.raw`\begin{aligned}
-        t &= \sqrt{\frac{2 \times ${fmt(drop, 1)}}{${problem.g}}} \approx ${tRounded}\,\mathrm{s} \\
-        v &= \frac{${span}}{${tRounded}} \approx ${vRounded}\,\mathrm{m/s}
+        t &= \sqrt{\frac{2 \times ${fmtHeight(drop)}}{${problem.g}}} \approx ${tRounded}\,\mathrm{s} \\
+        v &= \frac{${fmtDistance(span)}}{${tRounded}} \approx ${vRounded}\,\mathrm{m/s}
       \end{aligned}`,
       fallback:
-        ` t = √(2 × ${fmt(drop, 1)} / ${problem.g}) ≈ ${tRounded} s; ` +
-        `v = ${span} ÷ ${tRounded} ≈ ${vRounded} m/s`,
+        ` t = √(2 × ${fmtHeight(drop)} / ${problem.g}) ≈ ${tRounded} s; ` +
+        `v = ${fmtDistance(span)} ÷ ${tRounded} ≈ ${vRounded} m/s`,
     });
     answer = await ask(boundary.retryQuestion, choices);
   }
 
-  if (answer === key) {
+  if (answer === correctLabel) {
     await say(`Yes. The hidden speed is ${fmt(limitSpeed, 1)} m/s.`);
   } else {
     await say(`The limiting speed is ${fmt(limitSpeed, 1)} m/s.`);
@@ -277,14 +545,47 @@ async function teachBoundary(dsl, key, { alone = false } = {}) {
   completeRoute(key);
 }
 
+/**
+ * Two conditions do not make an interval until the student decides how they
+ * combine. "Either one is enough" is tested with two real serves, each of which
+ * satisfies one condition and still fails.
+ */
+async function combineConditions(dsl) {
+  const { ask, say, serve, clearCourt, stage, problem, bounds } = dsl;
+  const min = fmt(bounds.vMin, 1);
+  const max = fmt(bounds.vMax, 1);
+
+  stage('interval', 'combine');
+  await say(`You now have two conditions: v > ${min} m/s to clear the net, and v ≤ ${max} m/s to land in.`);
+  let answer = await ask('Does a legal serve have to meet both conditions, or is one of them enough?', BOTH_OR_ONE);
+
+  if (answer !== 'both') {
+    const slow = Math.max(problem.speed.min, Math.floor(bounds.vMin) - 4);
+    const fast = Math.min(problem.speed.max, Math.ceil(bounds.vMax) + 2);
+    clearCourt();
+    await say(`Test that idea. ${slow} m/s meets v ≤ ${max} m/s, and ${fast} m/s meets v > ${min} m/s. Watch both.`);
+    await serve(slow, { keep: true, label: `${slow}`, animatePlayer: true });
+    await serve(fast, { keep: true, label: `${fast}`, animatePlayer: true });
+    await say('Each serve meets one condition and still fails: one hits the net, the other lands long.');
+    answer = await ask('So does a legal serve need both conditions, or is one enough?', BOTH_OR_ONE);
+  }
+
+  await say(
+    answer === 'both'
+      ? 'Right — both at once. The speeds that work are where the two conditions overlap.'
+      : 'A legal serve has to meet both at once. The speeds that work are where the two conditions overlap.',
+  );
+}
+
 async function finishWindow(dsl) {
   const { askMulti, say, serve, celebrate, stage, bounds } = dsl;
   const min = fmt(bounds.vMin, 1);
   const max = fmt(bounds.vMax, 1);
   const legal = legalSpeeds(bounds).map(String);
 
+  await combineConditions(dsl);
+
   stage('interval', 'final');
-  await say(`Both limits hold at once: v > ${min} m/s and v ≤ ${max} m/s.`);
   await say(`So the legal interval is ${min} < v ≤ ${max} m/s.`);
   const choices = speedChoices(bounds);
 

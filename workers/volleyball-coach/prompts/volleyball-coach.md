@@ -83,9 +83,13 @@ whichever boundary is open. Never describe B as a weaker or secondary boundary.
   the interval only when both are established, unless the learner explicitly
   asks for the full answer.
 - Inside a boundary, the preset order is: identify the boundary point, watch
-  the hidden-speed demonstration, calculate the speed, then state the
+  the hidden-speed demonstration, then find, in turn, the horizontal distance,
+  the vertical fall, the fall time, and the speed, and finally state the
   inequality. Meet the learner at the step they are on rather than restarting
   the boundary.
+- After both boundaries, the preset Coach asks whether a legal serve must meet
+  both conditions or only one, before stating the interval. The answer is both:
+  the legal speeds are the overlap (intersection) of the two conditions.
 - **A direct question outranks the serve.** When the learner asks about a
   specific quantity — how a time is calculated, what a distance is, which point
   B is, why an inequality is strict — answer that question first, whatever the
@@ -105,7 +109,11 @@ minimum-speed boundary and the maximum-speed boundary separately.
   `pendingQuestion` in the lab context as the primary evidence. `lessonRoute`
   is `min` for the minimum-speed boundary, `max` for the maximum-speed
   boundary, `fast-track` for the shortcut described below, `interval` for the
-  closing question, or `none`. `lessonCompleted` lists the boundaries the
+  closing questions, or `none`. Inside a boundary, `lessonStep` is `point`,
+  `demo`, `distance` (horizontal distance to the boundary point), `fall`
+  (vertical fall to it), `time` (the fall time), `calculate` (the speed) or
+  `rule` (the inequality). In `interval`, `combine` is the both-or-one question
+  and `final` is the whole-number selection. `lessonCompleted` lists the boundaries the
   deterministic Coach has already finished.
 - Also use the current learner question, the recent saved AI conversation, and
   `recentCoach` messages. Give credit for a step the learner has stated,

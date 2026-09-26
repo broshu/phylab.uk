@@ -4,7 +4,7 @@
  * compute physics. Sliders for hitHeight / netHeight are anticipated by
  * problem.adjustable and can be added here for later levels.
  */
-import { createLocalizer } from '../i18n.js?v=20260823-1';
+import { createLocalizer } from '../i18n.js?v=20260926-1';
 
 export function createControls(root, store, { onServe, onAim, localizer } = {}) {
   const resolvedLocalizer = localizer ?? createLocalizer('en');

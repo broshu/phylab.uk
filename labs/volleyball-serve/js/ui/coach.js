@@ -8,11 +8,27 @@
  * something new happens. What the coach actually says lives in
  * services/coach-script.js.
  */
-import { opening, reaction } from '../services/coach-script.js?v=20260820-1';
+import { opening, reaction } from '../services/coach-script.js?v=20260926-1';
 import { renderDelimitedMath, renderRichText } from './math.js?v=20260820-1';
-import { createLocalizer, translateCoachMessage } from '../i18n.js?v=20260823-4';
+import { createLocalizer, translateCoachMessage } from '../i18n.js?v=20260926-1';
 
 const CANCELLED = Symbol('coach-cancelled');
+
+const FULL_WIDTH = { '．': '.', '。': '.', '，': '.', ',': '.', '－': '-', '＋': '+' };
+
+/**
+ * Read a typed number leniently: "9", "9.0", "9 m", "１.０" and "1,0" all
+ * count. Returns NaN when there is no number at the start of the text.
+ * @param {unknown} raw
+ */
+export function parseTypedNumber(raw) {
+  const text = String(raw ?? '')
+    .replace(/[０-９]/g, (d) => String.fromCharCode(d.charCodeAt(0) - 0xfee0))
+    .replace(/[．。，,－＋]/g, (c) => FULL_WIDTH[c])
+    .trim();
+  const match = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)/.exec(text);
+  return match ? Number(match[0]) : Number.NaN;
+}
 
 /**
  * @param {HTMLElement} root
@@ -237,7 +253,9 @@ export function createCoach(root, store, { tutor, attempts, runtime, ai, timing,
       pending,
       buttons: Array.from(options.children),
       resumeTarget: recentCoach.at(-1) || '',
-      resumeOptions: Array.from(options.children).map((button) => button.textContent || ''),
+      resumeOptions: Array.from(options.children).map(
+        (item) => item.dataset?.resumeLabel || item.textContent || '',
+      ),
     };
     aiPause = pause;
     options.innerHTML = '';
@@ -416,6 +434,83 @@ export function createCoach(root, store, { tutor, attempts, runtime, ai, timing,
         await wait(Math.min(messagePause, 400));
         guard(mine);
         return id;
+      },
+
+      /**
+       * Ask for a typed number. Used only where the answer is a whole number,
+       * so the student is judged on the physics, not on rounding. Text that is
+       * not a number is refused in place and does not count as an answer.
+       */
+      async askNumber(text, { unit = '' } = {}) {
+        guard(mine);
+        bubble(text);
+        lesson.question = plainMessage(text);
+        const value = await new Promise((resolve) => {
+          pending = null;
+          options.innerHTML = '';
+
+          const row = document.createElement('div');
+          row.className = 'number-answer';
+          row.dataset.resumeLabel = `${t('typeAnswer')}${unit ? ` (${unit})` : ''}`;
+
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.inputMode = 'decimal';
+          input.autocomplete = 'off';
+          input.className = 'number-answer-input';
+          input.placeholder = t('typeAnswer');
+          input.setAttribute?.('aria-label', t('typeAnswer'));
+
+          const unitLabel = document.createElement('span');
+          unitLabel.className = 'number-answer-unit';
+          unitLabel.textContent = unit;
+
+          const submit = document.createElement('button');
+          submit.type = 'button';
+          submit.className = 'ghost-button option number-answer-submit';
+          submit.textContent = t('check');
+
+          const hint = document.createElement('p');
+          hint.className = 'number-answer-hint';
+          hint.hidden = true;
+
+          const send = () => {
+            const typed = parseTypedNumber(input.value);
+            if (!Number.isFinite(typed)) {
+              hint.textContent = t('enterNumber');
+              hint.hidden = false;
+              input.focus?.();
+              return;
+            }
+            pending = null;
+            lesson.question = '';
+            options.innerHTML = '';
+            bubble(`${typed}${unit ? ` ${unit}` : ''}`, 'mine');
+            resolve(typed);
+          };
+
+          submit.addEventListener('click', send);
+          input.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' && !event.isComposing) {
+              event.preventDefault?.();
+              send();
+            }
+          });
+          input.addEventListener('input', () => {
+            hint.hidden = true;
+          });
+
+          row.appendChild(input);
+          row.appendChild(unitLabel);
+          row.appendChild(submit);
+          row.appendChild(hint);
+          options.appendChild(row);
+          input.focus?.({ preventScroll: true });
+        });
+        guard(mine);
+        await wait(Math.min(messagePause, 400));
+        guard(mine);
+        return value;
       },
 
       /**

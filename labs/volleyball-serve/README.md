@@ -106,7 +106,12 @@ path, through **A** at the top of the net; the **maximum-speed boundary** is the
 fastest legal path, landing at **C** on the far baseline. Both are derived by
 the same four moves — name the boundary point, watch the limiting serve with its
 speed hidden, calculate that speed, state the inequality — so one function
-handles both and nothing in the wording ranks them.
+handles both and nothing in the wording ranks them. The calculation is asked
+in four small steps — horizontal distance, vertical fall, fall time, speed — so
+the common slips (the whole flight time used at the net, the net height used as
+the fall, half a court used for the far baseline) show up as answers the coach
+responds to. A whole-number answer is typed; anything else is chosen from the
+correct value and the values those slips produce.
 
 Which end opens first is decided by the student:
 
@@ -121,8 +126,10 @@ Which end opens first is decided by the student:
    correct answers end the lesson with the interval and a celebration; any wrong
    answer demonstrates the failure and hands the student back to the full
    derivation, so both ends still get thought about.
-4. **The conclusion** combines both inequalities and asks for the possible
-   whole-number slider values.
+4. **The conclusion** first asks whether a legal serve must meet both
+   conditions or only one (a wrong answer is tested with one serve per
+   condition), then states the interval and asks for the possible whole-number
+   slider values.
 
 Whichever end opens first, the coach then works on the one still open, and
 finally combines them. Teaching progress survives a new serve: a boundary that

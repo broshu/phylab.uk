@@ -88,6 +88,18 @@ function harness() {
     async chooseMulti(labels) {
       for (const label of labels) await this.choose(label);
     },
+    hasNumberInput: () => options.children.some((c) => c.className === 'number-answer'),
+    numberHint: () =>
+      options.children.find((c) => c.className === 'number-answer')?.children.find((c) => c.tagName === 'p'),
+    async enter(value) {
+      const row = options.children.find((c) => c.className === 'number-answer');
+      if (!row) throw new Error(`no number input; have [${this.options().join(', ')}]`);
+      const input = row.children.find((c) => c.tagName === 'input');
+      const button = row.children.find((c) => c.tagName === 'button');
+      input.value = String(value);
+      button.dispatch('click');
+      await dom.settle(50);
+    },
   };
 }
 
@@ -97,15 +109,45 @@ async function startMin(h, answer = 'A') {
   await h.choose(answer);
 }
 
-async function solveMinSpeed(h, answer = '20.1 m/s') {
+const last = (h) => h.messages().at(-1) || '';
+
+/**
+ * Walk the calculation for one boundary: distance (typed), fall (typed when
+ * whole), time (chosen), speed (chosen). Every answer can be overridden to
+ * exercise a mistake; later answers default to the correct ones.
+ */
+async function solveMinSpeed(h, {
+  distance = [9],
+  fall = [1],
+  time = ['0.45 s'],
+  speed = ['20.1 m/s'],
+} = {}) {
   check('shows only A for the limiting serve', h.markers.map((p) => p.id).join('') === 'A');
   check('draws horizontal and vertical construction lines', h.guides.map((g) => g.kind).join(',') === 'horizontal,vertical');
+  check('construction lines start without their values',
+    h.guides.every((g) => / \? m$/.test(g.label)), h.guides.map((g) => g.label).join(' | '));
   check('limiting serve animates the player with its speed hidden',
     h.serveOptions.at(-1)?.animatePlayer === true && h.serveOptions.at(-1)?.hideSpeed === true,
   );
-  check('asks for the hidden A-point speed', /speed of the serve that just reaches A/i.test(h.messages().at(-1) || ''));
-  check('offers three candidate speeds', h.options().length === 3);
-  await h.choose(answer);
+  check('asks for the horizontal distance to A', /horizontally from the hit point to A/i.test(last(h)), last(h));
+  check('a whole-number distance is typed, not chosen', h.hasNumberInput());
+  for (const value of distance) await h.enter(value);
+  check('the found distance appears on the construction line', /· 9 m$/.test(h.guides[0]?.label || ''), h.guides[0]?.label);
+
+  check('asks for the vertical fall to A', /fall between the hit point and A/i.test(last(h)), last(h));
+  check('the 1.0 m fall is typed, not chosen', h.hasNumberInput());
+  for (const value of fall) await h.enter(value);
+  check('the found fall appears on the construction line', /· 1\.0 m$/.test(h.guides[1]?.label || ''), h.guides[1]?.label);
+
+  check('asks for the fall time', /How long does the ball take to fall 1\.0 m/i.test(last(h)), last(h));
+  check('the fall time is chosen from three candidates',
+    h.options().join(',') === '0.45 s,0.66 s,0.80 s', h.options().join(','));
+  for (const value of time) await h.choose(value);
+
+  check('asks for the hidden A-point speed', /speed of the serve that just reaches A/i.test(last(h)), last(h));
+  check('speed candidates come from the three fall times',
+    h.options().join(',') === '11.25 m/s,13.6 m/s,20.1 m/s', h.options().join(','));
+  for (const value of speed) await h.choose(value);
 }
 
 async function startMax(h, answer = 'C') {
@@ -114,21 +156,46 @@ async function startMax(h, answer = 'C') {
   await h.choose(answer);
 }
 
-async function solveMaxSpeed(h, answer = '22.5 m/s') {
+async function solveMaxSpeed(h, {
+  distance = [18],
+  fall = ['3.2 m'],
+  time = ['0.80 s'],
+  speed = ['22.5 m/s'],
+} = {}) {
   check('shows only C for the limiting serve', h.markers.map((p) => p.id).join('') === 'C');
   check('draws C horizontal and vertical construction lines',
     h.guides.map((g) => g.kind).join(',') === 'horizontal,vertical');
   check('C limiting serve animates the player with its speed hidden',
     h.serveOptions.at(-1)?.animatePlayer === true && h.serveOptions.at(-1)?.hideSpeed === true,
   );
-  check('asks for the hidden C-point speed', /speed of the serve that just lands at C/i.test(h.messages().at(-1) || ''));
-  check('offers three candidate speeds for C', h.options().length === 3);
-  await h.choose(answer);
+  check('asks for the horizontal distance to C', /horizontally from the hit point to C/i.test(last(h)), last(h));
+  check('the 18 m distance is typed', h.hasNumberInput());
+  for (const value of distance) await h.enter(value);
+
+  check('asks for the vertical fall to C', /fall between the hit point and C/i.test(last(h)), last(h));
+  check('the 3.2 m fall is chosen, because it is not a whole number',
+    !h.hasNumberInput() && h.options().join(',') === '1.0 m,2.2 m,3.2 m', h.options().join(','));
+  for (const value of fall) await h.choose(value);
+
+  check('asks for the full fall time', /How long does the ball take to fall 3\.2 m/i.test(last(h)), last(h));
+  check('C fall time is chosen from the same three candidates',
+    h.options().join(',') === '0.45 s,0.66 s,0.80 s', h.options().join(','));
+  for (const value of time) await h.choose(value);
+
+  check('asks for the hidden C-point speed', /speed of the serve that just lands at C/i.test(last(h)), last(h));
+  check('C speed candidates come from the three fall times',
+    h.options().join(',') === '22.5 m/s,27.1 m/s,40.2 m/s', h.options().join(','));
+  for (const value of speed) await h.choose(value);
 }
 
-async function finish(h, wrongSpeeds = []) {
+async function finish(h, wrongSpeeds = [], combine = ['Both at once']) {
   check('states the strict minimum-speed condition', h.said(/v > 20\.1 m\/s/));
   check('states the inclusive maximum-speed condition', h.said(/v ≤ 22\.5 m\/s/));
+  check('lists the two conditions before combining them', h.said(/You now have two conditions/));
+  check('asks whether both conditions must hold', /both conditions/i.test(last(h)), last(h));
+  check('offers both-or-one as the choices', h.options().join(',') === 'Both at once,One is enough');
+  for (const answer of combine) await h.choose(answer);
+  check('confirms that the conditions overlap', h.said(/where the two conditions overlap/));
   check('combines both limits', h.said(/20\.1 < v ≤ 22\.5 m\/s/));
   check('asks for the whole-number answers', /whole-number speeds/i.test(h.messages().at(-1) || ''));
   for (const wrongSpeed of wrongSpeeds) {
@@ -171,9 +238,8 @@ async function finish(h, wrongSpeeds = []) {
   check('minimum-speed point question is repeated', h.options().length === 3);
   check('canvas marker answers are accepted', h.coach.answer('A') === true);
   await dom.settle(50);
-  await solveMinSpeed(h, '9.0 m/s');
+  await solveMinSpeed(h, { speed: ['11.25 m/s', '20.1 m/s'] });
   check('a wrong speed shows the two-step calculation', h.said(/Write it in two steps/i));
-  await h.choose('20.1 m/s');
   check('the other end is introduced as a peer, not a sequel',
     h.said(/That leaves the maximum-speed boundary/i) && !h.said(/second boundary/i));
   await startMax(h);
@@ -198,14 +264,15 @@ async function finish(h, wrongSpeeds = []) {
   check('wrong long diagnosis is corrected', h.said(/must be slower/i));
   check('a long serve starts at the maximum-speed boundary', h.said(/Start with the maximum-speed boundary/i));
   await startMax(h);
-  await solveMaxSpeed(h, '18.0 m/s');
+  await solveMaxSpeed(h, { speed: ['40.2 m/s', '22.5 m/s'] });
   check('a wrong C speed shows the two-step calculation in math',
     h.said(/Write it in two steps/i) && h.said(/18.*0\.800.*22\.5/i));
-  await h.choose('22.5 m/s');
   check('the remaining end is introduced as a peer', h.said(/That leaves the minimum-speed boundary/i));
   await startMin(h);
   await solveMinSpeed(h);
-  await finish(h, ['20 m/s', '23 m/s']);
+  await finish(h, ['20 m/s', '23 m/s'], ['One is enough', 'Both at once']);
+  check('"one is enough" is tested with one serve per condition', h.served.includes(16) && h.served.includes(25));
+  check('the counter-example serves are explained', h.said(/meets one condition and still fails/));
   check('wrong final answer is corrected with both failure modes',
     h.said(/20 m\/s is still too slow/i) && h.said(/23 m\/s lands long/i));
 }
@@ -289,7 +356,7 @@ async function finish(h, wrongSpeeds = []) {
   await dom.settle(50);
   await h.choose('Faster');
   await h.choose('A');
-  await h.choose('20.1 m/s');
+  await solveMinSpeed(h);
   check('the minimum-speed boundary is recorded as derived', h.coach.progress().min === true);
   check('the maximum-speed boundary is still open', h.coach.progress().max === false);
 
@@ -300,8 +367,9 @@ async function finish(h, wrongSpeeds = []) {
   await h.choose('Slower');
   check('the coach resumes at the boundary still open', /fastest legal serve/i.test(h.messages().at(-1) || ''));
   await h.choose('C');
-  await h.choose('22.5 m/s');
-  check('the finished boundary is not taught again', /whole-number speeds/i.test(h.messages().at(-1) || ''));
+  await solveMaxSpeed(h);
+  check('the finished boundary is not taught again', /both conditions/i.test(h.messages().at(-1) || ''));
+  await h.choose('Both at once');
   await h.chooseMulti(['21 m/s', '22 m/s']);
   check('the lesson closes once both ends are established', h.coach.progress().complete === true);
 
@@ -310,6 +378,45 @@ async function finish(h, wrongSpeeds = []) {
   await dom.settle(50);
   check('a serve after the lesson only gets a comment',
     h.said(/too slow, as expected/i) && h.options().length === 0);
+}
+
+// The calculation steps answer the named mistakes directly: the net's height
+// used as the fall (E2), the whole flight time used at the net (E1), and half
+// the court used for the far baseline (E7). Non-numbers are refused in place.
+{
+  const h = harness();
+  h.coach.reactTo(evaluate(problem, 15));
+  await dom.settle(50);
+  await h.choose('Faster');
+  await h.choose('A');
+  await h.enter('nine');
+  check('text that is not a number is refused without using up the attempt',
+    h.hasNumberInput() && h.numberHint()?.hidden === false && /horizontally from the hit point to A/i.test(last(h)));
+  await h.enter('9 m');
+  check('a typed value with its unit is accepted', h.said(/^Yes — 9 m\.$/));
+  await h.enter(2.2);
+  check('using the net height as the fall gets the E2 diagnosis', h.said(/how high A is above the floor/));
+  check('the fall question is asked again', /how far has the ball dropped when it reaches A/i.test(last(h)) && h.hasNumberInput());
+  await h.enter('3.2');
+  check('a second wrong fall states the value and moves on', h.said(/^We will use 1\.0 m\.$/));
+  await h.choose('0.80 s');
+  check('using the full flight time at the net gets the E1 diagnosis', h.said(/time to fall all the way to the floor/));
+  check('the fall-time formula is shown after a wrong time', h.said(/depends only on the vertical fall/));
+  await h.choose('0.45 s');
+  check('a corrected time is confirmed', h.said(/^Yes — 0\.45 s\.$/));
+  await h.choose('20.1 m/s');
+  check('the minimum-speed boundary still completes', h.coach.progress().min === true);
+
+  // the maximum-speed boundary follows; half a court is the E7 slip
+  await h.choose('C');
+  await h.enter(9);
+  check('using the net distance for the baseline gets the E7 diagnosis', h.said(/only reaches the net\. C is on the far baseline/));
+  await h.enter(18);
+  await h.choose('1.0 m');
+  check('a fall only to the net top is diagnosed for C', h.said(/only takes the ball down to the top of the net/));
+  await h.choose('3.2 m');
+  await h.choose('0.45 s');
+  check('a net-top time for C is diagnosed', h.said(/only covers the first 1\.0 m/));
 }
 
 // Starting another conversation after interruption must still work.

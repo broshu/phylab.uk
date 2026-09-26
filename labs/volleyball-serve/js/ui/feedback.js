@@ -4,7 +4,7 @@
  * tutor.hint is async and stale responses are discarded, so a real model call
  * can be dropped in without touching this file.
  */
-import { createLocalizer } from '../i18n.js?v=20260823-1';
+import { createLocalizer } from '../i18n.js?v=20260926-1';
 
 export function createFeedback(root, store, { tutor, attempts, localizer } = {}) {
   const resolvedLocalizer = localizer ?? createLocalizer('en');

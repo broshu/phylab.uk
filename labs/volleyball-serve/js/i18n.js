@@ -85,6 +85,9 @@ const UI_COPY = {
     hitsNet: 'hits the net',
     faster: 'Faster',
     slower: 'Slower',
+    check: 'Check',
+    typeAnswer: 'Type a number',
+    enterNumber: 'Enter a number, for example 9 or 1.0.',
     correct: '🎉 Correct! 🎉',
     continueFallback: 'That connects to the paused Coach question. Use the idea above, then choose the option that best completes the next step.',
   },
@@ -138,6 +141,9 @@ const UI_COPY = {
     hitsNet: '碰网',
     faster: '更快',
     slower: '更慢',
+    check: '确定',
+    typeAnswer: '输入数值',
+    enterNumber: '请输入一个数，例如 9 或 1.0。',
     correct: '🎉 正确！🎉',
     continueFallback: '这与暂停的教练问题相关。先利用上面的思路，再从恢复的选项中选择最合适的下一步。',
   },
@@ -187,14 +193,47 @@ export function translateCoachMessage(message, language = getUiLanguage()) {
     '🎉 Both boundaries — nicely done! 🎉': '🎉 两个边界都找到了，做得好！🎉',
     Faster: '更快',
     Slower: '更慢',
+    'Work out the hidden speed from those two lines, one step at a time.': '根据这两条虚线，一步一步算出被隐藏的速度。',
+    'Follow the dashed horizontal line from the hit point to the net.': '沿着水平虚线，从击球点看到球网。',
+    'Follow the dashed horizontal line from the hit point to the far baseline.': '沿着水平虚线，从击球点看到对方底线。',
+    'Compare the height of the hit point with the height of A.': '比较击球点的高度和 A 点的高度。',
+    'Compare the height of the hit point with the height of C.': '比较击球点的高度和 C 点的高度。',
+    'Use the vertical fall you just found, not the horizontal distance.': '用刚才求出的竖直下落高度，而不是水平距离。',
+    'The fall time depends only on the vertical fall:': '下落时间只由竖直下落高度决定：',
+    'Does a legal serve have to meet both conditions, or is one of them enough?': '合法的发球必须同时满足这两个条件，还是满足其中一个就够了？',
+    'So does a legal serve need both conditions, or is one enough?': '所以，合法的发球需要同时满足两个条件，还是满足一个就够？',
+    'Each serve meets one condition and still fails: one hits the net, the other lands long.': '每一球都只满足一个条件，结果都失败了：一球挂网，一球出界。',
+    'Right — both at once. The speeds that work are where the two conditions overlap.': '对，必须同时满足。可行的速度是两个条件的重叠部分，也就是交集。',
+    'A legal serve has to meet both at once. The speeds that work are where the two conditions overlap.': '合法的发球必须同时满足两个条件。可行的速度是两个条件的重叠部分，也就是交集。',
+    'Both at once': '同时满足',
+    'One is enough': '满足一个就够',
   };
   if (exact[message]) return exact[message];
 
   let match;
   if ((match = /^The marked points can also be selected directly on the court\.$/.exec(message))) return exact[match[0]];
-  if ((match = /^horizontal distance · ([\d.]+) m$/.exec(message))) return `水平距离 · ${match[1]} m`;
-  if ((match = /^vertical fall · ([\d.]+) m$/.exec(message))) return `竖直下落 · ${match[1]} m`;
+  if ((match = /^horizontal distance · ([\d.]+|\?) m$/.exec(message))) return `水平距离 · ${match[1]} m`;
+  if ((match = /^vertical fall · ([\d.]+|\?) m$/.exec(message))) return `竖直下落 · ${match[1]} m`;
   if ((match = /^Yes — ([ABC])\.$/.exec(message))) return `对，${match[1]}。`;
+  if ((match = /^Yes — (.+)\.$/.exec(message))) return `对，${match[1]}。`;
+  if ((match = /^How far does the ball travel horizontally from the hit point to ([AC])\?$/.exec(message))) return `从击球点到 ${match[1]}，球的水平距离是多少？`;
+  if ((match = /^Try again: how far is ([AC]) horizontally from the hit point\?$/.exec(message))) return `再试一次：${match[1]} 与击球点的水平距离是多少？`;
+  if ((match = /^([\d.]+) m takes the ball all the way to the far baseline\. A is at the net\.$/.exec(message))) return `${match[1]} m 已经一直到了对方底线。A 在球网处。`;
+  if ((match = /^([\d.]+) m only reaches the net\. C is on the far baseline, a full court away\.$/.exec(message))) return `${match[1]} m 只到球网。C 在对方底线，要跨过整个场地。`;
+  if ((match = /^How far does the ball fall between the hit point and ([AC])\?$/.exec(message))) return `从击球点到 ${match[1]}，球竖直下落了多少？`;
+  if ((match = /^Try again: how far has the ball dropped when it (reaches A|lands at C)\?$/.exec(message))) return `再试一次：球${match[1] === 'reaches A' ? '到达 A 点' : '落到 C 点'}时，一共下落了多少？`;
+  if ((match = /^([\d.]+) m is how high A is above the floor, not how far the ball has fallen\. The ball starts ([\d.]+) m up\.$/.exec(message))) return `${match[1]} m 是 A 点离地面的高度，不是球下落的高度。球是从 ${match[2]} m 高处出发的。`;
+  if ((match = /^([\d.]+) m is the fall all the way to the floor\. At A the ball is still ([\d.]+) m above the floor\.$/.exec(message))) return `${match[1]} m 是一直落到地面的下落高度。到 A 点时，球离地面还有 ${match[2]} m。`;
+  if ((match = /^([\d.]+) m only takes the ball down to the top of the net\. C is on the floor\.$/.exec(message))) return `${match[1]} m 只是下落到网顶的高度。C 点在地面上。`;
+  if ((match = /^([\d.]+) m is the height of the net\. C is on the floor, so the ball falls the full height of the hit point\.$/.exec(message))) return `${match[1]} m 是球网的高度。C 点在地面上，所以球要下落击球点的全部高度。`;
+  if ((match = /^How long does the ball take to fall ([\d.]+) m\?$/.exec(message))) return `球下落 ${match[1]} m 需要多长时间？`;
+  if ((match = /^So how long does the ball take to reach ([AC])\?$/.exec(message))) return `那么，球到达 ${match[1]} 点需要多长时间？`;
+  if ((match = /^([\d.]+) s is the time to fall all the way to the floor\. The ball reaches A much sooner, after falling only ([\d.]+) m\.$/.exec(message))) return `${match[1]} s 是一直落到地面所用的时间。球到达 A 点要早得多，那时只下落了 ${match[2]} m。`;
+  if ((match = /^([\d.]+) s is the time to fall ([\d.]+) m, the height of the net, not the fall to A\.$/.exec(message))) return `${match[1]} s 是下落 ${match[2]} m（球网的高度）所用的时间，不是下落到 A 点的时间。`;
+  if ((match = /^([\d.]+) s only covers the first ([\d.]+) m, down to the top of the net\. To reach C the ball falls the whole ([\d.]+) m\.$/.exec(message))) return `${match[1]} s 只对应前 ${match[2]} m 的下落，也就是落到网顶的高度。要到达 C 点，球要下落全部 ${match[3]} m。`;
+  if ((match = /^([\d.]+) s is the time to fall ([\d.]+) m, the height of the net\. To reach C the ball falls the whole ([\d.]+) m\.$/.exec(message))) return `${match[1]} s 是下落 ${match[2]} m（球网的高度）所用的时间。要到达 C 点，球要下落全部 ${match[3]} m。`;
+  if ((match = /^You now have two conditions: (v > [\d.]+ m\/s) to clear the net, and (v ≤ [\d.]+ m\/s) to land in\.$/.exec(message))) return `现在有两个条件：${match[1]} 才能过网，${match[2]} 才能落在界内。`;
+  if ((match = /^Test that idea\. (\d+) m\/s meets (v ≤ [\d.]+ m\/s), and (\d+) m\/s meets (v > [\d.]+ m\/s)\. Watch both\.$/.exec(message))) return `来检验这个想法。${match[1]} m/s 满足 ${match[2]}，${match[3]} m/s 满足 ${match[4]}。看看这两球。`;
   if ((match = /^Let us test ([\d.]+) m\/s\.$/.exec(message))) return `我们来测试 ${match[1]} m/s。`;
   if ((match = /^(\d+(?:\.\d+)? m\/s) is still too slow to clear the net\. Try again\.$/.exec(message))) return `${match[1]} 仍然太慢，无法越过球网。请再试一次。`;
   if ((match = /^(\d+(?:\.\d+)? m\/s) lands long beyond the baseline\. Try again\.$/.exec(message))) return `${match[1]} 会落到对方底线外。请再试一次。`;
@@ -205,8 +244,9 @@ export function translateCoachMessage(message, language = getUiLanguage()) {
   if ((match = /^The window has two edges we have not found yet\. Let us locate them\.$/.exec(message))) return '这个区间还有两个尚未找到的边界。我们来定位它们。';
   if ((match = /^Exactly\. A fixes the minimum-speed boundary at ([\d.]+) m\/s, and touching the tape is a fault, so (.+)\.$/.exec(message))) return `正确。A 点确定 ${match[1]} m/s 的最小速度边界；碰到球网带算失误，所以 ${match[2]}。`;
   if ((match = /^C fixes the maximum-speed boundary at ([\d.]+) m\/s, and a ball on the line is in, so (.+)\.$/.exec(message))) return `C 点确定 ${match[1]} m/s 的最大速度边界；压线球算界内，所以 ${match[2]}。`;
-  if ((match = /^Watch that limiting serve\. I will hide its speed: it (just reaches A|just lands at C)\.$/.exec(message))) return `观察这次临界发球。它${match[1] === 'just reaches A' ? '恰好到达 A 点' : '恰好落在 C 点'}；你认为此时的发球速度是多少？`;
+  if ((match = /^Watch that limiting serve\. I will hide its speed: it (just reaches A|just lands at C)\.$/.exec(message))) return `观察这次临界发球。我先隐藏它的速度：它${match[1] === 'just reaches A' ? '恰好到达 A 点' : '恰好落在 C 点'}。`;
   if ((match = /^We will use ([AC]): it is where the (slowest|fastest) legal serve reaches its limit\.$/.exec(message))) return `我们使用 ${match[1]} 点：${match[2] === 'slowest' ? '最慢' : '最快'}的合法发球会恰好到达这里。`;
+  if ((match = /^We will use (.+)\.$/.exec(message))) return `我们用 ${match[1]}。`;
   if ((match = /^So which point fixes the (minimum-speed|maximum-speed) boundary\?$/.exec(message))) return `那么，哪个点决定${match[1] === 'minimum-speed' ? '最小速度' : '最大速度'}边界？`;
   if ((match = /^Which point does the (slowest|fastest) legal serve just (pass through|land on)\?$/.exec(message))) return `哪一个点是${match[1] === 'slowest' ? '最慢' : '最快'}合法发球恰好${match[2] === 'pass through' ? '通过' : '落在'}的位置？`;
   if ((match = /^What is the speed of the serve that just (reaches A|lands at C)\?$/.exec(message))) return `恰好${match[1] === 'reaches A' ? '到达 A 点' : '落在 C 点'}的发球速度是多少？`;
