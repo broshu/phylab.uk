@@ -25,14 +25,14 @@ test('drafts remain hidden, latest picks are date ordered, new recommendations c
   assert.equal(filterPapers([draft]).length, 0);
   const newer = { ...catalog.papers[0], id: 'new-paper', date_added: '2026-10-04' };
   assert.equal(latestPicks([...catalog.papers, newer])[0].id, 'new-paper');
-  assert.equal(latestPicks(catalog.papers).length, 3);
+  assert.equal(latestPicks(catalog.papers).length, 6);
 });
-test('validation rejects duplicates, broken links, missing Chinese notes and impossible dates', () => {
+test('validation rejects duplicates, broken links, missing English notes and impossible dates', () => {
   const duplicate = clone(); duplicate.papers.push(duplicate.papers[0]);
   assert.ok(validateCatalog(duplicate).some(e => e.includes('duplicate DOI')));
-  const broken = clone(); broken.papers[0].url = 'javascript:alert(1)'; broken.papers[0].key_finding_zh = '';
+  const broken = clone(); broken.papers[0].url = 'javascript:alert(1)'; broken.papers[0].key_finding_en = '';
   assert.ok(validateCatalog(broken).some(e => e.includes('HTTPS')));
-  assert.ok(validateCatalog(broken).some(e => e.includes('key_finding_zh')));
+  assert.ok(validateCatalog(broken).some(e => e.includes('key_finding_en')));
   assert.equal(validDate('2026-02-30'), false);
 });
 test('partial Crossref dates are not fabricated and generated metadata stays draft', () => {
@@ -40,5 +40,5 @@ test('partial Crossref dates are not fabricated and generated metadata stays dra
   assert.equal(draft.published_date, null);
   assert.equal(draft.year, 2026);
   assert.equal(draft.status, 'draft');
-  assert.equal(draft.key_finding_zh, '');
+  assert.equal(draft.key_finding_en, '');
 });

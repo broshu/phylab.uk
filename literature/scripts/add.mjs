@@ -8,7 +8,7 @@ const input = args.find(arg => !arg.startsWith('--'));
 if (!input) throw new Error('Usage: node literature/scripts/add.mjs reviewed-papers.json [--dry-run]');
 const incoming = JSON.parse(await readFile(resolve(input), 'utf8'));
 const entries = Array.isArray(incoming) ? incoming : [incoming];
-if (entries.some(p => p.status !== 'published')) throw new Error('Only reviewed entries with status published may be added. Fill all Chinese notes and verify the original source first.');
+if (entries.some(p => p.status !== 'published')) throw new Error('Only reviewed entries with status published may be added. Fill all English notes and verify the original source first.');
 const path = fileURLToPath(new URL('../data/papers.json', import.meta.url));
 const catalog = JSON.parse(await readFile(path, 'utf8'));
 const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());

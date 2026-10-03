@@ -3,7 +3,7 @@ export const TOPICS = {
   transfer: 'Transfer', assessment: 'Assessment', icap: 'ICAP',
   scaffolding: 'Scaffolding', 'cognitive-load': 'Cognitive Load'
 };
-export const PRIORITIES = { core: 'PhD Core · 必读', read: 'Read · 全文读', skim: 'Skim · 略读' };
+export const PRIORITIES = { core: 'PhD Core · Essential', read: 'Read · Full text', skim: 'Skim · Background' };
 export const SORTS = ['added', 'published', 'priority'];
 export function validDate(value) {
   return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) &&
@@ -49,8 +49,8 @@ export function validateCatalog(data) {
     if (paper.status === 'published') {
       if (!paper.topics?.length) fail('published entry needs topics');
       if (!Object.hasOwn(PRIORITIES, paper.reading_priority)) fail('invalid reading_priority');
-      for (const field of ['key_finding_zh', 'phd_relevance_zh', 'reading_recommendation_zh', 'limitations_zh']) {
-        if (typeof paper[field] !== 'string' || !/[\u3400-\u9fff]/u.test(paper[field])) fail(`missing Chinese ${field}`);
+      for (const field of ['key_finding_en', 'phd_relevance_en', 'reading_recommendation_en', 'limitations_en']) {
+        if (typeof paper[field] !== 'string' || !/[A-Za-z]/.test(paper[field]) || /[\u3400-\u9fff]/u.test(paper[field])) fail(`missing English ${field}`);
       }
       if (!safeURL(paper.verification_url)) fail('verification_url must be HTTPS');
     }
@@ -62,7 +62,7 @@ export function filterPapers(papers, { topics = [], priority = '', query = '', s
   const rank = { core: 0, read: 1, skim: 2 };
   return papers.filter(p => p.status === 'published' && topics.every(t => p.topics.includes(t)) &&
     (!priority || p.reading_priority === priority) && words.every(word =>
-      [p.title, ...p.authors, p.source, p.year, p.doi, p.key_finding_zh, p.phd_relevance_zh,
+      [p.title, ...p.authors, p.source, p.year, p.doi, p.key_finding_en, p.phd_relevance_en, p.key_finding_zh, p.phd_relevance_zh,
         ...p.topics.flatMap(t => [t, TOPICS[t]])].join(' ').toLocaleLowerCase().includes(word)))
     .sort((a, b) => {
       if (sort === 'priority' && rank[a.reading_priority] !== rank[b.reading_priority]) return rank[a.reading_priority] - rank[b.reading_priority];
@@ -70,6 +70,10 @@ export function filterPapers(papers, { topics = [], priority = '', query = '', s
       return (b.published_date || `${b.year}-01-01`).localeCompare(a.published_date || `${a.year}-01-01`) || a.title.localeCompare(b.title);
     });
 }
-export function latestPicks(papers) {
-  return filterPapers(papers.filter(p => p.featured), { sort: 'added' }).slice(0, 3);
+export function latestPicks(papers, limit = 6) {
+  // All published entries are curated; highlights break ties within an added date.
+  return filterPapers(papers.filter(p => p.reading_priority !== 'skim'), { sort: 'added' })
+    .sort((a, b) => b.date_added.localeCompare(a.date_added) || Number(b.featured) - Number(a.featured) ||
+      (b.published_date || `${b.year}-01-01`).localeCompare(a.published_date || `${a.year}-01-01`) || a.title.localeCompare(b.title))
+    .slice(0, limit);
 }

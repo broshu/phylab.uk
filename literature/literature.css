@@ -36,7 +36,18 @@
 .lit-caption, .lit-meta { color:var(--muted); font-size:.8rem; }
 .lit-caption { margin:0 0 20px; }
 .lit-grid { display:grid; gap:20px; }
-.lit-picks, .lit-home .lit-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.lit-shelf {
+  display:grid; grid-auto-flow:column; grid-auto-columns:calc((100% - 40px) / 3); gap:20px;
+  overflow-x:auto; scroll-snap-type:x mandatory; scroll-padding:4px; overscroll-behavior-x:contain;
+  scrollbar-width:thin; scrollbar-color:var(--line) transparent; padding:4px 4px 20px; margin:-4px -4px 0;
+}
+.lit-shelf > .lit-card { scroll-snap-align:start; }
+.lit-shelf > .lit-status { grid-column:1 / -1; }
+.lit-heading-actions { display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+.lit-arrows { display:flex; gap:6px; }
+.lit-arrows button { width:36px; height:36px; border:1px solid var(--line); border-radius:50%; background:var(--card); color:var(--green); font:inherit; cursor:pointer; }
+.lit-arrows button:hover:not(:disabled) { border-color:var(--accent); }
+.lit-arrows button:disabled { opacity:.35; cursor:default; }
 .lit-library { grid-template-columns:repeat(2,minmax(0,1fr)); }
 .lit-card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:22px; box-shadow:var(--shadow); min-width:0; scroll-margin-top:20px; }
 .lit-card:target { border-color:var(--green); outline:2px solid var(--green); outline-offset:4px; }
@@ -80,9 +91,10 @@
 .lit-home .lit-card h3 { font-size:.92rem; }
 .lit-home .lit-notes dd { font-size:.82rem; }
 .lit-home .lit-card:hover { border-color:var(--accent); }
-@media(max-width:900px) { .lit-nav { align-items:start; flex-direction:column; } .lit-picks, .lit-home .lit-grid { grid-template-columns:1fr; } }
+@media(max-width:900px) { .lit-nav { align-items:start; flex-direction:column; } .lit-shelf { grid-auto-columns:calc((100% - 20px) / 2); } }
 @media(max-width:640px) {
   .lit-wrap { padding:0 18px; } .lit-intro { padding-top:32px; }
+  .lit-shelf { grid-auto-columns:86%; }
   .lit-library { grid-template-columns:1fr; } .lit-card { padding:18px; }
   .lit-heading { flex-wrap:wrap; gap:8px; } .lit-heading h2 { font-size:1.8rem; }
   .lit-nav div { gap:12px; font-size:.83rem; } .lit-controls { flex-direction:column; align-items:stretch; }

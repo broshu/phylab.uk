@@ -30,8 +30,8 @@ export function draftFromMetadata(item, today) {
     authors: (item.author || []).map(a => [a.given, a.family].filter(Boolean).join(' ') || a.name || '').filter(Boolean),
     year, published_date: date, source: item['container-title']?.[0] || '',
     doi, url: `https://doi.org/${doi}`, topics: [], evidence_type: 'Needs review',
-    reading_priority: '', key_finding_zh: '', phd_relevance_zh: '',
-    reading_recommendation_zh: '', limitations_zh: '', featured: false,
+    reading_priority: '', key_finding_en: '', phd_relevance_en: '',
+    reading_recommendation_en: '', limitations_en: '', featured: false,
     date_added: today, verified_at: today, verification_url: `https://doi.org/${doi}`
   };
 }

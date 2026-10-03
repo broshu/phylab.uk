@@ -29,7 +29,7 @@
   .brand { display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; }
   .brand b { font-size:1.9rem; color:var(--green); }
   .brand span { font-size:.88rem; color:var(--muted); }
-  .nav ul { list-style:none; display:flex; gap:24px; font-size:.92rem; color:var(--muted); }
+  .nav ul { list-style:none; display:flex; flex-wrap:wrap; gap:24px; font-size:.92rem; color:var(--muted); }
   .nav ul a:hover { color:var(--green); }
 
   /* sections */
@@ -102,7 +102,7 @@
   <div class="wrap">
     <nav class="nav">
       <a class="brand" href="/"><b class="serif">PhyLab</b><span>Xingyu Shu · Physics teacher</span></a>
-      <ul><li><a href="/research/">Research</a></li><li><a href="/literature/">Literature</a></li><li><a href="/labs/">Labs</a></li><li><a href="/resources/">Resources</a></li><li><a href="/contact/">Contact</a></li></ul>
+      <ul><li><a href="/research/">Research</a></li><li><a href="/labs/">Labs</a></li><li><a href="/literature/">Literature</a></li><li><a href="/resources/">Resources</a></li><li><a href="/contact/">Contact</a></li></ul>
     </nav>
 
     <section>
@@ -131,14 +131,6 @@
       </div>
     </section>
 
-    <section class="lit-home" aria-labelledby="literature-home-heading">
-      <div class="head"><h2 id="literature-home-heading" class="serif">Literature</h2><a href="/literature/">Reading library →</a></div>
-      <p class="lit-caption">Curated external research · Hands-on labs, simulation &amp; AI-supported physics teaching</p>
-      <p id="literature-home-updated" class="lit-meta"></p>
-      <div id="literature-home-picks" class="lit-grid"><p class="lit-status">Loading recommendations…</p></div>
-      <noscript><a href="/literature/">Browse external literature →</a></noscript>
-    </section>
-
     <section>
       <div class="head"><h2 class="serif">Labs</h2><a href="/labs/">All 12 labs →</a></div>
       <div class="grid g4">
@@ -151,6 +143,14 @@
         <a class="tile" href="/labs/electric-field-lines/"><img src="/labs/electric-field-lines/screenshot.png" alt="" loading="lazy"><div class="t"><h3>Electric Field Lines</h3></div></a>
         <a class="tile" href="/labs/vernier-caliper/"><img src="/labs/vernier-caliper/screenshot.png" alt="" loading="lazy"><div class="t"><h3>Vernier Caliper</h3></div></a>
       </div>
+    </section>
+
+    <section class="lit-home" aria-labelledby="literature-home-heading">
+      <div class="head"><h2 id="literature-home-heading" class="serif">Literature</h2><div class="lit-heading-actions"><div class="lit-arrows"><button type="button" data-lit-prev aria-controls="literature-home-picks" aria-label="Previous literature recommendations">←</button><button type="button" data-lit-next aria-controls="literature-home-picks" aria-label="More literature recommendations">→</button></div><a href="/literature/">Reading library →</a></div></div>
+      <p class="lit-caption">Curated external research · Hands-on labs, simulation &amp; AI-supported physics teaching</p>
+      <p id="literature-home-updated" class="lit-meta"></p>
+      <div id="literature-home-picks" class="lit-shelf" tabindex="0" role="region" aria-label="Latest literature recommendations; scroll left or right"><p class="lit-status">Loading recommendations…</p></div>
+      <noscript><a href="/literature/">Browse external literature →</a></noscript>
     </section>
 
     <section>

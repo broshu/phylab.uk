@@ -21,7 +21,7 @@ test('reviewed additions are atomic; drafts, duplicates and incomplete notes can
     await writeFile(incoming, JSON.stringify(paper));
     assert.equal(run('--dry-run').status, 0);
     assert.equal(await readFile(path, 'utf8'), original);
-    for (const invalid of [{ ...paper, status: 'draft' }, catalog.papers[0], { ...paper, key_finding_zh: '' }]) {
+    for (const invalid of [{ ...paper, status: 'draft' }, catalog.papers[0], { ...paper, key_finding_en: '' }]) {
       await writeFile(incoming, JSON.stringify(invalid));
       assert.notEqual(run().status, 0);
       assert.equal(await readFile(path, 'utf8'), original);

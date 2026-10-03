@@ -33,7 +33,11 @@
       "featured": true,
       "date_added": "2026-10-03",
       "verified_at": "2026-10-03",
-      "verification_url": "https://www.frontiersin.org/journals/education/articles/10.3389/feduc.2026.1964629/full"
+      "verification_url": "https://www.frontiersin.org/journals/education/articles/10.3389/feduc.2026.1964629/full",
+      "key_finding_en": "This review included 11 empirical studies in university physics education. AI outcomes varied with the task and instructional structure: some studies reported short-term gains, alongside limitations in independent performance after AI support was removed and in identifying incorrect responses.",
+      "phd_relevance_en": "Use this review to locate the research gap between performance with AI support and independent capability after AI is withdrawn, then follow its references to the original studies.",
+      "reading_recommendation_en": "Start with the inclusion criteria, study characteristics table, and limitations. Then read the original studies on laboratory work, simulations, and transfer to independent tasks closely.",
+      "limitations_en": "The evidence base is small and heterogeneous, and the review uses a narrative synthesis. It does not establish that AI is universally effective across university physics teaching."
     },
     {
       "id": "becker-2026-ai-scaffolding",
@@ -65,7 +69,11 @@
       "featured": true,
       "date_added": "2026-10-03",
       "verified_at": "2026-10-03",
-      "verification_url": "https://journals.aps.org/prper/abstract/10.1103/nvf1-zrq8"
+      "verification_url": "https://journals.aps.org/prper/abstract/10.1103/nvf1-zrq8",
+      "key_finding_en": "A total of 268 ninth-grade students completed buoyancy tasks. The AI chatbot and tiered-scaffolding groups reported lower intrinsic and extraneous cognitive load than the textual-support group. Differences in affective-motivational outcomes between the AI and tiered-scaffolding groups were not statistically significant.",
+      "phd_relevance_en": "This study can inform a comparison between AI scaffolding and traditional tiered scaffolding. Consider cognitive load as a process measure, alongside separate assessments of conceptual understanding and independent tasks after scaffolding is withdrawn.",
+      "reading_recommendation_en": "Read the full descriptions of the support configurations, random assignment, and measurement instruments. Pay particular attention to what the outcome measures actually assess.",
+      "limitations_en": "The study mainly measures short-term, self-reported cognitive load and affective-motivational outcomes. It does not provide evidence of advantages in operating physical laboratory equipment, long-term learning, or independent transfer."
     },
     {
       "id": "fussell-2026-measurement-assessment",
@@ -95,7 +103,11 @@
       "featured": true,
       "date_added": "2026-10-03",
       "verified_at": "2026-10-03",
-      "verification_url": "https://journals.aps.org/prper/abstract/10.1103/z9n2-tfr9"
+      "verification_url": "https://journals.aps.org/prper/abstract/10.1103/z9n2-tfr9",
+      "key_finding_en": "For two types of items in the Physics Measurement Questionnaire, writing an open-ended explanation first did not change subsequent multiple-choice answers. Differences between open and closed responses indicate that the two formats reveal different information about students’ reasoning.",
+      "phd_relevance_en": "An assessment of experimental capability can retain both multiple-choice items and students’ explanations of measurement, error, and data comparison, avoiding the assumption that selecting the correct answer demonstrates independent reasoning.",
+      "reading_recommendation_en": "Prioritize the item design, coding of open responses, and analysis of agreement between the two assessment formats.",
+      "limitations_en": "This is a case study of a particular classroom context and two types of measurement items. Its findings should not be generalized to all open-ended or multiple-choice questions."
     },
     {
       "id": "ben-zion-2026-ai-simulation",
@@ -128,7 +140,11 @@
       "featured": false,
       "date_added": "2026-10-03",
       "verified_at": "2026-10-03",
-      "verification_url": "https://journals.aps.org/prper/abstract/10.1103/s8dy-kqy5"
+      "verification_url": "https://journals.aps.org/prper/abstract/10.1103/s8dy-kqy5",
+      "key_finding_en": "An electric-potential laboratory compared three conditions: physical equipment, a prebuilt simulation, and an AI-generated simulation. Both simulation groups scored higher on the conceptual assessment than the physical-equipment group. The study highlights learning opportunities in prompting, revising, and validating AI models.",
+      "phd_relevance_en": "This directly relates to a three-condition comparison of physical experiments, simulations, and AI. Adapt the condition design and add assessments of equipment operation, troubleshooting, and transfer after support is withdrawn.",
+      "reading_recommendation_en": "Prioritize the intervention activities, conceptual assessment, comparability of the groups, and discussion. Map each assessment measure to the PhD research questions.",
+      "limitations_en": "The conceptual-score findings from this preliminary study do not demonstrate improved skill in operating physical equipment, nor do they establish that AI-generated simulations outperform prebuilt simulations."
     },
     {
       "id": "bastani-2025-ai-independent-learning",
@@ -162,7 +178,11 @@
       "featured": false,
       "date_added": "2026-10-03",
       "verified_at": "2026-10-03",
-      "verification_url": "https://doi.org/10.1073/pnas.2422633122"
+      "verification_url": "https://doi.org/10.1073/pnas.2422633122",
+      "key_finding_en": "A randomized experiment in high-school mathematics distinguished AI-assisted practice from unassisted examinations. AI without guardrails improved practice performance but could harm learning performance after the tool was removed. Instructional guardrails reduced this negative effect.",
+      "phd_relevance_en": "This offers a cross-disciplinary design reference for distinguishing task completion with support from independent performance without support. The design can inform assessments after scaffolding is withdrawn in physics laboratory work.",
+      "reading_recommendation_en": "Read the full descriptions of the unassisted examination design and the two AI conditions. Focus on how the guardrails prevent the AI from simply giving away answers.",
+      "limitations_en": "This is adjacent evidence from mathematics education, rather than a study of physics education or physical laboratory skills. An unassisted examination also does not represent every form of far transfer."
     },
     {
       "id": "kestin-2025-ai-physics-tutor",
@@ -194,7 +214,11 @@
       "featured": false,
       "date_added": "2026-10-03",
       "verified_at": "2026-10-03",
-      "verification_url": "https://www.nature.com/articles/s41598-025-97652-6"
+      "verification_url": "https://www.nature.com/articles/s41598-025-97652-6",
+      "key_finding_en": "In a randomized controlled study of university physics, an AI tutor designed around instructional best practices produced higher immediate learning scores in the studied lessons and required less time. Students reported greater engagement and motivation.",
+      "phd_relevance_en": "Use its alignment with learning objectives and AI tutor design as references. Assess immediate conceptual scores separately from physical laboratory performance and subsequent independent transfer.",
+      "reading_recommendation_en": "Read the full tutor prompts, crossover condition arrangements, assessments, and discussion. Clarify the differences in time spent and instructional format.",
+      "limitations_en": "The results concern a particular course and a carefully designed tutor. They cannot be generalized to arbitrary chatbots and do not directly establish long-term retention or improved physical laboratory skills."
     },
     {
       "id": "wilcox-2016-eclass",
@@ -222,7 +246,11 @@
       "featured": false,
       "date_added": "2026-10-03",
       "verified_at": "2026-10-03",
-      "verification_url": "https://journals.aps.org/prper/abstract/10.1103/PhysRevPhysEducRes.12.010123"
+      "verification_url": "https://journals.aps.org/prper/abstract/10.1103/PhysRevPhysEducRes.12.010123",
+      "key_finding_en": "Analysis of data from multiple institutions supports acceptable E-CLASS performance in discrimination, test–retest reliability, internal consistency, and related validity evidence. The instrument addresses students’ views and expectations about experimental physics.",
+      "phd_relevance_en": "E-CLASS can measure changes in views about experimentation, but should be used alongside scores for practical performance, experimental design, and data reasoning. An attitudes survey should not be treated as a test of experimental capability.",
+      "reading_recommendation_en": "Prioritize the instrument’s constructs, items, and validity evidence. If using it in secondary education or a Chinese-language setting, separately examine the translation and its suitability for that population.",
+      "limitations_en": "E-CLASS primarily measures views and expectations, rather than the operation of physical equipment. The original study did not identify strong, stable factors for subscales."
     },
     {
       "id": "holmes-2015-critical-thinking",
@@ -253,7 +281,11 @@
       "featured": false,
       "date_added": "2026-10-03",
       "verified_at": "2026-10-03",
-      "verification_url": "https://arxiv.org/abs/1508.04870"
+      "verification_url": "https://arxiv.org/abs/1508.04870",
+      "key_finding_en": "After repeated practice in quantitative comparisons between datasets and between data and models, with prompts gradually withdrawn, the intervention group more often improved experimental methods independently and identified model limitations. Differences persisted into the following year’s course.",
+      "phd_relevance_en": "Build the sequence of comparison, decision, and improvement into an experiment in every lesson. Observe whether students independently check measurements, revise methods, and evaluate models after prompts are removed.",
+      "reading_recommendation_en": "Prioritize the gradual withdrawal of scaffolding, behavioral measures, and measurements in the subsequent course. Use these to design observable tasks involving independent experimental work.",
+      "limitations_en": "The evidence comes from a particular university laboratory course and comparison group. Retention in a subsequent course does not automatically establish far transfer to arbitrary new contexts."
     },
     {
       "id": "chi-2014-icap",
@@ -281,7 +313,11 @@
       "featured": false,
       "date_added": "2026-10-03",
       "verified_at": "2026-10-03",
-      "verification_url": "https://www.tandfonline.com/doi/full/10.1080/00461520.2014.965823"
+      "verification_url": "https://www.tandfonline.com/doi/full/10.1080/00461520.2014.965823",
+      "key_finding_en": "ICAP distinguishes four modes of cognitive engagement through observable activities: passive, active, constructive, and interactive. It proposes that learning gains increase with deeper engagement and sets out conditions under which that hypothesis applies.",
+      "phd_relevance_en": "Use ICAP to code physical laboratory work, simulations, and AI conversations. Pressing buttons provides evidence of activity; generating explanations, making predictions, and reasoning together require further distinctions.",
+      "reading_recommendation_en": "Start with the category definitions, examples, and boundary conditions, then map classroom behaviors and student outputs to coding rules.",
+      "limitations_en": "This is a general framework for learning theory, rather than an intervention trial in physics laboratories. Observable behavior is an indicator of cognitive engagement and does not by itself guarantee learning gains."
     },
     {
       "id": "finkelstein-2005-simulation-transfer",
@@ -317,7 +353,11 @@
       "featured": false,
       "date_added": "2026-10-03",
       "verified_at": "2026-10-03",
-      "verification_url": "https://journals.aps.org/prper/abstract/10.1103/PhysRevSTPER.1.010103"
+      "verification_url": "https://journals.aps.org/prper/abstract/10.1103/PhysRevSTPER.1.010103",
+      "key_finding_en": "In a direct-current circuit course, students using a simulation that displayed electron flow outperformed the physical-equipment comparison group on conceptual tests and on a task requiring them to assemble a real circuit and explain how it worked.",
+      "phd_relevance_en": "This provides important positive evidence of transfer from simulation to tasks involving physical equipment. Use it to qualify the assumption that simulations lack practical experience and to design comparisons with matched tasks and representations.",
+      "reading_recommendation_en": "Prioritize the real-circuit tasks and the design of the simulation’s representations. Compare their operational complexity with that of the PhD project’s optics experiments.",
+      "limitations_en": "The conclusion concerns particular direct-current circuits, simulations, and coordinated tasks. It does not establish that simulations can replace all physical laboratory training."
     },
     {
       "id": "puntambekar-2005-scaffolding",
@@ -345,7 +385,11 @@
       "featured": false,
       "date_added": "2026-10-03",
       "verified_at": "2026-10-03",
-      "verification_url": "https://www.tandfonline.com/doi/abs/10.1207/s15326985ep4001_1"
+      "verification_url": "https://www.tandfonline.com/doi/abs/10.1207/s15326985ep4001_1",
+      "key_finding_en": "The article argues that software tools are often described as scaffolds while key features are overlooked, including ongoing diagnosis, support matched to students’ needs, and gradual withdrawal of support.",
+      "phd_relevance_en": "Use this analysis to define the scaffolding mechanisms of an AI laboratory tutor: provide support in response to students’ difficulties, gradually reduce prompts, and check whether students can complete tasks independently.",
+      "reading_recommendation_en": "Read the full arguments about diagnosis, calibration of support, and fading. Turn these mechanisms into intervention design features and observation measures.",
+      "limitations_en": "This is a theoretical analysis, rather than a study of the effects of AI or physics laboratory instruction. The journal volume and issue are dated 2005; the platform’s later online publication date is 2010, so this catalogue retains only the volume-and-issue year."
     }
   ]
 }

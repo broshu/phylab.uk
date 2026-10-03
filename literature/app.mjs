@@ -32,18 +32,18 @@ function card(paper, compact = false) {
     tags.append(tag);
   }
   const notes = el('dl', 'lit-notes');
-  notes.lang = 'zh-CN';
-  note(notes, '核心发现', paper.key_finding_zh);
+  notes.lang = 'en-GB';
+  note(notes, 'Key finding', paper.key_finding_en);
   if (!compact) {
-    note(notes, 'Why I care · 与我的 PhD 的关系（策展判断）', paper.phd_relevance_zh);
-    note(notes, '阅读建议', paper.reading_recommendation_zh);
+    note(notes, 'Why I care · PhD relevance (curatorial judgement)', paper.phd_relevance_en);
+    note(notes, 'Reading recommendation', paper.reading_recommendation_en);
   }
   article.append(tags, notes);
   if (!compact) {
     const details = el('details');
-    details.lang = 'zh-CN';
-    details.append(el('summary', '', '证据边界与核对来源'), el('p', '', paper.limitations_zh),
-      link('核对来源 ↗', paper.verification_url, true), el('p', 'lit-meta', `核对日期：${paper.verified_at}`));
+    details.lang = 'en-GB';
+    details.append(el('summary', '', 'Evidence limitations and verification'), el('p', '', paper.limitations_en),
+      link('Verified source ↗', paper.verification_url, true), el('p', 'lit-meta', `Verified ${paper.verified_at}`));
     article.append(details);
   }
   const links = el('div', 'lit-links');
@@ -62,6 +62,33 @@ let papers = [];
 function currentHash() {
   try { return decodeURIComponent(location.hash.slice(1)); } catch { return ''; }
 }
+function initializeShelf() {
+  const previous = document.querySelector(`[data-lit-prev][aria-controls="${picks.id}"]`);
+  const next = document.querySelector(`[data-lit-next][aria-controls="${picks.id}"]`);
+  if (!previous || !next) return () => {};
+  const update = () => {
+    previous.disabled = picks.scrollLeft < 4;
+    next.disabled = picks.scrollLeft + picks.clientWidth >= picks.scrollWidth - 4;
+  };
+  const scroll = direction => {
+    const first = picks.querySelector('.lit-card');
+    const distance = first ? first.getBoundingClientRect().width + parseFloat(getComputedStyle(picks).columnGap) : picks.clientWidth;
+    picks.scrollBy({ left: direction * distance, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+  };
+  previous.addEventListener('click', () => scroll(-1));
+  next.addEventListener('click', () => scroll(1));
+  picks.addEventListener('scroll', update, { passive: true });
+  picks.addEventListener('keydown', event => {
+    if (event.target !== picks || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+    event.preventDefault();
+    if (event.key === 'Home' || event.key === 'End') picks.scrollTo({ left: event.key === 'Home' ? 0 : picks.scrollWidth });
+    else scroll(event.key === 'ArrowLeft' ? -1 : 1);
+  });
+  new ResizeObserver(update).observe(picks);
+  update();
+  return update;
+}
+const updateShelf = picks ? initializeShelf() : () => {};
 function readState() {
   const params = new URLSearchParams(location.search);
   return { topics: [...new Set(params.getAll('topic').filter(t => Object.hasOwn(TOPICS, t)))],
@@ -119,6 +146,7 @@ function initializeFilters() {
 }
 async function load() {
   picks.replaceChildren(el('p', 'lit-status', 'Loading recommendations…'));
+  updateShelf();
   if (results) results.setAttribute('aria-busy', 'true');
   try {
     const response = await fetch('/literature/data/papers.json', { cache: 'no-cache', signal: AbortSignal.timeout(15000) });
@@ -129,6 +157,8 @@ async function load() {
     papers = data.papers;
     picks.replaceChildren(...latestPicks(papers).map(p => card(p, true)));
     if (!picks.children.length) picks.append(el('p', 'lit-status', 'New recommendations will appear here when selected.'));
+    picks.scrollLeft = 0;
+    updateShelf();
     const updated = document.getElementById(home ? 'literature-home-updated' : 'lit-updated');
     updated.textContent = `Library updated ${data.updated_at} · ${filterPapers(papers).length} curated papers`;
     if (home) return;
@@ -143,6 +173,7 @@ async function load() {
     retry.type = 'button'; retry.addEventListener('click', load);
     notice.append(link('Browse the catalogue', '/literature/data/papers.json'), retry);
     picks.replaceChildren(notice);
+    updateShelf();
     if (results) { results.replaceChildren(); results.setAttribute('aria-busy', 'false'); form.hidden = true; message.hidden = true; }
   }
 }

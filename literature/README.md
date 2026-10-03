@@ -1,50 +1,54 @@
-# PhyLab Literature 维护说明
+# PhyLab Literature Maintenance Guide
 
-Literature 收录外部研究；作者自己的成果继续放在 `research/`。本板块沿用主站配色、字体、卡片和深色模式，复用 `assets/nav.js` 返回首页。主站首页和 `/literature/` 共享同一数据与渲染组件。
+Literature curates external research. The site owner's own work remains in `research/`. This section uses the main site's colours, typography, cards, and dark mode, and reuses `assets/nav.js` for navigation back to the homepage. The homepage and `/literature/` share the same data and rendering components.
 
-## 文件与部署
+## Files and deployment
 
-- `data/papers.json`：唯一正式文献源，每篇独立条目；`schema_version: 1`。
-- `core.mjs`：字段校验、主题、搜索、排序和首页推荐规则。
-- `app.mjs`：主页推荐、文献页筛选、中文阅读笔记和链接。
-- `literature.css`：与现有站点一致、限定作用范围的样式。
-- `scripts/`：静态构建检查、候选检索、审核后追加。
-- `.github/workflows/literature-candidates.yml`：每周五北京时间 08:00 收集候选，也支持在 Actions 手动运行。GitHub 定时任务可能延迟，长期无活动时可能停用。
+- `data/papers.json`: the single published catalogue, with one object per paper and `schema_version: 1`.
+- `core.mjs`: field validation, topics, search, sorting, and latest-pick selection.
+- `app.mjs`: homepage recommendations, library filters, English reading notes, and links.
+- `literature.css`: scoped styles consistent with the existing site.
+- `scripts/`: static publication checks, candidate collection, and reviewed-entry addition.
+- `.github/workflows/literature-candidates.yml`: collects candidates every Friday at 08:00 Beijing time and can also be run manually in Actions. GitHub scheduled runs may be delayed or disabled after prolonged repository inactivity.
 
-现有部署为 GitHub Pages，`main` 分支根目录直接发布，仓库有 `.nojekyll` 和 `CNAME`。无打包框架、服务器、数据库或新增第三方依赖。维护脚本需要 Node.js 22+，候选源的 XML 解析使用 Python 3 标准库（Actions 自动准备环境）。`/literature` 由目录页重定向到 `/literature/`。修改源文件后，按仓库原有方式提交并推送才会更新线上；本次本地实现不等同于已经上线。
+The existing site uses GitHub Pages to publish the root of the `main` branch, with `.nojekyll` and `CNAME` in the repository. There is no bundling framework, server, database, or new third-party dependency. Maintenance scripts require Node.js 22+. Candidate-source XML is parsed with the Python 3 standard library; Actions prepares the runtime automatically. The directory route redirects `/literature` to `/literature/`.
 
-## 每周推荐怎么追加
+After changing source files, commit and push through the repository's existing process to update the live site. Confirm publication through the GitHub Pages deployment status.
 
-1. 在 GitHub Actions 的 **Weekly literature candidates** 下载 `literature-candidates` 文件，或在仓库根目录运行：
+## Adding weekly recommendations
+
+1. Download the `literature-candidates` artifact from the **Weekly literature candidates** GitHub Actions run, or run this command from the repository root:
 
    ```sh
    node literature/scripts/collect.mjs work/literature-candidates-2026-10-09.json
    ```
 
-   自动检索 PRPER 官方 RSS 和 Crossref 最近 45 天的主题候选，按 DOI 排除已收录文献。Crossref 限流会有界重试并保留 RSS 结果；来源不足会写入候选文件的 `warnings`，两个来源均失败则明确报错，不会伪装成“本周没有文献”。候选只是元数据线索，Crossref 有索引延迟；另检查 [PRPER 最新论文](https://journals.aps.org/prper/recent) 和出版商页面。自动流程不会修改正式文献源或生成未经核对的中文结论。
+   Collection searches the official PRPER RSS feed and Crossref for topic candidates from the past 45 days, excluding already catalogued papers by DOI. Crossref rate limits trigger bounded retries, and successful RSS results are retained. Incomplete source coverage is recorded in the candidate file's `warnings`. If both sources fail, collection reports an error rather than presenting the failure as a week with no papers.
 
-2. 筛选真正高价值的 0–3 篇，阅读原始来源，核对作者、日期、DOI、研究对象、干预、评价指标和局限。将候选的 `paper` 对象复制到单独的 JSON 对象或对象数组文件。也可直接按现有条目填写，完全不依赖自动检索。
+   Candidates are metadata leads, and Crossref indexing can lag. Also check [recent PRPER papers](https://journals.aps.org/prper/recent) and publisher pages. The automated job does not change the published catalogue or generate unverified English conclusions.
 
-3. 完成下列字段并设置 `status: "published"`：
+2. Select 0–3 papers of clear value. Read the original sources and verify authors, dates, DOI, participants, intervention, assessment measures, and limitations. Copy each candidate's `paper` object into a separate JSON object or array file. You can also prepare entries directly from the existing examples without using automated collection.
 
-   | 字段 | 要求 |
+3. Complete these fields and set `status: "published"`:
+
+   | Field | Requirement |
    | --- | --- |
-   | `id` | 稳定唯一的小写连字符 ID；已有条目不要改 ID，否则永久链接会失效 |
-   | `title`, `authors` | 原文标题、完整作者数组 |
-   | `year`, `published_date` | 卷期/出版年份；精确日期用 `YYYY-MM-DD`，不确定时用 `null`，不能编造月日 |
-   | `source`, `doi`, `url` | 期刊/来源；DOI 填裸 DOI，非 DOI 文献允许为空，HTTPS 原文 URL 必填 |
-   | `topics` | `hands-on`, `simulation`, `ai`, `transfer`, `assessment`, `icap`, `scaffolding`, `cognitive-load` 的数组 |
-   | `evidence_type` | 试验、比较研究、系统综述、理论框架、量表验证等；跨学科证据明确标记 |
-   | `key_finding_zh` | 中文核心发现，仅陈述原文支持的结果，不复制摘要 |
-   | `phd_relevance_zh` | 中文 PhD 关联；这是策展推论，不作为论文发现陈述 |
-   | `reading_priority` | `core`（PhD 必读）、`read`（全文读）、`skim`（略读） |
-   | `reading_recommendation_zh` | 中文建议：读哪些部分及为何值得读 |
-   | `limitations_zh` | 中文证据边界；区分即时表现、实验能力与独立迁移 |
-   | `featured` | `true` 进入首页推荐候选；首页展示最近添加的 3 篇，日期相同时按出版日期降序 |
-   | `date_added` | 实际加入日期，`YYYY-MM-DD` |
-   | `verified_at`, `verification_url` | 人工核对日期与支持解读的原始来源 HTTPS 链接；候选抓取日期不能替代人工核对 |
+   | `id` | A stable, unique ID using lowercase letters, numbers, and hyphens. Do not change an existing ID, because that breaks its permalink. |
+   | `title`, `authors` | The original title and a complete array of author names. |
+   | `year`, `published_date` | The volume/issue or publication year. Use `YYYY-MM-DD` for a known exact date and `null` when uncertain; do not invent a month or day. |
+   | `source`, `doi`, `url` | Journal or source name, a bare DOI, and a required HTTPS original-source URL. The DOI may be empty for sources without one. |
+   | `topics` | An array drawn from `hands-on`, `simulation`, `ai`, `transfer`, `assessment`, `icap`, `scaffolding`, and `cognitive-load`. |
+   | `evidence_type` | For example, an experiment, comparative study, systematic review, theoretical framework, or instrument validation. Clearly label evidence from other disciplines. |
+   | `key_finding_en` | An English account of findings supported by the source. Do not copy the abstract. |
+   | `phd_relevance_en` | Relevance to the PhD direction in English. This is curatorial judgement and must be distinguished from the paper's findings. |
+   | `reading_priority` | `core` for essential PhD reading, `read` for full-text reading, or `skim` for background reading. |
+   | `reading_recommendation_en` | English guidance on which sections to read and why. |
+   | `limitations_en` | Evidence limitations in English. Distinguish immediate performance, experimental capability, and independent transfer. |
+   | `featured` | A boolean used only to break ties between entries with the same `date_added`: featured entries rank first, followed by publication date in descending order. Latest picks include up to six most recently added published `core`/`read` entries. New `core`/`read` entries are eligible automatically; `featured: true` is not required. |
+   | `date_added` | The actual date the entry was added, in `YYYY-MM-DD` format. |
+   | `verified_at`, `verification_url` | The editorial verification date and an HTTPS original-source link supporting the interpretation. A collection date cannot substitute for source verification. |
 
-4. 在仓库根目录先检查，再追加：
+4. Check the reviewed entries, then add them from the repository root:
 
    ```sh
    node literature/scripts/add.mjs work/reviewed-papers.json --dry-run
@@ -53,22 +57,38 @@ Literature 收录外部研究；作者自己的成果继续放在 `research/`。
    npm test --prefix literature
    ```
 
-   追加脚本检测重复 ID/DOI、缺失字段、中文笔记、日期和安全链接；全部通过才原子写入 `papers.json`。它不会提交或推送。修订已收录条目时直接修改该条目并更新 `updated_at`，不新增重复条目。手工追加也只需编辑 `papers.json` 并执行上述检查。
+   The addition script checks duplicate IDs and DOIs, missing fields, English notes, dates, and safe links. It writes `papers.json` atomically only when all checks pass. It does not commit or push.
 
-5. 审阅差异并按原站点流程发布。新条目会自动出现在文献页；`featured: true` 的条目会参与首页推荐，不需要改 HTML。候选文件和已审核工作文件保存在 `work/`，不要当作正式公开文献源。
+   To revise an existing entry, edit that object and update the catalogue's `updated_at`; do not add a duplicate. Manual additions can also be made directly in `papers.json`, followed by the build and test checks above.
 
-## 浏览与验证
+5. Review the changes and publish through the site's existing process. New published entries appear in the library automatically, and new `core`/`read` entries become eligible for the homepage and section's latest picks without changes to HTML or a `featured` flag. Keep candidate files and reviewed working files in `work/`; they are not the published catalogue.
 
-页面支持多个主题同时匹配（AND）、中文与英文关键词、DOI/作者搜索、优先级和出版日期排序。筛选保存在 URL，可以分享；每篇使用 `/literature/#稳定ID` 永久链接。草稿不会显示。数据每次加载请求重新验证缓存；部署后刷新即可看到更新。
+## Browsing and verification
 
-本地预览从仓库根目录启动普通静态服务器：
+The homepage Literature section follows Labs, and the section navigation follows Research → Labs → Literature. All public page text is in English. Existing `_zh` notes remain in the data as editorial reference and are not required for future entries. The English `_en` notes are required for published entries.
+
+Latest-pick shelves contain up to six recommendations, showing three cards on desktop and approximately one on mobile. They support native horizontal scrolling, touch swipes, previous/next buttons, and arrow-key navigation when the shelf is focused.
+
+The library supports matching multiple topics simultaneously (AND), Chinese and English keyword searches, DOI and author searches, and sorting by addition date, publication date, or reading priority. Filters are stored in the URL for sharing. Each paper has a `/literature/#stable-id` permalink. Drafts are hidden. Each data request revalidates the cache, so a refresh after deployment loads the updated catalogue.
+
+Start a standard static server from the repository root for local preview:
 
 ```sh
 python3 -m http.server 8765 --bind 127.0.0.1
 ```
 
-访问 `http://127.0.0.1:8765/literature/`，不要直接双击 HTML（浏览器会限制本地文件的数据读取）。断网或数据加载失败时可重试；JavaScript 关闭时保留完整数据文件入口。
+Visit `http://127.0.0.1:8765/literature/`. Do not open the HTML file directly, because browsers restrict data loading from local files. A retry is available when the network or data request fails. A link to the complete data file remains available when JavaScript is disabled.
 
-`npm run build --prefix literature` 是静态发布完整性检查，不生成新的目录。CI 在文献相关 push/PR 时验证字段、资源路径与核心行为；GitHub Pages 原有部署机制保持不变，CI 不自动成为 Pages 部署的前置门槛。
+`npm run build --prefix literature` checks static publication integrity; it does not generate a new output directory. CI validates fields, resource paths, and core behaviour on literature-related pushes and pull requests. The existing GitHub Pages deployment mechanism remains in place; these CI checks do not automatically become a prerequisite for Pages deployment.
 
-首批 11 篇条目的来源已于 2026-10-03 核对，含 2026 年 10 月近期文献与经典框架。该库是有选择的阅读推荐，不是声称覆盖全部 PER 文献的系统综述。
+Sources for the initial 11 entries were checked on 2026-10-03. They include recent October 2026 papers and foundational frameworks. This catalogue is a selective reading recommendation list, rather than a systematic review claiming to cover all PER literature.
+
+## Automation status and next step
+
+The current weekly workflow collects candidate metadata into a GitHub Actions artifact only. It uses read-only `contents` permission and no model API credential. Automated note generation, draft-PR creation, and publication are not live.
+
+A planned expansion, not yet implemented, would follow this sequence:
+
+Original-source checks → AI-assisted English drafts of findings, PhD relevance, reading guidance, and limitations → data validation, build checks, and tests → draft pull request → editorial approval → merge to `main` and GitHub Pages publication.
+
+This expansion needs a model API credential and repository write capability sufficient to create a branch and a draft pull request. Editorial approval would remain the gate for publishing interpretations and recommendations.
