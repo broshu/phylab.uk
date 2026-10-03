@@ -3,37 +3,39 @@
 }
 
 :root {
-  --bg: #f7f7f5;
-  --card: #fff;
-  --ink: #111;
-  --muted: #646464;
-  --line: #d9d9d4;
-  --soft-line: #ececea;
-  --panel-bg: #fafaf8;
+  --bg: var(--site-bg);
+  --card: var(--site-surface);
+  --ink: var(--site-text);
+  --muted: var(--site-muted);
+  --line: var(--site-border);
+  --soft-line: var(--site-border-soft);
+  --panel-bg: var(--site-surface-soft);
+  --control-fill: var(--site-green);
+  --control-text: var(--site-on-accent);
   /* functional colors (match canvas drawing) */
   --compress: #2f6fd6;
   --stretch: #d64545;
   --danger: #ef8a17;
   --newbond: #16a34a;
-  --clamp: #3a3a3a;
+  --clamp: var(--site-muted);
   /* canvas colours, read by js/main.js */
-  --canvas-bg: #ffffff;
-  --canvas-ink: #111111;
-  --canvas-muted: #646464;
-  --canvas-grid: #ececea;
-  --canvas-axis: #b5b5ae;
-  --canvas-marker: #646464;
-  --canvas-clamp: #efefec;
-  --canvas-clamp-hatch: rgba(17, 17, 17, 0.14);
-  --canvas-clamp-edge: #b5b5ae;
-  --canvas-clamp-atom: #3a3a3a;
-  --canvas-tag-bg: rgba(255, 255, 255, 0.92);
+  --canvas-bg: var(--site-surface);
+  --canvas-ink: var(--site-text);
+  --canvas-muted: var(--site-muted);
+  --canvas-grid: var(--site-border-soft);
+  --canvas-axis: var(--site-border);
+  --canvas-marker: var(--site-muted);
+  --canvas-clamp: var(--site-surface-soft);
+  --canvas-clamp-hatch: color-mix(in srgb, var(--site-text) 14%, transparent);
+  --canvas-clamp-edge: var(--site-border);
+  --canvas-clamp-atom: var(--site-muted);
+  --canvas-tag-bg: color-mix(in srgb, var(--site-surface) 92%, transparent);
   --canvas-bond: 190, 196, 204;
-  --canvas-broken: rgba(155, 44, 44, 0.75);
-  --canvas-break-text: #9b2c2c;
-  --canvas-blue-text: rgba(47, 111, 214, 0.95);
-  --canvas-orange-text: #c26a0a;
-  --canvas-arrow: #b36b00;
+  --canvas-broken: color-mix(in srgb, var(--site-danger) 75%, transparent);
+  --canvas-break-text: var(--site-danger);
+  --canvas-blue-text: var(--site-info);
+  --canvas-orange-text: var(--site-amber);
+  --canvas-arrow: var(--site-amber);
 }
 
 body {
@@ -84,7 +86,7 @@ input {
 .home-button:hover,
 .home-button:focus-visible {
   background: var(--soft-line);
-  border-color: var(--ink);
+  border-color: var(--control-fill);
   outline: none;
 }
 
@@ -164,8 +166,8 @@ h1 {
 }
 
 .mode-button.active {
-  color: #ffffff;
-  background: var(--ink);
+  color: var(--control-text);
+  background: var(--control-fill);
 }
 
 .control-block {
@@ -197,8 +199,8 @@ h1 {
   flex: 0 0 auto;
   padding: 5px 9px;
   border-radius: 999px;
-  color: #ffffff;
-  background: #7f8793;
+  color: var(--site-bg);
+  background: var(--site-muted);
   font-size: 12px;
   font-weight: 700;
 }
@@ -222,7 +224,7 @@ h1 {
   border: 1px solid var(--line);
   border-radius: 6px;
   color: var(--ink);
-  background: #ffffff;
+  background: var(--card);
   font-weight: 700;
   cursor: pointer;
 }
@@ -232,9 +234,9 @@ h1 {
 }
 
 .field-switch.active {
-  color: #ffffff;
-  border-color: var(--ink);
-  background: var(--ink);
+  color: var(--control-text);
+  border-color: var(--control-fill);
+  background: var(--control-fill);
 }
 
 .switch-track {
@@ -242,7 +244,7 @@ h1 {
   width: 38px;
   height: 20px;
   border-radius: 999px;
-  background: #c8d0da;
+  background: var(--site-border);
 }
 
 .switch-thumb {
@@ -252,15 +254,16 @@ h1 {
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: #ffffff;
+  background: var(--site-text);
   transition: transform 0.18s ease;
 }
 
 .field-switch.active .switch-track {
-  background: rgba(255, 255, 255, 0.35);
+  background: color-mix(in srgb, var(--control-text) 35%, transparent);
 }
 
 .field-switch.active .switch-thumb {
+  background: var(--control-text);
   transform: translateX(18px);
 }
 
@@ -457,66 +460,6 @@ canvas {
     height: 340px;
   }
 }
-/* ---- Dark mode · follows system colour scheme ---- */
-@media (prefers-color-scheme: dark) {
-    :root {
-        --bg: #14161a;
-        --card: #1d2024;
-        --ink: #e7e8ea;
-        --muted: #9aa0a8;
-        --line: #363a41;
-        --soft-line: #2a2e34;
-        --panel-bg: #212429;
-        --clamp: #b9bec6;
-        --canvas-bg: #1d2024;
-        --canvas-ink: #e7e8ea;
-        --canvas-muted: #9aa0a8;
-        --canvas-grid: #2a2e34;
-        --canvas-axis: #4a4f57;
-        --canvas-marker: #9aa0a8;
-        --canvas-clamp: #25282d;
-        --canvas-clamp-hatch: rgba(231, 232, 234, 0.12);
-        --canvas-clamp-edge: #4a4f57;
-        --canvas-clamp-atom: #b9bec6;
-        --canvas-tag-bg: rgba(29, 32, 36, 0.92);
-        --canvas-bond: 86, 94, 106;
-        --canvas-broken: rgba(232, 128, 128, 0.8);
-        --canvas-break-text: #e88080;
-        --canvas-blue-text: #7aa7f0;
-        --canvas-orange-text: #f0a040;
-        --canvas-arrow: #e8a838;
-    }
-    /* filled emphasis buttons keep a light fill (var(--ink)); flip their text dark */
-    .primary-button,
-    .mode-button.active,
-    .segbtn.active,
-    .preset-button.active,
-    .field-type-btn.active,
-    .field-switch.active,
-    .reveal-button {
-        color: var(--bg);
-    }
-    /* outline / ghost controls sit on the dark card, not white */
-    .ghost-button,
-    .chip,
-    .field-switch,
-    .secondary-button,
-    .preset-button,
-    .field-type-btn {
-        background: var(--card);
-    }
-    .ghost-button:hover,
-    .secondary-button:hover,
-    .field-type-btn:hover {
-        background: var(--soft-line);
-    }
-}
-
-/* Dark mode · fix active toggle thumb/track on the light-filled switch */
-@media (prefers-color-scheme: dark) {
-    .field-switch.active .switch-track { background: rgba(20, 22, 26, 0.28); }
-    .field-switch.active .switch-thumb { background: var(--bg); }
-}
 
 /* ---- Deformation in Collisions: additions ---- */
 
@@ -534,10 +477,10 @@ canvas {
   align-items: center;
   justify-content: center;
   min-height: 44px;
-  border: 1px solid var(--ink);
+  border: 1px solid var(--control-fill);
   border-radius: 6px;
-  color: #ffffff;
-  background: var(--ink);
+  color: var(--control-text);
+  background: var(--control-fill);
   font-weight: 700;
   cursor: pointer;
 }
@@ -566,7 +509,7 @@ canvas {
   border: 1px solid var(--line);
   border-radius: 6px;
   color: var(--ink);
-  background: #ffffff;
+  background: var(--card);
   font-weight: 700;
   cursor: pointer;
 }
@@ -583,9 +526,9 @@ canvas {
 }
 
 .preset-button.active {
-  color: #ffffff;
-  border-color: var(--ink);
-  background: var(--ink);
+  color: var(--control-text);
+  border-color: var(--control-fill);
+  background: var(--control-fill);
 }
 
 .preset-button.active small {
@@ -633,7 +576,7 @@ kbd {
   border: 1px solid var(--line);
   border-bottom-width: 2px;
   border-radius: 4px;
-  background: #ffffff;
+  background: var(--card);
   font-family: inherit;
   font-size: 11px;
 }
@@ -643,10 +586,10 @@ button:disabled {
   cursor: default;
 }
 
-.status-pill.elastic { background: var(--compress); }
-.status-pill.plastic { background: var(--newbond); }
+.status-pill.elastic { color: var(--site-info); background: color-mix(in srgb, var(--site-info) 12%, var(--card)); }
+.status-pill.plastic { color: var(--site-success); background: var(--site-tint-green); }
 .status-pill.crack,
-.status-pill.fracture { background: var(--stretch); }
+.status-pill.fracture { color: var(--site-danger); background: color-mix(in srgb, var(--site-danger) 12%, var(--card)); }
 
 .stage-panel {
   align-self: start;
@@ -716,7 +659,7 @@ button:disabled {
 }
 
 .tag.elastic { background: var(--compress); }
-.tag.plastic { background: var(--newbond); }
+.tag.plastic { background: var(--newbond); color: var(--site-figure-ink); }
 .tag.fracture { background: var(--stretch); }
 
 @media (max-width: 900px) {
@@ -779,23 +722,7 @@ button:disabled {
   }
 }
 
-/* Dark mode for the additions above (declared after them so they win) */
+/* The renderer builds rgba() from this numeric bond triplet. */
 @media (prefers-color-scheme: dark) {
-  .primary-button,
-  .preset-button.active {
-    color: var(--bg);
-  }
-
-  .preset-button,
-  kbd {
-    background: var(--card);
-  }
-
-  .preset-button:hover {
-    background: var(--soft-line);
-  }
-
-  .preset-button.active {
-    background: var(--ink);
-  }
+  :root { --canvas-bond: 86, 94, 106; }
 }

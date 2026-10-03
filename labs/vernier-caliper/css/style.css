@@ -3,13 +3,17 @@
 }
 
 :root {
-    --bg: #f7f7f5;
-    --card: #fff;
-    --ink: #111;
-    --muted: #646464;
-    --line: #d9d9d4;
-    --soft-line: #ececea;
-    --panel-bg: #fafaf8;
+    --bg: var(--site-bg);
+    --card: var(--site-surface);
+    --ink: var(--site-text);
+    --muted: var(--site-muted);
+    --line: var(--site-border);
+    --soft-line: var(--site-border-soft);
+    --panel-bg: var(--site-surface-soft);
+    --control-fill: var(--site-green);
+    --control-text: var(--site-on-accent);
+    /* Fixed-source diagrams retain a light surface for their dark scale labels. */
+    --diagram-bg: var(--site-figure-bg);
 }
 
 body {
@@ -77,7 +81,7 @@ h1, h2, p {
 .home-button:hover,
 .home-button:focus-visible {
     background: var(--soft-line);
-    border-color: var(--ink);
+    border-color: var(--control-fill);
     outline: none;
 }
 
@@ -113,8 +117,8 @@ h1, h2, p {
 }
 
 .mode-button.active {
-    background: var(--ink);
-    color: #fff;
+    background: var(--control-fill);
+    color: var(--control-text);
 }
 
 .layout {
@@ -142,6 +146,7 @@ h1, h2, p {
 }
 
 canvas#caliper {
+    background: var(--diagram-bg);
     display: block;
     margin: 0 auto;
     max-width: 100%;
@@ -200,16 +205,17 @@ canvas#caliper {
 }
 
 .read-card.total {
-    background: var(--ink);
-    border-color: var(--ink);
+    background: var(--control-fill);
+    border-color: var(--control-fill);
 }
 
 .read-card.total .read-label {
-    color: rgba(255, 255, 255, 0.7);
+    color: var(--control-text);
+    opacity: 0.7;
 }
 
 .read-card.total strong {
-    color: #ffffff;
+    color: var(--control-text);
     font-size: 1.6rem;
 }
 
@@ -221,7 +227,7 @@ canvas#caliper {
 
 .ghost-button {
     border: 1px solid var(--line);
-    background: #ffffff;
+    background: var(--card);
     color: var(--ink);
     font: inherit;
     font-weight: 600;
@@ -236,9 +242,9 @@ canvas#caliper {
 }
 
 .reveal-button {
-    border: 1px solid var(--ink);
-    background: var(--ink);
-    color: #ffffff;
+    border: 1px solid var(--control-fill);
+    background: var(--control-fill);
+    color: var(--control-text);
     font: inherit;
     font-weight: 600;
     padding: 9px 20px;
@@ -252,7 +258,7 @@ canvas#caliper {
 }
 
 .reveal-button.hidden-state {
-    background: #ffffff;
+    background: var(--card);
     color: var(--ink);
     border-color: var(--line);
 }
@@ -273,45 +279,8 @@ footer p {
     color: var(--muted);
     text-align: center;
 }
-/* ---- Dark mode · follows system colour scheme ---- */
-@media (prefers-color-scheme: dark) {
-    :root {
-        --bg: #14161a;
-        --card: #1d2024;
-        --ink: #e7e8ea;
-        --muted: #9aa0a8;
-        --line: #363a41;
-        --soft-line: #2a2e34;
-        --panel-bg: #212429;
-    }
-    /* filled emphasis buttons keep a light fill (var(--ink)); flip their text dark */
-    .primary-button,
-    .mode-button.active,
-    .segbtn.active,
-    .preset-button.active,
-    .field-type-btn.active,
-    .field-switch.active,
-    .reveal-button {
-        color: var(--bg);
-    }
-    /* outline / ghost controls sit on the dark card, not white */
-    .ghost-button,
-    .chip,
-    .field-switch,
-    .secondary-button,
-    .preset-button,
-    .field-type-btn {
-        background: var(--card);
-    }
-    .ghost-button:hover,
-    .secondary-button:hover,
-    .field-type-btn:hover {
-        background: var(--soft-line);
-    }
-}
 
-/* Dark mode · fix light-filled "Reading" total box text */
-@media (prefers-color-scheme: dark) {
-    .read-card.total .read-label { color: rgba(20, 22, 26, 0.65); }
-    .read-card.total strong { color: var(--bg); }
+.read-card.total strong.masked {
+    color: var(--control-text);
+    opacity: 0.7;
 }

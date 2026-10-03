@@ -3,26 +3,28 @@
 }
 
 :root {
-    --bg: #f7f7f5;
-    --card: #fff;
-    --ink: #111;
-    --muted: #646464;
-    --line: #d9d9d4;
-    --soft-line: #ececea;
-    --panel-bg: #fafaf8;
+    --bg: var(--site-bg);
+    --card: var(--site-surface);
+    --ink: var(--site-text);
+    --muted: var(--site-muted);
+    --line: var(--site-border);
+    --soft-line: var(--site-border-soft);
+    --panel-bg: var(--site-surface-soft);
+    --control-fill: var(--site-green);
+    --control-text: var(--site-on-accent);
 
     /* functional colours (shared with the canvas drawing) */
-    --blue: #2468a6;
-    --amber: #e69d28;
-    --red: #d64f62;
-    --green-ok: #2f7d55;
+    --blue: var(--site-info);
+    --amber: var(--site-amber);
+    --red: var(--site-danger);
+    --green-ok: var(--site-success);
 
     /* canvas-only surfaces */
-    --canvas-sky: #ffffff;
-    --canvas-ground: #edece7;
-    --canvas-ground-line: #c3c1ba;
-    --canvas-court: #dfe9e0;
-    --canvas-net: #5b6b7c;
+    --canvas-sky: var(--site-surface);
+    --canvas-ground: var(--site-surface-soft);
+    --canvas-ground-line: var(--site-border);
+    --canvas-court: var(--site-surface-tint);
+    --canvas-net: var(--site-muted);
 }
 
 body {
@@ -68,14 +70,14 @@ h1, h2, h3, p {
     width: 44px;
     height: 44px;
     padding: 0;
-    border: 1px solid #d8d2c0;
+    border: 1px solid var(--line);
     border-radius: 50%;
-    background: #faf8f1;
-    color: #2f5d4f;
+    background: var(--card);
+    color: var(--site-green);
     text-decoration: none;
     font-size: 13px;
     font-weight: 600;
-    box-shadow: 0 1px 2px rgba(28, 43, 37, 0.05), 0 12px 32px -16px rgba(28, 43, 37, 0.28);
+    box-shadow: var(--site-shadow);
     transition: transform 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
@@ -92,8 +94,8 @@ h1, h2, h3, p {
 
 .home-button:hover,
 .home-button:focus-visible {
-    border-color: #8a9a5b;
-    color: #3f7060;
+    border-color: var(--site-accent);
+    color: var(--site-green-hover);
     transform: translateY(-2px);
     outline: none;
 }
@@ -117,7 +119,7 @@ h1, h2, h3, p {
 
 .result-shortcut:hover,
 .result-shortcut:focus-visible {
-    border-color: #9aa999;
+    border-color: var(--site-green);
     outline: none;
 }
 
@@ -278,10 +280,10 @@ input[type="range"][data-verdict="out"] { accent-color: var(--blue); }
     min-width: 116px;
     min-height: 40px;
     padding: 0 16px;
-    border: 1px solid var(--ink);
+    border: 1px solid var(--control-fill);
     border-radius: 6px;
-    color: #fff;
-    background: var(--ink);
+    color: var(--control-text);
+    background: var(--control-fill);
     transition: opacity 0.15s ease;
 }
 
@@ -293,7 +295,7 @@ input[type="range"][data-verdict="out"] { accent-color: var(--blue); }
     border: 1px solid var(--line);
     border-radius: 6px;
     color: var(--ink);
-    background: #fff;
+    background: var(--card);
     transition: background 0.15s ease;
 }
 
@@ -362,8 +364,8 @@ input[type="range"][data-verdict="out"] { accent-color: var(--blue); }
     max-width: 85%;
     padding: 6px 10px;
     border-radius: 10px 10px 2px 10px;
-    color: var(--card);
-    background: var(--ink);
+    color: var(--control-text);
+    background: var(--control-fill);
     font-weight: 600;
 }
 
@@ -431,9 +433,9 @@ input[type="range"][data-verdict="out"] { accent-color: var(--blue); }
 .number-answer-hint[hidden] { display: none; }
 
 .multi-option[data-selected="true"] {
-    border-color: var(--ink);
-    color: var(--card);
-    background: var(--ink);
+    border-color: var(--control-fill);
+    color: var(--control-text);
+    background: var(--control-fill);
 }
 
 .coach-celebration {
@@ -496,10 +498,10 @@ input[type="range"][data-verdict="out"] { accent-color: var(--blue); }
 
 .coach-ai-composer button {
     height: 36px;
-    border: 1px solid var(--ink);
+    border: 1px solid var(--control-fill);
     border-radius: 6px;
-    color: var(--card);
-    background: var(--ink);
+    color: var(--control-text);
+    background: var(--control-fill);
     font: inherit;
     font-size: 12px;
     font-weight: 700;
@@ -630,44 +632,3 @@ input[type="range"][data-verdict="out"] { accent-color: var(--blue); }
     font-size: 14px;
 }
 .progress { color: var(--muted); font-size: 13px; text-align: right; }
-
-/* ---------- dark mode · follows system colour scheme ---------- */
-@media (prefers-color-scheme: dark) {
-    :root {
-        --bg: #14161a;
-        --card: #1d2024;
-        --ink: #e7e8ea;
-        --muted: #9aa0a8;
-        --line: #363a41;
-        --soft-line: #2a2e34;
-        --panel-bg: #212429;
-
-        --blue: #5aa0dd;
-        --green-ok: #58b184;
-        --red: #e2707f;
-
-        --canvas-sky: #1d2024;
-        --canvas-ground: #23262b;
-        --canvas-ground-line: #464b52;
-        --canvas-court: #26332c;
-        --canvas-net: #7f8fa0;
-    }
-
-    .home-button {
-        border-color: #363a41;
-        background: #1d2024;
-        color: #8fb8a8;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 32px -16px rgba(0, 0, 0, 0.7);
-    }
-
-    .home-button:hover,
-    .home-button:focus-visible {
-        border-color: #a3b06e;
-        color: #a6c8ba;
-    }
-
-    .primary-button { color: var(--bg); }
-    .ghost-button { background: var(--card); }
-    .ghost-button:hover { background: var(--soft-line); }
-    .coach-ai-composer button { color: var(--bg); }
-}

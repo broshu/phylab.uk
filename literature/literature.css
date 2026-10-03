@@ -1,16 +1,9 @@
 /* Palette, typography and card treatment follow the existing PhyLab home and Labs pages. */
 .lit-page {
-  --ink:#1c2b25; --green:#2f5d4f; --green-2:#3f7060; --accent:#8a9a5b;
-  --paper:#f4f1e8; --card:#faf8f1; --line:#d8d2c0; --muted:#62695f;
-  --shadow:0 1px 2px rgba(28,43,37,.05),0 12px 32px -16px rgba(28,43,37,.28);
   margin:0; background:var(--paper); color:var(--ink); font-family:Inter,sans-serif;
   line-height:1.65; -webkit-font-smoothing:antialiased;
 }
-@media(prefers-color-scheme:dark) {
-  .lit-page { --ink:#e7e8ea; --green:#8fb8a8; --green-2:#a6c8ba; --accent:#a3b06e;
-    --paper:#14161a; --card:#1d2024; --line:#363a41; --muted:#a6adb5;
-    --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 32px -16px rgba(0,0,0,.7); }
-}
+
 .lit-page *, .lit-home * { box-sizing:border-box; }
 .lit-page a, .lit-home a { color:var(--green); }
 .lit-page a:hover, .lit-home a:hover { text-decoration:underline; }
@@ -62,7 +55,7 @@
 .lit-tag, .lit-topic { display:inline-flex; align-items:center; padding:4px 10px; border:1px solid var(--line); border-radius:999px; font-size:.72rem; color:var(--green); background:var(--card); text-decoration:none; }
 .lit-tag:hover { border-color:var(--accent); }
 .lit-topic { cursor:pointer; }
-.lit-topic:has(input:checked) { border-color:var(--green); background:var(--green); color:var(--paper); }
+.lit-topic:has(input:checked) { border-color:var(--green); background:var(--green); color:var(--site-on-accent); }
 .lit-topic input { accent-color:var(--green); margin:0 6px 0 0; }
 .lit-notes { margin:18px 0 0; }
 .lit-notes dt { color:var(--green); font-size:.8rem; font-weight:600; margin-top:14px; }

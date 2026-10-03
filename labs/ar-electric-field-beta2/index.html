@@ -13,17 +13,13 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
 
-  <style>
-    :root{
-      --ink:#1c2b25; --green:#2f5d4f; --accent:#8a9a5b; --paper:#f4f1e8; --card:#faf8f1;
-      --line:#d8d2c0; --muted:#6b7269;
-      --shadow:0 1px 2px rgba(28,43,37,.05),0 12px 32px -16px rgba(28,43,37,.28);
-    }
+  <link rel="stylesheet" href="/assets/theme.css" />
+<style>
     html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;
       font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
       background:var(--paper);}
-    body.space{background:radial-gradient(circle at 42% 30%,#f7f4ec,#e3dcc9 78%);}
-    body.demo{background:radial-gradient(circle at 42% 30%,#f7f4ec,#e8e2d1 78%);}
+    body.space{background:radial-gradient(circle at 42% 30%,var(--site-surface),var(--site-bg) 78%);}
+    body.demo{background:radial-gradient(circle at 42% 30%,var(--site-surface),var(--site-bg) 78%);}
     /* the canvas must sit above the AR video/photo source. AR.js gives its
        source element (#arjs-video) an inline z-index of −2 — never override
        it with a bare `video` selector, or the feed covers all 3-D content. */
@@ -31,10 +27,10 @@
 
     #ui{position:fixed;inset:0;pointer-events:none;z-index:1000;}
     #status{position:fixed;left:50%;top:12px;transform:translateX(-50%);max-width:92%;
-      background:rgba(250,248,241,.92);color:var(--ink);padding:9px 16px;border-radius:999px;text-align:center;
+      background:var(--site-surface);color:var(--ink);padding:9px 16px;border-radius:999px;text-align:center;
       font-size:14px;font-weight:600;border:1px solid var(--line);box-shadow:var(--shadow);
       backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
-    #legend{position:fixed;left:12px;top:56px;background:rgba(250,248,241,.9);color:var(--ink);
+    #legend{position:fixed;left:12px;top:56px;background:var(--site-surface);color:var(--ink);
       padding:9px 13px;border-radius:13px;font-size:12.5px;line-height:1.75;border:1px solid var(--line);
       box-shadow:var(--shadow);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
     #legend .dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:7px;vertical-align:middle;}
@@ -44,44 +40,44 @@
     .cneg{background:#2f7cd6;box-shadow:0 0 6px rgba(47,124,214,.55);}
 
     #controls{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:1002;display:flex;gap:10px;
-      pointer-events:auto;background:rgba(250,248,241,.92);border:1px solid var(--line);padding:8px;border-radius:16px;
+      pointer-events:auto;background:var(--site-surface);border:1px solid var(--line);padding:8px;border-radius:16px;
       box-shadow:var(--shadow);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
     .toggle{cursor:pointer;user-select:none;-webkit-user-select:none;display:flex;flex-direction:column;align-items:center;gap:2px;
-      min-width:76px;padding:9px 12px;border-radius:11px;color:var(--muted);background:rgba(28,43,37,.03);
+      min-width:76px;padding:9px 12px;border-radius:11px;color:var(--muted);background:var(--site-surface-soft);
       border:1px solid var(--line);font-size:12.5px;font-weight:600;transition:all .18s ease;}
     .toggle .ic{font-size:17px;line-height:1;}
-    .toggle.on{color:#fff;background:linear-gradient(135deg,var(--green),#3f7a67);border-color:transparent;
-      box-shadow:0 4px 14px rgba(47,93,79,.35);}
+    .toggle.on{color:var(--site-on-accent);background:var(--site-accent);border-color:transparent;
+      box-shadow:var(--site-shadow);}
     .toggle.disabled{opacity:.4;pointer-events:none;}
-    #lockBtn{color:#fff;background:linear-gradient(135deg,var(--accent),#a3b46e);border-color:transparent;font-weight:700;}
-    #lockBtn.locked{background:rgba(28,43,37,.04);color:var(--ink);border:1px solid var(--line);font-weight:600;}
+    #lockBtn{color:var(--site-on-accent);background:var(--site-accent);border-color:transparent;font-weight:700;}
+    #lockBtn.locked{background:var(--site-surface-soft);color:var(--ink);border:1px solid var(--line);font-weight:600;}
 
     #gate{position:fixed;inset:0;z-index:50;background:var(--paper);
       color:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
       padding:26px;overflow:auto;}
     #gate::before{content:"";position:fixed;inset:0;pointer-events:none;
-      background:radial-gradient(circle at 20% 15%,rgba(47,93,79,.05),transparent 45%),
-                 radial-gradient(circle at 85% 80%,rgba(138,154,91,.07),transparent 50%);}
+      background:radial-gradient(circle at 20% 15%,var(--site-tint-green),transparent 45%),
+                 radial-gradient(circle at 85% 80%,var(--site-tint-accent),transparent 50%);}
     #gate>*{position:relative;}
     #gate h1{font-family:"Cormorant Garamond",serif;font-size:34px;font-weight:600;letter-spacing:.5px;
       margin:0 0 8px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:center;}
     .beta{font-family:"Inter",sans-serif;font-size:10.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
-      color:#fff;background:var(--accent);padding:3px 10px;border-radius:999px;}
+      color:var(--site-on-accent);background:var(--accent);padding:3px 10px;border-radius:999px;}
     #gate p{color:var(--muted);max-width:480px;line-height:1.6;margin:6px 0;font-size:14px;}
     #gate p b{color:var(--green);}
     .step{display:flex;gap:10px;align-items:flex-start;max-width:450px;text-align:left;margin:5px 0;
-      color:#4a544d;font-size:13.5px;line-height:1.5;}
+      color:var(--ink);font-size:13.5px;line-height:1.5;}
     .step b{color:var(--green);}
     .step span:first-child{color:var(--accent);font-weight:700;}
-    #startBtn{margin-top:20px;pointer-events:auto;cursor:pointer;background:linear-gradient(135deg,var(--green),#3f7a67);
-      color:#fff;border:none;border-radius:14px;padding:14px 34px;font-size:17px;font-weight:700;
-      box-shadow:0 10px 26px -8px rgba(47,93,79,.55);}
+    #startBtn{margin-top:20px;pointer-events:auto;cursor:pointer;background:var(--site-accent);
+      color:var(--site-on-accent);border:none;border-radius:14px;padding:14px 34px;font-size:17px;font-weight:700;
+      box-shadow:var(--site-shadow);}
     .crumb{position:fixed;top:14px;left:16px;font-size:13px;z-index:60;}
     .crumb a{color:var(--green);text-decoration:none;}
     .crumb a:hover{text-decoration:underline;}
     .gate-actions{align-self:stretch;display:flex;justify-content:flex-end;margin-bottom:16px;pointer-events:auto;}
     .home-button{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;padding:0;border:1px solid var(--line);border-radius:50%;background:var(--card);color:var(--green);text-decoration:none;font-size:.84rem;font-weight:500;box-shadow:var(--shadow);transition:transform .2s ease,border-color .2s ease,color .2s ease;}
-    .home-button:hover,.home-button:focus-visible{border-color:var(--accent);color:var(--green);transform:translateY(-2px);outline:none;}
+    .home-button:hover,.home-button:focus-visible{border-color:var(--accent);color:var(--green);transform:translateY(-2px);}
     .home-button svg{display:block;}
     .links{margin-top:16px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center;pointer-events:auto;}
     .links a,.links button{font-family:"Inter",sans-serif;color:var(--ink);text-decoration:none;background:var(--card);
@@ -89,7 +85,14 @@
       box-shadow:var(--shadow);}
     .links a:hover,.links button:hover{border-color:var(--accent);}
     .hidden{display:none !important;}
-  </style>
+
+    .charge-pos-label{color:var(--site-danger) !important;}
+    .charge-neg-label{color:var(--site-info) !important;}
+
+    a:focus-visible,button:focus-visible,input:focus-visible,.toggle:focus-visible{
+      outline:2px solid var(--site-focus);outline-offset:3px;
+    }
+</style>
 </head>
 <body>
   <div class="crumb"><a href="/labs/">← Labs</a></div>
@@ -98,12 +101,12 @@
     <div class="gate-actions"><a class="home-button" href="/labs/" aria-label="Return to Labs" title="Labs"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9.5 21v-6h5v6"/></svg></a></div>
     <h1>AR Electric Field <span class="beta">beta 2</span></h1>
     <p>Print the barcode cards and lay them <b>flat on the desk</b>. Every card has the same edge
-       length <i>d</i>. In AR, each <b style="color:#c0392b">+q</b> / <b style="color:#2b6cb0">−q</b> charge floats
+       length <i>d</i>. In AR, each <b class="charge-pos-label">+q</b> / <b class="charge-neg-label">−q</b> charge floats
        <b>2d above its card</b>, and each ±2q plate stands as a <b>4d × 4d board upright on the desk</b>.</p>
     <div class="step"><span>①</span><span>Print the <b>marker sheet</b> at 100% and cut out the cards.</span></div>
     <div class="step"><span>②</span><span>Start the camera and hold steady — the layout <b>locks automatically</b>, so the field stays rigid (no jitter) while you move.</span></div>
     <div class="step"><span>③</span><span>Toggle <b>Field lines</b>, <b>Shells</b> (3-D equipotential surfaces — this view hides the desk and follows the camera, with gyro fallback) and <b>Relief</b> (the desk rises to height ∝ V, with equal-ΔV contour rings). Shells and Relief are one-at-a-time — switching one on switches the other off.</span></div>
-    <p style="font-size:12px;color:#9aa294">Camera needs HTTPS · field lines: 16 per unit charge · equipotentials: equal ΔV steps.<br>
+    <p style="font-size:12px;color:var(--site-muted)">Camera needs HTTPS · field lines: 16 per unit charge · equipotentials: equal ΔV steps.<br>
        No camera to hand? <b>Test with a photo</b> of the printed cards — it runs through the exact AR pipeline.</p>
     <button id="startBtn">Start camera</button>
     <div class="links">

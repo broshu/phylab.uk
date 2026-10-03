@@ -3,13 +3,17 @@
 }
 
 :root {
-    --bg: #f7f7f5;
-    --card: #fff;
-    --ink: #111;
-    --muted: #646464;
-    --line: #d9d9d4;
-    --soft-line: #ececea;
-    --panel-bg: #fafaf8;
+    --bg: var(--site-bg);
+    --card: var(--site-surface);
+    --ink: var(--site-text);
+    --muted: var(--site-muted);
+    --line: var(--site-border);
+    --soft-line: var(--site-border-soft);
+    --panel-bg: var(--site-surface-soft);
+    --control-fill: var(--site-green);
+    --control-text: var(--site-on-accent);
+    /* Fixed-source diagrams retain a light surface for their dark scale labels. */
+    --diagram-bg: var(--site-figure-bg);
     /* functional screen colors */
     --green: #5ee28f;
     --cyan: #2bb7bf;
@@ -72,7 +76,7 @@ p {
 .home-button:hover,
 .home-button:focus-visible {
     background: var(--soft-line);
-    border-color: var(--ink);
+    border-color: var(--control-fill);
     outline: none;
 }
 
@@ -142,7 +146,7 @@ h3 {
     border: 1px solid var(--line);
     border-radius: 6px;
     color: var(--ink);
-    background: #fff;
+    background: var(--card);
     font: inherit;
     font-size: 13px;
     font-weight: 600;
@@ -191,8 +195,8 @@ h3 {
 }
 
 .mode-button.active {
-    color: #ffffff;
-    background: var(--ink);
+    color: var(--control-text);
+    background: var(--control-fill);
 }
 
 .slider-row {
@@ -332,7 +336,7 @@ canvas {
     height: 360px;
     border-radius: 8px;
     border: 1px solid var(--line);
-    background: #fff;
+    background: var(--diagram-bg);
 }
 
 footer {
@@ -381,41 +385,5 @@ footer {
     .beam-readout,
     .legend {
         justify-content: flex-start;
-    }
-}
-/* ---- Dark mode · follows system colour scheme ---- */
-@media (prefers-color-scheme: dark) {
-    :root {
-        --bg: #14161a;
-        --card: #1d2024;
-        --ink: #e7e8ea;
-        --muted: #9aa0a8;
-        --line: #363a41;
-        --soft-line: #2a2e34;
-        --panel-bg: #212429;
-    }
-    /* filled emphasis buttons keep a light fill (var(--ink)); flip their text dark */
-    .primary-button,
-    .mode-button.active,
-    .segbtn.active,
-    .preset-button.active,
-    .field-type-btn.active,
-    .field-switch.active,
-    .reveal-button {
-        color: var(--bg);
-    }
-    /* outline / ghost controls sit on the dark card, not white */
-    .ghost-button,
-    .chip,
-    .field-switch,
-    .secondary-button,
-    .preset-button,
-    .field-type-btn {
-        background: var(--card);
-    }
-    .ghost-button:hover,
-    .secondary-button:hover,
-    .field-type-btn:hover {
-        background: var(--soft-line);
     }
 }

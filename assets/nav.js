@@ -8,24 +8,27 @@
     /* single Home button, pinned top-right */
     '.site-nav{position:fixed;top:20px;right:20px;z-index:1000}' +
     '.site-nav a{display:inline-flex;align-items:center;justify-content:center;' +
-    'width:44px;height:44px;border:1px solid #d8d2c0;border-radius:50%;' +
-    'color:#2f5d4f;background:#faf8f1;text-decoration:none;' +
-    'box-shadow:0 1px 2px rgba(28,43,37,.05),0 12px 32px -16px rgba(28,43,37,.28);' +
+    'width:44px;height:44px;border:1px solid var(--site-border);border-radius:50%;' +
+    'color:var(--site-green);background:var(--site-surface);text-decoration:none;' +
+    'box-shadow:var(--site-shadow);' +
     'transition:transform .2s ease,border-color .2s ease}' +
-    '.site-nav a:hover,.site-nav a:focus-visible{border-color:#8a9a5b;' +
-    'color:#3f7060;transform:translateY(-2px);outline:none}' +
+    '.site-nav a:hover,.site-nav a:focus-visible{border-color:var(--site-accent);' +
+    'color:var(--site-green-hover);transform:translateY(-2px)}' +
+    '.site-nav a:focus-visible{outline:2px solid var(--site-focus);outline-offset:3px}' +
     '.site-nav svg{display:block}' +
     /* keep page headers clear of the Home button */
-    '.top-bar,.topbar{padding-right:64px}' +
-    /* dark mode · follows system colour scheme */
-    '@media (prefers-color-scheme:dark){' +
-    '.site-nav a{border-color:#363a41;color:#8fb8a8;background:#1d2024;' +
-    'box-shadow:0 1px 2px rgba(0,0,0,.4),0 12px 32px -16px rgba(0,0,0,.7)}' +
-    '.site-nav a:hover,.site-nav a:focus-visible{border-color:#a3b06e;color:#a6c8ba}}';
+    '.top-bar,.topbar{padding-right:64px}';
 
   var ICONS = {
     home: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9.5 21v-6h5v6"/></svg>'
   };
+
+  if (!document.querySelector('link[href="/assets/theme.css"]')) {
+    var theme = document.createElement('link');
+    theme.rel = 'stylesheet';
+    theme.href = '/assets/theme.css';
+    document.head.prepend(theme);
+  }
 
   var path = location.pathname.replace(/index\.html$/i, '');
   if (path.charAt(path.length - 1) !== '/') path += '/';

@@ -3,17 +3,21 @@
 }
 
 :root {
-    --bg: #f7f7f5;
-    --card: #fff;
-    --ink: #111;
-    --muted: #646464;
-    --line: #d9d9d4;
-    --soft-line: #ececea;
-    --panel-bg: #fafaf8;
+    --bg: var(--site-bg);
+    --card: var(--site-surface);
+    --ink: var(--site-text);
+    --muted: var(--site-muted);
+    --line: var(--site-border);
+    --soft-line: var(--site-border-soft);
+    --panel-bg: var(--site-surface-soft);
+    --control-fill: var(--site-green);
+    --control-text: var(--site-on-accent);
+    /* Fixed-source diagrams retain a light surface for their dark scale labels. */
+    --diagram-bg: var(--site-figure-bg);
     /* functional colors (match canvas drawing) */
     --pos: #f45b69;
     --neg: #2d7ff9;
-    --path: #1a1a1a;
+    --path: var(--site-text);
 }
 
 body {
@@ -79,7 +83,7 @@ a {
 .home-button:hover,
 .home-button:focus-visible {
     background: var(--soft-line);
-    border-color: var(--ink);
+    border-color: var(--control-fill);
     outline: none;
 }
 
@@ -140,7 +144,7 @@ a {
 .ghost-button {
     border: 1px solid var(--line);
     color: var(--ink);
-    background: #fff;
+    background: var(--card);
     padding: 8px 14px;
     border-radius: 6px;
     font-weight: 600;
@@ -178,8 +182,8 @@ a {
     height: 14px;
     border-radius: 50%;
     display: inline-block;
-    border: 2px solid #ffffff;
-    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.05);
+    border: 2px solid var(--card);
+    box-shadow: 0 0 0 2px var(--soft-line);
 }
 
 .dot.positive {
@@ -208,7 +212,7 @@ a {
     cursor: pointer;
     font-weight: 700;
     background: var(--pos);
-    color: #fff;
+    color: var(--site-figure-ink);
     transition: all 0.15s ease;
 }
 
@@ -330,7 +334,7 @@ canvas {
     height: 520px;
     border-radius: 8px;
     display: block;
-    background: #fff;
+    background: var(--diagram-bg);
     border: 1px solid var(--line);
 }
 
@@ -382,7 +386,7 @@ canvas {
     padding: 6px 14px;
     border-radius: 6px;
     border: 1px solid var(--line);
-    background: #fff;
+    background: var(--card);
     color: var(--ink);
     font-weight: 600;
     cursor: pointer;
@@ -395,9 +399,9 @@ canvas {
 }
 
 .field-type-btn.active {
-    background: var(--ink);
-    color: #fff;
-    border-color: var(--ink);
+    background: var(--control-fill);
+    color: var(--control-text);
+    border-color: var(--control-fill);
 }
 
 .motion-controls {
@@ -416,9 +420,9 @@ canvas {
 }
 
 .primary-button {
-    border: 1px solid var(--ink);
-    background: var(--ink);
-    color: #fff;
+    border: 1px solid var(--control-fill);
+    background: var(--control-fill);
+    color: var(--control-text);
     padding: 10px 16px;
     border-radius: 6px;
     font-weight: 600;
@@ -462,8 +466,8 @@ canvas {
     height: 14px;
     border-radius: 50%;
     display: inline-block;
-    border: 2px solid #fff;
-    box-shadow: 0 0 0 1px rgba(0,0,0,0.08);
+    border: 2px solid var(--card);
+    box-shadow: 0 0 0 1px var(--soft-line);
 }
 
 .legend-dot.velocity {
@@ -492,41 +496,5 @@ footer {
 
     .canvas-card {
         order: -1;
-    }
-}
-/* ---- Dark mode · follows system colour scheme ---- */
-@media (prefers-color-scheme: dark) {
-    :root {
-        --bg: #14161a;
-        --card: #1d2024;
-        --ink: #e7e8ea;
-        --muted: #9aa0a8;
-        --line: #363a41;
-        --soft-line: #2a2e34;
-        --panel-bg: #212429;
-    }
-    /* filled emphasis buttons keep a light fill (var(--ink)); flip their text dark */
-    .primary-button,
-    .mode-button.active,
-    .segbtn.active,
-    .preset-button.active,
-    .field-type-btn.active,
-    .field-switch.active,
-    .reveal-button {
-        color: var(--bg);
-    }
-    /* outline / ghost controls sit on the dark card, not white */
-    .ghost-button,
-    .chip,
-    .field-switch,
-    .secondary-button,
-    .preset-button,
-    .field-type-btn {
-        background: var(--card);
-    }
-    .ghost-button:hover,
-    .secondary-button:hover,
-    .field-type-btn:hover {
-        background: var(--soft-line);
     }
 }

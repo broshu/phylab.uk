@@ -8,18 +8,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/theme.css">
 <style>
-  :root {
-    --ink:    #1c2b25;
-    --green:  #2f5d4f;
-    --green-2:#3f7060;
-    --accent: #8a9a5b;
-    --paper:  #f4f1e8;
-    --card:   #faf8f1;
-    --line:   #d8d2c0;
-    --muted:  #6b7269;
-    --shadow: 0 1px 2px rgba(28,43,37,.05), 0 12px 32px -16px rgba(28,43,37,.28);
-  }
+
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -38,8 +29,8 @@
     content: "";
     position: fixed; inset: 0;
     background:
-      radial-gradient(circle at 20% 15%, rgba(47,93,79,.05), transparent 45%),
-      radial-gradient(circle at 85% 80%, rgba(138,154,91,.06), transparent 50%);
+      radial-gradient(circle at 20% 15%, var(--site-tint-green), transparent 45%),
+      radial-gradient(circle at 85% 80%, var(--site-tint-accent), transparent 50%);
     pointer-events: none; z-index: 0;
   }
 
@@ -78,7 +69,7 @@
   .block:hover {
     transform: translateY(-5px);
     border-color: var(--accent);
-    box-shadow: 0 22px 48px -20px rgba(28,43,37,.45);
+    box-shadow: var(--site-shadow-hover);
   }
 
   .block h2 {
@@ -94,7 +85,7 @@
     object-position: top;
     border: 1px solid var(--line);
     border-radius: 10px;
-    background: #fff;
+    background: var(--site-figure-bg);
   }
 
   @media (max-width: 1000px) {
