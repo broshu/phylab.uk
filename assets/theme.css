@@ -89,6 +89,11 @@
     --site-green-hover: #244c3f;
     --site-accent: #66753a;
     --site-on-accent: #ffffff;
+    --site-success: #247149;
+    --site-danger: #b7354a;
+    --site-info: #2468a6;
+    --site-amber: #94620e;
+    --site-focus: #2f5d4f;
     --site-shadow: none;
     --site-shadow-hover: none;
     --site-tint-green: transparent;
