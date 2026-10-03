@@ -6,9 +6,9 @@ Literature curates external research. The site owner's own work remains in `rese
 
 - `data/papers.json`: the single published catalogue, with one object per paper and `schema_version: 1`.
 - `core.mjs`: field validation, topics, search, sorting, latest additions, and homepage-pick selection.
-- `index.html`: the latest-ten carousel at `/literature/`.
+- `index.html`: the latest-ten single-column list at `/literature/`.
 - `library/index.html`: the complete searchable archive at `/literature/library/`.
-- `app.mjs`: source-linked cards, homepage and latest-addition carousels, archive filters, and English key findings.
+- `app.mjs`: source-linked cards, the homepage carousel, latest-addition rows, archive filters, and English key findings.
 - `literature.css`: scoped styles consistent with the existing site.
 - `scripts/`: static publication checks, candidate collection, and reviewed-entry addition.
 - `.github/workflows/literature-candidates.yml`: collects candidates every Friday at 08:00 Beijing time and can also be run manually in Actions. GitHub scheduled runs may be delayed or disabled after prolonged repository inactivity.
@@ -46,7 +46,7 @@ After changing source files, commit and push through the repository's existing p
    | `reading_priority` | `core` for essential PhD reading, `read` for full-text reading, or `skim` for background reading. |
    | `reading_recommendation_en` | English guidance on which sections to read and why. |
    | `limitations_en` | Evidence limitations in English. Distinguish immediate performance, experimental capability, and independent transfer. |
-   | `featured` | A boolean affecting only the main-site homepage carousel. Within the same `date_added`, featured entries rank first, followed by publication date in descending order. The carousel includes up to six published `core`/`read` entries; `featured: true` is not required. The `/literature/` latest-ten carousel includes all published priorities and ignores `featured`. |
+   | `featured` | A boolean affecting only the main-site homepage carousel. Within the same `date_added`, featured entries rank first, followed by publication date in descending order. The carousel includes up to six published `core`/`read` entries; `featured: true` is not required. The `/literature/` latest-ten list includes all published priorities and ignores `featured`. |
    | `date_added` | The actual date the entry was added, in `YYYY-MM-DD` format. |
    | `verified_at`, `verification_url` | The editorial verification date and an HTTPS original-source link supporting the interpretation. A collection date cannot substitute for source verification. |
 
@@ -63,7 +63,7 @@ After changing source files, commit and push through the repository's existing p
 
    To revise an existing entry, edit that object and update the catalogue's `updated_at`; do not add a duplicate. Manual additions can also be made directly in `papers.json`, followed by the build and test checks above.
 
-5. Review the changes and publish through the site's existing process. New published entries appear in the complete Library automatically and enter the latest-ten carousel according to their addition date. New `core`/`read` entries also become eligible for the main-site homepage carousel. No changes to HTML or a `featured` flag are required. Keep candidate files and reviewed working files in `work/`; they are not the published catalogue.
+5. Review the changes and publish through the site's existing process. New published entries appear in the complete Library automatically and enter the latest-ten list according to their addition date. New `core`/`read` entries also become eligible for the main-site homepage carousel. No changes to HTML or a `featured` flag are required. Keep candidate files and reviewed working files in `work/`; they are not the published catalogue.
 
 ## Browsing and verification
 
@@ -71,9 +71,9 @@ The homepage Literature section follows Labs, and the section navigation follows
 
 Every paper card on the main-site homepage, `/literature/`, and `/literature/library/` opens its original source URL directly from anywhere inside the card. Cards show compact English content: title, authors, journal/source, topic labels, and key finding, with reading priority and dates. There is no intermediate internal reading-note or explanation page.
 
-`/literature/` displays up to ten latest additions in a horizontal carousel. Entries are ordered by `date_added` descending, then publication date (or year when an exact date is unknown), then title. All published reading priorities are eligible. Older entries remain in Library; selecting the latest ten never removes them from the catalogue.
+`/literature/` displays up to ten latest additions as full-width rows in a single column for vertical browsing. Entries are ordered by `date_added` descending, then publication date (or year when an exact date is unknown), then title. All published reading priorities are eligible. Older entries remain in Library; selecting the latest ten never removes them from the catalogue.
 
-The main-site homepage keeps its separate carousel of up to six `core`/`read` recommendations, showing three cards on desktop and approximately one on mobile. Both latest-recommendation carousels support native horizontal scrolling, touch swipes, previous/next buttons, and arrow-key navigation when the shelf is focused.
+The main-site homepage keeps its separate carousel of up to six `core`/`read` recommendations, showing three cards on desktop and approximately one on mobile. Only the homepage carousel uses horizontal scrolling, touch swipes, previous/next buttons, and arrow-key navigation when the shelf is focused.
 
 `/literature/library/` contains every published entry, including the latest ten, using the same compact cards that open original sources directly. Topic chips inside all paper cards are plain labels; topic filtering is available only through the Library controls. The complete Library supports matching multiple topics simultaneously (AND), Chinese and English keyword searches, DOI and author searches, and sorting by addition date, publication date, or reading priority. Filters are stored in the URL for sharing.
 

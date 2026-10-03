@@ -42,7 +42,7 @@
 .lit-arrows button { width:36px; height:36px; border:1px solid var(--line); border-radius:50%; background:var(--card); color:var(--green); font:inherit; cursor:pointer; }
 .lit-arrows button:hover:not(:disabled) { border-color:var(--accent); }
 .lit-arrows button:disabled { opacity:.35; cursor:default; }
-.lit-library { grid-template-columns:minmax(0,1fr); }
+.lit-latest, .lit-library { grid-template-columns:minmax(0,1fr); }
 .lit-card { display:block; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:22px; box-shadow:var(--shadow); min-width:0; scroll-margin-top:20px; }
 .lit-card:target, .lit-entry:target > .lit-card { border-color:var(--green); outline:2px solid var(--green); outline-offset:4px; }
 .lit-card h3 { color:var(--green); font-size:1.03rem; line-height:1.45; margin:12px 0 10px; overflow-wrap:anywhere; }
