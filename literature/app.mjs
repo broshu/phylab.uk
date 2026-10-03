@@ -22,33 +22,13 @@ function metadata(paper, article, title) {
   article.append(top, title, el('p', 'lit-authors', paper.authors.join(', ')),
     el('p', 'lit-source', `${paper.source} · ${paper.published_date || paper.year} · ${paper.evidence_type}`));
 }
-function homeCard(paper) {
-  const article = el('article', 'lit-card');
-  const title = el('h3');
-  title.append(link(paper.title, `/literature/library/#${paper.id}`));
-  metadata(paper, article, title);
-  const tags = el('div', 'lit-chips');
-  for (const topic of paper.topics) {
-    const tag = link(TOPICS[topic], `/literature/library/?topic=${encodeURIComponent(topic)}#library`);
-    tag.className = 'lit-tag';
-    tags.append(tag);
-  }
-  const notes = el('dl', 'lit-notes');
-  notes.lang = 'en-GB';
-  note(notes, 'Key finding', paper.key_finding_en);
-  const links = el('div', 'lit-links');
-  links.append(link('Reading notes →', `/literature/library/#${paper.id}`));
-  links.append(link(paper.doi ? 'DOI ↗' : 'Original source ↗', paper.doi ? `https://doi.org/${paper.doi}` : paper.url, true));
-  article.append(tags, notes, links, el('p', 'lit-meta', `Added ${paper.date_added}`));
-  return article;
-}
-function paperCard(paper, detailed = false) {
+function paperCard(paper, scope = 'library') {
   const entry = el('article', 'lit-entry');
-  entry.id = detailed ? paper.id : `latest-${paper.id}`;
+  entry.id = scope === 'library' ? paper.id : `${scope}-${paper.id}`;
   const card = link('', paper.url, true);
   card.className = 'lit-card lit-paper-link';
   const title = el('h3', '', paper.title);
-  title.id = `paper-title-${paper.id}`;
+  title.id = `${entry.id}-title`;
   card.setAttribute('aria-labelledby', title.id);
   metadata(paper, card, title);
   const tags = el('div', 'lit-chips');
@@ -57,17 +37,7 @@ function paperCard(paper, detailed = false) {
   const notes = el('dl', 'lit-notes');
   notes.lang = 'en-GB';
   note(notes, 'Key finding', paper.key_finding_en);
-  if (detailed) {
-    note(notes, 'Why I care · PhD relevance (curatorial judgement)', paper.phd_relevance_en);
-    note(notes, 'Reading recommendation', paper.reading_recommendation_en);
-  }
-  card.append(tags, notes);
-  if (detailed) {
-    const evidence = el('div', 'lit-evidence');
-    evidence.append(el('strong', '', 'Evidence limitations'), el('p', '', paper.limitations_en), el('p', 'lit-meta', `Source verified ${paper.verified_at}`));
-    card.append(evidence);
-  }
-  card.append(el('p', 'lit-links', 'Read original article ↗'), el('p', 'lit-meta', `Added ${paper.date_added}`));
+  card.append(tags, notes, el('p', 'lit-links', 'Read original article ↗'), el('p', 'lit-meta', `Added ${paper.date_added}`));
   entry.append(card);
   return entry;
 }
@@ -81,33 +51,33 @@ let papers = [];
 function currentHash() {
   try { return decodeURIComponent(location.hash.slice(1)); } catch { return ''; }
 }
-function initializeShelf() {
-  const previous = document.querySelector(`[data-lit-prev][aria-controls="${home.id}"]`);
-  const next = document.querySelector(`[data-lit-next][aria-controls="${home.id}"]`);
+function initializeShelf(shelf) {
+  const previous = document.querySelector(`[data-lit-prev][aria-controls="${shelf.id}"]`);
+  const next = document.querySelector(`[data-lit-next][aria-controls="${shelf.id}"]`);
   if (!previous || !next) return () => {};
   const update = () => {
-    previous.disabled = home.scrollLeft < 4;
-    next.disabled = home.scrollLeft + home.clientWidth >= home.scrollWidth - 4;
+    previous.disabled = shelf.scrollLeft < 4;
+    next.disabled = shelf.scrollLeft + shelf.clientWidth >= shelf.scrollWidth - 4;
   };
   const scroll = direction => {
-    const first = home.querySelector('.lit-card');
-    const distance = first ? first.getBoundingClientRect().width + parseFloat(getComputedStyle(home).columnGap) : home.clientWidth;
-    home.scrollBy({ left: direction * distance, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+    const first = shelf.querySelector('.lit-card');
+    const distance = first ? first.getBoundingClientRect().width + parseFloat(getComputedStyle(shelf).columnGap) : shelf.clientWidth;
+    shelf.scrollBy({ left: direction * distance, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
   };
   previous.addEventListener('click', () => scroll(-1));
   next.addEventListener('click', () => scroll(1));
-  home.addEventListener('scroll', update, { passive: true });
-  home.addEventListener('keydown', event => {
-    if (event.target !== home || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+  shelf.addEventListener('scroll', update, { passive: true });
+  shelf.addEventListener('keydown', event => {
+    if (event.target !== shelf || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
     event.preventDefault();
-    if (event.key === 'Home' || event.key === 'End') home.scrollTo({ left: event.key === 'Home' ? 0 : home.scrollWidth });
+    if (event.key === 'Home' || event.key === 'End') shelf.scrollTo({ left: event.key === 'Home' ? 0 : shelf.scrollWidth });
     else scroll(event.key === 'ArrowLeft' ? -1 : 1);
   });
-  new ResizeObserver(update).observe(home);
+  new ResizeObserver(update).observe(shelf);
   update();
   return update;
 }
-const updateShelf = home ? initializeShelf() : () => {};
+const updateShelf = picks?.classList.contains('lit-shelf') ? initializeShelf(picks) : () => {};
 function readState() {
   const params = new URLSearchParams(location.search);
   return { topics: [...new Set(params.getAll('topic').filter(t => Object.hasOwn(TOPICS, t)))],
@@ -122,7 +92,7 @@ function syncForm(state) {
 }
 function render(state) {
   const matches = filterPapers(papers, state);
-  results.replaceChildren(...matches.map(p => paperCard(p, true)));
+  results.replaceChildren(...matches.map(p => paperCard(p)));
   document.getElementById('lit-count').textContent = `${matches.length} of ${filterPapers(papers).length} papers`;
   message.hidden = matches.length > 0;
   message.textContent = 'No papers match these filters. Try fewer topics or clear the search.';
@@ -206,10 +176,10 @@ async function load() {
     updated.textContent = `Library updated ${data.updated_at} · ${filterPapers(papers).length} curated papers`;
     if (picks) {
       const selected = home ? latestPicks(papers) : latestAdditions(papers);
-      picks.replaceChildren(...selected.map(p => home ? homeCard(p) : paperCard(p)));
+      picks.replaceChildren(...selected.map(p => paperCard(p, home ? 'home' : 'latest')));
       if (!selected.length) picks.append(el('p', 'lit-status', 'New recommendations will appear here when selected.'));
       picks.setAttribute('aria-busy', 'false');
-      if (home) { home.scrollLeft = 0; updateShelf(); }
+      picks.scrollLeft = 0; updateShelf();
     }
     if (form) { form.hidden = false; renderLibrary(); }
   } catch (error) {
