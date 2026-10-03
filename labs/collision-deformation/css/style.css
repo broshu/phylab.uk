@@ -653,14 +653,14 @@ button:disabled {
   margin-right: 6px;
   padding: 1px 7px;
   border-radius: 999px;
-  color: #ffffff;
+  color: var(--site-on-accent);
   font-size: 12px;
   vertical-align: 1px;
 }
 
-.tag.elastic { background: var(--compress); }
-.tag.plastic { background: var(--newbond); color: var(--site-figure-ink); }
-.tag.fracture { background: var(--stretch); }
+.tag.elastic { background: var(--site-info); }
+.tag.plastic { background: var(--site-success); }
+.tag.fracture { background: var(--site-danger); }
 
 @media (max-width: 900px) {
   .controls-panel {

@@ -1,12 +1,14 @@
 # PhyLab Literature Maintenance Guide
 
-Literature curates external research. The site owner's own work remains in `research/`. This section uses the main site's colours, typography, cards, and dark mode, and reuses `assets/nav.js` for navigation back to the homepage. The homepage and `/literature/` share the same data and rendering components.
+Literature curates external research. The site owner's own work remains in `research/`. This section uses the main site's colours, typography, cards, and dark mode, and reuses `assets/nav.js` for navigation back to the homepage. The homepage, `/literature/`, and `/literature/library/` share one catalogue and rendering components.
 
 ## Files and deployment
 
 - `data/papers.json`: the single published catalogue, with one object per paper and `schema_version: 1`.
-- `core.mjs`: field validation, topics, search, sorting, and latest-pick selection.
-- `app.mjs`: homepage recommendations, library filters, English reading notes, and links.
+- `core.mjs`: field validation, topics, search, sorting, latest additions, and homepage-pick selection.
+- `index.html`: the latest ten additions at `/literature/`.
+- `library/index.html`: the complete searchable archive at `/literature/library/`.
+- `app.mjs`: homepage recommendations, latest-paper rows, archive filters, English reading notes, and links.
 - `literature.css`: scoped styles consistent with the existing site.
 - `scripts/`: static publication checks, candidate collection, and reviewed-entry addition.
 - `.github/workflows/literature-candidates.yml`: collects candidates every Friday at 08:00 Beijing time and can also be run manually in Actions. GitHub scheduled runs may be delayed or disabled after prolonged repository inactivity.
@@ -44,7 +46,7 @@ After changing source files, commit and push through the repository's existing p
    | `reading_priority` | `core` for essential PhD reading, `read` for full-text reading, or `skim` for background reading. |
    | `reading_recommendation_en` | English guidance on which sections to read and why. |
    | `limitations_en` | Evidence limitations in English. Distinguish immediate performance, experimental capability, and independent transfer. |
-   | `featured` | A boolean used only to break ties between entries with the same `date_added`: featured entries rank first, followed by publication date in descending order. Latest picks include up to six most recently added published `core`/`read` entries. New `core`/`read` entries are eligible automatically; `featured: true` is not required. |
+   | `featured` | A boolean affecting only the main-site homepage carousel. Within the same `date_added`, featured entries rank first, followed by publication date in descending order. The carousel includes up to six published `core`/`read` entries; `featured: true` is not required. The internal latest-ten list includes all published priorities and ignores `featured`. |
    | `date_added` | The actual date the entry was added, in `YYYY-MM-DD` format. |
    | `verified_at`, `verification_url` | The editorial verification date and an HTTPS original-source link supporting the interpretation. A collection date cannot substitute for source verification. |
 
@@ -61,15 +63,19 @@ After changing source files, commit and push through the repository's existing p
 
    To revise an existing entry, edit that object and update the catalogue's `updated_at`; do not add a duplicate. Manual additions can also be made directly in `papers.json`, followed by the build and test checks above.
 
-5. Review the changes and publish through the site's existing process. New published entries appear in the library automatically, and new `core`/`read` entries become eligible for the homepage and section's latest picks without changes to HTML or a `featured` flag. Keep candidate files and reviewed working files in `work/`; they are not the published catalogue.
+5. Review the changes and publish through the site's existing process. New published entries appear in the complete Library automatically and enter the latest-ten list according to their addition date. New `core`/`read` entries also become eligible for the main-site homepage carousel. No changes to HTML or a `featured` flag are required. Keep candidate files and reviewed working files in `work/`; they are not the published catalogue.
 
 ## Browsing and verification
 
 The homepage Literature section follows Labs, and the section navigation follows Research → Labs → Literature. All public page text is in English. Existing `_zh` notes remain in the data as editorial reference and are not required for future entries. The English `_en` notes are required for published entries.
 
-Latest-pick shelves contain up to six recommendations, showing three cards on desktop and approximately one on mobile. They support native horizontal scrolling, touch swipes, previous/next buttons, and arrow-key navigation when the shelf is focused.
+`/literature/` displays up to ten latest additions as full-width rows, with one paper per row. Each card contains the title, authors, journal/source, topic labels, and key finding in English; the entire card opens the original paper URL. Entries are ordered by `date_added` descending, then publication date (or year when an exact date is unknown), then title. All published reading priorities are eligible. Older entries remain in Library; selecting the latest ten never removes them from the catalogue.
 
-The library supports matching multiple topics simultaneously (AND), Chinese and English keyword searches, DOI and author searches, and sorting by addition date, publication date, or reading priority. Filters are stored in the URL for sharing. Each paper has a `/literature/#stable-id` permalink. Drafts are hidden. Each data request revalidates the cache, so a refresh after deployment loads the updated catalogue.
+`/literature/library/` contains every published entry, including the latest ten, with complete English findings, PhD relevance, reading recommendations, and evidence limitations. Neither internal page uses a sideways shelf. Topic chips inside paper cards are plain labels; use the Library filters to select topics.
+
+The main-site homepage keeps its separate carousel of up to six `core`/`read` recommendations, showing three cards on desktop and approximately one on mobile. It supports native horizontal scrolling, touch swipes, previous/next buttons, and arrow-key navigation when the shelf is focused.
+
+The complete Library supports matching multiple topics simultaneously (AND), Chinese and English keyword searches, DOI and author searches, and sorting by addition date, publication date, or reading priority. Filters are stored in the URL for sharing. The canonical reading-note permalink is `/literature/library/#stable-id`. Existing `/literature/#stable-id` links and older filtered links such as `/literature/?topic=ai#library` are routed to the archive, preserving access to older entries and filters. Drafts are hidden. Each data request revalidates the cache, so a refresh after deployment loads the updated catalogue.
 
 Start a standard static server from the repository root for local preview:
 
@@ -77,7 +83,7 @@ Start a standard static server from the repository root for local preview:
 python3 -m http.server 8765 --bind 127.0.0.1
 ```
 
-Visit `http://127.0.0.1:8765/literature/`. Do not open the HTML file directly, because browsers restrict data loading from local files. A retry is available when the network or data request fails. A link to the complete data file remains available when JavaScript is disabled.
+Visit `http://127.0.0.1:8765/literature/` for the latest additions or `http://127.0.0.1:8765/literature/library/` for the complete archive. Do not open the HTML file directly, because browsers restrict data loading from local files. A retry is available when the network or data request fails. A link to the complete data file remains available when JavaScript is disabled.
 
 `npm run build --prefix literature` checks static publication integrity; it does not generate a new output directory. CI validates fields, resource paths, and core behaviour on literature-related pushes and pull requests. The existing GitHub Pages deployment mechanism remains in place; these CI checks do not automatically become a prerequisite for Pages deployment.
 

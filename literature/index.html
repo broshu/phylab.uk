@@ -15,7 +15,7 @@
   <script defer src="/assets/nav.js"></script>
 </head>
 <body class="lit-page">
-  <a class="lit-skip" href="#library">Skip to literature</a>
+  <a class="lit-skip" href="#latest">Skip to literature</a>
   <div class="lit-wrap">
     <nav class="lit-nav" aria-label="Sections">
       <a class="lit-brand" href="/">PhyLab</a>
@@ -30,30 +30,16 @@
         <p class="lit-context">This library features external research. Findings summarise the original sources; relevance and reading priorities reflect my curatorial judgement. For my own work, see <a href="/research/">Research →</a></p>
         <p id="lit-updated" class="lit-meta"></p>
       </header>
-      <section aria-labelledby="picks-heading" class="lit-section">
-        <div class="lit-heading"><h2 id="picks-heading">Latest worthwhile reads</h2><div class="lit-heading-actions"><div class="lit-arrows"><button type="button" data-lit-prev aria-controls="lit-picks" aria-label="Previous literature recommendations">←</button><button type="button" data-lit-next aria-controls="lit-picks" aria-label="More literature recommendations">→</button></div><a href="#library">Browse all papers ↓</a></div></div>
-        <p class="lit-caption">Recent high-value recommendations, selected for relevance rather than volume. Swipe or use the arrows to browse.</p>
-        <div id="lit-picks" class="lit-shelf" tabindex="0" role="region" aria-label="Latest literature recommendations; scroll left or right"><p class="lit-status">Loading recommendations…</p></div>
-      </section>
-      <section id="library" aria-labelledby="library-heading" class="lit-section">
-        <div class="lit-heading"><h2 id="library-heading">The reading library</h2><span id="lit-count" role="status" aria-live="polite"></span></div>
-        <form id="lit-filters" class="lit-filters" role="search" hidden>
-          <div class="lit-controls">
-            <label class="lit-search">Search papers<input id="lit-search" type="search" placeholder="Title, author, DOI or keyword" autocomplete="off"></label>
-            <label>Reading priority<select id="lit-priority"><option value="">All priorities</option><option value="core">PhD Core · Essential</option><option value="read">Read · Full text</option><option value="skim">Skim · Background</option></select></label>
-            <label>Sort by<select id="lit-sort"><option value="added">Recently added</option><option value="published">Publication date</option><option value="priority">Reading priority</option></select></label>
-          </div>
-          <fieldset><legend>Topics <span>· Select multiple to match all selected topics</span></legend><div id="lit-topics" class="lit-chips"></div></fieldset>
-          <button type="button" id="lit-reset" class="lit-reset">Clear filters</button>
-        </form>
-        <div id="lit-results" class="lit-grid lit-library" aria-busy="true"></div>
-        <div id="lit-message" class="lit-status" role="status" aria-live="polite" hidden></div>
-        <noscript><p class="lit-status">Enable JavaScript to search and filter the library. The complete catalogue and reading notes are also available in the <a href="/literature/data/papers.json">literature data file</a>.</p></noscript>
+      <section id="latest" aria-labelledby="picks-heading" class="lit-section">
+        <div class="lit-heading"><h2 id="picks-heading">Latest additions</h2><a href="/literature/library/">Browse the Library →</a></div>
+        <p class="lit-caption">The 10 most recently added papers. Select any card to open the original article in a new tab. Full reading notes and the complete collection are available in the Library.</p>
+        <div id="lit-picks" class="lit-grid lit-latest" aria-busy="true"><p class="lit-status">Loading recommendations…</p></div>
+        <noscript><p class="lit-status">Enable JavaScript to load the latest recommendations, or browse the <a href="/literature/data/papers.json">complete literature data file</a>.</p></noscript>
       </section>
       <section class="lit-method" aria-labelledby="method-heading">
         <h2 id="method-heading">How this library is curated</h2>
         <p>The focus is on research that distinguishes conceptual understanding, experimental competence and independent transfer. Foundational frameworks and assessment tools sit alongside recent studies. PhD Core identifies essential reading for research design or theory; Read recommends the full text; Skim provides background context.</p>
-        <p>Recommendations are added after checking the original sources. This is a selective reading library, not a systematic review. Short-term scores, cognitive load and self-reports do not establish practical competence or long-term transfer. Each entry includes its verification source and evidence limitations.</p>
+        <p>Recommendations are added after checking the original sources. This is a selective reading library, not a systematic review. Short-term scores, cognitive load and self-reports do not establish practical competence or long-term transfer. The Library includes detailed reading notes, verification sources and evidence limitations for every entry.</p>
         <a href="https://github.com/broshu/phylab.uk/blob/main/literature/README.md">Maintaining this reading library →</a>
       </section>
     </main>

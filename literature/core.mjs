@@ -70,6 +70,9 @@ export function filterPapers(papers, { topics = [], priority = '', query = '', s
       return (b.published_date || `${b.year}-01-01`).localeCompare(a.published_date || `${a.year}-01-01`) || a.title.localeCompare(b.title);
     });
 }
+export function latestAdditions(papers, limit = 10) {
+  return filterPapers(papers, { sort: 'added' }).slice(0, limit);
+}
 export function latestPicks(papers, limit = 6) {
   // All published entries are curated; highlights break ties within an added date.
   return filterPapers(papers.filter(p => p.reading_priority !== 'skim'), { sort: 'added' })

@@ -1,4 +1,4 @@
-import { TOPICS, PRIORITIES, SORTS, filterPapers, latestPicks, validateCatalog } from './core.mjs';
+import { TOPICS, PRIORITIES, SORTS, filterPapers, latestPicks, latestAdditions, validateCatalog } from './core.mjs';
 
 // Source content is always inserted as text, never interpreted as HTML.
 function el(tag, className = '', text = '') {
@@ -16,43 +16,62 @@ function link(text, href, external = false) {
 function note(list, title, value) {
   list.append(el('dt', '', title), el('dd', '', value));
 }
-function card(paper, compact = false) {
-  const article = el('article', 'lit-card');
-  if (!compact) article.id = paper.id;
+function metadata(paper, article, title) {
   const top = el('div', 'lit-card-top');
   top.append(el('span', 'lit-priority', PRIORITIES[paper.reading_priority]), el('span', 'lit-year', String(paper.year)));
-  const title = el('h3');
-  title.append(link(paper.title, compact ? `/literature/#${paper.id}` : paper.url, !compact));
   article.append(top, title, el('p', 'lit-authors', paper.authors.join(', ')),
     el('p', 'lit-source', `${paper.source} · ${paper.published_date || paper.year} · ${paper.evidence_type}`));
+}
+function homeCard(paper) {
+  const article = el('article', 'lit-card');
+  const title = el('h3');
+  title.append(link(paper.title, `/literature/library/#${paper.id}`));
+  metadata(paper, article, title);
   const tags = el('div', 'lit-chips');
   for (const topic of paper.topics) {
-    const tag = link(TOPICS[topic], `/literature/?topic=${encodeURIComponent(topic)}#library`);
+    const tag = link(TOPICS[topic], `/literature/library/?topic=${encodeURIComponent(topic)}#library`);
     tag.className = 'lit-tag';
     tags.append(tag);
   }
   const notes = el('dl', 'lit-notes');
   notes.lang = 'en-GB';
   note(notes, 'Key finding', paper.key_finding_en);
-  if (!compact) {
+  const links = el('div', 'lit-links');
+  links.append(link('Reading notes →', `/literature/library/#${paper.id}`));
+  links.append(link(paper.doi ? 'DOI ↗' : 'Original source ↗', paper.doi ? `https://doi.org/${paper.doi}` : paper.url, true));
+  article.append(tags, notes, links, el('p', 'lit-meta', `Added ${paper.date_added}`));
+  return article;
+}
+function paperCard(paper, detailed = false) {
+  const entry = el('article', 'lit-entry');
+  entry.id = detailed ? paper.id : `latest-${paper.id}`;
+  const card = link('', paper.url, true);
+  card.className = 'lit-card lit-paper-link';
+  const title = el('h3', '', paper.title);
+  title.id = `paper-title-${paper.id}`;
+  card.setAttribute('aria-labelledby', title.id);
+  metadata(paper, card, title);
+  const tags = el('div', 'lit-chips');
+  tags.setAttribute('aria-label', 'Topics');
+  for (const topic of paper.topics) tags.append(el('span', 'lit-tag', TOPICS[topic]));
+  const notes = el('dl', 'lit-notes');
+  notes.lang = 'en-GB';
+  note(notes, 'Key finding', paper.key_finding_en);
+  if (detailed) {
     note(notes, 'Why I care · PhD relevance (curatorial judgement)', paper.phd_relevance_en);
     note(notes, 'Reading recommendation', paper.reading_recommendation_en);
   }
-  article.append(tags, notes);
-  if (!compact) {
-    const details = el('details');
-    details.lang = 'en-GB';
-    details.append(el('summary', '', 'Evidence limitations and verification'), el('p', '', paper.limitations_en),
-      link('Verified source ↗', paper.verification_url, true), el('p', 'lit-meta', `Verified ${paper.verified_at}`));
-    article.append(details);
+  card.append(tags, notes);
+  if (detailed) {
+    const evidence = el('div', 'lit-evidence');
+    evidence.append(el('strong', '', 'Evidence limitations'), el('p', '', paper.limitations_en), el('p', 'lit-meta', `Source verified ${paper.verified_at}`));
+    card.append(evidence);
   }
-  const links = el('div', 'lit-links');
-  links.append(link(compact ? 'Reading notes →' : 'Permalink', `/literature/#${paper.id}`));
-  if (paper.doi) links.append(link('DOI ↗', `https://doi.org/${paper.doi}`, true));
-  else links.append(link('Original source ↗', paper.url, true));
-  article.append(links, el('p', 'lit-meta', `Added ${paper.date_added}`));
-  return article;
+  card.append(el('p', 'lit-links', 'Read original article ↗'), el('p', 'lit-meta', `Added ${paper.date_added}`));
+  entry.append(card);
+  return entry;
 }
+
 const home = document.getElementById('literature-home-picks');
 const picks = home || document.getElementById('lit-picks');
 const results = document.getElementById('lit-results');
@@ -63,32 +82,32 @@ function currentHash() {
   try { return decodeURIComponent(location.hash.slice(1)); } catch { return ''; }
 }
 function initializeShelf() {
-  const previous = document.querySelector(`[data-lit-prev][aria-controls="${picks.id}"]`);
-  const next = document.querySelector(`[data-lit-next][aria-controls="${picks.id}"]`);
+  const previous = document.querySelector(`[data-lit-prev][aria-controls="${home.id}"]`);
+  const next = document.querySelector(`[data-lit-next][aria-controls="${home.id}"]`);
   if (!previous || !next) return () => {};
   const update = () => {
-    previous.disabled = picks.scrollLeft < 4;
-    next.disabled = picks.scrollLeft + picks.clientWidth >= picks.scrollWidth - 4;
+    previous.disabled = home.scrollLeft < 4;
+    next.disabled = home.scrollLeft + home.clientWidth >= home.scrollWidth - 4;
   };
   const scroll = direction => {
-    const first = picks.querySelector('.lit-card');
-    const distance = first ? first.getBoundingClientRect().width + parseFloat(getComputedStyle(picks).columnGap) : picks.clientWidth;
-    picks.scrollBy({ left: direction * distance, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+    const first = home.querySelector('.lit-card');
+    const distance = first ? first.getBoundingClientRect().width + parseFloat(getComputedStyle(home).columnGap) : home.clientWidth;
+    home.scrollBy({ left: direction * distance, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
   };
   previous.addEventListener('click', () => scroll(-1));
   next.addEventListener('click', () => scroll(1));
-  picks.addEventListener('scroll', update, { passive: true });
-  picks.addEventListener('keydown', event => {
-    if (event.target !== picks || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+  home.addEventListener('scroll', update, { passive: true });
+  home.addEventListener('keydown', event => {
+    if (event.target !== home || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
     event.preventDefault();
-    if (event.key === 'Home' || event.key === 'End') picks.scrollTo({ left: event.key === 'Home' ? 0 : picks.scrollWidth });
+    if (event.key === 'Home' || event.key === 'End') home.scrollTo({ left: event.key === 'Home' ? 0 : home.scrollWidth });
     else scroll(event.key === 'ArrowLeft' ? -1 : 1);
   });
-  new ResizeObserver(update).observe(picks);
+  new ResizeObserver(update).observe(home);
   update();
   return update;
 }
-const updateShelf = picks ? initializeShelf() : () => {};
+const updateShelf = home ? initializeShelf() : () => {};
 function readState() {
   const params = new URLSearchParams(location.search);
   return { topics: [...new Set(params.getAll('topic').filter(t => Object.hasOwn(TOPICS, t)))],
@@ -103,7 +122,7 @@ function syncForm(state) {
 }
 function render(state) {
   const matches = filterPapers(papers, state);
-  results.replaceChildren(...matches.map(p => card(p)));
+  results.replaceChildren(...matches.map(p => paperCard(p, true)));
   document.getElementById('lit-count').textContent = `${matches.length} of ${filterPapers(papers).length} papers`;
   message.hidden = matches.length > 0;
   message.textContent = 'No papers match these filters. Try fewer topics or clear the search.';
@@ -117,7 +136,6 @@ function updateURL(state) {
   if (state.sort !== 'added') params.set('sort', state.sort);
   const next = new URL(location.href);
   next.search = params.toString();
-  // A paper permalink is only retained when that paper remains visible.
   const hash = currentHash();
   if (hash && hash !== 'library' && !filterPapers(papers, state).some(p => p.id === hash)) next.hash = 'library';
   history.replaceState(null, '', next);
@@ -126,6 +144,18 @@ function formState() {
   return { topics: [...form.querySelectorAll('input[name="topic"]:checked')].map(i => i.value),
     priority: document.getElementById('lit-priority').value,
     query: document.getElementById('lit-search').value, sort: document.getElementById('lit-sort').value };
+}
+function renderLibrary() {
+  let state = readState();
+  const hash = currentHash();
+  // A valid paper permalink wins over incompatible saved filters.
+  if (papers.some(p => p.status === 'published' && p.id === hash) && !filterPapers(papers, state).some(p => p.id === hash)) {
+    state = { topics: [], priority: '', query: '', sort: state.sort };
+    updateURL(state);
+  }
+  syncForm(state);
+  render(state);
+  if (hash) document.getElementById(hash)?.scrollIntoView();
 }
 function initializeFilters() {
   const topics = document.getElementById('lit-topics');
@@ -142,12 +172,28 @@ function initializeFilters() {
     const state = { topics: [], priority: '', query: '', sort: 'added' };
     syncForm(state); updateURL(state); render(state);
   });
-  window.addEventListener('popstate', () => { const state = readState(); syncForm(state); render(state); });
+  window.addEventListener('popstate', renderLibrary);
+  window.addEventListener('hashchange', renderLibrary);
+}
+function forwardLegacyLink() {
+  if (home || results) return false;
+  const params = new URLSearchParams(location.search);
+  const hash = currentHash();
+  const hasFilters = ['topic', 'priority', 'q', 'sort'].some(key => params.has(key));
+  if (!hasFilters && hash !== 'library' && !papers.some(p => p.status === 'published' && p.id === hash)) return false;
+  const archive = new URL('/literature/library/', location.origin);
+  archive.search = location.search;
+  archive.hash = location.hash;
+  location.replace(archive);
+  return true;
 }
 async function load() {
-  picks.replaceChildren(el('p', 'lit-status', 'Loading recommendations…'));
+  const host = picks || results;
+  host.replaceChildren(el('p', 'lit-status', home ? 'Loading recommendations…' : 'Loading papers…'));
+  host.setAttribute('aria-busy', 'true');
   updateShelf();
-  if (results) results.setAttribute('aria-busy', 'true');
+  if (form) form.hidden = true;
+  if (message) message.hidden = true;
   try {
     const response = await fetch('/literature/data/papers.json', { cache: 'no-cache', signal: AbortSignal.timeout(15000) });
     if (!response.ok) throw new Error(`Catalogue request: ${response.status}`);
@@ -155,29 +201,30 @@ async function load() {
     const errors = validateCatalog(data);
     if (errors.length) throw new Error(errors.join('; '));
     papers = data.papers;
-    picks.replaceChildren(...latestPicks(papers).map(p => card(p, true)));
-    if (!picks.children.length) picks.append(el('p', 'lit-status', 'New recommendations will appear here when selected.'));
-    picks.scrollLeft = 0;
-    updateShelf();
+    if (forwardLegacyLink()) return;
     const updated = document.getElementById(home ? 'literature-home-updated' : 'lit-updated');
     updated.textContent = `Library updated ${data.updated_at} · ${filterPapers(papers).length} curated papers`;
-    if (home) return;
-    form.hidden = false;
-    const state = readState(); syncForm(state); render(state);
-    const hash = currentHash();
-    if (hash) document.getElementById(hash)?.scrollIntoView();
+    if (picks) {
+      const selected = home ? latestPicks(papers) : latestAdditions(papers);
+      picks.replaceChildren(...selected.map(p => home ? homeCard(p) : paperCard(p)));
+      if (!selected.length) picks.append(el('p', 'lit-status', 'New recommendations will appear here when selected.'));
+      picks.setAttribute('aria-busy', 'false');
+      if (home) { home.scrollLeft = 0; updateShelf(); }
+    }
+    if (form) { form.hidden = false; renderLibrary(); }
   } catch (error) {
     console.error('Literature:', error);
     const notice = el('p', 'lit-status', 'The literature library could not load. ');
     const retry = el('button', '', 'Try again');
     retry.type = 'button'; retry.addEventListener('click', load);
     notice.append(link('Browse the catalogue', '/literature/data/papers.json'), retry);
-    picks.replaceChildren(notice);
+    host.replaceChildren(notice);
+    host.setAttribute('aria-busy', 'false');
     updateShelf();
-    if (results) { results.replaceChildren(); results.setAttribute('aria-busy', 'false'); form.hidden = true; message.hidden = true; }
   }
 }
-if (picks) {
+if (picks || results) {
   if (form) initializeFilters();
+  else if (!home) window.addEventListener('hashchange', forwardLegacyLink);
   load();
 }

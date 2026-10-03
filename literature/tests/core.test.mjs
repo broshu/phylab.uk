@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { TOPICS, filterPapers, latestPicks, validateCatalog, validDate } from '../core.mjs';
+import { TOPICS, filterPapers, latestAdditions, latestPicks, validateCatalog, validDate } from '../core.mjs';
 import { draftFromMetadata } from '../scripts/crossref.mjs';
 
 const catalog = JSON.parse(await readFile(new URL('../data/papers.json', import.meta.url), 'utf8'));
@@ -26,6 +26,43 @@ test('drafts remain hidden, latest picks are date ordered, new recommendations c
   const newer = { ...catalog.papers[0], id: 'new-paper', date_added: '2026-10-04' };
   assert.equal(latestPicks([...catalog.papers, newer])[0].id, 'new-paper');
   assert.equal(latestPicks(catalog.papers).length, 6);
+});
+test('latest additions order by addition date, publication date or year, then title', () => {
+  const base = catalog.papers[0];
+  const papers = [
+    { ...base, id: 'old-featured', title: 'Old featured paper', date_added: '2026-10-01', published_date: '2026-10-01', featured: true },
+    { ...base, id: 'beta', title: 'Beta', date_added: '2026-10-03', published_date: '2026-10-01', featured: true },
+    { ...base, id: 'year-only', title: 'Year only', date_added: '2026-10-03', year: 2025, published_date: null },
+    { ...base, id: 'skim', title: 'Background paper', date_added: '2026-10-03', published_date: '2026-09-30', reading_priority: 'skim' },
+    { ...base, id: 'alpha', title: 'Alpha', date_added: '2026-10-03', published_date: '2026-10-01', featured: false },
+    { ...base, id: 'newest-publication', title: 'Newest publication', date_added: '2026-10-03', published_date: '2026-10-02' },
+    { ...base, id: 'draft', status: 'draft', date_added: '2026-10-04', published_date: '2026-10-04' }
+  ];
+  assert.deepEqual(latestAdditions(papers).map(p => p.id), [
+    'newest-publication', 'alpha', 'beta', 'skim', 'year-only', 'old-featured'
+  ]);
+  assert.deepEqual(latestAdditions(papers, 2).map(p => p.id), ['newest-publication', 'alpha']);
+});
+test('latest additions cap at ten without deleting papers from the complete library', () => {
+  const papers = Array.from({ length: 11 }, (_, index) => ({
+    ...catalog.papers[0], id: `paper-${index}`, date_added: `2026-09-${String(index + 1).padStart(2, '0')}`,
+    reading_priority: index === 10 ? 'skim' : 'core'
+  }));
+  const before = structuredClone(papers);
+  assert.deepEqual(latestAdditions(papers).map(p => p.id), [
+    'paper-10', 'paper-9', 'paper-8', 'paper-7', 'paper-6',
+    'paper-5', 'paper-4', 'paper-3', 'paper-2', 'paper-1'
+  ]);
+  assert.equal(filterPapers(papers).length, 11);
+  assert.ok(filterPapers(papers).some(p => p.id === 'paper-0'));
+  assert.deepEqual(papers, before);
+});
+test('the full catalogue remains accessible after selecting latest additions', () => {
+  const before = structuredClone(catalog);
+  latestAdditions(catalog.papers);
+  const published = catalog.papers.filter(p => p.status === 'published');
+  assert.deepEqual(new Set(filterPapers(catalog.papers).map(p => p.id)), new Set(published.map(p => p.id)));
+  assert.deepEqual(catalog, before);
 });
 test('validation rejects duplicates, broken links, missing English notes and impossible dates', () => {
   const duplicate = clone(); duplicate.papers.push(duplicate.papers[0]);
