@@ -1,0 +1,351 @@
+{
+  "schema_version": 1,
+  "updated_at": "2026-10-03",
+  "papers": [
+    {
+      "id": "malikova-2026-ai-physics-review",
+      "status": "published",
+      "title": "Artificial intelligence in university physics education: a systematic review of empirical studies",
+      "authors": [
+        "Zhanara Malikova",
+        "Bayan Ualikhanova",
+        "Torebay Turmambekov",
+        "Bakytgali Rakhashev",
+        "Dauletbay Berdaliyev"
+      ],
+      "year": 2026,
+      "published_date": "2026-10-01",
+      "source": "Frontiers in Education",
+      "doi": "10.3389/feduc.2026.1964629",
+      "url": "https://www.frontiersin.org/journals/education/articles/10.3389/feduc.2026.1964629/full",
+      "topics": [
+        "ai",
+        "transfer",
+        "scaffolding",
+        "assessment"
+      ],
+      "evidence_type": "Systematic review",
+      "reading_priority": "core",
+      "key_finding_zh": "综述纳入 11 项大学物理教育实证研究，发现 AI 的效果随任务与教学结构而变化；部分研究报告短期收益，也存在独立表现迁移和识别错误回答的局限。",
+      "phd_relevance_zh": "可用来定位“AI 支持下的表现”与“撤去 AI 后的独立能力”之间的研究缺口，并据其参考文献进一步追踪原始研究。",
+      "reading_recommendation_zh": "先读纳入标准、研究特征表和局限，再精读涉及实验、仿真与独立迁移的原始研究。",
+      "limitations_zh": "证据库小且异质，采用叙述综合；不能据此得出 AI 对所有大学物理教学普遍有效的结论。",
+      "featured": true,
+      "date_added": "2026-10-03",
+      "verified_at": "2026-10-03",
+      "verification_url": "https://www.frontiersin.org/journals/education/articles/10.3389/feduc.2026.1964629/full"
+    },
+    {
+      "id": "becker-2026-ai-scaffolding",
+      "status": "published",
+      "title": "Comparing AI chatbot, tiered, and textual support in physics problem solving: Effects on cognitive load and affective-motivational outcomes",
+      "authors": [
+        "Eleonore Becker",
+        "Johannes Wünsche",
+        "Joaquin Veith",
+        "Johanna Schrader",
+        "Philipp Bitzenbauer"
+      ],
+      "year": 2026,
+      "published_date": "2026-10-01",
+      "source": "Physical Review Physics Education Research",
+      "doi": "10.1103/nvf1-zrq8",
+      "url": "https://journals.aps.org/prper/abstract/10.1103/nvf1-zrq8",
+      "topics": [
+        "ai",
+        "scaffolding",
+        "cognitive-load"
+      ],
+      "evidence_type": "Cluster-randomized field study",
+      "reading_priority": "read",
+      "key_finding_zh": "268 名九年级学生完成浮力任务。AI 聊天机器人和分层支架组的自报告内在与外在认知负荷低于文本支持组；AI 与分层支架组的情感动机差异未达统计显著。",
+      "phd_relevance_zh": "可作为 AI 支架与传统分层支架的对照设计参考；建议将认知负荷作为过程指标，并另设概念理解与撤去支架后的独立任务。",
+      "reading_recommendation_zh": "全文读支架配置、随机分组和测量工具，特别注意结果指标实际测量了什么。",
+      "limitations_zh": "研究主要测量短期自报告负荷和情感动机，不提供真实实验操作、长期学习或独立迁移优势的证据。",
+      "featured": true,
+      "date_added": "2026-10-03",
+      "verified_at": "2026-10-03",
+      "verification_url": "https://journals.aps.org/prper/abstract/10.1103/nvf1-zrq8"
+    },
+    {
+      "id": "fussell-2026-measurement-assessment",
+      "status": "published",
+      "title": "Open- versus closed-response methods of measuring students’ reasoning: A case study using the Physics Measurement Questionnaire",
+      "authors": [
+        "Rebeckah K. Fussell",
+        "Jillian S. Epstein",
+        "Gina Passante",
+        "N. G. Holmes"
+      ],
+      "year": 2026,
+      "published_date": "2026-09-15",
+      "source": "Physical Review Physics Education Research",
+      "doi": "10.1103/z9n2-tfr9",
+      "url": "https://journals.aps.org/prper/abstract/10.1103/z9n2-tfr9",
+      "topics": [
+        "hands-on",
+        "assessment"
+      ],
+      "evidence_type": "Assessment format experiment",
+      "reading_priority": "core",
+      "key_finding_zh": "在 Physics Measurement Questionnaire 的两类题目中，先写开放解释未改变后续选择题答案；开放与封闭回答之间的差异表明，两种格式提供的推理信息并不相同。",
+      "phd_relevance_zh": "你的实验能力评估可同时保留选择题与学生对测量、误差和数据比较的解释，避免把选对答案等同于能独立推理。",
+      "reading_recommendation_zh": "优先读题目设计、开放回答编码和两种测量格式的一致性分析。",
+      "limitations_zh": "这是特定课堂和两类测量题目的案例研究；不宜把结果推广为所有开放题或选择题的普遍规律。",
+      "featured": true,
+      "date_added": "2026-10-03",
+      "verified_at": "2026-10-03",
+      "verification_url": "https://journals.aps.org/prper/abstract/10.1103/z9n2-tfr9"
+    },
+    {
+      "id": "ben-zion-2026-ai-simulation",
+      "status": "published",
+      "title": "Leveraging generative artificial intelligence for simulation-based physics experiments: A new approach to virtual learning about the real world",
+      "authors": [
+        "Yossi Ben-Zion",
+        "Turhan K. Carroll",
+        "Colin G. West",
+        "Jesse Wong",
+        "Noah D. Finkelstein"
+      ],
+      "year": 2026,
+      "published_date": "2026-01-26",
+      "source": "Physical Review Physics Education Research",
+      "doi": "10.1103/s8dy-kqy5",
+      "url": "https://journals.aps.org/prper/abstract/10.1103/s8dy-kqy5",
+      "topics": [
+        "hands-on",
+        "simulation",
+        "ai",
+        "assessment"
+      ],
+      "evidence_type": "Comparative classroom study",
+      "reading_priority": "core",
+      "key_finding_zh": "电势实验比较真实仪器、预制仿真和 AI 生成仿真三种条件。两类仿真组的概念评估成绩高于真实仪器组；研究强调提示、修订和验证 AI 模型的学习机会。",
+      "phd_relevance_zh": "与真实实验、仿真和 AI 的三条件研究直接相关。可借鉴条件设计，再加入实际操作、故障诊断和撤去辅助后的迁移评估。",
+      "reading_recommendation_zh": "优先读干预活动、概念评估、组间可比性与讨论；将评价指标逐项对应到你的研究问题。",
+      "limitations_zh": "初步研究的概念成绩结果不等同于真实仪器操作能力提升，也不证明 AI 仿真优于预制仿真。",
+      "featured": false,
+      "date_added": "2026-10-03",
+      "verified_at": "2026-10-03",
+      "verification_url": "https://journals.aps.org/prper/abstract/10.1103/s8dy-kqy5"
+    },
+    {
+      "id": "bastani-2025-ai-independent-learning",
+      "status": "published",
+      "title": "Generative AI without guardrails can harm learning: Evidence from high school mathematics",
+      "authors": [
+        "Hamsa Bastani",
+        "Osbert Bastani",
+        "Alp Sungu",
+        "Haosen Ge",
+        "Özge Kabakcı",
+        "Rei Mariman"
+      ],
+      "year": 2025,
+      "published_date": "2025-06-25",
+      "source": "Proceedings of the National Academy of Sciences",
+      "doi": "10.1073/pnas.2422633122",
+      "url": "https://doi.org/10.1073/pnas.2422633122",
+      "topics": [
+        "ai",
+        "transfer",
+        "scaffolding",
+        "assessment"
+      ],
+      "evidence_type": "Randomized field experiment · Mathematics",
+      "reading_priority": "core",
+      "key_finding_zh": "高中数学随机实验区分 AI 辅助练习与无辅助考试。无护栏的 AI 能改善练习表现，却可能损害撤去工具后的学习表现；教学护栏减轻了这种负面影响。",
+      "phd_relevance_zh": "为区分“有辅助时完成任务”与“无辅助时独立表现”提供跨学科研究设计参考，可迁移为物理实验中的撤去支架评估。",
+      "reading_recommendation_zh": "全文读无辅助考试设计与两种 AI 条件；重点记录护栏如何避免直接交出答案。",
+      "limitations_zh": "这是数学教育的相邻证据，不是物理教育或真实实验技能研究；无辅助考试也不能代表所有形式的远迁移。",
+      "featured": false,
+      "date_added": "2026-10-03",
+      "verified_at": "2026-10-03",
+      "verification_url": "https://doi.org/10.1073/pnas.2422633122"
+    },
+    {
+      "id": "kestin-2025-ai-physics-tutor",
+      "status": "published",
+      "title": "AI tutoring outperforms in-class active learning: an RCT introducing a novel research-based design in an authentic educational setting",
+      "authors": [
+        "Greg Kestin",
+        "Kelly Miller",
+        "Anna Klales",
+        "Timothy Milbourne",
+        "Gregorio Ponti"
+      ],
+      "year": 2025,
+      "published_date": "2025-06-03",
+      "source": "Scientific Reports",
+      "doi": "10.1038/s41598-025-97652-6",
+      "url": "https://www.nature.com/articles/s41598-025-97652-6",
+      "topics": [
+        "ai",
+        "scaffolding",
+        "assessment"
+      ],
+      "evidence_type": "Randomized controlled trial",
+      "reading_priority": "read",
+      "key_finding_zh": "大学物理随机对照研究中，按教学最佳实践设计的 AI 导师在所研究课时内带来更高的即时学习成绩，并用时更少；学生报告更高的参与感和动机。",
+      "phd_relevance_zh": "可参考其教学目标对齐和 AI 导师设计，并把即时概念成绩与真实实验操作及后续独立迁移分别评估。",
+      "reading_recommendation_zh": "全文读导师提示、交叉条件安排、测验和讨论，明确时间与教学形式的差异。",
+      "limitations_zh": "结果针对特定课程与设计好的导师；不能外推到任意聊天机器人，也没有直接证明长期保持或真实实验技能提升。",
+      "featured": false,
+      "date_added": "2026-10-03",
+      "verified_at": "2026-10-03",
+      "verification_url": "https://www.nature.com/articles/s41598-025-97652-6"
+    },
+    {
+      "id": "wilcox-2016-eclass",
+      "status": "published",
+      "title": "Students’ epistemologies about experimental physics: Validating the Colorado Learning Attitudes about Science Survey for experimental physics",
+      "authors": [
+        "Bethany R. Wilcox",
+        "H. J. Lewandowski"
+      ],
+      "year": 2016,
+      "published_date": "2016-03-21",
+      "source": "Physical Review Physics Education Research",
+      "doi": "10.1103/PhysRevPhysEducRes.12.010123",
+      "url": "https://journals.aps.org/prper/abstract/10.1103/PhysRevPhysEducRes.12.010123",
+      "topics": [
+        "hands-on",
+        "assessment"
+      ],
+      "evidence_type": "Instrument validation",
+      "reading_priority": "core",
+      "key_finding_zh": "多机构数据分析支持 E-CLASS 在区分度、重测信度、内部一致性及相关效度等方面的可接受表现。量表针对学生对实验物理的认识与期待。",
+      "phd_relevance_zh": "可用来测量实验观念的变化，但应与操作表现、实验设计和数据推理评分并列，避免把态度问卷当作实验能力测验。",
+      "reading_recommendation_zh": "优先读量表构念、题目及效度证据；若用于中学或中文环境，另行检验翻译与群体适用性。",
+      "limitations_zh": "E-CLASS 主要测量认识与期待，不直接测量真实仪器操作。原研究未发现强而稳定的分量表因子。",
+      "featured": false,
+      "date_added": "2026-10-03",
+      "verified_at": "2026-10-03",
+      "verification_url": "https://journals.aps.org/prper/abstract/10.1103/PhysRevPhysEducRes.12.010123"
+    },
+    {
+      "id": "holmes-2015-critical-thinking",
+      "status": "published",
+      "title": "Teaching critical thinking",
+      "authors": [
+        "N. G. Holmes",
+        "Carl E. Wieman",
+        "D. A. Bonn"
+      ],
+      "year": 2015,
+      "published_date": "2015-08-17",
+      "source": "Proceedings of the National Academy of Sciences",
+      "doi": "10.1073/pnas.1505329112",
+      "url": "https://arxiv.org/abs/1508.04870",
+      "topics": [
+        "hands-on",
+        "transfer",
+        "assessment",
+        "scaffolding"
+      ],
+      "evidence_type": "Comparative laboratory intervention",
+      "reading_priority": "core",
+      "key_finding_zh": "反复练习数据之间及数据与模型之间的定量比较，并逐步撤去提示后，干预组更常自主改进实验方法、识别模型局限；差异持续到次年课程。",
+      "phd_relevance_zh": "可将“比较—决策—改进”落实到每课一实验，观察学生撤去提示后是否主动检查测量、修订方法和判断模型。",
+      "reading_recommendation_zh": "优先读支架逐步撤去的过程、行为指标及后续课程测量，设计可观察的独立实验任务。",
+      "limitations_zh": "证据来自特定大学实验课程和比较组；后续课程中的保持不自动等于任意新情境的远迁移。",
+      "featured": false,
+      "date_added": "2026-10-03",
+      "verified_at": "2026-10-03",
+      "verification_url": "https://arxiv.org/abs/1508.04870"
+    },
+    {
+      "id": "chi-2014-icap",
+      "status": "published",
+      "title": "The ICAP Framework: Linking Cognitive Engagement to Active Learning Outcomes",
+      "authors": [
+        "Michelene T. H. Chi",
+        "Ruth Wylie"
+      ],
+      "year": 2014,
+      "published_date": "2014-10-28",
+      "source": "Educational Psychologist",
+      "doi": "10.1080/00461520.2014.965823",
+      "url": "https://www.tandfonline.com/doi/full/10.1080/00461520.2014.965823",
+      "topics": [
+        "icap",
+        "scaffolding"
+      ],
+      "evidence_type": "Theoretical framework with empirical synthesis",
+      "reading_priority": "core",
+      "key_finding_zh": "ICAP 依据可观察活动区分被动、主动、建构和交互四种认知参与模式，并提出学习收益随更深入参与而提高的假设及其适用条件。",
+      "phd_relevance_zh": "可用于编码真实实验、仿真和 AI 对话：操作按钮属于活动证据，生成解释、提出预测与共同推理需要进一步区分。",
+      "reading_recommendation_zh": "先读分类定义、例子和边界条件，再把你的课堂行为与学生产出映射到编码规则。",
+      "limitations_zh": "通用学习理论框架，不是物理实验干预试验；可见行为只是认知参与的指示，不足以保证学习效果。",
+      "featured": false,
+      "date_added": "2026-10-03",
+      "verified_at": "2026-10-03",
+      "verification_url": "https://www.tandfonline.com/doi/full/10.1080/00461520.2014.965823"
+    },
+    {
+      "id": "finkelstein-2005-simulation-transfer",
+      "status": "published",
+      "title": "When learning about the real world is better done virtually: A study of substituting computer simulations for laboratory equipment",
+      "authors": [
+        "N. D. Finkelstein",
+        "W. K. Adams",
+        "C. J. Keller",
+        "P. B. Kohl",
+        "K. K. Perkins",
+        "N. S. Podolefsky",
+        "S. Reid",
+        "R. LeMaster"
+      ],
+      "year": 2005,
+      "published_date": "2005-10-06",
+      "source": "Physical Review Special Topics — Physics Education Research",
+      "doi": "10.1103/PhysRevSTPER.1.010103",
+      "url": "https://journals.aps.org/prper/abstract/10.1103/PhysRevSTPER.1.010103",
+      "topics": [
+        "hands-on",
+        "simulation",
+        "transfer",
+        "assessment"
+      ],
+      "evidence_type": "Comparative circuit laboratory study",
+      "reading_priority": "core",
+      "key_finding_zh": "直流电路课程中，使用显示电子流的仿真设备的学生，在概念测验以及组装真实电路并解释其工作的任务上，表现优于使用真实器材的比较组。",
+      "phd_relevance_zh": "这是仿真向真实器材任务迁移的重要正面证据，可用于限定“仿真缺少操作经验”的假设，并设计任务与表征匹配的比较。",
+      "reading_recommendation_zh": "优先读真实电路任务与仿真表征设计，比较它们与你的光学实验在操作复杂度上的差异。",
+      "limitations_zh": "结论针对特定直流电路、仿真和协调任务，不证明仿真可以替代全部真实实验训练。",
+      "featured": false,
+      "date_added": "2026-10-03",
+      "verified_at": "2026-10-03",
+      "verification_url": "https://journals.aps.org/prper/abstract/10.1103/PhysRevSTPER.1.010103"
+    },
+    {
+      "id": "puntambekar-2005-scaffolding",
+      "status": "published",
+      "title": "Tools for Scaffolding Students in a Complex Learning Environment: What Have We Gained and What Have We Missed?",
+      "authors": [
+        "Sadhana Puntambekar",
+        "Roland Hubscher"
+      ],
+      "year": 2005,
+      "published_date": null,
+      "source": "Educational Psychologist",
+      "doi": "10.1207/s15326985ep4001_1",
+      "url": "https://www.tandfonline.com/doi/abs/10.1207/s15326985ep4001_1",
+      "topics": [
+        "scaffolding",
+        "transfer"
+      ],
+      "evidence_type": "Theoretical analysis",
+      "reading_priority": "read",
+      "key_finding_zh": "文章指出，软件工具常被称为支架，但持续诊断、与学生需要匹配的支持及逐步撤去支持等关键特征容易被忽略。",
+      "phd_relevance_zh": "可用于定义 AI 实验导师的支架机制：依据学生困难提供支持，再逐步减少提示，并检查学生是否能够独立完成任务。",
+      "reading_recommendation_zh": "全文读诊断、支持校准与撤除的论证，将这些机制写成你的干预设计与观察指标。",
+      "limitations_zh": "理论分析而非 AI 或物理实验效果试验。期刊卷期年份为 2005；出版平台的后补在线日期为 2010，故此处仅保留卷期年份。",
+      "featured": false,
+      "date_added": "2026-10-03",
+      "verified_at": "2026-10-03",
+      "verification_url": "https://www.tandfonline.com/doi/abs/10.1207/s15326985ep4001_1"
+    }
+  ]
+}

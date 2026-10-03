@@ -95,12 +95,14 @@
   @media (max-width:760px){ .g3{ grid-template-columns:1fr;} .scroller{ grid-auto-columns:86%; gap:14px; } .figs.ga{ aspect-ratio:16/3; } .arrows{ display:none; } .paper img{ aspect-ratio:16/9; } .g4,.g5{ grid-template-columns:repeat(2,1fr);} .head h2{ font-size:1.8rem; } }
   @media (max-width:460px){ .nav ul{ gap:14px; font-size:.84rem; } .grid{ gap:12px; } .tile h3{ font-size:.88rem; } }
 </style>
+<link rel="stylesheet" href="/literature/literature.css">
+<script type="module" src="/literature/app.mjs"></script>
 </head>
 <body>
   <div class="wrap">
     <nav class="nav">
       <a class="brand" href="/"><b class="serif">PhyLab</b><span>Xingyu Shu · Physics teacher</span></a>
-      <ul><li><a href="/research/">Research</a></li><li><a href="/labs/">Labs</a></li><li><a href="/resources/">Resources</a></li><li><a href="/contact/">Contact</a></li></ul>
+      <ul><li><a href="/research/">Research</a></li><li><a href="/literature/">Literature</a></li><li><a href="/labs/">Labs</a></li><li><a href="/resources/">Resources</a></li><li><a href="/contact/">Contact</a></li></ul>
     </nav>
 
     <section>
@@ -127,6 +129,14 @@
           <div class="t"><h3>Improving the p–type conductivity of Cu₂O thin films by Ni doping and their heterojunction with n–ZnO</h3><div class="v"><span class="pub">Applied Surface Science · 2022</span></div></div>
         </a>
       </div>
+    </section>
+
+    <section class="lit-home" aria-labelledby="literature-home-heading">
+      <div class="head"><h2 id="literature-home-heading" class="serif">Literature</h2><a href="/literature/">Reading library →</a></div>
+      <p class="lit-caption">Curated external research · Hands-on labs, simulation &amp; AI-supported physics teaching</p>
+      <p id="literature-home-updated" class="lit-meta"></p>
+      <div id="literature-home-picks" class="lit-grid"><p class="lit-status">Loading recommendations…</p></div>
+      <noscript><a href="/literature/">Browse external literature →</a></noscript>
     </section>
 
     <section>

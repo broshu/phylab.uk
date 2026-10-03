@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Literature — PhyLab</title>
+  <meta name="description" content="Curated external physics education research literature, with Chinese reading notes on hands-on labs, simulation, AI teaching, transfer, assessment and scaffolding.">
+  <link rel="canonical" href="https://phylab.uk/literature/">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/literature/literature.css">
+  <script type="module" src="/literature/app.mjs"></script>
+  <script defer src="/assets/nav.js"></script>
+</head>
+<body class="lit-page">
+  <a class="lit-skip" href="#library">Skip to literature</a>
+  <div class="lit-wrap">
+    <nav class="lit-nav" aria-label="Sections">
+      <a class="lit-brand" href="/">PhyLab</a>
+      <div><a href="/research/">Research</a><a href="/literature/" aria-current="page">Literature</a><a href="/labs/">Labs</a><a href="/resources/">Resources</a><a href="/contact/">Contact</a></div>
+    </nav>
+    <main>
+      <header class="lit-intro">
+        <p class="lit-eyebrow">CURATED EXTERNAL LITERATURE</p>
+        <h1>Physics Education<br>Research Literature</h1>
+        <p class="lit-lead">Papers worth reading. Ideas worth returning to.</p>
+        <p>Selected research by other authors on laboratory learning, simulations and AI-supported physics teaching. Chinese notes connect each paper to my PhD interests.</p>
+        <p class="lit-context" lang="zh-CN">这里收录外部研究。核心发现据原文整理；PhD 关联和阅读建议是本站的策展判断。我的研究与论文请见 <a href="/research/">Research →</a></p>
+        <p id="lit-updated" class="lit-meta"></p>
+      </header>
+      <section aria-labelledby="picks-heading" class="lit-section">
+        <div class="lit-heading"><h2 id="picks-heading">Latest worthwhile reads</h2><a href="#library">Browse all papers ↓</a></div>
+        <p class="lit-caption">Recent high-value recommendations, selected for relevance rather than volume.</p>
+        <div id="lit-picks" class="lit-grid lit-picks"><p class="lit-status">Loading recommendations…</p></div>
+      </section>
+      <section id="library" aria-labelledby="library-heading" class="lit-section">
+        <div class="lit-heading"><h2 id="library-heading">The reading library</h2><span id="lit-count" role="status" aria-live="polite"></span></div>
+        <form id="lit-filters" class="lit-filters" role="search" hidden>
+          <div class="lit-controls">
+            <label class="lit-search">Search papers<input id="lit-search" type="search" placeholder="Title, author, DOI or 中文关键词" autocomplete="off"></label>
+            <label>Reading priority<select id="lit-priority"><option value="">All priorities</option><option value="core">PhD Core · 必读</option><option value="read">Read · 全文读</option><option value="skim">Skim · 略读</option></select></label>
+            <label>Sort by<select id="lit-sort"><option value="added">Recently added</option><option value="published">Publication date</option><option value="priority">Reading priority</option></select></label>
+          </div>
+          <fieldset><legend>Topics <span>· Select multiple to match all selected topics</span></legend><div id="lit-topics" class="lit-chips"></div></fieldset>
+          <button type="button" id="lit-reset" class="lit-reset">Clear filters</button>
+        </form>
+        <div id="lit-results" class="lit-grid lit-library" aria-busy="true"></div>
+        <div id="lit-message" class="lit-status" role="status" aria-live="polite" hidden></div>
+        <noscript><p class="lit-status">Enable JavaScript to search and filter the library. The complete catalogue and Chinese notes are also available in the <a href="/literature/data/papers.json">literature data file</a>.</p></noscript>
+      </section>
+      <section class="lit-method" aria-labelledby="method-heading">
+        <h2 id="method-heading">How this library is curated</h2>
+        <p lang="zh-CN">优先收录能帮助区分概念理解、实验能力与独立迁移的文献。保留经典理论与评估工具，同时关注近期研究；不追求每周凑数。PhD Core 表示研究设计或理论框架的优先阅读文献，Read 表示值得全文阅读，Skim 表示背景参考。</p>
+        <p lang="zh-CN">推荐经来源核对后追加，页面随文献库更新。已收录范围不是系统综述；短期成绩、认知负荷和自我报告不能自动等同于真实实验能力或长期迁移。每条推荐注明核对来源与证据边界。</p>
+        <a href="https://github.com/broshu/phylab.uk/blob/main/literature/README.md">Maintaining this reading library →</a>
+      </section>
+    </main>
+    <footer class="lit-footer"><span>PhyLab · Literature by other researchers, notes by PhyLab.</span><a href="/contact/">Contact →</a></footer>
+  </div>
+</body>
+</html>

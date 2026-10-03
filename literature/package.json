@@ -1,0 +1,12 @@
+{
+  "name": "phylab-literature",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "build": "node scripts/check.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "collect": "node scripts/collect.mjs",
+    "add": "node scripts/add.mjs"
+  }
+}
