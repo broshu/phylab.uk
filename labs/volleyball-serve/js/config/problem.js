@@ -26,10 +26,12 @@ export const PROBLEMS = {
     title: 'Volleyball Serve',
     titleZh: '排球发球',
     prompt:
-      'A player jumps at the baseline and hits the ball horizontally from a ' +
-      'height of 3.2 m. The net is 2.2 m high and 9 m away; the far baseline ' +
-      'is 18 m away. Ignoring air resistance and taking g = 10 m/s², which ' +
-      'launch speeds clear the net and still land in?',
+      'After jumping, a player hits a volleyball horizontally from a point ' +
+      'directly above their own end line. The ball is struck at a height of ' +
+      'H = 3.2 m above the ground. The net is h = 2.2 m high, and each half of ' +
+      'the court is L = 9.0 m long. Neglect air resistance and take ' +
+      'g = 10 m/s². If the ball must neither touch the net nor land beyond the ' +
+      "opponent's end line, find the range of values of the initial speed v₀.",
     promptZh:
       '一名球员在底线处起跳，从 3.2 m 高处水平击球。球网高 2.2 m，' +
       '距离击球点 9 m；对方底线距离 18 m。忽略空气阻力，取 g = 10 m/s²，' +
