@@ -91,7 +91,7 @@ Visit `http://127.0.0.1:8765/literature/` for the latest additions or `http://12
 
 `npm run build --prefix literature` checks static publication integrity; it does not generate a new output directory. CI validates fields, resource paths, and core behaviour on literature-related pushes and pull requests. The existing GitHub Pages deployment mechanism remains in place; these CI checks do not automatically become a prerequisite for Pages deployment.
 
-Sources for the initial 11 entries were checked on 2026-10-03. They include recent October 2026 papers and foundational frameworks. This catalogue is a selective reading recommendation list, rather than a systematic review claiming to cover all PER literature.
+The catalogue keeps papers published within the past two years; older entries (including the original foundational frameworks) were removed on 2026-10-07. New additions should come from roughly the past month. This catalogue is a selective reading recommendation list, rather than a systematic review claiming to cover all PER literature.
 
 ## Automation status and next step
 

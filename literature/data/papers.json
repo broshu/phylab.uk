@@ -221,177 +221,6 @@
       "limitations_en": "The results concern a particular course and a carefully designed tutor. They cannot be generalized to arbitrary chatbots and do not directly establish long-term retention or improved physical laboratory skills."
     },
     {
-      "id": "wilcox-2016-eclass",
-      "status": "published",
-      "title": "Students’ epistemologies about experimental physics: Validating the Colorado Learning Attitudes about Science Survey for experimental physics",
-      "authors": [
-        "Bethany R. Wilcox",
-        "H. J. Lewandowski"
-      ],
-      "year": 2016,
-      "published_date": "2016-03-21",
-      "source": "Physical Review Physics Education Research",
-      "doi": "10.1103/PhysRevPhysEducRes.12.010123",
-      "url": "https://journals.aps.org/prper/abstract/10.1103/PhysRevPhysEducRes.12.010123",
-      "topics": [
-        "hands-on",
-        "assessment"
-      ],
-      "evidence_type": "Instrument validation",
-      "reading_priority": "core",
-      "key_finding_zh": "多机构数据分析支持 E-CLASS 在区分度、重测信度、内部一致性及相关效度等方面的可接受表现。量表针对学生对实验物理的认识与期待。",
-      "phd_relevance_zh": "可用来测量实验观念的变化，但应与操作表现、实验设计和数据推理评分并列，避免把态度问卷当作实验能力测验。",
-      "reading_recommendation_zh": "优先读量表构念、题目及效度证据；若用于中学或中文环境，另行检验翻译与群体适用性。",
-      "limitations_zh": "E-CLASS 主要测量认识与期待，不直接测量真实仪器操作。原研究未发现强而稳定的分量表因子。",
-      "featured": false,
-      "date_added": "2026-10-03",
-      "verified_at": "2026-10-03",
-      "verification_url": "https://journals.aps.org/prper/abstract/10.1103/PhysRevPhysEducRes.12.010123",
-      "key_finding_en": "Analysis of data from multiple institutions supports acceptable E-CLASS performance in discrimination, test–retest reliability, internal consistency, and related validity evidence. The instrument addresses students’ views and expectations about experimental physics.",
-      "phd_relevance_en": "E-CLASS can measure changes in views about experimentation, but should be used alongside scores for practical performance, experimental design, and data reasoning. An attitudes survey should not be treated as a test of experimental capability.",
-      "reading_recommendation_en": "Prioritize the instrument’s constructs, items, and validity evidence. If using it in secondary education or a Chinese-language setting, separately examine the translation and its suitability for that population.",
-      "limitations_en": "E-CLASS primarily measures views and expectations, rather than the operation of physical equipment. The original study did not identify strong, stable factors for subscales."
-    },
-    {
-      "id": "holmes-2015-critical-thinking",
-      "status": "published",
-      "title": "Teaching critical thinking",
-      "authors": [
-        "N. G. Holmes",
-        "Carl E. Wieman",
-        "D. A. Bonn"
-      ],
-      "year": 2015,
-      "published_date": "2015-08-17",
-      "source": "Proceedings of the National Academy of Sciences",
-      "doi": "10.1073/pnas.1505329112",
-      "url": "https://arxiv.org/abs/1508.04870",
-      "topics": [
-        "hands-on",
-        "transfer",
-        "assessment",
-        "scaffolding"
-      ],
-      "evidence_type": "Comparative laboratory intervention",
-      "reading_priority": "core",
-      "key_finding_zh": "反复练习数据之间及数据与模型之间的定量比较，并逐步撤去提示后，干预组更常自主改进实验方法、识别模型局限；差异持续到次年课程。",
-      "phd_relevance_zh": "可将“比较—决策—改进”落实到每课一实验，观察学生撤去提示后是否主动检查测量、修订方法和判断模型。",
-      "reading_recommendation_zh": "优先读支架逐步撤去的过程、行为指标及后续课程测量，设计可观察的独立实验任务。",
-      "limitations_zh": "证据来自特定大学实验课程和比较组；后续课程中的保持不自动等于任意新情境的远迁移。",
-      "featured": false,
-      "date_added": "2026-10-03",
-      "verified_at": "2026-10-03",
-      "verification_url": "https://arxiv.org/abs/1508.04870",
-      "key_finding_en": "After repeated practice in quantitative comparisons between datasets and between data and models, with prompts gradually withdrawn, the intervention group more often improved experimental methods independently and identified model limitations. Differences persisted into the following year’s course.",
-      "phd_relevance_en": "Build the sequence of comparison, decision, and improvement into an experiment in every lesson. Observe whether students independently check measurements, revise methods, and evaluate models after prompts are removed.",
-      "reading_recommendation_en": "Prioritize the gradual withdrawal of scaffolding, behavioral measures, and measurements in the subsequent course. Use these to design observable tasks involving independent experimental work.",
-      "limitations_en": "The evidence comes from a particular university laboratory course and comparison group. Retention in a subsequent course does not automatically establish far transfer to arbitrary new contexts."
-    },
-    {
-      "id": "chi-2014-icap",
-      "status": "published",
-      "title": "The ICAP Framework: Linking Cognitive Engagement to Active Learning Outcomes",
-      "authors": [
-        "Michelene T. H. Chi",
-        "Ruth Wylie"
-      ],
-      "year": 2014,
-      "published_date": "2014-10-28",
-      "source": "Educational Psychologist",
-      "doi": "10.1080/00461520.2014.965823",
-      "url": "https://www.tandfonline.com/doi/full/10.1080/00461520.2014.965823",
-      "topics": [
-        "icap",
-        "scaffolding"
-      ],
-      "evidence_type": "Theoretical framework with empirical synthesis",
-      "reading_priority": "core",
-      "key_finding_zh": "ICAP 依据可观察活动区分被动、主动、建构和交互四种认知参与模式，并提出学习收益随更深入参与而提高的假设及其适用条件。",
-      "phd_relevance_zh": "可用于编码真实实验、仿真和 AI 对话：操作按钮属于活动证据，生成解释、提出预测与共同推理需要进一步区分。",
-      "reading_recommendation_zh": "先读分类定义、例子和边界条件，再把你的课堂行为与学生产出映射到编码规则。",
-      "limitations_zh": "通用学习理论框架，不是物理实验干预试验；可见行为只是认知参与的指示，不足以保证学习效果。",
-      "featured": false,
-      "date_added": "2026-10-03",
-      "verified_at": "2026-10-03",
-      "verification_url": "https://www.tandfonline.com/doi/full/10.1080/00461520.2014.965823",
-      "key_finding_en": "ICAP distinguishes four modes of cognitive engagement through observable activities: passive, active, constructive, and interactive. It proposes that learning gains increase with deeper engagement and sets out conditions under which that hypothesis applies.",
-      "phd_relevance_en": "Use ICAP to code physical laboratory work, simulations, and AI conversations. Pressing buttons provides evidence of activity; generating explanations, making predictions, and reasoning together require further distinctions.",
-      "reading_recommendation_en": "Start with the category definitions, examples, and boundary conditions, then map classroom behaviors and student outputs to coding rules.",
-      "limitations_en": "This is a general framework for learning theory, rather than an intervention trial in physics laboratories. Observable behavior is an indicator of cognitive engagement and does not by itself guarantee learning gains."
-    },
-    {
-      "id": "finkelstein-2005-simulation-transfer",
-      "status": "published",
-      "title": "When learning about the real world is better done virtually: A study of substituting computer simulations for laboratory equipment",
-      "authors": [
-        "N. D. Finkelstein",
-        "W. K. Adams",
-        "C. J. Keller",
-        "P. B. Kohl",
-        "K. K. Perkins",
-        "N. S. Podolefsky",
-        "S. Reid",
-        "R. LeMaster"
-      ],
-      "year": 2005,
-      "published_date": "2005-10-06",
-      "source": "Physical Review Special Topics — Physics Education Research",
-      "doi": "10.1103/PhysRevSTPER.1.010103",
-      "url": "https://journals.aps.org/prper/abstract/10.1103/PhysRevSTPER.1.010103",
-      "topics": [
-        "hands-on",
-        "simulation",
-        "transfer",
-        "assessment"
-      ],
-      "evidence_type": "Comparative circuit laboratory study",
-      "reading_priority": "core",
-      "key_finding_zh": "直流电路课程中，使用显示电子流的仿真设备的学生，在概念测验以及组装真实电路并解释其工作的任务上，表现优于使用真实器材的比较组。",
-      "phd_relevance_zh": "这是仿真向真实器材任务迁移的重要正面证据，可用于限定“仿真缺少操作经验”的假设，并设计任务与表征匹配的比较。",
-      "reading_recommendation_zh": "优先读真实电路任务与仿真表征设计，比较它们与你的光学实验在操作复杂度上的差异。",
-      "limitations_zh": "结论针对特定直流电路、仿真和协调任务，不证明仿真可以替代全部真实实验训练。",
-      "featured": false,
-      "date_added": "2026-10-03",
-      "verified_at": "2026-10-03",
-      "verification_url": "https://journals.aps.org/prper/abstract/10.1103/PhysRevSTPER.1.010103",
-      "key_finding_en": "In a direct-current circuit course, students using a simulation that displayed electron flow outperformed the physical-equipment comparison group on conceptual tests and on a task requiring them to assemble a real circuit and explain how it worked.",
-      "phd_relevance_en": "This provides important positive evidence of transfer from simulation to tasks involving physical equipment. Use it to qualify the assumption that simulations lack practical experience and to design comparisons with matched tasks and representations.",
-      "reading_recommendation_en": "Prioritize the real-circuit tasks and the design of the simulation’s representations. Compare their operational complexity with that of the PhD project’s optics experiments.",
-      "limitations_en": "The conclusion concerns particular direct-current circuits, simulations, and coordinated tasks. It does not establish that simulations can replace all physical laboratory training."
-    },
-    {
-      "id": "puntambekar-2005-scaffolding",
-      "status": "published",
-      "title": "Tools for Scaffolding Students in a Complex Learning Environment: What Have We Gained and What Have We Missed?",
-      "authors": [
-        "Sadhana Puntambekar",
-        "Roland Hubscher"
-      ],
-      "year": 2005,
-      "published_date": null,
-      "source": "Educational Psychologist",
-      "doi": "10.1207/s15326985ep4001_1",
-      "url": "https://www.tandfonline.com/doi/abs/10.1207/s15326985ep4001_1",
-      "topics": [
-        "scaffolding",
-        "transfer"
-      ],
-      "evidence_type": "Theoretical analysis",
-      "reading_priority": "read",
-      "key_finding_zh": "文章指出，软件工具常被称为支架，但持续诊断、与学生需要匹配的支持及逐步撤去支持等关键特征容易被忽略。",
-      "phd_relevance_zh": "可用于定义 AI 实验导师的支架机制：依据学生困难提供支持，再逐步减少提示，并检查学生是否能够独立完成任务。",
-      "reading_recommendation_zh": "全文读诊断、支持校准与撤除的论证，将这些机制写成你的干预设计与观察指标。",
-      "limitations_zh": "理论分析而非 AI 或物理实验效果试验。期刊卷期年份为 2005；出版平台的后补在线日期为 2010，故此处仅保留卷期年份。",
-      "featured": false,
-      "date_added": "2026-10-03",
-      "verified_at": "2026-10-03",
-      "verification_url": "https://www.tandfonline.com/doi/abs/10.1207/s15326985ep4001_1",
-      "key_finding_en": "The article argues that software tools are often described as scaffolds while key features are overlooked, including ongoing diagnosis, support matched to students’ needs, and gradual withdrawal of support.",
-      "phd_relevance_en": "Use this analysis to define the scaffolding mechanisms of an AI laboratory tutor: provide support in response to students’ difficulties, gradually reduce prompts, and check whether students can complete tasks independently.",
-      "reading_recommendation_en": "Read the full arguments about diagnosis, calibration of support, and fading. Turn these mechanisms into intervention design features and observation measures.",
-      "limitations_en": "This is a theoretical analysis, rather than a study of the effects of AI or physics laboratory instruction. The journal volume and issue are dated 2005; the platform’s later online publication date is 2010, so this catalogue retains only the volume-and-issue year."
-    },
-    {
       "id": "tschisgale-2025-llm-physics-olympiad",
       "status": "published",
       "title": "Evaluating GPT- and reasoning-based large language models on Physics Olympiad problems: Surpassing human performance and implications for educational assessment",
@@ -414,7 +243,7 @@
       ],
       "evidence_type": "Comparative performance study (LLMs vs Olympiad participants)",
       "reading_priority": "core",
-      "featured": true,
+      "featured": false,
       "key_finding_en": "On a set of German Physics Olympiad problems, both GPT-4o and the reasoning model o1 outperformed the human participants on average. Prompting technique made little difference for GPT-4o, while o1 almost always scored higher than both GPT-4o and the human benchmark. Beyond correctness, the authors describe characteristic strengths and weaknesses of the generated solutions.",
       "phd_relevance_en": "A peer-reviewed reference point for comparing LLM solutions with human solutions on competition physics, and for discussing what correctness-based scoring misses about solution quality.",
       "reading_recommendation_en": "Read the problem selection, the scoring procedure and the qualitative analysis of solution strengths and limitations; these are the parts most reusable for a solution-quality coding scheme.",
@@ -598,70 +427,6 @@
       "verification_url": "https://api.datacite.org/dois/10.48550/arXiv.2601.09965"
     },
     {
-      "id": "becker-2020-mobile-video-analysis",
-      "status": "published",
-      "title": "Using mobile devices to enhance inquiry-based learning processes",
-      "authors": [
-        "Sebastian Becker",
-        "Pascal Klein",
-        "Alexander Gößling",
-        "Jochen Kuhn"
-      ],
-      "year": 2020,
-      "published_date": null,
-      "source": "Learning and Instruction",
-      "doi": "10.1016/j.learninstruc.2020.101350",
-      "url": "https://doi.org/10.1016/j.learninstruc.2020.101350",
-      "topics": [
-        "hands-on",
-        "visualization",
-        "cognitive-load"
-      ],
-      "evidence_type": "Cluster-randomized controlled trial",
-      "reading_priority": "core",
-      "featured": true,
-      "key_finding_en": "Students investigated uniform motion with tablets running a video-analysis app that displayed the measured motion in multiple linked representations. In a cluster-randomized trial (262 matched students), the tablet condition reduced extraneous cognitive load and increased conceptual knowledge compared with the conventional experiment, and a structural model linked the lower load to the gain in understanding.",
-      "phd_relevance_en": "Classroom-scale evidence that turning video of a real experiment into multiple representations can support conceptual learning, a direct precedent for frame-stacking and video-based motion tools.",
-      "reading_recommendation_en": "Read the intervention design (what the app shows and when), the cognitive-load instrument and the structural equation model.",
-      "limitations_en": "One topic (uniform motion) with a short intervention. The outcome is a conceptual test; it does not measure experimental skill or transfer to new investigations. A 2019 arXiv preprint version is also available.",
-      "date_added": "2026-10-07",
-      "verified_at": "2026-10-07",
-      "verification_url": "https://api.datacite.org/dois/10.48550/arXiv.1908.11281"
-    },
-    {
-      "id": "thees-2020-ar-lab-cognitive-load",
-      "status": "published",
-      "title": "Effects of augmented reality on learning and cognitive load in university physics laboratory courses",
-      "authors": [
-        "Michael Thees",
-        "Sebastian Kapp",
-        "Martin P. Strzys",
-        "Fabian Beil",
-        "Paul Lukowicz",
-        "Jochen Kuhn"
-      ],
-      "year": 2020,
-      "published_date": null,
-      "source": "Computers in Human Behavior",
-      "doi": "10.1016/j.chb.2020.106316",
-      "url": "https://doi.org/10.1016/j.chb.2020.106316",
-      "topics": [
-        "hands-on",
-        "visualization",
-        "cognitive-load"
-      ],
-      "evidence_type": "Comparative laboratory study",
-      "reading_priority": "read",
-      "featured": false,
-      "key_finding_en": "In a graded undergraduate lab on heat conduction (N = 74), one group used see-through smartglasses that showed live measurement data anchored to the apparatus; the other used the traditional data-collection workflow. The AR group reported significantly lower extraneous cognitive load, but conceptual-knowledge gains did not differ.",
-      "phd_relevance_en": "A carefully controlled AR lab study showing that lower cognitive load does not automatically produce better conceptual learning; a useful benchmark for AR visualisation of fields anchored to real objects.",
-      "reading_recommendation_en": "Read the description of the AR display (what is overlaid and where) and the cognitive-load measures, then the discussion of why the conceptual test did not improve.",
-      "limitations_en": "One university lab topic with head-mounted displays, which differ from tablet-based AR. Cognitive load is self-reported, and the conceptual test may not capture experimental competence.",
-      "date_added": "2026-10-07",
-      "verified_at": "2026-10-07",
-      "verification_url": "https://www.dfki.de/web/forschung/projekte-publikationen/publikation/12119"
-    },
-    {
       "id": "wei-2026-household-demonstrations",
       "status": "published",
       "title": "Material-based contextualization in physics: Student preference for household objects versus laboratory equipment in a resonance demonstration",
@@ -748,6 +513,272 @@
       "date_added": "2026-10-07",
       "verified_at": "2026-10-07",
       "verification_url": "https://api.crossref.org/works/10.1088/1361-6404/ae2a80"
+    },
+    {
+      "id": "huang-2026-genai-training-problem-solving",
+      "status": "published",
+      "title": "From answer machine to collaborative partner: impact of structured generative AI training on scientific problem solving in STEM education",
+      "authors": [
+        "Bingjie Huang",
+        "Li Xie",
+        "Yamei Liu",
+        "Xiaohan Liu",
+        "Hongchen Tang",
+        "Xiumei Feng",
+        "Cuilan Qiao",
+        "Qing Guo",
+        "Chunxiao Wu",
+        "Lei Bao"
+      ],
+      "year": 2026,
+      "published_date": "2026-10-06",
+      "source": "International Journal of STEM Education",
+      "doi": "10.1186/s40594-026-00652-9",
+      "url": "https://doi.org/10.1186/s40594-026-00652-9",
+      "topics": [
+        "ai",
+        "scaffolding",
+        "cognitive-load"
+      ],
+      "evidence_type": "Randomized controlled trial",
+      "reading_priority": "core",
+      "featured": true,
+      "key_finding_en": "In an RCT (N = 95), students first answered the Conceptual Survey of Electricity and Magnetism alone and then revised their answers in conversation with the Doubao model. A short training grounded in self-regulated learning (how GenAI works, prompting strategies, how to catch and fix AI errors) raised AI-assisted revision performance (d = 0.81): trained students turned 69.3% of wrong answers into correct ones versus 41.3% in the control group, with comparable overall cognitive load.",
+      "phd_relevance_en": "Shows that how students are taught to use a general chatbot changes what they get from it, which bears directly on comparisons between general-purpose and purpose-built AI tutors.",
+      "reading_recommendation_en": "Read the training protocol and the coding of revision strategies; the incorrect-to-correct revision measure is a reusable outcome for AI-supported homework.",
+      "limitations_en": "Outcomes are revision performance while AI is available, measured in one session on one survey; the study does not test independent performance after AI support is removed.",
+      "date_added": "2026-10-07",
+      "verified_at": "2026-10-07",
+      "verification_url": "https://api.crossref.org/works/10.1186/s40594-026-00652-9"
+    },
+    {
+      "id": "akhmedov-2026-chatbots-uzbek-textbooks",
+      "status": "published",
+      "title": "Where free chatbots fail in school physics: an evaluation across 780 Uzbek-language textbook problems",
+      "authors": [
+        "B B Akhmedov",
+        "M K Yuldashev"
+      ],
+      "year": 2026,
+      "published_date": "2026-10-01",
+      "source": "Physics Education",
+      "doi": "10.1088/1361-6552/aeab1e",
+      "url": "https://iopscience.iop.org/article/10.1088/1361-6552/aeab1e",
+      "topics": [
+        "ai",
+        "assessment"
+      ],
+      "evidence_type": "Evaluation of LLM performance on textbook problems",
+      "reading_priority": "core",
+      "featured": true,
+      "key_finding_en": "Free versions of ChatGPT (GPT-5 family) and DeepSeek (V3 family) solved 74.5% and 77.7% of 772 scoreable grade 7–10 textbook problems. Both failed on the same 119 problems (15.4%), clustered in identifiable sections and in demands such as textbook-specific value retrieval, unit tracking and multi-step quantitative reasoning.",
+      "phd_relevance_en": "A school-level counterpart to Olympiad studies: it locates where chatbot solutions break down rather than ranking models, and argues for teaching pupils where verification matters most.",
+      "reading_recommendation_en": "Read the joint-failure analysis and the section-by-section recommendation table.",
+      "limitations_en": "Scoring is correctness against textbook answers in one language and curriculum; free chat interfaces change over time, and the study does not examine students using the chatbots.",
+      "date_added": "2026-10-07",
+      "verified_at": "2026-10-07",
+      "verification_url": "https://api.crossref.org/works/10.1088/1361-6552/aeab1e"
+    },
+    {
+      "id": "corekci-2026-llm-turkish-exams",
+      "status": "published",
+      "title": "Can artificial intelligence solve school-level physics exam questions? A decade-based evaluation using Turkish university entrance exams",
+      "authors": [
+        "Güler Çörekci",
+        "Ahmet Murat Çörekci"
+      ],
+      "year": 2026,
+      "published_date": "2026-09-07",
+      "source": "Physics Education",
+      "doi": "10.1088/1361-6552/ae9bf4",
+      "url": "https://iopscience.iop.org/article/10.1088/1361-6552/ae9bf4",
+      "topics": [
+        "ai",
+        "assessment"
+      ],
+      "evidence_type": "Evaluation of LLM performance on exam questions",
+      "reading_priority": "skim",
+      "featured": false,
+      "key_finding_en": "On 84 physics questions from Turkish university entrance exams (2016–2025), DeepSeek V3.1, Gemini 2.5 Flash and ChatGPT-5 reached 78.6%, 69.0% and 65.5% final-answer accuracy with a neutral student-style prompt; the differences were not statistically significant.",
+      "phd_relevance_en": "A national-exam benchmark that can be set alongside Olympiad-level results when discussing how reliable LLM physics solutions are.",
+      "reading_recommendation_en": "Skim the question selection and scoring; the item-level failures are more informative than the totals.",
+      "limitations_en": "Only final-answer correctness on multiple-choice items was scored; 84 questions give wide confidence intervals and no analysis of reasoning quality.",
+      "date_added": "2026-10-07",
+      "verified_at": "2026-10-07",
+      "verification_url": "https://api.crossref.org/works/10.1088/1361-6552/ae9bf4"
+    },
+    {
+      "id": "kim-2026-ai-tutoring-engagement",
+      "status": "published",
+      "title": "Student engagement patterns in conversational AI tutoring: evidence from physics problem-solving",
+      "authors": [
+        "Eunhye Kim",
+        "Hunkoog Jho"
+      ],
+      "year": 2026,
+      "published_date": "2026-09-19",
+      "source": "Education and Information Technologies",
+      "doi": "10.1007/s10639-026-14154-2",
+      "url": "https://link.springer.com/article/10.1007/s10639-026-14154-2",
+      "topics": [
+        "ai",
+        "icap",
+        "scaffolding"
+      ],
+      "evidence_type": "Discourse analysis of tutoring logs",
+      "reading_priority": "read",
+      "featured": true,
+      "key_finding_en": "Coding 318 problem-solving episodes from 18 undergraduates using an LLM tutor in thermodynamics (ICAP-based plus inductive coding) gave five interaction patterns. Task-focused (44.3%) and collaborative problem-solving (34.0%) dominated, 65.4% of interactions were brief exchanges without student-initiated questions, and dialogic engagement concentrated on the harder problems.",
+      "phd_relevance_en": "Offers an ICAP-based coding scheme for student–AI tutor dialogue that could be applied to chat logs from an AI-tutored homework study.",
+      "reading_recommendation_en": "Read the coding framework and the pattern definitions, then the relation between pattern and task difficulty.",
+      "limitations_en": "A small sample in one advanced course; engagement patterns are descriptive and are not linked to learning outcomes.",
+      "date_added": "2026-10-07",
+      "verified_at": "2026-10-07",
+      "verification_url": "https://link.springer.com/article/10.1007/s10639-026-14154-2"
+    },
+    {
+      "id": "gaurina-2026-genai-kinematics-graphs",
+      "status": "published",
+      "title": "Using generative AI to support students’ interpretation of kinematics graphs: a classroom-based approach",
+      "authors": [
+        "Marija Gaurina",
+        "Ivana Štibi"
+      ],
+      "year": 2026,
+      "published_date": "2026-09-17",
+      "source": "Physics Education",
+      "doi": "10.1088/1361-6552/aea261",
+      "url": "https://iopscience.iop.org/article/10.1088/1361-6552/aea261",
+      "topics": [
+        "ai",
+        "scaffolding"
+      ],
+      "evidence_type": "Classroom intervention report",
+      "reading_priority": "skim",
+      "featured": false,
+      "key_finding_en": "In five workshops, secondary vocational students used generative AI to explain, compare and check their reasoning about kinematics graphs, under a teacher-guided routine in which AI explanations (including wrong ones) had to be tested against axes, units, slopes, areas and intervals. Mean scores rose descriptively from 2.91/13 to 5.50/13.",
+      "phd_relevance_en": "A practical routine for treating AI output as something to check rather than an answer to copy, adaptable to AI-supported physics homework.",
+      "reading_recommendation_en": "Read the checking routine and the workshop tasks.",
+      "limitations_en": "One class, no comparison group, and pre/post item sets not validated as equivalent; the gains are descriptive only.",
+      "date_added": "2026-10-07",
+      "verified_at": "2026-10-07",
+      "verification_url": "https://api.crossref.org/works/10.1088/1361-6552/aea261"
+    },
+    {
+      "id": "sachithanand-2026-ai-simulation-generation",
+      "status": "published",
+      "title": "Constrained vs. unconstrained free-fall and projectile-motion AI problem-to-simulation generation: a pilot study",
+      "authors": [
+        "Krish Sachithanand"
+      ],
+      "year": 2026,
+      "published_date": "2026-09-23",
+      "source": "Physics Education",
+      "doi": "10.1088/1361-6552/aea25e",
+      "url": "https://iopscience.iop.org/article/10.1088/1361-6552/aea25e",
+      "topics": [
+        "ai",
+        "simulation"
+      ],
+      "evidence_type": "Pilot evaluation of AI-generated simulations",
+      "reading_priority": "skim",
+      "featured": false,
+      "key_finding_en": "For five Force Concept Inventory free-fall and projectile-motion questions, a constrained problem-to-simulation system met every applicable criterion of a technical and physics-accuracy rubric, while unconstrained AI-generated simulations varied widely and included a complete generation failure.",
+      "phd_relevance_en": "Relevant to AI-generated projectile-motion simulations: it argues for constraining generation before any classroom use.",
+      "reading_recommendation_en": "Skim the rubric and the examples of unconstrained failures.",
+      "limitations_en": "Five questions and no students; the study evaluates simulation quality, not learning.",
+      "date_added": "2026-10-07",
+      "verified_at": "2026-10-07",
+      "verification_url": "https://api.crossref.org/works/10.1088/1361-6552/aea25e"
+    },
+    {
+      "id": "li-2026-vision-thermal-expansion",
+      "status": "published",
+      "title": "Reforming thermal expansion experiments using vision-based measurement",
+      "authors": [
+        "Ruibo Li",
+        "Haibiao Chen",
+        "Xurui Hu",
+        "Gang Wang"
+      ],
+      "year": 2026,
+      "published_date": "2026-10-01",
+      "source": "European Journal of Physics",
+      "doi": "10.1088/1361-6404/aea8a6",
+      "url": "https://iopscience.iop.org/article/10.1088/1361-6404/aea8a6",
+      "topics": [
+        "hands-on",
+        "visualization",
+        "cognitive-load"
+      ],
+      "evidence_type": "Apparatus development with parallel-group comparison",
+      "reading_priority": "core",
+      "featured": true,
+      "key_finding_en": "Machine-vision sub-pixel tracking with synchronised temperature logging replaced manual optical alignment in a linear-expansion lab (about 2.7% relative error), cut equipment tuning from about 70% to under 10% of the session, and made thermal hysteresis directly observable. In a parallel-group study (N = 84), the vision-based group scored higher on lab-report data analysis (d = 0.67), core knowledge (d = 0.99) and understanding of hysteresis and non-equilibrium states (d = 1.41).",
+      "phd_relevance_en": "Closest recent example of camera-based measurement turning a static verification lab into continuous observation, with learning outcomes reported; a direct comparison point for video frame-stacking tools.",
+      "reading_recommendation_en": "Read the measurement pipeline, the time-allocation data and the design of the controlled comparison.",
+      "limitations_en": "One university lab and a single topic; group assignment and test validity should be checked in the full text, and outcomes are course assessments rather than transfer to new experiments.",
+      "date_added": "2026-10-07",
+      "verified_at": "2026-10-07",
+      "verification_url": "https://api.crossref.org/works/10.1088/1361-6404/aea8a6"
+    },
+    {
+      "id": "adler-2026-student-selected-videos",
+      "status": "published",
+      "title": "Student-Selected Videos Together with Scaffolding Questions Improves Learning in a Physics Course",
+      "authors": [
+        "Melanie V. Adler",
+        "Richard Steinberg",
+        "Lucas C. Parra"
+      ],
+      "year": 2026,
+      "published_date": "2026-10-03",
+      "source": "Journal of Science Education and Technology",
+      "doi": "10.1007/s10956-026-10360-2",
+      "url": "https://link.springer.com/article/10.1007/s10956-026-10360-2",
+      "topics": [
+        "scaffolding",
+        "assessment"
+      ],
+      "evidence_type": "Quasi-experimental classroom study",
+      "reading_priority": "read",
+      "featured": false,
+      "key_finding_en": "In an introductory college physics course (N = 103, intact lab sections), students who searched for their own online videos and answered association questions did better on quizzes and gained more on the Force Concept Inventory than a reading-and-exercises control. Exam effects were only indirect, depending on how much students engaged with the questions; working memory, GPA and motivation predicted most outcomes.",
+      "phd_relevance_en": "Evidence that self-directed homework resources help only when paired with scaffolding questions, a useful parallel for unstructured versus structured AI help at home.",
+      "reading_recommendation_en": "Read the association-question design and the engagement analysis behind the exam result.",
+      "limitations_en": "Non-equivalent groups without random assignment; mixed results across outcome measures.",
+      "date_added": "2026-10-07",
+      "verified_at": "2026-10-07",
+      "verification_url": "https://link.springer.com/article/10.1007/s10956-026-10360-2"
+    },
+    {
+      "id": "payton-2026-lab-group-equity",
+      "status": "published",
+      "title": "Disrupting gendered task division without achieving equity of parity: A centrality-affective paradox from a design experiment in undergraduate physics labs",
+      "authors": [
+        "Aidan Payton",
+        "Russell Clark",
+        "C Singh"
+      ],
+      "year": 2026,
+      "published_date": "2026-10-06",
+      "source": "European Journal of Physics",
+      "doi": "10.1088/1361-6404/aeb0e1",
+      "url": "https://iopscience.iop.org/article/10.1088/1361-6404/aeb0e1",
+      "topics": [
+        "hands-on",
+        "assessment"
+      ],
+      "evidence_type": "Design experiment with observation and pre/post survey",
+      "reading_priority": "read",
+      "featured": false,
+      "key_finding_en": "Larger lab groups, weekly random grouping and rotating roles led women to take central and experimentalist roles more often. Yet matched pre/post E-CLASS results showed a significant decline in women’s attitudes toward experimental physics, with no change for men.",
+      "phd_relevance_en": "A reminder for inclusive lab design: changing who handles the equipment does not by itself produce equitable outcomes.",
+      "reading_recommendation_en": "Read the three design changes, the observation protocol and the E-CLASS comparison.",
+      "limitations_en": "One algebra-based course with a majority of women bioscience majors; the design changes were made together, so their separate effects cannot be isolated.",
+      "date_added": "2026-10-07",
+      "verified_at": "2026-10-07",
+      "verification_url": "https://api.crossref.org/works/10.1088/1361-6404/aeb0e1"
     }
   ]
 }

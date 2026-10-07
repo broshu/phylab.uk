@@ -12,13 +12,13 @@ test('published catalogue validates and covers all requested themes', () => {
 });
 test('multiple tags use intersection and combine with priority', () => {
   const papers = filterPapers(catalog.papers, { topics: ['simulation', 'hands-on'], priority: 'core' });
-  assert.deepEqual(new Set(papers.map(p => p.id)), new Set(['ben-zion-2026-ai-simulation', 'finkelstein-2005-simulation-transfer']));
+  assert.deepEqual(new Set(papers.map(p => p.id)), new Set(['ben-zion-2026-ai-simulation']));
   assert.equal(filterPapers(catalog.papers, { topics: ['icap', 'simulation'] }).length, 0);
 });
 test('Chinese notes, authors, DOI and case-insensitive English tags are searchable', () => {
   assert.ok(filterPapers(catalog.papers, { query: '独立迁移' }).length > 0);
   assert.equal(filterPapers(catalog.papers, { query: '10.1103/nvf1-zrq8' })[0].id, 'becker-2026-ai-scaffolding');
-  assert.equal(filterPapers(catalog.papers, { query: 'CHI ICAP' })[0].id, 'chi-2014-icap');
+  assert.equal(filterPapers(catalog.papers, { query: 'JHO ICAP' })[0].id, 'kim-2026-ai-tutoring-engagement');
 });
 test('drafts remain hidden, latest picks are date ordered, new recommendations can replace old ones', () => {
   const draft = { ...catalog.papers[0], id: 'draft', status: 'draft' };
