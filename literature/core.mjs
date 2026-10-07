@@ -1,7 +1,8 @@
 export const TOPICS = {
   'hands-on': 'Hands-on Lab', simulation: 'Simulation', ai: 'AI Teaching',
   transfer: 'Transfer', assessment: 'Assessment', icap: 'ICAP',
-  scaffolding: 'Scaffolding', 'cognitive-load': 'Cognitive Load'
+  scaffolding: 'Scaffolding', 'cognitive-load': 'Cognitive Load',
+  visualization: 'Visualization & AR'
 };
 export const PRIORITIES = { core: 'PhD Core · Essential', read: 'Read · Full text', skim: 'Skim · Background' };
 export const SORTS = ['added', 'published', 'priority'];

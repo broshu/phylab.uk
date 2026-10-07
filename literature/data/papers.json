@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-03",
+  "updated_at": "2026-10-07",
   "papers": [
     {
       "id": "malikova-2026-ai-physics-review",
@@ -390,6 +390,364 @@
       "phd_relevance_en": "Use this analysis to define the scaffolding mechanisms of an AI laboratory tutor: provide support in response to students’ difficulties, gradually reduce prompts, and check whether students can complete tasks independently.",
       "reading_recommendation_en": "Read the full arguments about diagnosis, calibration of support, and fading. Turn these mechanisms into intervention design features and observation measures.",
       "limitations_en": "This is a theoretical analysis, rather than a study of the effects of AI or physics laboratory instruction. The journal volume and issue are dated 2005; the platform’s later online publication date is 2010, so this catalogue retains only the volume-and-issue year."
+    },
+    {
+      "id": "tschisgale-2025-llm-physics-olympiad",
+      "status": "published",
+      "title": "Evaluating GPT- and reasoning-based large language models on Physics Olympiad problems: Surpassing human performance and implications for educational assessment",
+      "authors": [
+        "Paul Tschisgale",
+        "Holger Maus",
+        "Fabian Kieser",
+        "Ben Kroehs",
+        "Stefan Petersen",
+        "Peter Wulff"
+      ],
+      "year": 2025,
+      "published_date": "2025-08-13",
+      "source": "Physical Review Physics Education Research",
+      "doi": "10.1103/6fmx-bsnl",
+      "url": "https://journals.aps.org/prper/abstract/10.1103/6fmx-bsnl",
+      "topics": [
+        "ai",
+        "assessment"
+      ],
+      "evidence_type": "Comparative performance study (LLMs vs Olympiad participants)",
+      "reading_priority": "core",
+      "featured": true,
+      "key_finding_en": "On a set of German Physics Olympiad problems, both GPT-4o and the reasoning model o1 outperformed the human participants on average. Prompting technique made little difference for GPT-4o, while o1 almost always scored higher than both GPT-4o and the human benchmark. Beyond correctness, the authors describe characteristic strengths and weaknesses of the generated solutions.",
+      "phd_relevance_en": "A peer-reviewed reference point for comparing LLM solutions with human solutions on competition physics, and for discussing what correctness-based scoring misses about solution quality.",
+      "reading_recommendation_en": "Read the problem selection, the scoring procedure and the qualitative analysis of solution strengths and limitations; these are the parts most reusable for a solution-quality coding scheme.",
+      "limitations_en": "Results depend on the specific problem set and on model versions that are quickly superseded. Scores measure final-solution correctness against a rubric, not how efficient or instructive a solution path is, and say nothing about student learning.",
+      "date_added": "2026-10-07",
+      "verified_at": "2026-10-07",
+      "verification_url": "https://api.crossref.org/works/10.1103/6fmx-bsnl"
+    },
+    {
+      "id": "jian-2025-loca-cpho",
+      "status": "published",
+      "title": "Mastering Olympiad-Level Physics with Artificial Intelligence",
+      "authors": [
+        "Dong-Shan Jian",
+        "Xiang Li",
+        "Chen-Xu Yan",
+        "Hui-Wen Zheng",
+        "Zhi-Zhang Bian",
+        "You-Le Fang",
+        "Ren-Xi He",
+        "Jing-Tian Zhang",
+        "Ce Meng",
+        "Ling-Shi Meng",
+        "Bing-Rui Gong",
+        "Sheng-Qi Zhang",
+        "Yan-Qing Ma"
+      ],
+      "year": 2025,
+      "published_date": "2025-11-13",
+      "source": "arXiv preprint",
+      "doi": "10.48550/arXiv.2511.10515",
+      "url": "https://arxiv.org/abs/2511.10515",
+      "topics": [
+        "ai",
+        "assessment"
+      ],
+      "evidence_type": "AI system evaluation (preprint, not peer reviewed)",
+      "reading_priority": "read",
+      "featured": false,
+      "key_finding_en": "The LOCA agent framework splits long physics reasoning into small, verifiable steps and refines them through an augment-and-review loop. On the 2025 Chinese Physics Olympiad (CPhO) theory exam it scored 313 of 320 points, above the top human competitor, and 28.6 of 30 on the IPhO 2025 exam.",
+      "phd_relevance_en": "Directly concerns AI performance on the Chinese Physics Olympiad, and its step-wise verification design offers a contrast to judging AI solutions by their final score alone.",
+      "reading_recommendation_en": "Read the description of the step decomposition and review loop, and the CPhO scoring comparison with human contestants and baseline models.",
+      "limitations_en": "An unreviewed preprint from the system developers, evaluated on one year of each exam. A near-perfect score shows answer correctness under official marking; it does not show whether the solutions are concise, readable or pedagogically useful.",
+      "date_added": "2026-10-07",
+      "verified_at": "2026-10-07",
+      "verification_url": "https://api.datacite.org/dois/10.48550/arXiv.2511.10515"
+    },
+    {
+      "id": "yu-2025-hipho-benchmark",
+      "status": "published",
+      "title": "HiPhO: How Far Are (M)LLMs from Humans in the Latest High School Physics Olympiad Benchmark?",
+      "authors": [
+        "Fangchen Yu",
+        "Haiyuan Wan",
+        "Qianjia Cheng",
+        "Yuchen Zhang",
+        "Jiacheng Chen",
+        "Fujun Han",
+        "Yulun Wu",
+        "Junchi Yao",
+        "Ruilizhen Hu",
+        "Ning Ding",
+        "Yu Cheng",
+        "Tao Chen",
+        "Lei Bai",
+        "Dongzhan Zhou",
+        "Yun Luo",
+        "Ganqu Cui",
+        "Peng Ye"
+      ],
+      "year": 2025,
+      "published_date": "2025-09-09",
+      "source": "arXiv preprint",
+      "doi": "10.48550/arXiv.2509.07894",
+      "url": "https://arxiv.org/abs/2509.07894",
+      "topics": [
+        "ai",
+        "assessment"
+      ],
+      "evidence_type": "Benchmark study (preprint, not peer reviewed)",
+      "reading_priority": "skim",
+      "featured": false,
+      "key_finding_en": "HiPhO compiles 13 Olympiad exams from 2024–2025 and grades 30 models with the official marking schemes at answer and step level, then assigns medals using the official thresholds. Closed-source reasoning models reached gold on 6 to 12 of the exams, open-source multimodal models mostly stayed at or below bronze, and most models remained well short of full marks.",
+      "phd_relevance_en": "Shows how official marking schemes and medal thresholds can be used to place AI and human performance on the same scale, a useful contrast to rubric-only comparisons.",
+      "reading_recommendation_en": "Skim the benchmark construction and the step-level grading procedure; the model leaderboard dates quickly.",
+      "limitations_en": "A machine-learning benchmark preprint. It ranks models by exam scores and does not study students, teaching or the quality of solution paths.",
+      "date_added": "2026-10-07",
+      "verified_at": "2026-10-07",
+      "verification_url": "https://arxiv.org/abs/2509.07894"
+    },
+    {
+      "id": "wang-2026-prompted-agents",
+      "status": "published",
+      "title": "Comparing teacher-centered and student-centered agents based on prompt engineering: Effects on learning performance, cognitive load, flow experience, and empathy perception in physics learning",
+      "authors": [
+        "Yimin Wang",
+        "Xiaotong Chen",
+        "Yushan Xiong",
+        "Shaorui Xu",
+        "Qiuye Li",
+        "Shaona Zhou"
+      ],
+      "year": 2026,
+      "published_date": "2026-09-09",
+      "source": "Physical Review Physics Education Research",
+      "doi": "10.1103/9t5b-twsb",
+      "url": "https://journals.aps.org/prper/abstract/10.1103/9t5b-twsb",
+      "topics": [
+        "ai",
+        "scaffolding",
+        "cognitive-load"
+      ],
+      "evidence_type": "Comparative study of two prompt-engineered AI agents",
+      "reading_priority": "core",
+      "featured": true,
+      "key_finding_en": "Two instructional agents were built on the Coze platform with different system prompts: a teacher-centred agent giving authoritative, content-focused answers and a student-centred agent that attended to prior knowledge and gave adaptive, supportive guidance. Students using the student-centred agent showed higher learning performance, lower extraneous cognitive load, stronger germane engagement, more flow and higher perceived empathy.",
+      "phd_relevance_en": "Evidence that the design of a custom AI tutor's prompt, not only access to AI, changes learning and cognitive load. Relevant to comparing a general-purpose chatbot with a purpose-built tutor.",
+      "reading_recommendation_en": "Read the two agent prompts and how they were operationalised, then the sample, assignment procedure and the learning-performance measure before relying on the effect sizes.",
+      "limitations_en": "Both conditions used AI, so the study compares prompt designs rather than AI against no AI. Sample size, assignment and study duration should be checked in the full text. Outcomes are immediate performance and self-reports, not independent transfer after AI support is removed.",
+      "date_added": "2026-10-07",
+      "verified_at": "2026-10-07",
+      "verification_url": "https://api.crossref.org/works/10.1103/9t5b-twsb"
+    },
+    {
+      "id": "miller-2026-prompt-matters",
+      "status": "published",
+      "title": "Prompt Matters: How Pedagogical Engineering Shapes Behavior and Engagement with AI Tutors",
+      "authors": [
+        "Kelly Miller"
+      ],
+      "year": 2026,
+      "published_date": "2026-05-27",
+      "source": "Technology, Knowledge and Learning",
+      "doi": "10.1007/s10758-026-09983-6",
+      "url": "https://link.springer.com/article/10.1007/s10758-026-09983-6",
+      "topics": [
+        "ai",
+        "scaffolding",
+        "cognitive-load"
+      ],
+      "evidence_type": "Randomized online experiment",
+      "reading_priority": "read",
+      "featured": false,
+      "key_finding_en": "In a randomized online study (N = 125) on conservation of momentum, an AI tutor whose system prompt built in active learning, cognitive-load management and growth-mindset support produced more student–AI interaction, higher reported engagement and motivation, and less cognitive overload than a tutor with minimal instructional guidance. Both groups made substantial pre–post learning gains.",
+      "phd_relevance_en": "Separates the effect of tutor prompt design on engagement from its effect on learning gains, which matters when comparing a general chatbot with a custom physics tutor.",
+      "reading_recommendation_en": "Compare the two system prompts, the interaction logs and the pre/post test; note which outcomes differed between conditions and which did not.",
+      "limitations_en": "Participants were recruited online through Prolific rather than from a physics class, and the task was a single short topic. Gains are immediate pre–post scores; engagement and overload are self-reported.",
+      "date_added": "2026-10-07",
+      "verified_at": "2026-10-07",
+      "verification_url": "https://link.springer.com/article/10.1007/s10758-026-09983-6"
+    },
+    {
+      "id": "dange-2026-aiplato-homework",
+      "status": "published",
+      "title": "aiPlato: A Novel AI Tutoring and Step-wise Feedback System for Physics Homework",
+      "authors": [
+        "Atharva Dange",
+        "Ramon E. Lopez",
+        "Louis Deslauriers",
+        "Nimish Shah"
+      ],
+      "year": 2026,
+      "published_date": "2026-01-15",
+      "source": "arXiv preprint",
+      "doi": "10.48550/arXiv.2601.09965",
+      "url": "https://arxiv.org/abs/2601.09965",
+      "topics": [
+        "ai",
+        "scaffolding",
+        "assessment"
+      ],
+      "evidence_type": "Quasi-experimental classroom pilot (preprint)",
+      "reading_priority": "read",
+      "featured": false,
+      "key_finding_en": "In a large introductory physics course, an AI homework platform gave step-wise feedback on open-ended solutions across four optional extra-credit assignments. Students who used it more had higher final-exam scores (standardized difference about 0.81 after controlling for prior performance), and usage logs showed students relied mainly on iterative feedback rather than solution-revealing help.",
+      "phd_relevance_en": "A concrete design for AI support on physics homework that tries to preserve productive struggle, with interaction-log measures that could be adapted to an AI-tutored homework study.",
+      "reading_recommendation_en": "Read the tool descriptions (step evaluation versus tutor chat), the engagement measures and how prior performance was controlled.",
+      "limitations_en": "An optional, self-selected pilot without random assignment, so the exam difference may reflect who chose to engage. It is a preprint, and the outcome is course exam performance rather than transfer to unfamiliar problems.",
+      "date_added": "2026-10-07",
+      "verified_at": "2026-10-07",
+      "verification_url": "https://api.datacite.org/dois/10.48550/arXiv.2601.09965"
+    },
+    {
+      "id": "becker-2020-mobile-video-analysis",
+      "status": "published",
+      "title": "Using mobile devices to enhance inquiry-based learning processes",
+      "authors": [
+        "Sebastian Becker",
+        "Pascal Klein",
+        "Alexander Gößling",
+        "Jochen Kuhn"
+      ],
+      "year": 2020,
+      "published_date": null,
+      "source": "Learning and Instruction",
+      "doi": "10.1016/j.learninstruc.2020.101350",
+      "url": "https://doi.org/10.1016/j.learninstruc.2020.101350",
+      "topics": [
+        "hands-on",
+        "visualization",
+        "cognitive-load"
+      ],
+      "evidence_type": "Cluster-randomized controlled trial",
+      "reading_priority": "core",
+      "featured": true,
+      "key_finding_en": "Students investigated uniform motion with tablets running a video-analysis app that displayed the measured motion in multiple linked representations. In a cluster-randomized trial (262 matched students), the tablet condition reduced extraneous cognitive load and increased conceptual knowledge compared with the conventional experiment, and a structural model linked the lower load to the gain in understanding.",
+      "phd_relevance_en": "Classroom-scale evidence that turning video of a real experiment into multiple representations can support conceptual learning, a direct precedent for frame-stacking and video-based motion tools.",
+      "reading_recommendation_en": "Read the intervention design (what the app shows and when), the cognitive-load instrument and the structural equation model.",
+      "limitations_en": "One topic (uniform motion) with a short intervention. The outcome is a conceptual test; it does not measure experimental skill or transfer to new investigations. A 2019 arXiv preprint version is also available.",
+      "date_added": "2026-10-07",
+      "verified_at": "2026-10-07",
+      "verification_url": "https://api.datacite.org/dois/10.48550/arXiv.1908.11281"
+    },
+    {
+      "id": "thees-2020-ar-lab-cognitive-load",
+      "status": "published",
+      "title": "Effects of augmented reality on learning and cognitive load in university physics laboratory courses",
+      "authors": [
+        "Michael Thees",
+        "Sebastian Kapp",
+        "Martin P. Strzys",
+        "Fabian Beil",
+        "Paul Lukowicz",
+        "Jochen Kuhn"
+      ],
+      "year": 2020,
+      "published_date": null,
+      "source": "Computers in Human Behavior",
+      "doi": "10.1016/j.chb.2020.106316",
+      "url": "https://doi.org/10.1016/j.chb.2020.106316",
+      "topics": [
+        "hands-on",
+        "visualization",
+        "cognitive-load"
+      ],
+      "evidence_type": "Comparative laboratory study",
+      "reading_priority": "read",
+      "featured": false,
+      "key_finding_en": "In a graded undergraduate lab on heat conduction (N = 74), one group used see-through smartglasses that showed live measurement data anchored to the apparatus; the other used the traditional data-collection workflow. The AR group reported significantly lower extraneous cognitive load, but conceptual-knowledge gains did not differ.",
+      "phd_relevance_en": "A carefully controlled AR lab study showing that lower cognitive load does not automatically produce better conceptual learning; a useful benchmark for AR visualisation of fields anchored to real objects.",
+      "reading_recommendation_en": "Read the description of the AR display (what is overlaid and where) and the cognitive-load measures, then the discussion of why the conceptual test did not improve.",
+      "limitations_en": "One university lab topic with head-mounted displays, which differ from tablet-based AR. Cognitive load is self-reported, and the conceptual test may not capture experimental competence.",
+      "date_added": "2026-10-07",
+      "verified_at": "2026-10-07",
+      "verification_url": "https://www.dfki.de/web/forschung/projekte-publikationen/publikation/12119"
+    },
+    {
+      "id": "wei-2026-household-demonstrations",
+      "status": "published",
+      "title": "Material-based contextualization in physics: Student preference for household objects versus laboratory equipment in a resonance demonstration",
+      "authors": [
+        "Yajun Wei",
+        "Haitao Feng",
+        "Chunhong Gao",
+        "Lei Bao"
+      ],
+      "year": 2026,
+      "published_date": "2026-08-31",
+      "source": "Physical Review Physics Education Research",
+      "doi": "10.1103/6q11-82vh",
+      "url": "https://journals.aps.org/prper/abstract/10.1103/6q11-82vh",
+      "topics": [
+        "hands-on"
+      ],
+      "evidence_type": "Survey comparison of two demonstrations",
+      "reading_priority": "read",
+      "featured": false,
+      "key_finding_en": "288 secondary and college students watched a resonance demonstration with wine glasses and one with tuning forks, in counterbalanced order. 58.3% preferred the household version and 14.9% the laboratory version; the household version was rated higher for interest, novelty and everyday relevance, while clarity and self-reported support for understanding did not differ.",
+      "phd_relevance_en": "Supports the case for low-cost, everyday materials in physics teaching: engagement rose without a loss in perceived clarity.",
+      "reading_recommendation_en": "Read the demonstration design, the seven survey items and the paired comparisons.",
+      "limitations_en": "A single phenomenon and affective self-report measures only; no conceptual test, experimental skill or longer-term outcome was assessed.",
+      "date_added": "2026-10-07",
+      "verified_at": "2026-10-07",
+      "verification_url": "https://api.crossref.org/works/10.1103/6q11-82vh"
+    },
+    {
+      "id": "lahme-2025-smartphone-tasks",
+      "status": "published",
+      "title": "Recitation tasks revamped? Students’ perceptions of smartphone-based experimental and programming tasks in introductory mechanics",
+      "authors": [
+        "Simon Zacharias Lahme",
+        "Dominik Dorsel",
+        "Heidrun Heinke",
+        "Pascal Klein",
+        "Andreas Müller",
+        "Christoph Stampfer",
+        "Sebastian Staacks"
+      ],
+      "year": 2025,
+      "published_date": "2025-07-22",
+      "source": "Physical Review Physics Education Research",
+      "doi": "10.1103/bwpv-z3xh",
+      "url": "https://journals.aps.org/prper/abstract/10.1103/bwpv-z3xh",
+      "topics": [
+        "hands-on"
+      ],
+      "evidence_type": "Exploratory field study (surveys)",
+      "reading_priority": "skim",
+      "featured": false,
+      "key_finding_en": "Nine smartphone-based experimental tasks and three programming tasks were added to weekly homework in a first-year mechanics course. Across repeated short surveys (up to 188 students), the smartphone experiments were generally feasible at home and were perceived more favourably than the programming tasks, and comparably to standard recitation tasks.",
+      "phd_relevance_en": "Shows how low-cost experiments can move into homework, a model for take-home experimental tasks.",
+      "reading_recommendation_en": "Skim the task list and the feasibility and goal-clarity survey items.",
+      "limitations_en": "Perception surveys only, at one university; no learning or skill outcomes were measured.",
+      "date_added": "2026-10-07",
+      "verified_at": "2026-10-07",
+      "verification_url": "https://api.crossref.org/works/10.1103/bwpv-z3xh"
+    },
+    {
+      "id": "zhao-2026-smartphone-labs-review",
+      "status": "published",
+      "title": "Smartphone-based undergraduate physics labs: a comprehensive review of innovation, accessibility, and pedagogical impact",
+      "authors": [
+        "Yiping Zhao"
+      ],
+      "year": 2026,
+      "published_date": "2026-01-19",
+      "source": "European Journal of Physics",
+      "doi": "10.1088/1361-6404/ae2a80",
+      "url": "https://doi.org/10.1088/1361-6404/ae2a80",
+      "topics": [
+        "hands-on",
+        "visualization"
+      ],
+      "evidence_type": "Narrative review",
+      "reading_priority": "skim",
+      "featured": false,
+      "key_finding_en": "The review catalogues more than 200 smartphone-based lab activities across mechanics, optics, thermodynamics, electromagnetism and modern physics, sorted by topic, sensor type (sensor- versus camera-based) and instructional design, and discusses accessibility, device variability and curriculum integration.",
+      "phd_relevance_en": "A broad map of camera- and sensor-based low-cost experiments for locating where video tools and home-built apparatus already exist.",
+      "reading_recommendation_en": "Use the activity tables as a reference; skim the sections on camera-based activities and implementation challenges.",
+      "limitations_en": "A narrative catalogue rather than a systematic review of learning effects; pedagogical claims rest on the cited studies. A 2025 arXiv version (2504.11363) is also available.",
+      "date_added": "2026-10-07",
+      "verified_at": "2026-10-07",
+      "verification_url": "https://api.crossref.org/works/10.1088/1361-6404/ae2a80"
     }
   ]
 }

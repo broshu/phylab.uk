@@ -39,7 +39,7 @@ After changing source files, commit and push through the repository's existing p
    | `title`, `authors` | The original title and a complete array of author names. |
    | `year`, `published_date` | The volume/issue or publication year. Use `YYYY-MM-DD` for a known exact date and `null` when uncertain; do not invent a month or day. |
    | `source`, `doi`, `url` | Journal or source name, a bare DOI, and a required HTTPS original-source URL. The DOI may be empty for sources without one. |
-   | `topics` | An array drawn from `hands-on`, `simulation`, `ai`, `transfer`, `assessment`, `icap`, `scaffolding`, and `cognitive-load`. |
+   | `topics` | An array drawn from `hands-on`, `simulation`, `ai`, `transfer`, `assessment`, `icap`, `scaffolding`, `cognitive-load`, and `visualization`. |
    | `evidence_type` | For example, an experiment, comparative study, systematic review, theoretical framework, or instrument validation. Clearly label evidence from other disciplines. |
    | `key_finding_en` | An English account of findings supported by the source. Do not copy the abstract. |
    | `phd_relevance_en` | Relevance to the PhD direction in English. This is curatorial judgement and must be distinguished from the paper's findings. |

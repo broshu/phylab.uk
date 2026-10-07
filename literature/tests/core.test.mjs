@@ -23,7 +23,7 @@ test('Chinese notes, authors, DOI and case-insensitive English tags are searchab
 test('drafts remain hidden, latest picks are date ordered, new recommendations can replace old ones', () => {
   const draft = { ...catalog.papers[0], id: 'draft', status: 'draft' };
   assert.equal(filterPapers([draft]).length, 0);
-  const newer = { ...catalog.papers[0], id: 'new-paper', date_added: '2026-10-04' };
+  const newer = { ...catalog.papers[0], id: 'new-paper', date_added: '2099-12-31' };
   assert.equal(latestPicks([...catalog.papers, newer])[0].id, 'new-paper');
   assert.equal(latestPicks(catalog.papers).length, 6);
 });
