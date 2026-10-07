@@ -1,4 +1,4 @@
-import { TOPICS, PRIORITIES, SORTS, filterPapers, latestPicks, latestAdditions, validateCatalog } from './core.mjs';
+import { TOPICS, SORTS, filterPapers, latestPicks, latestAdditions, validateCatalog } from './core.mjs';
 
 // Source content is always inserted as text, never interpreted as HTML.
 function el(tag, className = '', text = '') {
@@ -18,7 +18,7 @@ function note(list, title, value) {
 }
 function metadata(paper, article, title) {
   const top = el('div', 'lit-card-top');
-  top.append(el('span', 'lit-priority', PRIORITIES[paper.reading_priority]), el('span', 'lit-year', String(paper.year)));
+  top.append(el('span', 'lit-year', String(paper.year)));
   article.append(top, title, el('p', 'lit-authors', paper.authors.join(', ')),
     el('p', 'lit-source', `${paper.source} · ${paper.published_date || paper.year} · ${paper.evidence_type}`));
 }
@@ -81,12 +81,11 @@ const updateShelf = picks?.classList.contains('lit-shelf') ? initializeShelf(pic
 function readState() {
   const params = new URLSearchParams(location.search);
   return { topics: [...new Set(params.getAll('topic').filter(t => Object.hasOwn(TOPICS, t)))],
-    priority: Object.hasOwn(PRIORITIES, params.get('priority')) ? params.get('priority') : '',
-    query: params.get('q') || '', sort: SORTS.includes(params.get('sort')) ? params.get('sort') : 'added' };
+    priority: '',
+    query: params.get('q') || '', sort: SORTS.includes(params.get('sort')) && params.get('sort') !== 'priority' ? params.get('sort') : 'added' };
 }
 function syncForm(state) {
   document.getElementById('lit-search').value = state.query;
-  document.getElementById('lit-priority').value = state.priority;
   document.getElementById('lit-sort').value = state.sort;
   form.querySelectorAll('input[name="topic"]').forEach(input => { input.checked = state.topics.includes(input.value); });
 }
@@ -112,7 +111,7 @@ function updateURL(state) {
 }
 function formState() {
   return { topics: [...form.querySelectorAll('input[name="topic"]:checked')].map(i => i.value),
-    priority: document.getElementById('lit-priority').value,
+    priority: '',
     query: document.getElementById('lit-search').value, sort: document.getElementById('lit-sort').value };
 }
 function renderLibrary() {

@@ -1,0 +1,17 @@
+{
+  "_note": "Display order for labs (top = shown first on the home page and labs page). After editing, run: python3 scripts/build_index.py",
+  "home_count": 8,
+  "labs": [
+    { "slug": "volleyball-serve", "title": "Volleyball Serve" },
+    { "slug": "frame-sequencer", "title": "Frame Sequencer" },
+    { "slug": "electric-potential-3d", "title": "Electric Potential 3D" },
+    { "slug": "oscilloscope-principle", "title": "Oscilloscope Principle" },
+    { "slug": "microscopic-current", "title": "Microscopic Current" },
+    { "slug": "electric-field-lines", "title": "Electric Field Lines" },
+    { "slug": "vernier-caliper", "title": "Vernier Caliper" },
+    { "slug": "particle-between-plates", "title": "Particle Between Plates" },
+    { "slug": "alternating-field-release", "title": "Alternating Field Release" },
+    { "slug": "collision-deformation", "title": "Deformation in Collisions" },
+    { "slug": "ar-electric-field", "title": "AR Electric Field", "badge": "Beta" }
+  ]
+}

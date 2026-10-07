@@ -1,0 +1,15 @@
+name: Labs & lessons index check
+on:
+  push:
+    paths: ['index.html', 'labs/**', 'lessons/**', 'scripts/build_index.py', '.github/workflows/index-checks.yml']
+  pull_request:
+    paths: ['index.html', 'labs/**', 'lessons/**', 'scripts/build_index.py', '.github/workflows/index-checks.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 scripts/build_index.py --check

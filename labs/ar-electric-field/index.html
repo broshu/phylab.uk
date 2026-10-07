@@ -25,7 +25,8 @@
   .page-title{font-family:"Cormorant Garamond",serif;font-size:clamp(2.2rem,5vw,3.4rem);font-weight:600;
     color:var(--ink);text-align:center;letter-spacing:.5px;margin-bottom:8px;}
   .lede{text-align:center;color:var(--muted);max-width:620px;margin:0 auto 36px;line-height:1.6;}
-  .blocks{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;}
+  .blocks{display:grid;grid-template-columns:repeat(2,1fr);gap:22px;}
+  img.thumb{object-fit:cover;object-position:top;}
   .block{position:relative;display:flex;flex-direction:column;gap:12px;padding:20px 20px 18px;text-decoration:none;
     background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);color:var(--ink);
     overflow:hidden;transition:transform .3s ease,box-shadow .3s ease,border-color .3s;}
@@ -112,13 +113,22 @@
         </svg>
         <p>Upload one photo of the cards. Detected once — perfectly stable. Tap 3D to orbit the scene.</p>
       </a>
+
+      <!-- PLANE v2 (formerly the separate "beta 2" lab) -->
+      <a class="block" href="/labs/ar-electric-field-beta2/">
+        <span class="pill">Live AR · v2</span>
+        <h2>Plane AR v2</h2>
+        <img class="thumb" src="/labs/ar-electric-field-beta2/screenshot.png" alt="Plane AR v2 preview" loading="lazy">
+        <p>Rewritten plane mode: point charges and ±2q charged plates, with 3-D equipotential shells and a potential relief. Prints from one marker sheet.</p>
+      </a>
     </div>
 
     <div class="foot">
       Print the markers first:
       <a href="print-plane.html">Plane markers</a> ·
       <a href="print-cube.html">Cube markers</a> ·
-      <a href="encoding.pdf" target="_blank">Encoding PDF</a>
+      <a href="encoding.pdf" target="_blank">Encoding PDF</a> ·
+      <a href="/labs/ar-electric-field-beta2/markers.pdf" target="_blank">v2 marker sheet</a>
       <br><span style="font-size:.82rem">Open in Safari on an iPad (camera needs HTTPS). Field lines show by default; toggle the potential surface in-app.</span>
     </div>
   </main>

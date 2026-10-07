@@ -1,0 +1,96 @@
+{
+  "_note": "Display order for lessons (top = shown first on the home page and lessons page). After editing, run: python3 scripts/build_index.py",
+  "home_count": 6,
+  "lessons": [
+    {
+      "slug": "resolving-forces",
+      "title": "Resolving Forces & Free-Body Analysis",
+      "file": "resolving-forces.html"
+    },
+    {
+      "slug": "physics-olympiad-intro",
+      "title": "Introduction to Physics Olympiad",
+      "file": "physics-olympiad-intro.html"
+    },
+    {
+      "slug": "gravitation",
+      "title": "Universal Gravitation",
+      "file": "gravitation.pdf"
+    },
+    {
+      "slug": "capacitance",
+      "title": "Capacitance",
+      "file": "capacitance.pdf"
+    },
+    {
+      "slug": "newtons-third-law",
+      "title": "Newton's Third Law",
+      "file": "newtons-third-law.pdf"
+    },
+    {
+      "slug": "voltage",
+      "title": "Voltage & Equipotentials",
+      "file": "voltage.pdf"
+    },
+    {
+      "slug": "newtons-first-law",
+      "title": "Newton's First Law",
+      "file": "newtons-first-law.pdf"
+    },
+    {
+      "slug": "static-electricity",
+      "title": "Static Electricity: Control & Use",
+      "file": "static-electricity.pdf"
+    },
+    {
+      "slug": "coulomb-balance",
+      "title": "Coulomb Force: Balance & Acceleration",
+      "file": "coulomb-balance.pdf"
+    },
+    {
+      "slug": "electric-potential",
+      "title": "Electric Potential",
+      "file": "electric-potential.pdf",
+      "alt": "Electric Potential Energy & Electric Potential — first page preview"
+    },
+    {
+      "slug": "circuit-ohm-v2",
+      "title": "Ohm's Law for Closed Circuits",
+      "file": "circuit-ohm-v2.pdf",
+      "alt": "Closed-Circuit Ohm's Law — first page preview"
+    },
+    {
+      "slug": "resistance",
+      "title": "Resistance of a Conductor",
+      "file": "resistance.pdf",
+      "alt": "Conductor resistance — first page preview"
+    },
+    {
+      "slug": "gradient",
+      "title": "Potential Gradient",
+      "file": "gradient.pdf",
+      "alt": "Potential gradient — first page preview"
+    },
+    {
+      "slug": "meters",
+      "title": "Voltmeters & Ammeters",
+      "file": "meters.pdf",
+      "alt": "Voltmeters and ammeters — first page preview"
+    },
+    {
+      "slug": "gravity-achievements",
+      "title": "Achievements of Gravitation",
+      "file": "gravity-achievements.pdf"
+    },
+    {
+      "slug": "equilibrium",
+      "title": "Forces in Balance",
+      "file": "equilibrium.pdf"
+    },
+    {
+      "slug": "force-vectors",
+      "title": "Composition & Resolution of Forces",
+      "file": "force-vectors.pdf"
+    }
+  ]
+}
