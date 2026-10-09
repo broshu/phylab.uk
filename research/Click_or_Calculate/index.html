@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Click or Calculate? — Supplementary material — PhyLab</title>
+<meta name="description" content="Paper and supplementary material: AI prompts, post-test scores and blurred answer sheets." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/theme.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Inter", sans-serif; background: var(--paper); color: var(--ink); min-height: 100vh;
+         padding: 48px 24px; -webkit-font-smoothing: antialiased; }
+  body::before { content: ""; position: fixed; inset: 0;
+    background: radial-gradient(circle at 20% 15%, var(--site-tint-green), transparent 45%),
+                radial-gradient(circle at 85% 80%, var(--site-tint-accent), transparent 50%);
+    pointer-events: none; z-index: 0; }
+  .wrap { position: relative; z-index: 1; width: 100%; max-width: 880px; margin: 0 auto; }
+  .kicker { text-align: center; color: var(--muted); font-size: 13px; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 10px; }
+  h1 { font-family: "Cormorant Garamond", serif; font-size: clamp(1.9rem, 4.4vw, 2.7rem); font-weight: 600;
+       color: var(--green); text-align: center; line-height: 1.15; }
+  .meta { text-align: center; color: var(--muted); font-size: 14px; margin-top: 10px; }
+  .card { margin-top: 28px; background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+          box-shadow: var(--shadow); padding: 22px 24px; }
+  .card h2 { font-family: "Cormorant Garamond", serif; font-size: 1.45rem; font-weight: 600; color: var(--green); margin-bottom: 12px; }
+  .card p, .card li { font-size: 14px; line-height: 1.6; }
+  .card p + p { margin-top: 10px; }
+  .files { list-style: none; display: grid; gap: 10px; }
+  .files a { display: flex; justify-content: space-between; gap: 16px; align-items: baseline; padding: 12px 14px;
+             border: 1px solid var(--line); border-radius: 10px; color: var(--ink); text-decoration: none;
+             transition: border-color .2s, transform .2s; }
+  .files a:hover, .files a:focus-visible { border-color: var(--accent); transform: translateY(-2px); }
+  .files .name { font-weight: 500; }
+  .files .desc { display: block; color: var(--muted); font-size: 13px; font-weight: 400; margin-top: 2px; }
+  .files .size { color: var(--muted); font-size: 12px; white-space: nowrap; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 6px; }
+  th, td { text-align: left; vertical-align: top; padding: 7px 8px; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 500; }
+  code { font-family: ui-monospace, Menlo, monospace; font-size: 12.5px; }
+  ol { padding-left: 1.3em; margin: 6px 0 10px; }
+  .table-wrap { overflow-x: auto; }
+  @media (max-width: 640px) { body { padding: 32px 16px; } .kicker { margin-top: 44px; } .files a { flex-direction: column; gap: 4px; } }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <p class="kicker">Paper and supplementary material</p>
+  <h1>Click or Calculate? Comparing Paper and AI-Supported Homework in High-School Projectile Motion</h1>
+  <p class="meta">Xingyu Shu · Manuscript</p>
+
+  <section class="card">
+    <h2>Files</h2>
+    <ul class="files">
+      <li><a href="../Click_or_Calculate.pdf"><span><span class="name">Paper</span><span class="desc">The full manuscript</span></span><span class="size">PDF · 2.4 MB</span></a></li>
+      <li><a href="Click_or_Calculate_Appendices.pdf"><span><span class="name">Appendices A and B</span><span class="desc">The prompt used for the standard AI (Group B) and for the custom AI tutor (Group C, version volleyball-coach-v9)</span></span><span class="size">PDF · 92 KB</span></a></li>
+      <li><a href="Click_or_Calculate_post-test_scores.csv" download><span><span class="name">Post-test scores</span><span class="desc">Scores and drawing codes of all 292 students, one row per student</span></span><span class="size">CSV · 7 KB</span></a></li>
+      <li><a href="Click_or_Calculate_answer_sheets_A.pdf"><span><span class="name">Answer sheets, Group A</span><span class="desc">Traditional paper homework · 83 blurred answer sheets</span></span><span class="size">PDF · 0.9 MB</span></a></li>
+      <li><a href="Click_or_Calculate_answer_sheets_B.pdf"><span><span class="name">Answer sheets, Group B</span><span class="desc">Standard AI · 85 blurred answer sheets</span></span><span class="size">PDF · 0.9 MB</span></a></li>
+      <li><a href="Click_or_Calculate_answer_sheets_C.pdf"><span><span class="name">Answer sheets, Group C</span><span class="desc">Custom AI tutor · 95 blurred answer sheets</span></span><span class="size">PDF · 1.1 MB</span></a></li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>Answer sheets</h2>
+    <p>To protect the students' privacy, every page was processed in the same way:</p>
+    <ol>
+      <li>The class and name fields at the top right of the page were covered with a solid white box.</li>
+      <li>The page was reduced to 420 pixels in width and blurred with a Gaussian filter (radius 2.6 pixels). At this level the amount and layout of the written work, the sketches and the trajectories can be seen, but the handwriting cannot be read.</li>
+    </ol>
+    <p>Each page is labelled at the top right with the student's anonymous ID (for example, A05). The IDs are the same as those used in the score data; they contain no personal information.</p>
+    <p>The answer sheets of 29 students (Group A 13, Group B 12, Group C 4) are not included, because the students or their parents did not consent to publication. These answer sheets were scored with the same rubric and are included in all analyses; their scores and drawing codes are in the score file.</p>
+  </section>
+
+  <section class="card">
+    <h2>Score file</h2>
+    <p>One row per student (N = 292: Group A 96, Group B 97, Group C 99), including the 29 students whose answer sheets are not published. All scores were assigned with the rubric in Table 1 of the paper.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Column</th><th>Values</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td><code>student_id</code></td><td>e.g. A05, CX2</td><td>Anonymous ID, the same as on the scanned pages. IDs whose second character is X belong to students whose answer sheets are not published.</td></tr>
+        <tr><td><code>group</code></td><td>A, B, C</td><td>A = traditional paper homework; B = online homework with a standard AI; C = online homework with a custom AI tutor</td></tr>
+        <tr><td><code>problem1_score</code></td><td>0–9</td><td>Score on Problem 1 (volleyball, near transfer)</td></tr>
+        <tr><td><code>problem2a_score</code></td><td>0–7</td><td>Score on Problem 2a (parcel sorting: range of belt speeds)</td></tr>
+        <tr><td><code>problem2b_feasible_improvements</code></td><td>0, 1, 2, …</td><td>Number of feasible improvements proposed in Problem 2b (not scored)</td></tr>
+        <tr><td><code>problem1_drawing</code></td><td>none, one, two, incorrect</td><td>Trajectories drawn on the answer sheet for Problem 1</td></tr>
+        <tr><td><code>problem2_drawing</code></td><td>none, one, two, incorrect</td><td>Trajectories drawn on the answer sheet for Problem 2</td></tr>
+        <tr><td><code>answer_sheet_published</code></td><td>yes, no</td><td>Whether the student's answer sheet is included in the PDF files</td></tr>
+      </tbody>
+    </table></div>
+    <p style="margin-top:12px">Drawing codes: <code>none</code> = no trajectory drawn; <code>one</code> = one trajectory, or several trajectories that were not both limiting trajectories; <code>two</code> = the two limiting trajectories; <code>incorrect</code> = a physically wrong trajectory, such as one starting upwards, a straight or broken line, or a faster ball or parcel drawn below a slower one.</p>
+  </section>
+</main>
+<script defer src="/assets/nav.js"></script>
+</body>
+</html>
