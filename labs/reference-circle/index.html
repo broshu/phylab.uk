@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reference Circle</title>
+    <link rel="stylesheet" href="/assets/theme.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="top-bar">
+        <div>
+            <h1>Reference Circle</h1>
+        </div>
+        <a class="home-button" href="/labs/" aria-label="Return to Labs" title="Labs"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9.5 21v-6h5v6"/></svg></a>
+    </header>
+
+    <main class="layout">
+        <section class="panel controls-panel">
+            <div class="section-title">
+                <h2>Controls</h2>
+                <button id="resetBtn" class="ghost-button" type="button">Reset</button>
+            </div>
+
+            <label class="slider-row">
+                <span>Angular frequency ω</span>
+                <output id="omegaOut" for="omega">3.14 rad/s</output>
+                <input id="omega" type="range" min="0.8" max="6.5" step="0.01" value="3.14">
+            </label>
+
+            <label class="slider-row">
+                <span>Initial phase φ</span>
+                <output id="phiOut" for="phi">0.00π rad</output>
+                <input id="phi" type="range" min="0" max="2" step="0.01" value="0">
+            </label>
+
+            <div class="button-row">
+                <button id="playBtn" class="primary-button" type="button">Pause</button>
+                <button id="restartBtn" class="ghost-button" type="button">Restart</button>
+            </div>
+
+            <div class="formula-box">
+                <h3>Readout</h3>
+                <p>Period T = 2π/ω <strong id="vT">2.00 s</strong></p>
+                <p>Frequency f = 1/T <strong id="vF">0.50 Hz</strong></p>
+                <p>Time t <strong id="vt">3.30 s</strong></p>
+                <p>Phase ωt + φ <strong id="vth">10.37 rad</strong></p>
+            </div>
+        </section>
+
+        <section class="panel stage-panel">
+            <div class="section-title">
+                <h2>x = A sin(ωt + φ)</h2>
+                <div class="legend">
+                    <span><i class="swatch blue"></i>Point on the circle</span>
+                    <span><i class="swatch orange"></i>Projection x</span>
+                </div>
+            </div>
+            <div class="figure">
+                <canvas id="stage" role="img" aria-label="A point turning on a reference circle, with its vertical projection traced as an x–t graph"></canvas>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>One turn of the point (2π rad) takes one period T. ω is the angular velocity of the point on the circle, not the speed of the oscillator.</p>
+    </footer>
+
+    <script src="js/main.js"></script>
+</body>
+</html>
