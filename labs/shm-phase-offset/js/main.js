@@ -235,7 +235,7 @@
         shown[i] = value;
         var btn = $('add' + (i + 1));
         btn.setAttribute('aria-pressed', value ? 'true' : 'false');
-        btn.textContent = value ? 'Remove ' + (i + 1) : (i === 1 ? 'Add 2: change phase φ' : 'Add 3: change offset b');
+        btn.textContent = value ? 'Remove ' + (i + 1) : (i === 1 ? 'Add 2: phase φ' : 'Add 3: offset b');
         sync();
     }
 
