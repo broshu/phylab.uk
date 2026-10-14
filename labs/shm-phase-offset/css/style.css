@@ -207,6 +207,16 @@ input[type="range"] {
     accent-color: var(--ink);
 }
 
+.slider-row.is-off {
+    opacity: 0.55;
+}
+
+.chip-grid .ghost-button[aria-pressed="true"] {
+    color: var(--control-text);
+    background: var(--control-fill);
+    border-color: var(--control-fill);
+}
+
 .check-row {
     display: flex;
     align-items: center;

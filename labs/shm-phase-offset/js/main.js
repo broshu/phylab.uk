@@ -2,12 +2,12 @@
     'use strict';
 
     var TWO_PI = Math.PI * 2;
-    var DEFAULTS = { phi: 90, c: 150, T: 1.6 };
+    var DEFAULTS = { phi: 90, b: 150, T: 1.6 };
     var PRESETS = {
-        same: { phi: 0, c: 0 },
-        lead: { phi: 90, c: 0 },
-        opposite: { phi: 180, c: 0 },
-        offset: { phi: 0, c: 150 }
+        same: { phi: 0 },
+        lead: { phi: 90 },
+        lag: { phi: -90 },
+        opposite: { phi: 180 }
     };
 
     // Fixed figure palette (colour-blind safe), drawn on a light surface in both site themes.
@@ -24,7 +24,9 @@
     var ctx = cv.getContext('2d');
     var W = cv.width, H = cv.height;
 
-    var T = DEFAULTS.T, phi = DEFAULTS.phi * Math.PI / 180, c = DEFAULTS.c;
+    // Oscillator 1: y = A sin(wt).  2: y = A sin(wt + phi).  3: y = A sin(wt) + b.
+    var shown = [true, false, false];
+    var T = DEFAULTS.T, phi = DEFAULTS.phi * Math.PI / 180, b = DEFAULTS.b;
     var w = TWO_PI / T, windowSec = 5, pxPerSec = (G.x1 - G.x0) / windowSec;
     var t = 5, last = 0, dirty = true;
     var reduceMotion = false;
@@ -67,9 +69,9 @@
     }
 
     function shade(hex, f) {
-        var n = parseInt(hex.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255;
+        var n = parseInt(hex.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, bl = n & 255;
         function m(v) { return Math.round(f < 0 ? v * (1 + f) : v + (255 - v) * f); }
-        return 'rgb(' + m(r) + ',' + m(g) + ',' + m(b) + ')';
+        return 'rgb(' + m(r) + ',' + m(g) + ',' + m(bl) + ')';
     }
 
     function drawSupport(x, y) {
@@ -99,13 +101,12 @@
     }
 
     // ---- model ----
-    function disp(i, s) { return A * Math.sin(w * s + (i === 0 ? 0 : phi)); }
-    function eqY(i) { return Y0 - (i === 2 ? c : 0); }
-    function supY(i) { return SUPPORT_Y - (i === 2 ? c : 0); }
+    function disp(i, s) { return A * Math.sin(w * s + (i === 1 ? phi : 0)); }
+    function eqY(i) { return Y0 - (i === 2 ? b : 0); }
+    function supY(i) { return SUPPORT_Y - (i === 2 ? b : 0); }
 
     function draw() {
         var now = t, i, k;
-        var showMarks = $('marks').checked;
         ctx.clearRect(0, 0, W, H);
         ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
 
@@ -113,6 +114,7 @@
         dotted(40, Y0, 520, Y0);
         richText('*y* = 0', 30, Y0 - 16, 20, 'left', SANS, MUTED);
         for (i = 0; i < 3; i++) {
+            if (!shown[i]) continue;
             var x = OSC_X[i], yb = eqY(i) - disp(i, now);
             drawSupport(x, supY(i));
             drawSpring(x, supY(i), yb - BALL_R);
@@ -128,7 +130,7 @@
         ctx.strokeStyle = INK; ctx.lineWidth = 1.2; ctx.setLineDash([]);
         ctx.strokeRect(G.x0, G.top, gx1 - G.x0, G.bottom - G.top);
         dotted(G.x0, Y0, gx1, Y0);
-        dotted(G.x0, Y0 - c, gx1, Y0 - c);
+        if (shown[2]) dotted(G.x0, Y0 - b, gx1, Y0 - b);
         richText('0', G.x0 - 14, Y0, 22, 'center', SERIF);
         richText('*y*', G.x0 - 12, G.top - 18, 26, 'center');
         richText('time *t* / s  →', (G.x0 + gx1) / 2, G.bottom + 26, 22, 'center');
@@ -138,11 +140,12 @@
 
         ctx.save(); ctx.beginPath(); ctx.rect(G.x0, G.top, gx1 - G.x0, G.bottom - G.top); ctx.clip();
         for (i = 0; i < 3; i++) {
-            var t0 = lo, n = Math.max(2, Math.ceil((now - t0) * 80));
+            if (!shown[i]) continue;
+            var n = Math.max(2, Math.ceil((now - lo) * 80));
             ctx.strokeStyle = COLORS[i]; ctx.lineWidth = 3; ctx.lineJoin = 'round'; ctx.setLineDash([]);
             ctx.beginPath();
             for (k = 0; k <= n; k++) {
-                var tt = t0 + (now - t0) * k / n, yy = eqY(i) - disp(i, tt);
+                var tt = lo + (now - lo) * k / n, yy = eqY(i) - disp(i, tt);
                 if (k) ctx.lineTo(X(tt), yy); else ctx.moveTo(X(tt), yy);
             }
             ctx.stroke();
@@ -151,24 +154,28 @@
         ctx.restore();
 
         // trace labels, nudged apart when two traces are close
-        var tags = [0, 1, 2].map(function (j) { return { i: j, y: eqY(j) - disp(j, now) }; })
+        var tags = [0, 1, 2].filter(function (j) { return shown[j]; })
+            .map(function (j) { return { i: j, y: eqY(j) - disp(j, now) }; })
             .sort(function (p, q) { return p.y - q.y; });
         for (k = 1; k < tags.length; k++) tags[k].y = Math.max(tags[k].y, tags[k - 1].y + 24);
         tags.forEach(function (tg) { richText(String(tg.i + 1), X(now) + 14, tg.y, 22, 'left', SANS, COLORS[tg.i]); });
 
-        // formulas
+        // formulas for the oscillators that are on screen
         var formulas = [
             '1   *y*₁ = *A* sin *ωt*',
             '2   *y*₂ = *A* sin(*ωt* + *φ*)',
-            '3   *y*₃ = *A* sin(*ωt* + *φ*) + *c*'
+            '3   *y*₃ = *A* sin *ωt* + *b*'
         ];
+        var row = 0;
         for (i = 0; i < 3; i++) {
-            ctx.fillStyle = COLORS[i]; ctx.fillRect(G.x0, 42 + i * 40, 18, 18);
-            richText(formulas[i], G.x0 + 30, 51 + i * 40, 28, 'left', SERIF);
+            if (!shown[i]) continue;
+            ctx.fillStyle = COLORS[i]; ctx.fillRect(G.x0, 42 + row * 40, 18, 18);
+            richText(formulas[i], G.x0 + 30, 51 + row * 40, 28, 'left', SERIF);
+            row++;
         }
 
-        // marks: time shift between corresponding troughs of 1 and 2, and the offset c
-        if (showMarks && Math.abs(phi) > 0.001) {
+        // marks: time shift between corresponding troughs of 1 and 2, and the offset b
+        if (shown[1] && Math.abs(phi) > 0.001) {
             var d = phi / w;
             var m = Math.floor((now + Math.min(0, d) - 3 * T / 4) / T);
             var t1 = 3 * T / 4 + m * T, t2 = t1 - d;
@@ -180,13 +187,13 @@
                 richText('*φ*/*ω*', (X(t1) + X(t2)) / 2, ya + 21, 24, 'center');
             }
         }
-        if (showMarks && Math.abs(c) > 0.001) {
+        if (shown[2] && Math.abs(b) > 0.001) {
             var xa = G.x0 - 34;
-            arrow(xa, Y0, xa, Y0 - c, true);
-            richText('*c*', xa - 20, Y0 - c / 2, 28, 'center');
+            arrow(xa, Y0, xa, Y0 - b, true);
+            richText('*b*', xa - 20, Y0 - b / 2, 28, 'center');
             var xl = OSC_X[2] + 70;
-            arrow(xl, Y0, xl, Y0 - c, true);
-            richText('*c*', xl + 10, Y0 - c / 2, 28);
+            arrow(xl, Y0, xl, Y0 - b, true);
+            richText('*b*', xl + 10, Y0 - b / 2, 28);
         }
     }
 
@@ -199,39 +206,68 @@
         pxPerSec = (G.x1 - G.x0) / windowSec;
         var deg = Math.round(phi * 180 / Math.PI), delta = phi / w;
         setText($('phiOut'), deg + '° (' + (phi / Math.PI).toFixed(2) + 'π)');
-        setText($('cOut'), String(c));
+        setText($('bOut'), String(b));
         setText($('TOut'), T.toFixed(1) + ' s');
         setText($('vw'), w.toFixed(2) + ' rad/s');
-        setText($('vd'), delta.toFixed(2) + ' s');
-        var rel;
-        if (Math.abs(deg) === 180) rel = '2 is in antiphase with 1, half a period apart. 3 is in phase with 2.';
-        else if (deg === 0) rel = '2 is in phase with 1. 3 has the same motion about a different equilibrium.';
-        else rel = '2 ' + (deg > 0 ? 'leads' : 'lags') + ' 1 by ' + Math.abs(delta).toFixed(2) + ' s (' + Math.abs(deg) + '°). 3 is in phase with 2.';
-        setText($('relation'), rel);
+        setText($('vd'), shown[1] ? delta.toFixed(2) + ' s' : '–');
+
+        var parts = [];
+        if (shown[1]) {
+            if (Math.abs(deg) === 180) parts.push('2 is in antiphase with 1, half a period apart.');
+            else if (deg === 0) parts.push('2 is in phase with 1.');
+            else parts.push('2 ' + (deg > 0 ? 'leads' : 'lags') + ' 1 by ' + Math.abs(delta).toFixed(2) + ' s (' + Math.abs(deg) + '°).');
+        }
+        if (shown[2]) {
+            if (b === 0) parts.push('3 coincides with 1.');
+            else parts.push('3 moves like 1 about an equilibrium ' + Math.abs(b) + (b > 0 ? ' above' : ' below') + ' it.');
+        }
+        if (!parts.length) parts.push('Oscillator 1 is the reference. Add 2 to change the phase, or 3 to change the offset b.');
+        setText($('relation'), parts.join(' '));
+
+        $('phi').disabled = !shown[1];
+        $('b').disabled = !shown[2];
+        $('phiRow').classList.toggle('is-off', !shown[1]);
+        $('bRow').classList.toggle('is-off', !shown[2]);
         dirty = true;
     }
 
+    function setShown(i, value) {
+        shown[i] = value;
+        var btn = $('add' + (i + 1));
+        btn.setAttribute('aria-pressed', value ? 'true' : 'false');
+        btn.textContent = value ? 'Remove ' + (i + 1) : (i === 1 ? 'Add 2: change phase φ' : 'Add 3: change offset b');
+        sync();
+    }
+
     function setParams(p) {
-        ['phi', 'c', 'T'].forEach(function (key) {
+        ['phi', 'b', 'T'].forEach(function (key) {
             if (p[key] === undefined) return;
             $(key).value = p[key];
             if (key === 'phi') phi = p[key] * Math.PI / 180;
-            else if (key === 'c') c = p[key];
+            else if (key === 'b') b = p[key];
             else T = p[key];
         });
         sync();
     }
 
-    ['phi', 'c', 'T'].forEach(function (key) {
+    ['phi', 'b', 'T'].forEach(function (key) {
         $(key).addEventListener('input', function () {
             var o = {}; o[key] = parseFloat($(key).value); setParams(o);
         });
     });
-    Array.prototype.forEach.call(document.querySelectorAll('[data-preset]'), function (b) {
-        b.addEventListener('click', function () { setParams(PRESETS[b.getAttribute('data-preset')]); });
+    $('add2').addEventListener('click', function () { setShown(1, !shown[1]); });
+    $('add3').addEventListener('click', function () { setShown(2, !shown[2]); });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-preset]'), function (btn) {
+        btn.addEventListener('click', function () {
+            if (!shown[1]) setShown(1, true);
+            setParams(PRESETS[btn.getAttribute('data-preset')]);
+        });
     });
-    $('marks').addEventListener('change', function () { dirty = true; });
-    $('resetBtn').addEventListener('click', function () { setParams(DEFAULTS); t = 5; $('marks').checked = true; dirty = true; });
+    $('resetBtn').addEventListener('click', function () {
+        setParams(DEFAULTS);
+        setShown(1, false); setShown(2, false);
+        t = 5; dirty = true;
+    });
     $('restartBtn').addEventListener('click', function () { t = 0; dirty = true; });
     playBtn.addEventListener('click', function () { playing = !playing; playBtn.textContent = playing ? 'Pause' : 'Play'; });
 

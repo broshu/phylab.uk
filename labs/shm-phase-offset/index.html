@@ -22,20 +22,28 @@
                 <button id="resetBtn" class="ghost-button" type="button">Reset</button>
             </div>
 
-            <label class="slider-row">
-                <span>Initial phase φ</span>
+            <div>
+                <p class="group-label">Add to the reference</p>
+                <div class="chip-grid">
+                    <button id="add2" class="ghost-button" type="button" aria-pressed="false">Add 2: phase φ</button>
+                    <button id="add3" class="ghost-button" type="button" aria-pressed="false">Add 3: offset b</button>
+                </div>
+            </div>
+
+            <label class="slider-row is-off" id="phiRow">
+                <span>Phase φ of 2</span>
                 <output id="phiOut" for="phi">90° (0.50π)</output>
-                <input id="phi" type="range" min="-180" max="180" step="5" value="90">
+                <input id="phi" type="range" min="-180" max="180" step="5" value="90" disabled>
+            </label>
+
+            <label class="slider-row is-off" id="bRow">
+                <span>Equilibrium offset b of 3</span>
+                <output id="bOut" for="b">150</output>
+                <input id="b" type="range" min="-80" max="160" step="5" value="150" disabled>
             </label>
 
             <label class="slider-row">
-                <span>Equilibrium offset c</span>
-                <output id="cOut" for="c">150</output>
-                <input id="c" type="range" min="-80" max="160" step="5" value="150">
-            </label>
-
-            <label class="slider-row">
-                <span>Period T</span>
+                <span>Period T (all)</span>
                 <output id="TOut" for="T">1.6 s</output>
                 <input id="T" type="range" min="0.8" max="4" step="0.1" value="1.6">
             </label>
@@ -46,44 +54,38 @@
             </div>
 
             <div>
-                <p class="group-label">Compare</p>
+                <p class="group-label">Compare phase</p>
                 <div class="chip-grid">
                     <button class="ghost-button" type="button" data-preset="same">In phase</button>
-                    <button class="ghost-button" type="button" data-preset="lead">Lead by T/4</button>
                     <button class="ghost-button" type="button" data-preset="opposite">Antiphase</button>
-                    <button class="ghost-button" type="button" data-preset="offset">Offset only</button>
+                    <button class="ghost-button" type="button" data-preset="lead">Lead by T/4</button>
+                    <button class="ghost-button" type="button" data-preset="lag">Lag by T/4</button>
                 </div>
             </div>
-
-            <label class="check-row">
-                <input id="marks" type="checkbox" checked>
-                <span>Show φ/ω and c marks</span>
-            </label>
-
         </section>
 
         <section class="panel stage-panel">
             <div class="section-title">
-                <h2>Three oscillators</h2>
+                <h2>Spring oscillators</h2>
                 <div class="legend">
                     <span><i class="swatch blue"></i>1 Reference</span>
                     <span><i class="swatch orange"></i>2 Phase φ</span>
-                    <span><i class="swatch teal"></i>3 Phase φ and offset c</span>
+                    <span><i class="swatch teal"></i>3 Offset b</span>
                 </div>
             </div>
             <div class="figure">
-                <canvas id="stage" width="1280" height="690" role="img" aria-label="Three spring oscillators on the left and their position–time graphs on the right"></canvas>
+                <canvas id="stage" width="1280" height="690" role="img" aria-label="Spring oscillators on the left and their position–time graphs on the right"></canvas>
             </div>
             <div class="readout-bar">
                 <p><span>ω = 2π/T</span><strong id="vw">3.93 rad/s</strong></p>
-                <p><span>Time shift φ/ω</span><strong id="vd">0.40 s</strong></p>
+                <p><span>Time shift φ/ω</span><strong id="vd">–</strong></p>
                 <p class="note" id="relation"></p>
             </div>
         </section>
     </main>
 
     <footer>
-        <p>φ shifts the motion in time; c shifts the equilibrium position. Neither changes the amplitude or the period. Up is positive, and lengths are in arbitrary units.</p>
+        <p>φ shifts the motion in time; b shifts the equilibrium position. Neither changes the amplitude or the period. Up is positive, and lengths are in arbitrary units.</p>
     </footer>
 
     <script src="js/main.js"></script>
