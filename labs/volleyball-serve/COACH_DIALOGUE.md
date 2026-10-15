@@ -21,7 +21,7 @@
 - 代码里只有一个 `teachBoundary(dsl, key)`，两端共用；差异全部收在 `BOUNDARIES` 常量表里，两个条目结构完全一致。
 - 文案中禁止出现 “second boundary”“next boundary”“另一半答案” 这类排序或从属表述。指代未完成的一端时，直接叫它的名字（“the maximum-speed boundary”），或说“还没做的那一条”。
 - 先讲的一条用 “Start with the …”，后讲的一条用 “That leaves the …”——这是描述剩余工作量，不是排名。
-- `tests/coach-flow.mjs` 与 `workers/volleyball-coach/tests/coach.test.mjs` 都有断言守住这一点。
+- `tests/coach-flow.mjs` 与 `workers/phylab-coach/tests/coach.test.mjs` 都有断言守住这一点。
 
 ## 2. 术语与画面标记
 
@@ -163,11 +163,11 @@ Worker 的 `normalizeCoachInput` 对这些字段做白名单校验，模型无�
 | 快捷通道 | `js/services/coach-script.js`：`fastTrack` | `tests/coach-flow.mjs` 的 fast-track 成功、速度答错、选 B 三个场景 |
 | 跨发球进度 | `js/ui/coach.js`：`progress`、`completeRoute`、`finishLesson` | `tests/coach-flow.mjs` 的进度保留场景 |
 | 按钮、预选、等待、取消、球场点选 | `js/ui/coach.js`：`ask`、`askMulti`、`interrupt` | `tests/coach-flow.mjs` 的 canvas marker 与 interruption 场景 |
-| AI 上下文与恢复 | `js/ui/coach.js`：`currentAiContext`、`continuePresetPath` | `tests/coach-flow.mjs` 的 AI 场景；`workers/volleyball-coach/tests/coach.test.mjs` |
+| AI 上下文与恢复 | `js/ui/coach.js`：`currentAiContext`、`continuePresetPath` | `tests/coach-flow.mjs` 的 AI 场景；`workers/phylab-coach/tests/coach.test.mjs` |
 
 ## 8. 推荐的协作方式
 
 1. 先在本文档中评审或修改某个节点的**教学目的、问题、选项、误解处理和画面行为**。
 2. 确认后，再同步修改 `coach-script.js` 的实现与 `coach-flow.mjs` 的行为测试。
-3. 教学表述若有变化，同时检查 `workers/volleyball-coach/prompts/volleyball-coach.md`，避免预设 Coach 与 AI Coach 说法不一致。
+3. 教学表述若有变化，同时检查 `workers/phylab-coach/prompts/volleyball-coach.md`，避免预设 Coach 与 AI Coach 说法不一致。
 4. 若未来题型增多，再将第 4 节的节点表迁移为 YAML/JSON 对话配置；在逻辑尚稳定前，不建议过早把它做成通用编辑器，避免文档、配置、代码三份内容失去同步。
