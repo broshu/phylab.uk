@@ -84,8 +84,8 @@ if (language === 'zh-Hans') {
   homeButton.setAttribute?.('aria-label', t('switchToEnglish'));
   homeButton.title = t('switchToEnglish');
 } else {
-  homeButton.setAttribute?.('aria-label', t('returnToLabs'));
-  homeButton.title = t('labs');
+  // English: the shared pendulum mark (assets/nav.js) returns to Labs.
+  homeButton.setAttribute?.('hidden', '');
 }
 document.querySelector('#taskPrompt').textContent = problem.prompt;
 
