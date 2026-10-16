@@ -122,6 +122,30 @@ test('the whole lesson can be finished with the help button alone', () => {
   assert.ok(guard <= (STEP_ORDER.length - 1) * 4);
 });
 
+test('"@Galileo" alone is the help button; "@Galileo ..." is a message to him', () => {
+  assert.equal(normalizeInput({ message: '@Galileo', state: { step: 'debate' } }).type, 'help');
+  const n = normalizeInput({ message: '@Galileo why does a feather fall slowly?', state: { step: 'debate' } });
+  assert.equal(n.type, 'turn');
+  assert.equal(n.toGalileo, true);
+  assert.match(buildPayload(n, 'm').messages[0].content, /called Galileo into the chat/);
+});
+
+test('@Galileo during the debate: he joins, answers, and asks for the rule', () => {
+  const n = normalizeInput({ message: '@Galileo help me, he always has an excuse', state: { step: 'debate', debateTurns: 2 } });
+  const out = advance(n, { move: 'asked', stepDone: false, messages: [{ speaker: 'galileo', text: "I'm Galileo. Use his own rule." }] });
+  assert.deepEqual(out.messages.map((m) => m.speaker), ['system', 'galileo', 'galileo']);
+  assert.equal(out.state.step, 'premise');
+  assert.equal(out.state.galileo, true);
+});
+
+test('@Galileo while he is away brings him in to answer', () => {
+  const n = normalizeInput({ message: '@Galileo what does he mean by one body?', state: { step: 'faster', galileo: false } });
+  assert.match(buildPayload(n, 'm').messages[0].content, /Galileo IS here/);
+  const out = advance(n, { move: 'stuck', stepDone: false, messages: [{ speaker: 'galileo', text: 'Think of a scale.' }] });
+  assert.deepEqual(out.messages.map((m) => m.speaker), ['system', 'galileo']);
+  assert.equal(out.state.galileo, true);
+});
+
 test('fallback keyword guess catches giving up', () => {
   assert.equal(guessMove("OK you're right"), 'concede');
   assert.equal(guessMove('idk'), 'stuck');

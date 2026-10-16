@@ -1,5 +1,5 @@
-import { AVATARS, PICTURES } from './art.js?v=20261016e';
-import { animationCard, hasAnimation } from './anims.js?v=20261016e';
+import { AVATARS, PICTURES } from './art.js?v=20261016f';
+import { animationCard, hasAnimation } from './anims.js?v=20261016f';
 
 const API = 'https://phylab-debate.dgxwmk9dbm.workers.dev/debate';
 const STORE = 'phylab-debate-aristotle-v1';
@@ -122,7 +122,17 @@ function messageNode(m, prev) {
   if (m.text) {
     const bubble = document.createElement('div');
     bubble.className = 'bubble';
-    bubble.textContent = m.text;
+    // Show "@Galileo" as a mention, like in a group chat.
+    for (const part of m.text.split(/(@galileo\b)/i)) {
+      if (/^@galileo$/i.test(part)) {
+        const at = document.createElement('span');
+        at.className = 'mention';
+        at.textContent = '@Galileo';
+        bubble.append(at);
+      } else if (part) {
+        bubble.append(part);
+      }
+    }
     body.append(bubble);
   }
   if (m.image && hasAnimation(m.image)) {
@@ -191,7 +201,7 @@ function renderControls() {
   els.help.disabled = busy || done;
   els.help.hidden = done;
   els.help.textContent = '@Galileo';
-  els.help.title = galileoIn() ? 'Ask Galileo for a hint' : 'Call Galileo into the chat for help';
+  els.help.title = 'Mention Galileo to ask him something';
   els.input.placeholder = done
     ? 'Ask Galileo or Aristotle anything…'
     : galileoIn()
@@ -278,7 +288,7 @@ async function turn(type, message) {
   renderControls();
   setNotice('');
 
-  const typer = type === 'help' && lessonStarted() ? 'galileo' : galileoIn() ? 'galileo' : 'aristotle';
+  const typer = /@galileo\b/i.test(message) || galileoIn() ? 'galileo' : 'aristotle';
   // The transcript sent to the Worker must not include the new message twice.
   const history = transcript();
   // The help button shows up in the chat as the student mentioning Galileo.
@@ -359,7 +369,14 @@ els.input.addEventListener('keydown', (e) => {
   }
 });
 els.input.addEventListener('input', autosize);
-els.help.addEventListener('click', () => turn('help', ''));
+// Insert a mention; the student keeps typing and sends it themselves.
+els.help.addEventListener('click', () => {
+  const text = els.input.value.replace(/^\s*@galileo\b\s*/i, '');
+  els.input.value = `@Galileo ${text}`;
+  autosize();
+  els.input.focus();
+  els.input.setSelectionRange(els.input.value.length, els.input.value.length);
+});
 els.restart.addEventListener('click', () => {
   if (busy) return;
   if (state.log.some((m) => m.speaker === 'student') && !confirm('Start a new debate? This chat will be cleared.')) return;

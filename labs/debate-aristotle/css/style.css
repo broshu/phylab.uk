@@ -243,3 +243,6 @@ h1, h2, p { margin: 0; }
     font: inherit; font-size: 12px; font-weight: 600; cursor: pointer;
 }
 .replay:hover { background: rgba(47, 93, 79, .1); }
+
+.bubble .mention { font-weight: 650; color: var(--galileo-name); }
+.msg.mine .bubble .mention { color: inherit; text-decoration: underline; text-underline-offset: 2px; }

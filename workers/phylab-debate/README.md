@@ -27,7 +27,7 @@ Steps: `debate` → `premise` → `slower` → `faster` → `contradiction` →
   **@Galileo**.
 - After 3 failed tries in one step, Galileo explains the idea and moves on.
 - Galileo leaves as soon as the student passes a step; Aristotle asks the next question. A wrong or stuck answer brings Galileo back with a hint, and he returns for the final reflection.
-- The **@Galileo** button calls him in (or asks for a hint if he is there). It never calls the model.
+- The **@Galileo** button puts a mention in the message box. A message with "@Galileo" and a question is answered by Galileo (he joins if needed); "@Galileo" on its own works as a help button and never calls the model.
 - If DeepSeek fails, replies in Chinese twice, or returns broken JSON, the
   Worker answers from the script, so a lesson can always be finished.
 

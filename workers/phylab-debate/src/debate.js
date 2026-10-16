@@ -24,7 +24,7 @@ const CJK = /[぀-ヿ㐀-鿿가-힯＀-￯]/;
 /**
  * @typedef {{speaker: string, text?: string, image?: string}} ChatMessage
  * @typedef {{step: string, stepTurns: number, debateTurns: number, galileo: boolean}} DebateState
- * @typedef {{type: 'turn' | 'help', message: string, state: DebateState, transcript: ChatMessage[]}} DebateInput
+ * @typedef {{type: 'turn' | 'help', message: string, toGalileo: boolean, state: DebateState, transcript: ChatMessage[]}} DebateInput
  */
 
 /** @param {unknown} value @param {number} max */
@@ -47,8 +47,10 @@ function cleanCount(value, max) {
 export function normalizeInput(body) {
   if (!body || typeof body !== 'object' || Array.isArray(body)) throw new Error('Body must be a JSON object.');
   const raw = /** @type {Record<string, any>} */ (body);
-  const type = raw.type === 'help' ? 'help' : 'turn';
   const message = cleanText(raw.message, MAX_MESSAGE_CHARS);
+  // "@Galileo" on its own is the help button; "@Galileo ..." is a message to him.
+  const type = raw.type === 'help' || /^@galileo[\s,.:!?]*$/i.test(message) ? 'help' : 'turn';
+  const toGalileo = /@galileo\b/i.test(message);
   if (type === 'turn' && !message) throw new Error('Message is empty.');
 
   const s = raw.state && typeof raw.state === 'object' ? raw.state : {};
@@ -69,7 +71,7 @@ export function normalizeInput(body) {
     }))
     .filter((item) => item.speaker && item.text);
 
-  return { type, message, state, transcript };
+  return { type, message, toGalileo, state, transcript };
 }
 
 /** @param {string} step */
@@ -89,13 +91,29 @@ function revealDue(state) {
   return state.step !== 'debate' && state.step !== 'done' && state.stepTurns >= REVEAL_AFTER;
 }
 
-/** The step card plus who is present and this turn's hint. @param {DebateState} state */
-export function buildCard(state) {
+const ASK_GALILEO_CARD = `CURRENT STEP: the student has just called Galileo into the chat with "@Galileo" and a message. Galileo joins now for the first time.
+Allowed speakers: galileo only. Write exactly 1 message.
+
+Galileo says in a few words that he is Galileo and on the student's side, then answers the student's message in one or two sentences.
+He must not give the final answer (that all bodies fall together). His advice: examples alone will not beat Aristotle, because Aristotle always finds an excuse; a better weapon is Aristotle's own rule.
+Do not end with a question: the next question is added automatically.
+
+student_move: "asked". step_done: false.`;
+
+const TO_GALILEO = `THE STUDENT IS TALKING TO GALILEO (the message contains "@Galileo"). Galileo must answer, even if he was not in the chat (then he joins now). If the student asks a question, Galileo answers it in one or two sentences in a way that helps with this step without giving this step's answer, then ends with the hint. If the message contains an answer that passes, judge it as usual.`;
+
+/**
+ * The step card plus who is present and this turn's hint.
+ * @param {DebateState} state
+ * @param {boolean} [toGalileo] the student addressed Galileo with "@Galileo"
+ */
+export function buildCard(state, toGalileo = false) {
   if (state.step === 'debate') {
-    return `${DEBATE_CARD}\n\nThis is student debate turn ${state.debateTurns + 1}.`;
+    return toGalileo ? ASK_GALILEO_CARD : `${DEBATE_CARD}\n\nThis is student debate turn ${state.debateTurns + 1}.`;
   }
   const step = STEPS[state.step];
-  if (state.step === 'done') return step.card;
+  if (state.step === 'done') return toGalileo ? `${step.card}\n\nThe student asked Galileo directly, so Galileo answers.` : step.card;
+  if (toGalileo) state = { ...state, galileo: true };
 
   const hint = `"${hintFor(state)}"`;
   const presence = state.galileo
@@ -109,7 +127,7 @@ export function buildCard(state) {
   const reveal = revealDue(state)
     ? `\n\nTHIS TURN: the student has already tried ${state.stepTurns} times. If step_done is false, Galileo writes ONLY one short, kind line about what the student tried, with no question and no answer: the lesson code explains the idea right after your message.`
     : '';
-  return `${step.card}\n\n${presence}${reveal}`;
+  return `${step.card}\n\n${presence}${reveal}${toGalileo ? `\n\n${TO_GALILEO}` : ''}`;
 }
 
 /** @param {ChatMessage[]} transcript @param {string} message */
@@ -136,7 +154,7 @@ export function buildPayload(input, model, strictEnglish = false) {
     max_tokens: 700,
     stream: false,
     messages: [
-      { role: 'system', content: `${CHARACTERS}\n\n---\n\n${buildCard(input.state)}${reminder}` },
+      { role: 'system', content: `${CHARACTERS}\n\n---\n\n${buildCard(input.state, input.toGalileo)}${reminder}` },
       { role: 'user', content: chatLog(input.transcript, input.message) },
     ],
   };
@@ -147,7 +165,7 @@ export function buildPayload(input, model, strictEnglish = false) {
  * @param {unknown} value
  * @param {string} step
  */
-export function parseModelReply(value, step) {
+export function parseModelReply(value, step, toGalileo = false) {
   const root = /** @type {any} */ (value);
   const choice = root?.choices?.[0];
   let content = choice?.message?.content;
@@ -162,7 +180,7 @@ export function parseModelReply(value, step) {
   }
   if (!data || typeof data !== 'object') return null;
 
-  const allowed = step === 'debate' ? ['aristotle'] : ['aristotle', 'galileo'];
+  const allowed = step === 'debate' ? [toGalileo ? 'galileo' : 'aristotle'] : ['aristotle', 'galileo'];
   const messages = (Array.isArray(data.messages) ? data.messages : [])
     .map((/** @type {any} */ m) => ({
       speaker: typeof m?.speaker === 'string' ? m.speaker.toLowerCase().trim() : '',
@@ -228,6 +246,41 @@ export function guessMove(text) {
  * @param {{move: string, stepDone: boolean, messages: ChatMessage[]} | null} result null when the AI failed
  */
 export function advance(input, result) {
+  if (input.toGalileo && input.state.step === 'debate') return askGalileoFirst(input, result);
+  if (input.toGalileo && !input.state.galileo) {
+    // Treat Galileo as present, then show him joining before his first line.
+    const out = advanceStep({ ...input, state: { ...input.state, galileo: true } }, result);
+    const first = out.messages.findIndex((m) => m.speaker === 'galileo');
+    if (first >= 0) out.messages.splice(first, 0, JOINED);
+    return { ...out, joined: first >= 0 ? 'asked' : out.joined };
+  }
+  return advanceStep(input, result);
+}
+
+/**
+ * "@Galileo ..." during the open debate: he joins, answers, and starts the method.
+ * @param {DebateInput} input
+ * @param {{messages: ChatMessage[]} | null} result
+ */
+function askGalileoFirst(input, result) {
+  const reply = result?.messages.filter((m) => m.speaker === 'galileo') || [];
+  return {
+    messages: [
+      JOINED,
+      ...(reply.length ? reply : [{ speaker: 'galileo', text: ENTRANCE.asked }]),
+      ...STEPS.premise.opener,
+    ],
+    state: { step: 'premise', stepTurns: 0, debateTurns: input.state.debateTurns + 1, galileo: true },
+    passed: [],
+    joined: 'asked',
+  };
+}
+
+/**
+ * @param {DebateInput} input
+ * @param {{move: string, stepDone: boolean, messages: ChatMessage[]} | null} result
+ */
+function advanceStep(input, result) {
   const { state } = input;
   /** @type {ChatMessage[]} */
   const messages = [];
