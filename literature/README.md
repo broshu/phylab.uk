@@ -95,6 +95,6 @@ The catalogue keeps papers published within the past two years; older entries (i
 
 ## Automation status
 
-Weekly candidates are now handled by the private review desk at `preview.phylab.uk/review` (`workers/phylab-preview`). It collects metadata from the sources above, uses DeepSeek to screen candidates and draft the English notes, and shows each draft with tick-box choices. Nothing is published until the owner approves it; approval runs `validateCatalog` and commits the entry to `main`, which GitHub Pages then publishes. See `workers/phylab-preview/README.md`.
+Weekly candidates are reviewed on the public desk at <https://preview.phylab.uk> (`workers/phylab-preview`). Each candidate is a Markdown file in `literature/review/pending/`; the format is in `literature/review/README.md`, so people and other AIs can add or edit candidates directly. The desk's weekly search collects metadata from the sources above, uses DeepSeek to screen candidates and draft the notes, and commits the drafts there. Nothing is published until a reviewer approves it; approval runs `validateCatalog`, adds the entry to `data/papers.json` and moves the file to `literature/review/done/` in one commit, which GitHub Pages then publishes.
 
-The GitHub Actions candidate workflow and the manual steps above still work and remain useful for one-off additions.
+The GitHub Actions candidate workflow and the manual steps above still work for one-off additions.

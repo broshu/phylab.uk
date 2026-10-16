@@ -22,46 +22,6 @@ export function makeId(meta, taken = new Set()) {
   return id;
 }
 
-/**
- * @param {object} meta  title, authors, year, published_date, source, doi, url
- * @param {object} draft AI draft (see ai.js)
- * @param {object} choice owner's choices: topics, priority, finding ('a'|'b'), featured, edits
- */
-export function buildEntry(meta, draft, choice, id, today) {
-  const finding = choice.finding === 'b' ? draft.findings?.[1] : draft.findings?.[0];
-  const edits = choice.edits || {};
-  const topics = (choice.topics || draft.topics || []).filter(t => Object.hasOwn(TOPICS, t));
-  const priority = Object.hasOwn(PRIORITIES, choice.priority) ? choice.priority : draft.priority;
-  const doi = normalizeDOI(meta.doi || '');
-  const url = meta.url || `https://doi.org/${doi}`;
-  return {
-    id,
-    status: 'published',
-    title: meta.title,
-    authors: meta.authors,
-    year: meta.year,
-    published_date: meta.published_date || null,
-    source: meta.source,
-    doi,
-    url,
-    topics: [...new Set(topics)],
-    evidence_type: edits.evidence_type || draft.evidence_type,
-    reading_priority: priority,
-    key_finding_zh: finding?.zh || '',
-    phd_relevance_zh: draft.phd_relevance_zh || '',
-    reading_recommendation_zh: draft.reading_recommendation_zh || '',
-    limitations_zh: draft.limitations_zh || '',
-    featured: Boolean(choice.featured),
-    date_added: today,
-    verified_at: today,
-    verification_url: url,
-    key_finding_en: edits.key_finding_en || finding?.en || '',
-    phd_relevance_en: edits.phd_relevance_en || draft.phd_relevance_en,
-    reading_recommendation_en: edits.reading_recommendation_en || draft.reading_recommendation_en,
-    limitations_en: edits.limitations_en || draft.limitations_en,
-  };
-}
-
 function serialize(catalog) {
   return JSON.stringify(catalog, null, 2) + '\n';
 }

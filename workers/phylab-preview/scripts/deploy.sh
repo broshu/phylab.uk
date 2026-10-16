@@ -8,7 +8,7 @@ npx wrangler d1 migrations apply phylab-preview --remote || echo "Could not appl
 secrets=$(mktemp --suffix=.env)
 trap 'rm -f "$secrets"' EXIT
 : > "$secrets"
-for name in DEEPSEEK_API_KEY GITHUB_TOKEN PREVIEW_KEY; do
+for name in DEEPSEEK_API_KEY GITHUB_TOKEN OPENALEX_API_KEY; do
   value=$(printenv "$name" || true)
   if [ -n "$value" ]; then printf '%s=%s\n' "$name" "$value" >> "$secrets"; fi
 done

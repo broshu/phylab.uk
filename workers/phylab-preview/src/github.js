@@ -1,11 +1,16 @@
-// Small GitHub REST client. Every call uses the Worker's own token, so the
-// mirror is never served from GitHub's 5-minute raw CDN cache.
+// GitHub access. Reads use one GraphQL query for everything the review desk
+// needs; writes are single commits (createCommitOnBranch), so a decision that
+// moves a review file and edits papers.json lands as one change.
 
 const API = 'https://api.github.com';
 
 /** @param {any} env */
 export function repoOf(env) {
-  return env.GITHUB_REPO || 'broshu/phylab.uk';
+  const [owner, name] = (env.GITHUB_REPO || 'broshu/phylab.uk').split('/');
+  return { owner, name, full: `${owner}/${name}` };
+}
+export function branchOf(env) {
+  return env.GITHUB_BRANCH || 'main';
 }
 
 /** @param {any} env @param {Record<string,string>} [extra] */
@@ -27,13 +32,12 @@ function encodePath(path) {
   return path.split('/').map(encodeURIComponent).join('/');
 }
 
-/** Raw file bytes, or null when the path does not exist. */
+/** Raw file bytes for the mirror, or null when the path is not a file. */
 export async function fetchRaw(env, path, ref) {
-  const url = `${API}/repos/${repoOf(env)}/contents/${encodePath(path)}?ref=${encodeURIComponent(ref)}`;
+  const url = `${API}/repos/${repoOf(env).full}/contents/${encodePath(path)}?ref=${encodeURIComponent(ref)}`;
   const response = await fetch(url, { headers: headers(env, { Accept: 'application/vnd.github.raw+json' }) });
   if (response.status === 404) { await response.body?.cancel(); return null; }
   if (!response.ok) throw new Error(`GitHub ${response.status} for ${path}`);
-  // A directory comes back as a JSON listing; the caller treats that as "not a file".
   if ((response.headers.get('content-type') || '').includes('application/json') && !path.endsWith('.json')) {
     await response.body?.cancel();
     return null;
@@ -41,60 +45,98 @@ export async function fetchRaw(env, path, ref) {
   return response;
 }
 
-function decodeBase64(text) {
-  const binary = atob(text.replace(/\s/g, ''));
-  return new TextDecoder().decode(Uint8Array.from(binary, c => c.charCodeAt(0)));
+export async function listBranches(env) {
+  const response = await fetch(`${API}/repos/${repoOf(env).full}/branches?per_page=50`, {
+    headers: headers(env, { Accept: 'application/vnd.github+json' }),
+  });
+  if (!response.ok) throw new Error(`GitHub ${response.status} listing branches`);
+  return (await response.json()).map(b => b.name);
 }
-function encodeBase64(text) {
+
+export async function graphql(env, query, variables) {
+  if (!env.GITHUB_TOKEN) throw new Error('GITHUB_TOKEN is not set');
+  const response = await fetch(`${API}/graphql`, {
+    method: 'POST',
+    headers: headers(env, { 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ query, variables }),
+  });
+  if (!response.ok) throw new Error(`GitHub GraphQL ${response.status}`);
+  const data = await response.json();
+  if (data.errors?.length) {
+    const error = new Error(`GitHub: ${data.errors.map(e => e.message).join('; ')}`);
+    error.stale = data.errors.some(e => /expected|head|stale|oid/i.test(`${e.type || ''} ${e.message}`));
+    throw error;
+  }
+  return data.data;
+}
+
+const TREE = '... on Tree { entries { name path type object { ... on Blob { text isBinary } } } }';
+const BLOB = '... on Blob { text }';
+
+/**
+ * Read several folders (all their text files) and single files in one request.
+ * @param {{ folders?: string[], files?: string[] }} wanted
+ * @returns {{ head: string, folders: Record<string, {name:string,path:string,text:string}[]>, files: Record<string, string|null> }}
+ */
+export async function readRepo(env, { folders = [], files = [] }) {
+  const { owner, name } = repoOf(env);
+  const branch = branchOf(env);
+  const parts = [
+    ...folders.map((f, i) => `d${i}: object(expression: ${JSON.stringify(`${branch}:${f}`)}) { ${TREE} }`),
+    ...files.map((f, i) => `f${i}: object(expression: ${JSON.stringify(`${branch}:${f}`)}) { ${BLOB} }`),
+  ];
+  const query = `query($owner: String!, $name: String!, $ref: String!) { repository(owner: $owner, name: $name) {
+    ref(qualifiedName: $ref) { target { oid } } ${parts.join('\n')} } }`;
+  const data = await graphql(env, query, { owner, name, ref: `refs/heads/${branch}` });
+  const repo = data.repository;
+  const out = { head: repo.ref.target.oid, folders: {}, files: {} };
+  folders.forEach((f, i) => {
+    out.folders[f] = (repo[`d${i}`]?.entries || [])
+      .filter(e => e.type === 'blob' && e.object && !e.object.isBinary && typeof e.object.text === 'string')
+      .map(e => ({ name: e.name, path: e.path, text: e.object.text }));
+  });
+  files.forEach((f, i) => { out.files[f] = repo[`f${i}`]?.text ?? null; });
+  return out;
+}
+
+export function encodeBase64(text) {
   const bytes = new TextEncoder().encode(text);
   let binary = '';
   for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
   return btoa(binary);
 }
 
-/** A text file with its blob sha, needed to update it. */
-export async function readFile(env, path, ref = env.GITHUB_BRANCH || 'main') {
-  const url = `${API}/repos/${repoOf(env)}/contents/${encodePath(path)}?ref=${encodeURIComponent(ref)}`;
-  const response = await fetch(url, { headers: headers(env, { Accept: 'application/vnd.github+json' }) });
-  if (!response.ok) throw new Error(`GitHub ${response.status} reading ${path}`);
-  const data = await response.json();
-  return { sha: data.sha, text: decodeBase64(data.content) };
+/** One commit with any number of added/changed and deleted files. */
+export async function commitFiles(env, { head, headline, body = '', additions = [], deletions = [] }) {
+  const { full } = repoOf(env);
+  const query = `mutation($input: CreateCommitOnBranchInput!) { createCommitOnBranch(input: $input) { commit { oid } } }`;
+  const data = await graphql(env, query, { input: {
+    branch: { repositoryNameWithOwner: full, branchName: branchOf(env) },
+    expectedHeadOid: head,
+    message: { headline, body },
+    fileChanges: {
+      additions: additions.map(a => ({ path: a.path, contents: encodeBase64(a.contents) })),
+      deletions: deletions.map(path => ({ path })),
+    },
+  } });
+  return data.createCommitOnBranch.commit.oid;
 }
 
 /**
- * Read a text file, change it, and commit. Retries when someone else committed
- * in between (GitHub answers 409 or 422 for a stale sha).
- * @param {(text: string) => string | null} change return null to skip the commit
+ * Read, change, commit; retry when someone else committed in between.
+ * @param {(snapshot: Awaited<ReturnType<typeof readRepo>>) => ({ headline: string, body?: string, additions?: any[], deletions?: string[], result?: any } | null)} change
  */
-export async function updateFile(env, path, message, change) {
-  const branch = env.GITHUB_BRANCH || 'main';
-  for (let attempt = 0; attempt < 3; attempt++) {
-    const { sha, text } = await readFile(env, path, branch);
-    const next = change(text);
-    if (next === null || next === text) return { changed: false };
-    const response = await fetch(`${API}/repos/${repoOf(env)}/contents/${encodePath(path)}`, {
-      method: 'PUT',
-      headers: headers(env, { Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ message, content: encodeBase64(next), sha, branch }),
-    });
-    if (response.ok) {
-      const data = await response.json();
-      return { changed: true, commit: data.commit?.sha || '' };
-    }
-    if (![409, 422].includes(response.status) || attempt === 2) {
-      throw new Error(`GitHub ${response.status} committing ${path}: ${(await response.text()).slice(0, 200)}`);
+export async function transact(env, wanted, change) {
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const snapshot = await readRepo(env, wanted);
+    const plan = change(snapshot);
+    if (!plan || (!plan.additions?.length && !plan.deletions?.length)) return { commit: null, result: plan?.result };
+    try {
+      const commit = await commitFiles(env, { head: snapshot.head, ...plan });
+      return { commit, result: plan.result };
+    } catch (error) {
+      if (!error.stale || attempt === 3) throw error;
     }
   }
-  return { changed: false };
+  return { commit: null };
 }
-
-export async function listBranches(env) {
-  const response = await fetch(`${API}/repos/${repoOf(env)}/branches?per_page=50`, {
-    headers: headers(env, { Accept: 'application/vnd.github+json' }),
-  });
-  if (!response.ok) throw new Error(`GitHub ${response.status} listing branches`);
-  const data = await response.json();
-  return data.map(b => b.name);
-}
-
-export { encodeBase64, decodeBase64 };

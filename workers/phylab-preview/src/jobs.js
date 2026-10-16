@@ -1,11 +1,14 @@
 // The weekly pipeline, split into small resumable chunks so that one cron run
 // or one button press never needs more than a few dozen outbound requests.
-//   collect (APS + Crossref)  ->  fill abstracts (OpenAlex)  ->  screen (AI)  ->  draft notes (AI)
+//   collect (APS + Crossref) -> abstracts -> screen (AI) -> draft (AI) -> commit to literature/review/pending/
+// D1 only holds this work in progress; finished drafts live in the repository.
 import { normalizeDOI } from '../../../literature/core.mjs';
-import { DEFAULT_PROFILE, collectionPlan, fillAbstracts, runStep } from './collect.js';
+import { collectionPlan, fillAbstracts, runStep } from './collect.js';
 import { aiSettings, callJSON, draftPrompt, parseDraft, parseScreen, screenPrompt } from './ai.js';
-import { CATALOG_PATH, makeId, shanghaiDate } from './literature.js';
-import { readFile } from './github.js';
+import { makeId, shanghaiDate } from './literature.js';
+import { PENDING_DIR, paperFromDraft, serializeReview } from './reviewfile.js';
+import { WANTED, deskFrom, knownDOIs, loadDesk, takenIds } from './store.js';
+import { readRepo, transact } from './github.js';
 
 const COLLECT_EVERY_DAYS = 7;
 
@@ -19,32 +22,31 @@ export async function setSetting(db, key, value) {
   return db.prepare('INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value')
     .bind(key, JSON.stringify(value)).run();
 }
-export async function getProfile(db) {
-  const saved = await getSetting(db, 'profile', null);
-  return { ...DEFAULT_PROFILE, ...(saved || {}) };
-}
 export async function log(db, kind, message) {
   await db.batch([
     db.prepare('INSERT INTO activity (at, kind, message) VALUES (?, ?, ?)').bind(new Date().toISOString(), kind, String(message).slice(0, 500)),
     db.prepare('DELETE FROM activity WHERE id NOT IN (SELECT id FROM activity ORDER BY id DESC LIMIT 200)'),
   ]);
 }
+export async function stageCounts(db) {
+  const { results } = await db.prepare('SELECT stage, COUNT(*) AS n FROM candidates GROUP BY stage').all();
+  return Object.fromEntries(results.map(r => [r.stage, r.n]));
+}
+export async function pipelineStatus(db) {
+  const [counts, collecting, last] = await Promise.all([stageCounts(db), getSetting(db, 'collect_state'), getSetting(db, 'last_collect')]);
+  return { counts, collecting: Boolean(collecting), last_collect: last, busy: Boolean(collecting || counts.new || counts.screened || counts.drafted) };
+}
 
 function daysBetween(a, b) {
   return Math.round((Date.parse(b) - Date.parse(a)) / 86400000);
 }
 
-export async function stageCounts(db) {
-  const { results } = await db.prepare('SELECT stage, COUNT(*) AS n FROM candidates GROUP BY stage').all();
-  return Object.fromEntries(results.map(r => [r.stage, r.n]));
-}
-
-async function feedback(db) {
-  const rejected = await db.prepare("SELECT meta, reject_reason FROM candidates WHERE stage = 'rejected' ORDER BY decided_at DESC LIMIT 15").all();
-  const approved = await db.prepare("SELECT meta FROM candidates WHERE stage = 'approved' ORDER BY decided_at DESC LIMIT 10").all();
+/** Past decisions from the repository teach the screener what the reviewers want. */
+function feedbackFrom(desk) {
+  const decided = desk.done.filter(p => !p.broken && p.decision).sort((a, b) => (b.decision.at || '').localeCompare(a.decision.at || ''));
   return {
-    rejected: rejected.results.map(r => ({ title: JSON.parse(r.meta).title, reason: r.reject_reason })),
-    approved: approved.results.map(r => JSON.parse(r.meta).title),
+    rejected: decided.filter(p => p.status === 'rejected').slice(0, 15).map(p => ({ title: p.title, reason: p.decision.reason })),
+    approved: decided.filter(p => p.status === 'approved').slice(0, 10).map(p => p.title),
   };
 }
 
@@ -55,12 +57,18 @@ async function feedback(db) {
 export async function work(env, { force = false, budget = 30, now = new Date() } = {}) {
   const db = env.PREVIEW_DB;
   const today = shanghaiDate(now);
-  const profile = await getProfile(db);
   let state = await getSetting(db, 'collect_state', null);
   const last = await getSetting(db, 'last_collect', null);
+  const due = !state && (force || !last || daysBetween(last, today) >= COLLECT_EVERY_DAYS);
+  const before = await stageCounts(db);
+  if (!state && !due && !before.new && !before.screened && !before.drafted) return { done: [], ...(await pipelineStatus(db)) };
+
+  budget -= 1;
+  let desk = await loadDesk(env);
+  const profile = desk.profile;
   const done = [];
 
-  if (!state && (force || !last || daysBetween(last, today) >= COLLECT_EVERY_DAYS)) {
+  if (due) {
     state = { step: 0, found: 0, warnings: [], started: today };
     await setSetting(db, 'collect_state', state);
     await log(db, 'collect', '开始抓取新论文');
@@ -69,19 +77,21 @@ export async function work(env, { force = false, budget = 30, now = new Date() }
   // 1. Collection
   if (state && budget > 0) {
     const plan = collectionPlan(profile);
-    budget -= 1;
-    const catalog = JSON.parse((await readFile(env, CATALOG_PATH)).text);
-    const known = new Set(catalog.papers.map(p => normalizeDOI(p.doi || '')).filter(Boolean));
-    const taken = new Set(catalog.papers.map(p => p.id));
+    const known = knownDOIs(desk);
+    const taken = takenIds(desk);
     while (state.step < plan.length && budget > 0) {
       const step = plan[state.step];
       budget -= 1;
       try {
         const records = (await runStep(step, profile, today)).filter(r => !known.has(r.doi));
         const label = step.kind === 'aps' ? 'APS PRPER' : step.name || step.query;
-        const stmts = records.map(r => db.prepare(
-          'INSERT OR IGNORE INTO candidates (doi, paper_id, meta, sources, stage, collected_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        ).bind(r.doi, makeId(r, taken), JSON.stringify({ ...r, abstract_checked: !!r.abstract }), JSON.stringify([label]), 'new', today, today));
+        const stmts = records.map(r => {
+          const id = makeId(r, taken);
+          taken.add(id);
+          return db.prepare(
+            'INSERT OR IGNORE INTO candidates (doi, paper_id, meta, sources, stage, collected_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          ).bind(r.doi, id, JSON.stringify({ ...r, abstract_checked: !!r.abstract }), JSON.stringify([label]), 'new', today, today);
+        });
         if (stmts.length) {
           const results = await db.batch(stmts);
           state.found += results.reduce((n, x) => n + (x.meta?.changes || 0), 0);
@@ -119,35 +129,34 @@ export async function work(env, { force = false, budget = 30, now = new Date() }
     done.push('abstracts');
   }
 
-  // Wait for collection to finish before spending AI calls, so every week's list is judged together.
-  if (state) return { done, collecting: true, counts: await stageCounts(db) };
+  // Wait for collection to finish before spending AI calls, so each week's list is judged together.
+  if (state) return { done, ...(await pipelineStatus(db)) };
   const ai = aiSettings(env);
-  if (!ai.apiKey) return { done, collecting: false, counts: await stageCounts(db), warning: 'DEEPSEEK_API_KEY missing' };
-  const fb = await feedback(db);
+  if (!ai.apiKey) return { done, ...(await pipelineStatus(db)), warning: 'DEEPSEEK_API_KEY missing' };
+  const feedback = feedbackFrom(desk);
 
   // 3. Screening, 10 per AI call
-  while (budget > 0) {
+  while (budget > 1) {
     const { results } = await db.prepare("SELECT doi, meta FROM candidates WHERE stage = 'new' ORDER BY collected_at LIMIT 10").all();
     if (!results.length) break;
     budget -= 1;
     const papers = results.map(r => JSON.parse(r.meta));
-    const { system, user } = screenPrompt(profile, fb, papers);
+    const { system, user } = screenPrompt(profile, feedback, papers);
     let scores;
     try { scores = parseScreen(await callJSON(ai, system, user, 1500), papers.length); }
     catch (error) { await log(db, 'warn', `AI 筛选失败：${error.message}`); break; }
+    if (!scores.size) { await log(db, 'warn', 'AI 筛选没有返回有效评分'); break; }
     const threshold = Number(profile.threshold) || 4;
-    await db.batch(results.map((r, i) => {
-      const s = scores.get(i);
-      if (!s) return db.prepare("UPDATE candidates SET updated_at = ? WHERE doi = ?").bind(today, r.doi);
+    await db.batch(results.filter((r, i) => scores.has(i)).map(r => {
+      const s = scores.get(results.indexOf(r));
       return db.prepare('UPDATE candidates SET stage = ?, score = ?, reason_zh = ?, updated_at = ? WHERE doi = ?')
         .bind(s.score >= threshold ? 'screened' : 'skipped', s.score, s.reason_zh, today, r.doi);
     }));
-    if (!scores.size) { await log(db, 'warn', 'AI 筛选没有返回有效评分'); break; }
     done.push('screen');
   }
 
-  // 4. Drafting, one paper per AI call, best first
-  while (budget > 0) {
+  // 4. Drafting, one paper per AI call, best first (keep one request for the commit)
+  while (budget > 1) {
     const row = await db.prepare("SELECT doi, meta, error FROM candidates WHERE stage = 'screened' ORDER BY score DESC, collected_at LIMIT 1").first();
     if (!row) break;
     budget -= 1;
@@ -165,7 +174,38 @@ export async function work(env, { force = false, budget = 30, now = new Date() }
       if (failed) await log(db, 'warn', `笔记生成失败：${meta.title.slice(0, 60)}（${error.message}）`);
     }
   }
-  const counts = await stageCounts(db);
-  if (done.includes('draft') && !counts.screened && !counts.new) await log(db, 'ready', `有 ${counts.drafted || 0} 篇论文等你审核`);
-  return { done, collecting: false, counts };
+
+  // 5. Commit finished drafts to the repository as Markdown files
+  const { results: ready } = await db.prepare("SELECT * FROM candidates WHERE stage = 'drafted' ORDER BY score DESC LIMIT 25").all();
+  if (ready.length && budget > 0) {
+    try {
+      const { result } = await transact(env, WANTED, snapshot => {
+        const current = deskFrom(snapshot);
+        const known = knownDOIs(current), taken = takenIds(current);
+        const files = [], skipped = [];
+        for (const row of ready) {
+          if (known.has(normalizeDOI(row.doi))) { skipped.push(row.doi); continue; }
+          const meta = JSON.parse(row.meta);
+          const id = taken.has(row.paper_id) ? makeId(meta, taken) : row.paper_id;
+          taken.add(id);
+          const paper = paperFromDraft(meta, JSON.parse(row.draft), { id, added: today, proposed_by: `DeepSeek (${ai.model})`, score: row.score, reason_zh: row.reason_zh });
+          files.push({ path: `${PENDING_DIR}/${id}.md`, contents: serializeReview(paper) });
+        }
+        if (!files.length) return { result: { added: 0, skipped } };
+        return {
+          headline: `Literature review: ${files.length} new candidate${files.length > 1 ? 's' : ''}`,
+          body: 'Found and drafted by the weekly search on preview.phylab.uk. Nothing is published until a reviewer approves it.',
+          additions: files, result: { added: files.length, skipped },
+        };
+      });
+      await db.batch(ready.map(r => db.prepare("UPDATE candidates SET stage = 'queued', updated_at = ? WHERE doi = ?").bind(today, r.doi)));
+      if (result?.added) await log(db, 'ready', `${result.added} 篇新论文等待筛选`);
+      done.push('commit');
+    } catch (error) {
+      await log(db, 'warn', `写入 GitHub 失败：${error.message}`);
+    }
+  }
+  return { done, ...(await pipelineStatus(db)) };
 }
+
+export { readRepo };
