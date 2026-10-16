@@ -341,7 +341,7 @@ NOT YET (step_done = false): name what the student already got right, then ask a
 student_move labels: "pass", "partial", "stuck", "off_topic".`,
     onPass: {
       galileo: 'praise the summary in one or two sentences',
-      aristotle: 'adds one gracious line',
+      aristotle: 'adds one gracious line accepting defeat; he has lost, so no new objections or doubts',
     },
     leave: '',
     hints: [
