@@ -1,4 +1,17 @@
-import CHARACTERS from '../prompts/characters.md';
+import DEBATE_INTRO from '../prompts/debate-intro.md';
+import GUIDED_INTRO from '../prompts/guided-intro.md';
+import SHARED_RULES from '../prompts/shared-rules.md';
+import {
+  BRIDGE,
+  EXPLORE_CARD,
+  EXPLORE_FALLBACKS,
+  EXPLORE_HINT,
+  EXPLORE_TURNS,
+  GUIDED_DONE_CARD,
+  GUIDED_OPENERS,
+  GUIDED_TO_GALILEO,
+  guidedPresence,
+} from './guided.js';
 import {
   ALL_STEPS,
   ARISTOTLE_ON_HELP,
@@ -23,7 +36,7 @@ const CJK = /[぀-ヿ㐀-鿿가-힯＀-￯]/;
 
 /**
  * @typedef {{speaker: string, text?: string, image?: string}} ChatMessage
- * @typedef {{step: string, stepTurns: number, debateTurns: number, galileo: boolean}} DebateState
+ * @typedef {{condition: 'debate' | 'guided', step: string, stepTurns: number, debateTurns: number, galileo: boolean}} DebateState
  * @typedef {{type: 'turn' | 'help', message: string, toGalileo: boolean, state: DebateState, transcript: ChatMessage[]}} DebateInput
  */
 
@@ -55,12 +68,15 @@ export function normalizeInput(body) {
 
   const s = raw.state && typeof raw.state === 'object' ? raw.state : {};
   const step = ALL_STEPS.includes(s.step) ? s.step : 'debate';
+  // Research groups: "debate" (argue with Aristotle) or "guided" (Galileo leads).
+  const condition = s.condition === 'guided' ? 'guided' : 'debate';
   const state = {
+    condition,
     step,
     stepTurns: cleanCount(s.stepTurns, 50),
     debateTurns: cleanCount(s.debateTurns, 50),
     // Older pages did not send this; Galileo was always present after joining.
-    galileo: step === 'debate' ? false : typeof s.galileo === 'boolean' ? s.galileo : true,
+    galileo: condition === 'guided' ? true : step === 'debate' ? false : typeof s.galileo === 'boolean' ? s.galileo : true,
   };
 
   const transcript = (Array.isArray(raw.transcript) ? raw.transcript : [])
@@ -108,6 +124,7 @@ const TO_GALILEO = `THE STUDENT IS TALKING TO GALILEO (the message contains "@Ga
  * @param {boolean} [toGalileo] the student addressed Galileo with "@Galileo"
  */
 export function buildCard(state, toGalileo = false) {
+  if (state.condition === 'guided') return buildGuidedCard(state, toGalileo);
   if (state.step === 'debate') {
     return toGalileo ? ASK_GALILEO_CARD : `${DEBATE_CARD}\n\nThis is student debate turn ${state.debateTurns + 1}.`;
   }
@@ -128,6 +145,17 @@ export function buildCard(state, toGalileo = false) {
     ? `\n\nTHIS TURN: the student has already tried ${state.stepTurns} times. If step_done is false, Galileo writes ONLY one short, kind line about what the student tried, with no question and no answer: the lesson code explains the idea right after your message.`
     : '';
   return `${step.card}\n\n${presence}${reveal}${toGalileo ? `\n\n${TO_GALILEO}` : ''}`;
+}
+
+/** @param {DebateState} state @param {boolean} toGalileo */
+function buildGuidedCard(state, toGalileo) {
+  if (state.step === 'debate') return `${EXPLORE_CARD}\n\nThis is turn ${state.debateTurns + 1} of ${EXPLORE_TURNS}.`;
+  if (state.step === 'done') return GUIDED_DONE_CARD;
+  const step = STEPS[state.step];
+  const reveal = revealDue(state)
+    ? `\n\nTHIS TURN: the student has already tried ${state.stepTurns} times. If step_done is false, Galileo writes ONLY one short, kind line about what the student tried, with no question and no answer: the lesson code explains the idea right after your message.`
+    : '';
+  return `${step.card}\n\n${guidedPresence(step.onPass, `"${hintFor(state)}"`)}${reveal}${toGalileo ? `\n\n${GUIDED_TO_GALILEO}` : ''}`;
 }
 
 /** @param {ChatMessage[]} transcript @param {string} message */
@@ -154,7 +182,7 @@ export function buildPayload(input, model, strictEnglish = false) {
     max_tokens: 700,
     stream: false,
     messages: [
-      { role: 'system', content: `${CHARACTERS}\n\n---\n\n${buildCard(input.state, input.toGalileo)}${reminder}` },
+      { role: 'system', content: `${input.state.condition === 'guided' ? GUIDED_INTRO : DEBATE_INTRO}\n\n${SHARED_RULES}\n\n---\n\n${buildCard(input.state, input.toGalileo)}${reminder}` },
       { role: 'user', content: chatLog(input.transcript, input.message) },
     ],
   };
@@ -165,7 +193,7 @@ export function buildPayload(input, model, strictEnglish = false) {
  * @param {unknown} value
  * @param {string} step
  */
-export function parseModelReply(value, step, toGalileo = false) {
+export function parseModelReply(value, step, toGalileo = false, condition = 'debate') {
   const root = /** @type {any} */ (value);
   const choice = root?.choices?.[0];
   let content = choice?.message?.content;
@@ -180,7 +208,8 @@ export function parseModelReply(value, step, toGalileo = false) {
   }
   if (!data || typeof data !== 'object') return null;
 
-  const allowed = step === 'debate' ? [toGalileo ? 'galileo' : 'aristotle'] : ['aristotle', 'galileo'];
+  const allowed =
+    condition === 'guided' ? ['galileo'] : step === 'debate' ? [toGalileo ? 'galileo' : 'aristotle'] : ['aristotle', 'galileo'];
   const messages = (Array.isArray(data.messages) ? data.messages : [])
     .map((/** @type {any} */ m) => ({
       speaker: typeof m?.speaker === 'string' ? m.speaker.toLowerCase().trim() : '',
@@ -246,6 +275,7 @@ export function guessMove(text) {
  * @param {{move: string, stepDone: boolean, messages: ChatMessage[]} | null} result null when the AI failed
  */
 export function advance(input, result) {
+  if (input.state.condition === 'guided') return advanceGuided(input, result);
   if (input.toGalileo && input.state.step === 'debate') return askGalileoFirst(input, result);
   if (input.toGalileo && !input.state.galileo) {
     // Treat Galileo as present, then show him joining before his first line.
@@ -270,7 +300,7 @@ function askGalileoFirst(input, result) {
       ...(reply.length ? reply : [{ speaker: 'galileo', text: ENTRANCE.asked }]),
       ...STEPS.premise.opener,
     ],
-    state: { step: 'premise', stepTurns: 0, debateTurns: input.state.debateTurns + 1, galileo: true },
+    state: { ...input.state, step: 'premise', stepTurns: 0, debateTurns: input.state.debateTurns + 1, galileo: true },
     passed: [],
     joined: 'asked',
   };
@@ -306,7 +336,7 @@ function advanceStep(input, result) {
 
     if (reason) {
       messages.push(...galileoJoins(reason));
-      next = { step: 'premise', stepTurns: 0, debateTurns, galileo: true };
+      next = { ...state, step: 'premise', stepTurns: 0, debateTurns, galileo: true };
     } else {
       next = { ...state, debateTurns };
     }
@@ -368,15 +398,69 @@ function advanceStep(input, result) {
 }
 
 /**
+ * The guided group: Galileo is always here and asks every question.
+ * Same pass rules, hints, reveals and pictures as the debate group.
+ * @param {DebateInput} input
+ * @param {{move: string, stepDone: boolean, messages: ChatMessage[]} | null} result
+ */
+function advanceGuided(input, result) {
+  const { state } = input;
+  /** @type {ChatMessage[]} */
+  const messages = [];
+  /** @type {string[]} */
+  const passed = [];
+  const reply = result ? result.messages.filter((m) => m.speaker === 'galileo') : [];
+  const opener = (/** @type {string} */ step) => GUIDED_OPENERS[step].map((m) => ({ ...m }));
+
+  if (state.step === 'debate') {
+    const debateTurns = state.debateTurns + 1;
+    const move = result ? result.move : guessMove(input.message);
+    messages.push(...(reply.length ? reply : [{ speaker: 'galileo', text: EXPLORE_FALLBACKS[state.debateTurns % EXPLORE_FALLBACKS.length] }]));
+    if (move === 'thought_experiment' || debateTurns >= EXPLORE_TURNS) {
+      messages.push({ speaker: 'galileo', text: move === 'thought_experiment' ? BRIDGE.spark : BRIDGE.idea }, ...opener('premise'));
+      return { messages, state: { ...state, step: 'premise', stepTurns: 0, debateTurns }, passed, joined: null };
+    }
+    return { messages, state: { ...state, debateTurns }, passed, joined: null };
+  }
+
+  if (state.step === 'done') {
+    messages.push(...(reply.length ? reply : [{ speaker: 'galileo', text: 'Sorry, I lost my train of thought. Could you ask that again?' }]));
+    return { messages, state: { ...state, stepTurns: state.stepTurns + 1 }, passed, joined: null };
+  }
+
+  const passedNow = Boolean(result?.stepDone);
+  if (passedNow || revealDue(state)) {
+    passed.push(state.step);
+    messages.push(...reply);
+    if (!passedNow) messages.push({ speaker: 'galileo', text: `Let's put it together. ${STEPS[state.step].reveal}` });
+    const step = nextStep(state.step);
+    messages.push(...opener(step));
+    return { messages, state: { ...state, step, stepTurns: 0 }, passed, joined: null };
+  }
+
+  messages.push(...(reply.length ? reply : [{ speaker: 'galileo', text: hintFor(state) }]));
+  return { messages, state: { ...state, stepTurns: state.stepTurns + 1 }, passed, joined: null };
+}
+
+/**
  * The help button. Never calls the AI.
  * @param {DebateInput} input
  */
 export function helpTurn(input) {
   const { state } = input;
+  if (state.condition === 'guided' && state.step === 'debate') {
+    return {
+      messages: [{ speaker: 'galileo', text: EXPLORE_HINT }],
+      state: { ...state },
+      passed: [],
+      joined: null,
+    };
+  }
+  if (state.condition === 'guided') return advanceGuided(input, null);
   if (state.step === 'debate') {
     return {
       messages: [{ speaker: 'aristotle', text: ARISTOTLE_ON_HELP }, ...galileoJoins('asked')],
-      state: { step: 'premise', stepTurns: 0, debateTurns: state.debateTurns, galileo: true },
+      state: { ...state, step: 'premise', stepTurns: 0, debateTurns: state.debateTurns, galileo: true },
       passed: [],
       joined: 'asked',
     };

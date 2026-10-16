@@ -87,7 +87,7 @@ async function askModel(settings, input, strictEnglish) {
     return null;
   }
   const text = await readLimitedText(response.body, MAX_PROVIDER_BYTES);
-  return parseModelReply(JSON.parse(text), input.state.step, input.toGalileo);
+  return parseModelReply(JSON.parse(text), input.state.step, input.toGalileo, input.state.condition);
 }
 
 /** @param {Request} request @param {any} env */

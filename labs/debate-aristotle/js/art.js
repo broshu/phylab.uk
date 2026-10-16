@@ -100,7 +100,7 @@ export const PICTURES = {
     238,
     `<text x="20" y="30" font-size="14" font-weight="700" fill="${INK}">How a thought experiment wins</text>
      ${[
-       'Take the other side’s rule as true',
+       'Take the rule as true, just for now',
        'Imagine a simple case',
        'Reason it one way',
        'Reason it another way',

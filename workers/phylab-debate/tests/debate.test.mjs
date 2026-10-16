@@ -210,3 +210,61 @@ test('Worker falls back to the script when DeepSeek fails', async () => {
     globalThis.fetch = original;
   }
 });
+
+/* ---------------- guided (control) group ---------------- */
+
+import { GUIDED_OPENERS } from '../src/guided.js';
+import { STEPS } from '../src/steps.js';
+
+const guided = (step, extra = {}) =>
+  normalizeInput({ type: 'turn', message: 'hello', state: { condition: 'guided', step, stepTurns: 0, debateTurns: 0, ...extra }, transcript: [] });
+
+test('guided: prompt has no debate opponent and only Galileo may speak', () => {
+  const p = buildPayload(guided('slower'), 'm').messages[0].content;
+  assert.match(p, /Guided group/);
+  assert.doesNotMatch(p, /Debate group/);
+  assert.match(p, /Allowed speakers: galileo only/);
+  const parsed = parseModelReply(
+    { choices: [{ message: { content: JSON.stringify({ student_move: 'pass', step_done: true, messages: [{ speaker: 'aristotle', text: 'No!' }, { speaker: 'galileo', text: 'Yes!' }] }) } }] },
+    'slower', false, 'guided',
+  );
+  assert.deepEqual(parsed.messages.map((m) => m.speaker), ['galileo']);
+});
+
+test('guided: two exploration turns, then the method starts', () => {
+  const r = { move: 'idea', stepDone: false, messages: [{ speaker: 'galileo', text: 'Interesting.' }] };
+  const one = advance(guided('debate'), r);
+  assert.equal(one.state.step, 'debate');
+  const two = advance(guided('debate', { debateTurns: 1 }), r);
+  assert.equal(two.state.step, 'premise');
+  assert.equal(two.state.condition, 'guided');
+  assert.ok(two.messages.every((m) => m.speaker === 'galileo'));
+});
+
+test('guided: passing a step — no joining or leaving, Galileo asks next', () => {
+  const out = advance(guided('slower'), { move: 'pass', stepDone: true, messages: [{ speaker: 'galileo', text: 'Yes!' }] });
+  assert.equal(out.state.step, 'faster');
+  assert.ok(out.messages.every((m) => m.speaker === 'galileo'));
+});
+
+test('guided: same reveal rule as the debate group', () => {
+  const out = advance(guided('faster', { stepTurns: 3 }), { move: 'stuck', stepDone: false, messages: [{ speaker: 'galileo', text: 'Nice try.' }] });
+  assert.equal(out.state.step, 'contradiction');
+  assert.ok(out.messages.some((m) => /put it together/.test(m.text)));
+});
+
+test('guided: the lesson can be finished with help alone', () => {
+  let state = { condition: 'guided', step: 'premise', stepTurns: 0, debateTurns: 2 };
+  let guard = 0;
+  while (state.step !== 'done' && guard++ < 60) state = helpTurn(normalizeInput({ type: 'help', state, transcript: [] })).state;
+  assert.equal(state.step, 'done');
+  assert.equal(state.condition, 'guided');
+});
+
+test('both groups show the same pictures at the same steps', () => {
+  for (const step of Object.keys(STEPS)) {
+    const a = STEPS[step].opener.map((m) => m.image).filter(Boolean);
+    const b = GUIDED_OPENERS[step].map((m) => m.image).filter(Boolean);
+    assert.deepEqual(b, a, step);
+  }
+});

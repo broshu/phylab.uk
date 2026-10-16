@@ -7,7 +7,7 @@
  * Edit wording here; keep the step ids unchanged — the lab page uses them.
  */
 
-export const PROMPT_VERSION = 'debate-aristotle-v2';
+export const PROMPT_VERSION = 'debate-aristotle-v3';
 
 /** Steps after Galileo first joins, in order. */
 export const STEP_ORDER = [
@@ -155,7 +155,7 @@ student_move labels: "pass", "argue", "stuck", "off_topic".`,
       },
     ],
     card: `CURRENT STEP: slower (first line of reasoning)
-Setup the student can see: heavy stone falls at speed 8, light stone at speed 4 (by Aristotle's rule). They are tied together with a short rope and dropped. Aristotle has just asked whether the light stone speeds up the heavy one or holds it back.
+Setup the student can see: heavy stone falls at speed 8, light stone at speed 4 (by Aristotle's rule). They are tied together with a short rope and dropped. The student has just been asked whether the light stone speeds up the heavy one or holds it back.
 
 Goal: the student concludes that the tied pair falls SLOWER than 8 (somewhere between 4 and 8), because the slow light stone holds back (drags, brakes) the heavy stone, and the heavy stone pulls the light one along.
 
@@ -188,7 +188,7 @@ student_move labels: "pass", "faster_idea", "argue", "stuck", "off_topic".`,
       },
     ],
     card: `CURRENT STEP: faster (second line of reasoning)
-The student already concluded: the tied pair is slower than 8. Aristotle, feeling safe, has just invited the student to look at the pair as one body.
+The student already concluded: the tied pair is slower than 8. The student has just been invited to look at the pair as one body.
 
 Goal: the student concludes that the tied pair, as one body, is HEAVIER than the heavy stone alone, so by Aristotle's own rule it must fall FASTER than 8 (for example 12).
 
@@ -222,7 +222,7 @@ student_move labels: "pass", "heavier_only", "argue", "stuck", "off_topic".`,
       },
     ],
     card: `CURRENT STEP: contradiction
-The student has derived from Aristotle's rule both: the tied pair is slower than 8, AND the tied pair is faster than 8. Aristotle, uneasy, has just asked what the student is trying to show.
+The student has derived from Aristotle's rule both: the tied pair is slower than 8, AND the tied pair is faster than 8. The student has just been asked what these two answers show.
 
 Goal: the student says these two answers cannot both be true (a contradiction), so the starting rule must be wrong.
 
@@ -253,14 +253,14 @@ student_move labels: "pass", "picks_one", "argue", "stuck", "off_topic".`,
         text: 'Ha! I have an answer. Two stones on a rope are not ONE body. They are two bodies. So my rule is safe! Can you answer that?',
       },
     ],
-    card: `CURRENT STEP: objection (Aristotle tries to escape)
-Aristotle has just said: two stones tied by a rope are two bodies, not one body, so his rule is safe.
+    card: `CURRENT STEP: objection (a possible escape for the rule)
+The objection just raised: two stones tied by a rope are two bodies, not one body, so the rule is safe.
 
 Goal: the student closes this loophole. Good answers include: glue them, melt them, or tie them very tightly into one body; any single stone could be seen as two halves joined together; the rope does not change the weight; a body does not know if it is "one" or "two".
 
 PASS (step_done = true) if the student gives any reason why the "two bodies" excuse fails, or turns the pair into one body (glue, weld, melt, tight rope, one stone made of two halves).
 NOT YET (step_done = false):
-- The student agrees with Aristotle: what would happen if we glued the stones so they became one stone?
+- The student accepts the objection: what would happen if we glued the stones so they became one stone?
 - The student only says "no" with no reason: ask for a reason.
 - Unsure or silent: use the hint.
 
@@ -286,7 +286,7 @@ student_move labels: "pass", "agrees_aristotle", "argue", "stuck", "off_topic".`
       },
     ],
     card: `CURRENT STEP: conclusion
-The rule "heavier falls faster" has been destroyed by a contradiction. Aristotle has just asked what is true instead.
+The rule "heavier falls faster" has been destroyed by a contradiction. The student has just been asked what is true instead.
 
 Goal: the student states the new rule: weight does not decide how fast a body falls. Heavy and light bodies fall at the same rate (if air does not get in the way). Then the tied pair also falls at that same speed, and there is no contradiction.
 
@@ -327,7 +327,7 @@ student_move labels: "pass", "partial", "argue", "stuck", "off_topic".`,
         text: 'You won with no lab and no tools, only your mind. That is called a thought experiment. In your own words: what steps did you follow to win?',
       },
     ],
-    card: `CURRENT STEP: method (reflection; Galileo has come back to wrap up)
+    card: `CURRENT STEP: method (reflection)
 Goal: the student describes the method of the thought experiment in their own words. The five key ideas are:
 (a) assume the opponent's rule is true;
 (b) imagine a simple, ideal situation (two stones tied together);
@@ -356,7 +356,7 @@ student_move labels: "pass", "partial", "stuck", "off_topic".`,
     opener: [
       {
         speaker: 'galileo',
-        text: "Here is your method, the same one I used: take the other side's rule as true, imagine a simple case, reason it two ways, find the contradiction, close the loopholes, and reject the rule. You can use it on any claim.",
+        text: "Here is your method, the same one I used: take the rule as true, just for now, imagine a simple case, reason it two ways, find the contradiction, close the loopholes, and reject the rule. You can use it on any claim.",
         image: 'method',
       },
       {

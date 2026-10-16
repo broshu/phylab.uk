@@ -1,28 +1,71 @@
-import { AVATARS, PICTURES } from './art.js?v=20261016f';
-import { animationCard, hasAnimation } from './anims.js?v=20261016f';
+import { AVATARS, PICTURES } from './art.js?v=20261016g';
+import { animationCard, hasAnimation } from './anims.js?v=20261016g';
 
 const API = 'https://phylab-debate.dgxwmk9dbm.workers.dev/debate';
 const STORE = 'phylab-debate-aristotle-v1';
+const GROUP_STORE = 'phylab-debate-aristotle-group';
 const TRANSCRIPT_LIMIT = 16;
 
 const NAMES = { aristotle: 'Aristotle', galileo: 'Galileo', student: 'You' };
 
-/** Aristotle's opening. Shown instantly; no AI call. */
-const OPENING = [
-  { speaker: 'aristotle', text: 'Greetings, young one! I am Aristotle. Let me tell you something that everyone can see.' },
-  { speaker: 'aristotle', text: 'Drop a stone and a feather together: the stone lands first. An apple falls fast, but a leaf drifts down slowly. A hammer beats a sheet of paper every time.', image: 'falling' },
-  { speaker: 'aristotle', text: 'So the rule is simple: the heavier a body, the faster it falls. A body twice as heavy falls twice as fast. Do you dare to disagree?' },
-];
+/**
+ * The two research groups. Same steps, hints, pictures and notebook; only the
+ * social setting differs. "debate": the student argues with Aristotle and
+ * Galileo helps only when needed. "guided": Galileo leads, nobody argues.
+ * The opening lines carry the same examples and the same rule in both.
+ */
+const GROUPS = {
+  debate: {
+    title: 'Debate Aristotle',
+    pinned: 'Aristotle says heavier things fall faster. Your task: convince him he is wrong.',
+    opening: [
+      { speaker: 'aristotle', text: 'Greetings, young one! I am Aristotle. Let me tell you something that everyone can see.' },
+      { speaker: 'aristotle', text: 'Drop a stone and a feather together: the stone lands first. An apple falls fast, but a leaf drifts down slowly. A hammer beats a sheet of paper every time.', image: 'falling' },
+      { speaker: 'aristotle', text: 'So the rule is simple: the heavier a body, the faster it falls. A body twice as heavy falls twice as fast. Do you dare to disagree?' },
+    ],
+    starters: ['Heavy and light things land at the same time!', 'The feather is slow because of the air.', 'Hmm, I think you are right.'],
+    nbEmpty: 'Debate first. The steps of the method will appear here as you discover them.',
+    firstPlaceholder: 'Argue with Aristotle…',
+  },
+  guided: {
+    title: 'Explore with Galileo',
+    pinned: 'Do heavier things fall faster? Your task: work it out step by step with Galileo.',
+    opening: [
+      { speaker: 'galileo', text: "Hello! I am Galileo. Let's look together at something that everyone can see." },
+      { speaker: 'galileo', text: 'Drop a stone and a feather together: the stone lands first. An apple falls fast, but a leaf drifts down slowly. A hammer beats a sheet of paper every time.', image: 'falling' },
+      { speaker: 'galileo', text: "Aristotle's rule says: the heavier a body, the faster it falls. A body twice as heavy falls twice as fast. What do you think, and why?" },
+    ],
+    starters: ['I think heavier things fall faster.', 'I think they fall at the same speed.', 'Maybe the air matters.'],
+    nbEmpty: 'Talk with Galileo first. The steps of the method will appear here as you discover them.',
+    firstPlaceholder: 'Answer Galileo…',
+  },
+};
 
-const STARTERS = [
-  'Heavy and light things land at the same time!',
-  'The feather is slow because of the air.',
-  'Hmm, I think you are right.',
-];
+/**
+ * Which group this browser is in: ?group=debate|guided sets it (for a teacher
+ * handing out two links); otherwise it is chosen at random once and kept.
+ */
+function chooseGroup() {
+  const asked = new URLSearchParams(location.search).get('group');
+  let group = asked in GROUPS ? asked : null;
+  try {
+    if (!group) group = localStorage.getItem(GROUP_STORE);
+    if (!(group in GROUPS)) group = Math.random() < 0.5 ? 'debate' : 'guided';
+    localStorage.setItem(GROUP_STORE, group);
+  } catch {
+    if (!(group in GROUPS)) group = Math.random() < 0.5 ? 'debate' : 'guided';
+  }
+  return group;
+}
+
+const GROUP = chooseGroup();
+const G = GROUPS[GROUP];
+const OPENING = G.opening;
+const STARTERS = G.starters;
 
 /** Notebook lines, revealed as each step is passed. Ids match the Worker. */
 const NOTEBOOK = [
-  ['premise', 'Take the other side’s rule as true'],
+  ['premise', 'Take the rule as true, just for now'],
   ['slower', 'Imagine a simple case and reason one way'],
   ['faster', 'Reason the same case another way'],
   ['contradiction', 'Spot the contradiction'],
@@ -54,7 +97,7 @@ let busy = false;
 
 function freshState() {
   return {
-    lesson: { step: 'debate', stepTurns: 0, debateTurns: 0 },
+    lesson: { condition: GROUP, step: 'debate', stepTurns: 0, debateTurns: 0, galileo: GROUP === 'guided' },
     log: OPENING.map((m) => ({ ...m })),
     passed: [],
   };
@@ -67,7 +110,8 @@ function save() {
 function load() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORE) || 'null');
-    if (saved && saved.lesson && Array.isArray(saved.log)) {
+    // A saved chat from the other group (the link changed) is not reused.
+    if (saved && saved.lesson && Array.isArray(saved.log) && (saved.lesson.condition || 'debate') === GROUP) {
       // Chats saved before an update keep their text; give the opening its current pictures.
       OPENING.forEach((m, i) => {
         const old = saved.log[i];
@@ -80,7 +124,8 @@ function load() {
 }
 
 // Galileo comes and goes. Older saved chats have no flag: he stayed once joined.
-const galileoIn = () => (typeof state.lesson.galileo === 'boolean' ? state.lesson.galileo : state.lesson.step !== 'debate');
+const galileoIn = () =>
+  GROUP === 'guided' || (typeof state.lesson.galileo === 'boolean' ? state.lesson.galileo : state.lesson.step !== 'debate');
 const lessonStarted = () => state.lesson.step !== 'debate';
 
 /* ---------------- rendering ---------------- */
@@ -94,6 +139,11 @@ function avatar(speaker) {
 
 /** `present` overrides the saved state while a reply is still playing out. */
 function renderMembers(animate = false, present = galileoIn()) {
+  if (GROUP === 'guided') {
+    els.members.replaceChildren(avatar('galileo'), avatar('student'));
+    els.memberCount.textContent = '2 members';
+    return;
+  }
   els.members.replaceChildren(avatar('aristotle'), avatar('student'));
   if (present) {
     const g = avatar('galileo');
@@ -202,13 +252,16 @@ function renderControls() {
   els.help.hidden = done;
   els.help.textContent = '@Galileo';
   els.help.title = 'Mention Galileo to ask him something';
-  els.input.placeholder = done
-    ? 'Ask Galileo or Aristotle anything…'
-    : galileoIn()
-      ? 'Answer Galileo, or argue with Aristotle…'
-      : lessonStarted()
-        ? 'Answer Aristotle…'
-        : 'Argue with Aristotle…';
+  els.input.placeholder =
+    GROUP === 'guided'
+      ? done ? 'Ask Galileo anything…' : 'Answer Galileo…'
+      : done
+        ? 'Ask Galileo or Aristotle anything…'
+        : galileoIn()
+          ? 'Answer Galileo, or argue with Aristotle…'
+          : lessonStarted()
+            ? 'Answer Aristotle…'
+            : G.firstPlaceholder;
 }
 
 function renderAll() {
@@ -388,6 +441,12 @@ els.restart.addEventListener('click', () => {
 
 if (matchMedia('(max-width: 900px)').matches) els.details.open = false;
 addEventListener('resize', autosize);
+
+document.title = G.title;
+document.querySelector('.top-bar h1').textContent = G.title;
+document.querySelector('.pinned p').textContent = G.pinned;
+els.nbEmpty.textContent = G.nbEmpty;
+document.documentElement.dataset.group = GROUP;
 
 state = load();
 renderAll();
