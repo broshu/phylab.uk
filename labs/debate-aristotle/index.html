@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Debate Aristotle</title>
+    <meta name="description" content="Debate Aristotle about falling bodies. Galileo helps you find a thought experiment.">
+    <link rel="stylesheet" href="/assets/theme.css">
+    <link rel="stylesheet" href="css/style.css?v=20261016a">
+</head>
+<body>
+    <header class="top-bar">
+        <h1>Debate Aristotle</h1>
+        <a class="home-button" href="/labs/" aria-label="Return to Labs" title="Labs"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9.5 21v-6h5v6"/></svg></a>
+    </header>
+
+    <main class="layout">
+        <section class="chat" aria-label="Group chat">
+            <div class="chat-head">
+                <div class="members" id="members"></div>
+                <div class="chat-title">
+                    <h2>Do heavier things fall faster?</h2>
+                    <p id="memberCount">2 members</p>
+                </div>
+                <button id="restartBtn" class="ghost-button" type="button" title="Start a new debate">Restart</button>
+            </div>
+
+            <div class="pinned">
+                <span class="pin-label">Pinned</span>
+                <p>Aristotle says heavier things fall faster. Your task: convince him he is wrong.</p>
+            </div>
+
+            <ol class="messages" id="messages" aria-live="polite"></ol>
+
+            <div class="starters" id="starters"></div>
+            <p class="notice" id="notice" hidden></p>
+
+            <form class="composer" id="composer" autocomplete="off">
+                <button id="helpBtn" class="help-button" type="button">Ask Galileo</button>
+                <textarea id="input" rows="1" maxlength="500" placeholder="Argue with Aristotle…" aria-label="Your message"></textarea>
+                <button id="sendBtn" class="send-button" type="submit" aria-label="Send">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+                </button>
+            </form>
+        </section>
+
+        <aside class="notebook" aria-label="Thought-experiment notebook">
+            <details id="notebookDetails" open>
+                <summary>
+                    <span>Thought-experiment notebook</span>
+                    <span class="progress" id="progress">0 / 7</span>
+                </summary>
+                <p class="nb-empty" id="nbEmpty">Debate first. The steps of the method will appear here as you discover them.</p>
+                <ol class="nb-steps" id="nbSteps"></ol>
+            </details>
+        </aside>
+    </main>
+
+    <script type="module" src="js/app.js?v=20261016a"></script>
+</body>
+</html>

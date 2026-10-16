@@ -1,0 +1,16 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "phylab-debate",
+  "main": "src/index.js",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": true,
+  "preview_urls": false,
+  "rules": [{ "type": "Text", "globs": ["**/*.md"], "fallthrough": true }],
+  "secrets": { "required": ["DEEPSEEK_API_KEY"] },
+  "vars": {
+    "AI_BASE_URL": "https://api.deepseek.com",
+    "AI_MODEL": "deepseek-flash",
+    "ALLOWED_ORIGINS": "https://phylab.uk,https://www.phylab.uk"
+  },
+  "observability": { "enabled": true, "logs": { "enabled": true, "head_sampling_rate": 1 } }
+}
