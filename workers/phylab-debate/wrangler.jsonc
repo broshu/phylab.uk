@@ -6,7 +6,6 @@
   "workers_dev": true,
   "preview_urls": false,
   "rules": [{ "type": "Text", "globs": ["**/*.md"], "fallthrough": true }],
-  "secrets": { "required": ["DEEPSEEK_API_KEY"] },
   "vars": {
     "AI_BASE_URL": "https://api.deepseek.com",
     "AI_MODEL": "deepseek-flash",
