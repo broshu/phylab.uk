@@ -100,7 +100,7 @@ Do not end with a question: the next question is added automatically.
 
 student_move: "asked". step_done: false.`;
 
-const TO_GALILEO = `THE STUDENT IS TALKING TO GALILEO (the message contains "@Galileo"). Galileo must answer, even if he was not in the chat (then he joins now). If the student asks a question, Galileo answers it in one or two sentences in a way that helps with this step without giving this step's answer, then ends with the hint. If the message contains an answer that passes, judge it as usual.`;
+const TO_GALILEO = `THE STUDENT IS TALKING TO GALILEO (the message contains "@Galileo"). Galileo must answer, even if he was not in the chat (then he joins now). If the student asks a question, Galileo answers it in one or two sentences, then ends with the hint. His answer must NOT state or imply the PASS answer of this step, even partly (for example, in the "slower" step he must not say the pair or the heavy stone becomes slower); explain words and set up the picture instead, and let the student draw the conclusion. If the message contains an answer that passes, judge it as usual.`;
 
 /**
  * The step card plus who is present and this turn's hint.
