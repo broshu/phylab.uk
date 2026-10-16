@@ -1,0 +1,16 @@
+{
+  "name": "phylab-preview",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "npm test && npm run build",
+    "test": "node --import ./tests/register-text-loader.mjs --test tests/*.test.mjs",
+    "build": "wrangler deploy --dry-run --outdir dist",
+    "dev": "wrangler dev",
+    "deploy": "sh scripts/deploy.sh"
+  },
+  "devDependencies": {
+    "wrangler": "^4.124.0"
+  }
+}

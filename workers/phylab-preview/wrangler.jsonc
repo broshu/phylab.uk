@@ -1,0 +1,29 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "phylab-preview",
+  "main": "src/index.js",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": true,
+  "preview_urls": false,
+  "routes": [{ "pattern": "preview.phylab.uk", "custom_domain": true }],
+  "rules": [{ "type": "Text", "globs": ["**/*.html"], "fallthrough": true }],
+  // Every 30 minutes: start the weekly collection when it is due, then
+  // screen and draft a few papers per run. Idle runs only read D1.
+  "triggers": { "crons": ["*/30 * * * *"] },
+  "d1_databases": [
+    {
+      "binding": "PREVIEW_DB",
+      "database_name": "phylab-preview",
+      "database_id": "0cca2f90-aa12-4c01-99e9-c87356a564cb",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "vars": {
+    "AI_BASE_URL": "https://api.deepseek.com",
+    "AI_MODEL": "deepseek-v4-flash",
+    "GITHUB_REPO": "broshu/phylab.uk",
+    "GITHUB_BRANCH": "main",
+    "PREVIEW_DEFAULT_BRANCH": "main"
+  },
+  "observability": { "enabled": true, "logs": { "enabled": true, "head_sampling_rate": 1 } }
+}

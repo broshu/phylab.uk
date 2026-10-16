@@ -1,0 +1,102 @@
+// Turns a reviewed candidate into a catalogue entry and edits papers.json.
+// Validation is the site's own validateCatalog, so the Worker can never
+// publish something the literature build check would reject.
+import { PRIORITIES, TOPICS, normalizeDOI, validateCatalog } from '../../../literature/core.mjs';
+
+export const CATALOG_PATH = 'literature/data/papers.json';
+export { TOPICS, PRIORITIES };
+
+export function shanghaiDate(now = new Date()) {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
+}
+
+/** Stable id like the existing ones: first author's surname, year, a few title words. */
+export function makeId(meta, taken = new Set()) {
+  const surname = (meta.authors?.[0] || 'anon').split(/\s+/).pop();
+  const words = (meta.title || '').toLowerCase().normalize('NFKD').replace(/[^a-z0-9\s]/g, ' ').split(/\s+/)
+    .filter(w => w.length > 3 && !['with', 'from', 'that', 'this', 'their', 'into', 'using', 'study', 'about'].includes(w)).slice(0, 3);
+  const base = [surname, meta.year, ...words].join('-').toLowerCase().normalize('NFKD')
+    .replace(/[^a-z0-9-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') || 'paper';
+  let id = base, n = 2;
+  while (taken.has(id)) id = `${base}-${n++}`;
+  return id;
+}
+
+/**
+ * @param {object} meta  title, authors, year, published_date, source, doi, url
+ * @param {object} draft AI draft (see ai.js)
+ * @param {object} choice owner's choices: topics, priority, finding ('a'|'b'), featured, edits
+ */
+export function buildEntry(meta, draft, choice, id, today) {
+  const finding = choice.finding === 'b' ? draft.findings?.[1] : draft.findings?.[0];
+  const edits = choice.edits || {};
+  const topics = (choice.topics || draft.topics || []).filter(t => Object.hasOwn(TOPICS, t));
+  const priority = Object.hasOwn(PRIORITIES, choice.priority) ? choice.priority : draft.priority;
+  const doi = normalizeDOI(meta.doi || '');
+  const url = meta.url || `https://doi.org/${doi}`;
+  return {
+    id,
+    status: 'published',
+    title: meta.title,
+    authors: meta.authors,
+    year: meta.year,
+    published_date: meta.published_date || null,
+    source: meta.source,
+    doi,
+    url,
+    topics: [...new Set(topics)],
+    evidence_type: edits.evidence_type || draft.evidence_type,
+    reading_priority: priority,
+    key_finding_zh: finding?.zh || '',
+    phd_relevance_zh: draft.phd_relevance_zh || '',
+    reading_recommendation_zh: draft.reading_recommendation_zh || '',
+    limitations_zh: draft.limitations_zh || '',
+    featured: Boolean(choice.featured),
+    date_added: today,
+    verified_at: today,
+    verification_url: url,
+    key_finding_en: edits.key_finding_en || finding?.en || '',
+    phd_relevance_en: edits.phd_relevance_en || draft.phd_relevance_en,
+    reading_recommendation_en: edits.reading_recommendation_en || draft.reading_recommendation_en,
+    limitations_en: edits.limitations_en || draft.limitations_en,
+  };
+}
+
+function serialize(catalog) {
+  return JSON.stringify(catalog, null, 2) + '\n';
+}
+function check(catalog) {
+  const errors = validateCatalog(catalog);
+  if (errors.length) throw new Error(`Catalogue check failed: ${errors.join('; ')}`);
+}
+
+/** Returns new papers.json text with the entry added (or null if its DOI is already there). */
+export function addToCatalog(text, entry, today) {
+  const catalog = JSON.parse(text);
+  if (entry.doi && catalog.papers.some(p => normalizeDOI(p.doi || '') === entry.doi)) return null;
+  const ids = new Set(catalog.papers.map(p => p.id));
+  if (ids.has(entry.id)) entry = { ...entry, id: makeId({ ...entry }, ids) };
+  const next = { ...catalog, updated_at: today, papers: [...catalog.papers, entry] };
+  check(next);
+  return serialize(next);
+}
+
+/** Returns new papers.json text without the given ids (or null if none were present). */
+export function removeFromCatalog(text, ids, today) {
+  const catalog = JSON.parse(text);
+  const drop = new Set(ids);
+  const papers = catalog.papers.filter(p => !drop.has(p.id));
+  if (papers.length === catalog.papers.length) return null;
+  const next = { ...catalog, updated_at: today, papers };
+  check(next);
+  return serialize(next);
+}
+
+/** Published entries whose publication date is more than two years before today. */
+export function expiredEntries(catalog, today, kept = new Set()) {
+  const cutoff = `${Number(today.slice(0, 4)) - 2}${today.slice(4)}`;
+  return catalog.papers
+    .filter(p => !kept.has(p.id))
+    .filter(p => (p.published_date || `${p.year}-12-31`) < cutoff)
+    .map(p => ({ id: p.id, title: p.title, source: p.source, published: p.published_date || String(p.year), priority: p.reading_priority }));
+}

@@ -9,7 +9,7 @@
   "vars": {
     "AI_BASE_URL": "https://api.deepseek.com",
     "AI_MODEL": "deepseek-flash",
-    "ALLOWED_ORIGINS": "https://phylab.uk,https://www.phylab.uk"
+    "ALLOWED_ORIGINS": "https://phylab.uk,https://www.phylab.uk,https://preview.phylab.uk"
   },
   "observability": { "enabled": true, "logs": { "enabled": true, "head_sampling_rate": 1 } }
 }

@@ -93,12 +93,8 @@ Visit `http://127.0.0.1:8765/literature/` for the latest additions or `http://12
 
 The catalogue keeps papers published within the past two years; older entries (including the original foundational frameworks) were removed on 2026-10-07. New additions should come from roughly the past month. This catalogue is a selective reading recommendation list, rather than a systematic review claiming to cover all PER literature.
 
-## Automation status and next step
+## Automation status
 
-The current weekly workflow collects candidate metadata into a GitHub Actions artifact only. It uses read-only `contents` permission and no model API credential. Automated note generation, draft-PR creation, and publication are not live.
+Weekly candidates are now handled by the private review desk at `preview.phylab.uk/review` (`workers/phylab-preview`). It collects metadata from the sources above, uses DeepSeek to screen candidates and draft the English notes, and shows each draft with tick-box choices. Nothing is published until the owner approves it; approval runs `validateCatalog` and commits the entry to `main`, which GitHub Pages then publishes. See `workers/phylab-preview/README.md`.
 
-A planned expansion, not yet implemented, would follow this sequence:
-
-Original-source checks → AI-assisted English drafts of findings, PhD relevance, reading guidance, and limitations → data validation, build checks, and tests → draft pull request → editorial approval → merge to `main` and GitHub Pages publication.
-
-This expansion needs a model API credential and repository write capability sufficient to create a branch and a draft pull request. Editorial approval would remain the gate for publishing interpretations and recommendations.
+The GitHub Actions candidate workflow and the manual steps above still work and remain useful for one-off additions.
