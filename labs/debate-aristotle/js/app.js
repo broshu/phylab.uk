@@ -1,5 +1,5 @@
-import { AVATARS, PICTURES } from './art.js?v=20261016g';
-import { animationCard, hasAnimation } from './anims.js?v=20261016g';
+import { AVATARS, PICTURES } from './art.js?v=20261016h';
+import { animationCard, hasAnimation } from './anims.js?v=20261016h';
 
 const API = 'https://phylab-debate.dgxwmk9dbm.workers.dev/debate';
 const STORE = 'phylab-debate-aristotle-v1';
@@ -437,6 +437,24 @@ els.restart.addEventListener('click', () => {
   save();
   setNotice('');
   renderAll();
+});
+
+// Switch teaching mode (for readers of the paper): remember it, then reload so
+// the whole page is built for that mode. A mid-lesson chat asks first.
+document.querySelectorAll('.mode-option').forEach((btn) => {
+  btn.setAttribute('aria-pressed', String(btn.dataset.group === GROUP));
+  btn.addEventListener('click', () => {
+    const next = btn.dataset.group;
+    if (next === GROUP || busy) return;
+    if (state.log.some((m) => m.speaker === 'student') && !confirm('Switch teaching mode? This chat will be cleared.')) return;
+    try {
+      localStorage.setItem(GROUP_STORE, next);
+      localStorage.removeItem(STORE);
+    } catch { /* storage is optional */ }
+    const url = new URL(location.href);
+    url.searchParams.set('group', next);
+    location.href = url.toString();
+  });
 });
 
 if (matchMedia('(max-width: 900px)').matches) els.details.open = false;

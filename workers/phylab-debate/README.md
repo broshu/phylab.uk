@@ -8,7 +8,7 @@ through his tied-stones thought experiment.
 ## Two research groups
 
 The page puts each browser in one of two groups, chosen at random once and
-kept (a link with `?group=debate` or `?group=guided` sets it). Both groups use
+kept (a link with `?group=debate` or `?group=guided` sets it). A **Teaching mode** switch at the top of the chat lets readers of the paper try either group; switching clears the chat. Both groups use
 the same steps, pass rules, hints, reveals, animations, notebook, model and
 settings; only the social setting differs.
 
