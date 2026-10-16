@@ -47,7 +47,7 @@ the state; the Worker stores nothing.
 
 ## Settings
 
-- Secret `DEEPSEEK_API_KEY` — set in the Cloudflare dashboard for the `phylab-debate` Worker.
+- `DEEPSEEK_API_KEY` is kept as a **build** secret (Worker → Settings → Builds → Variables and secrets). The deploy command `npm run deploy` (`scripts/deploy.sh`) copies it to the runtime secret on every deploy.
 - `AI_MODEL` is `deepseek-flash` with thinking turned off and JSON output on.
 
 ## Check locally
