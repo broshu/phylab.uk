@@ -1,4 +1,4 @@
-import { AVATARS, PICTURES } from './art.js?v=20261016a';
+import { AVATARS, PICTURES } from './art.js?v=20261016b';
 
 const API = 'https://phylab-debate.dgxwmk9dbm.workers.dev/debate';
 const STORE = 'phylab-debate-aristotle-v1';
@@ -321,9 +321,13 @@ function send(text) {
 
 /* ---------------- events ---------------- */
 
+// Grow with each new line instead of scrolling. scrollHeight leaves out the
+// border, so add it back or a scrollbar appears.
 function autosize() {
+  const box = getComputedStyle(els.input);
+  const border = parseFloat(box.borderTopWidth) + parseFloat(box.borderBottomWidth);
   els.input.style.height = 'auto';
-  els.input.style.height = `${Math.min(els.input.scrollHeight, 140)}px`;
+  els.input.style.height = `${els.input.scrollHeight + border}px`;
 }
 
 els.form.addEventListener('submit', (e) => {
@@ -348,6 +352,7 @@ els.restart.addEventListener('click', () => {
 });
 
 if (matchMedia('(max-width: 900px)').matches) els.details.open = false;
+addEventListener('resize', autosize);
 
 state = load();
 renderAll();
