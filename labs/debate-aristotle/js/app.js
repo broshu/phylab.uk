@@ -1,5 +1,5 @@
-import { AVATARS, PICTURES } from './art.js?v=20261016h';
-import { animationCard, hasAnimation } from './anims.js?v=20261016h';
+import { AVATARS, PICTURES } from './art.js?v=20261016i';
+import { animationCard, hasAnimation } from './anims.js?v=20261016i';
 
 const API = 'https://phylab-debate.dgxwmk9dbm.workers.dev/debate';
 const STORE = 'phylab-debate-aristotle-v1';
