@@ -1,5 +1,5 @@
-import { AVATARS, PICTURES } from './art.js?v=20261016d';
-import { animationCard, hasAnimation } from './anims.js?v=20261016d';
+import { AVATARS, PICTURES } from './art.js?v=20261016e';
+import { animationCard, hasAnimation } from './anims.js?v=20261016e';
 
 const API = 'https://phylab-debate.dgxwmk9dbm.workers.dev/debate';
 const STORE = 'phylab-debate-aristotle-v1';
@@ -67,7 +67,14 @@ function save() {
 function load() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORE) || 'null');
-    if (saved && saved.lesson && Array.isArray(saved.log)) return saved;
+    if (saved && saved.lesson && Array.isArray(saved.log)) {
+      // Chats saved before an update keep their text; give the opening its current pictures.
+      OPENING.forEach((m, i) => {
+        const old = saved.log[i];
+        if (old && old.speaker === m.speaker && old.text === m.text) old.image = m.image;
+      });
+      return saved;
+    }
   } catch { /* ignore */ }
   return freshState();
 }
