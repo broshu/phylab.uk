@@ -91,6 +91,13 @@ test('Galileo comes back for the final reflection', () => {
   assert.ok(out.messages.some((m) => m.text === 'Galileo joined the chat'));
 });
 
+test('Galileo stays for the ending', () => {
+  const out = advance(input('method', { galileo: true }), { move: 'pass', stepDone: true, messages: [{ speaker: 'galileo', text: 'Yes.' }] });
+  assert.equal(out.state.step, 'done');
+  assert.equal(out.state.galileo, true);
+  assert.ok(!out.messages.some((m) => m.speaker === 'system'));
+});
+
 test('after three failed tries Galileo reveals and moves on', () => {
   const fail = { move: 'stuck', stepDone: false, messages: [{ speaker: 'galileo', text: 'Nice try.' }] };
   assert.equal(advance(input('faster', { stepTurns: 1, galileo: true }), fail).state.stepTurns, 2);

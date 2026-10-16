@@ -282,7 +282,7 @@ export function advance(input, result) {
       galileo = true;
       messages.push({ speaker: 'galileo', text: `Let's put it together. ${STEPS[state.step].reveal}` });
     }
-    if (step === 'method') {
+    if (step === 'method' || step === 'done') {
       if (!galileo) messages.push(JOINED);
       galileo = true;
     } else if (galileo) {
