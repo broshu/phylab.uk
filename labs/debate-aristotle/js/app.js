@@ -1,4 +1,4 @@
-import { AVATARS, PICTURES } from './art.js?v=20261016b';
+import { AVATARS, PICTURES } from './art.js?v=20261016c';
 
 const API = 'https://phylab-debate.dgxwmk9dbm.workers.dev/debate';
 const STORE = 'phylab-debate-aristotle-v1';
@@ -177,7 +177,7 @@ function renderControls() {
   els.input.disabled = busy;
   els.help.disabled = busy || done;
   els.help.hidden = done;
-  els.help.textContent = galileoIn() ? 'Hint' : 'Ask Galileo';
+  els.help.textContent = '@Galileo';
   els.help.title = galileoIn() ? 'Ask Galileo for a hint' : 'Call Galileo into the chat';
   els.input.placeholder = done ? 'Ask Galileo or Aristotle anything…' : galileoIn() ? 'Answer Galileo, or argue with Aristotle…' : 'Argue with Aristotle…';
 }
@@ -258,15 +258,14 @@ async function turn(type, message) {
   renderControls();
   setNotice('');
 
-  const typer = state.lesson.step === 'debate' && type === 'turn' ? 'aristotle' : 'galileo';
+  const typer = state.lesson.step === 'debate' ? 'aristotle' : 'galileo';
   // The transcript sent to the Worker must not include the new message twice.
   const history = transcript();
-  if (type === 'turn') {
-    const mine = { speaker: 'student', text: message };
-    state.log.push(mine);
-    append(mine);
-    renderStarters();
-  }
+  // The help button shows up in the chat as the student mentioning Galileo.
+  const mine = { speaker: 'student', text: type === 'turn' ? message : '@Galileo' };
+  state.log.push(mine);
+  append(mine);
+  renderStarters();
   showTyping(typer);
 
   try {
@@ -295,12 +294,10 @@ async function turn(type, message) {
     if (data.notice) setNotice(data.notice);
   } catch {
     hideTyping();
-    if (type === 'turn') {
-      // Take the unanswered message back so the student can resend it.
-      state.log.pop();
-      els.messages.lastElementChild?.remove();
-      els.input.value = message;
-    }
+    // Take the unanswered message back so the student can resend it.
+    state.log.pop();
+    els.messages.lastElementChild?.remove();
+    if (type === 'turn') els.input.value = message;
     setNotice('Could not reach the chat server. Check the connection and try again.');
   } finally {
     busy = false;

@@ -24,9 +24,9 @@ Steps: `debate` → `premise` → `slower` → `faster` → `contradiction` →
 
 - Galileo joins when the model labels the student `concede`, `stuck` or
   `thought_experiment`, after 6 debate turns, or when the student presses
-  **Ask Galileo**.
+  **@Galileo**.
 - After 3 failed tries in one step, Galileo explains the idea and moves on.
-- The **Hint** button never calls the model.
+- After Galileo joins, the same **@Galileo** button asks him for a hint. It never calls the model.
 - If DeepSeek fails, replies in Chinese twice, or returns broken JSON, the
   Worker answers from the script, so a lesson can always be finished.
 
