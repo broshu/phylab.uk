@@ -1,4 +1,5 @@
-import { AVATARS, PICTURES } from './art.js?v=20261016c';
+import { AVATARS, PICTURES } from './art.js?v=20261016d';
+import { animationCard, hasAnimation } from './anims.js?v=20261016d';
 
 const API = 'https://phylab-debate.dgxwmk9dbm.workers.dev/debate';
 const STORE = 'phylab-debate-aristotle-v1';
@@ -9,7 +10,7 @@ const NAMES = { aristotle: 'Aristotle', galileo: 'Galileo', student: 'You' };
 /** Aristotle's opening. Shown instantly; no AI call. */
 const OPENING = [
   { speaker: 'aristotle', text: 'Greetings, young one! I am Aristotle. Let me tell you something that everyone can see.' },
-  { speaker: 'aristotle', text: 'Drop a stone and a feather together: the stone lands first. An apple falls fast, but a leaf drifts down slowly. A hammer beats a sheet of paper every time.' },
+  { speaker: 'aristotle', text: 'Drop a stone and a feather together: the stone lands first. An apple falls fast, but a leaf drifts down slowly. A hammer beats a sheet of paper every time.', image: 'falling' },
   { speaker: 'aristotle', text: 'So the rule is simple: the heavier a body, the faster it falls. A body twice as heavy falls twice as fast. Do you dare to disagree?' },
 ];
 
@@ -71,7 +72,9 @@ function load() {
   return freshState();
 }
 
-const galileoIn = () => state.lesson.step !== 'debate';
+// Galileo comes and goes. Older saved chats have no flag: he stayed once joined.
+const galileoIn = () => (typeof state.lesson.galileo === 'boolean' ? state.lesson.galileo : state.lesson.step !== 'debate');
+const lessonStarted = () => state.lesson.step !== 'debate';
 
 /* ---------------- rendering ---------------- */
 
@@ -82,14 +85,15 @@ function avatar(speaker) {
   return span;
 }
 
-function renderMembers(animate = false) {
+/** `present` overrides the saved state while a reply is still playing out. */
+function renderMembers(animate = false, present = galileoIn()) {
   els.members.replaceChildren(avatar('aristotle'), avatar('student'));
-  if (galileoIn()) {
+  if (present) {
     const g = avatar('galileo');
     if (animate) g.classList.add('arrive');
     els.members.append(g);
   }
-  els.memberCount.textContent = galileoIn() ? '3 members' : '2 members';
+  els.memberCount.textContent = present ? '3 members' : '2 members';
 }
 
 function messageNode(m, prev) {
@@ -114,7 +118,9 @@ function messageNode(m, prev) {
     bubble.textContent = m.text;
     body.append(bubble);
   }
-  if (m.image && PICTURES[m.image]) {
+  if (m.image && hasAnimation(m.image)) {
+    body.append(animationCard(m.image));
+  } else if (m.image && PICTURES[m.image]) {
     const pic = document.createElement('div');
     pic.className = 'picture';
     pic.innerHTML = PICTURES[m.image];
@@ -134,7 +140,7 @@ function append(m) {
 }
 
 function renderNotebook(animateId = null) {
-  const started = galileoIn();
+  const started = lessonStarted();
   els.nbEmpty.hidden = started;
   els.nbSteps.hidden = !started;
   const current = state.lesson.step;
@@ -178,8 +184,14 @@ function renderControls() {
   els.help.disabled = busy || done;
   els.help.hidden = done;
   els.help.textContent = '@Galileo';
-  els.help.title = galileoIn() ? 'Ask Galileo for a hint' : 'Call Galileo into the chat';
-  els.input.placeholder = done ? 'Ask Galileo or Aristotle anything…' : galileoIn() ? 'Answer Galileo, or argue with Aristotle…' : 'Argue with Aristotle…';
+  els.help.title = galileoIn() ? 'Ask Galileo for a hint' : 'Call Galileo into the chat for help';
+  els.input.placeholder = done
+    ? 'Ask Galileo or Aristotle anything…'
+    : galileoIn()
+      ? 'Answer Galileo, or argue with Aristotle…'
+      : lessonStarted()
+        ? 'Answer Aristotle…'
+        : 'Argue with Aristotle…';
 }
 
 function renderAll() {
@@ -225,7 +237,8 @@ async function play(messages) {
       await sleep(reduceMotion ? 0 : 500);
       state.log.push(m);
       append(m);
-      if (/joined/.test(m.text)) renderMembers(true);
+      if (/joined/.test(m.text)) renderMembers(true, true);
+      if (/left/.test(m.text)) renderMembers(false, false);
       continue;
     }
     if (!reduceMotion) {
@@ -258,7 +271,7 @@ async function turn(type, message) {
   renderControls();
   setNotice('');
 
-  const typer = state.lesson.step === 'debate' ? 'aristotle' : 'galileo';
+  const typer = type === 'help' && lessonStarted() ? 'galileo' : galileoIn() ? 'galileo' : 'aristotle';
   // The transcript sent to the Worker must not include the new message twice.
   const history = transcript();
   // The help button shows up in the chat as the student mentioning Galileo.
@@ -302,6 +315,7 @@ async function turn(type, message) {
   } finally {
     busy = false;
     save();
+    renderMembers();
     renderNotebook();
     renderControls();
     els.input.focus({ preventScroll: true });

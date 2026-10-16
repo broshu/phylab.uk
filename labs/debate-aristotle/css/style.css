@@ -232,3 +232,14 @@ h1, h2, p { margin: 0; }
 .msg.cont { margin-top: -8px; }
 .msg.cont .avatar { visibility: hidden; height: 0; }
 .msg.cont .name { display: none; }
+
+/* Animated figures in messages */
+.picture.anim { position: relative; padding: 0; overflow: hidden; }
+.picture.anim canvas { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; }
+.anim-bar { display: flex; justify-content: flex-end; padding: 4px 6px; background: #f1efe8; border-top: 1px solid #e2ddd0; }
+.replay {
+    border: none; border-radius: 999px; padding: 3px 10px;
+    background: transparent; color: #2f5d4f;
+    font: inherit; font-size: 12px; font-weight: 600; cursor: pointer;
+}
+.replay:hover { background: rgba(47, 93, 79, .1); }

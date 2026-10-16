@@ -5,6 +5,7 @@ import {
   DEBATE_CARD,
   DEBATE_FALLBACKS,
   ENTRANCE,
+  RETURN_LINE,
   STEPS,
   STEP_ORDER,
 } from './steps.js';
@@ -22,7 +23,7 @@ const CJK = /[぀-ヿ㐀-鿿가-힯＀-￯]/;
 
 /**
  * @typedef {{speaker: string, text?: string, image?: string}} ChatMessage
- * @typedef {{step: string, stepTurns: number, debateTurns: number}} DebateState
+ * @typedef {{step: string, stepTurns: number, debateTurns: number, galileo: boolean}} DebateState
  * @typedef {{type: 'turn' | 'help', message: string, state: DebateState, transcript: ChatMessage[]}} DebateInput
  */
 
@@ -56,6 +57,8 @@ export function normalizeInput(body) {
     step,
     stepTurns: cleanCount(s.stepTurns, 50),
     debateTurns: cleanCount(s.debateTurns, 50),
+    // Older pages did not send this; Galileo was always present after joining.
+    galileo: step === 'debate' ? false : typeof s.galileo === 'boolean' ? s.galileo : true,
   };
 
   const transcript = (Array.isArray(raw.transcript) ? raw.transcript : [])
@@ -86,17 +89,27 @@ function revealDue(state) {
   return state.step !== 'debate' && state.step !== 'done' && state.stepTurns >= REVEAL_AFTER;
 }
 
-/** The step card plus this turn's hint instruction. @param {DebateState} state */
+/** The step card plus who is present and this turn's hint. @param {DebateState} state */
 export function buildCard(state) {
   if (state.step === 'debate') {
     return `${DEBATE_CARD}\n\nThis is student debate turn ${state.debateTurns + 1}.`;
   }
   const step = STEPS[state.step];
   if (state.step === 'done') return step.card;
-  const extra = revealDue(state)
-    ? `THIS TURN: the student has already tried ${state.stepTurns} times. If step_done is false, Galileo writes ONLY one short, kind line about what the student tried. No question and no answer: the lesson code explains the idea right after your message.`
-    : `HINT FOR THIS TURN (use it if step_done is false; adapt it to what the student said): "${hintFor(state)}"`;
-  return `${step.card}\n\n${extra}`;
+
+  const hint = `"${hintFor(state)}"`;
+  const presence = state.galileo
+    ? `WHO IS IN THE CHAT: Galileo IS here (he came to help). Allowed speakers: galileo, aristotle.
+- If step_done is true: Galileo praises in one or two sentences (${step.onPass.galileo}). Aristotle may add one short line (${step.onPass.aristotle}). Do NOT ask a new question: the next question is added automatically.
+- If step_done is false: Galileo answers what the student said and ends with this hint as a question: ${hint}. Aristotle stays quiet unless the student argued with him.`
+    : `WHO IS IN THE CHAT: Galileo is NOT here. The student is reasoning alone against Aristotle. Allowed speakers: aristotle, galileo.
+- If step_done is true: write ONLY one Aristotle message (${step.onPass.aristotle}). No Galileo. Do NOT ask a new question: the next question is added automatically.
+- If step_done is false: Galileo comes back to help. First one short Aristotle message reacting to the student (no hint, no answer). Then one Galileo message that ends with this hint as a question: ${hint}.`;
+
+  const reveal = revealDue(state)
+    ? `\n\nTHIS TURN: the student has already tried ${state.stepTurns} times. If step_done is false, Galileo writes ONLY one short, kind line about what the student tried, with no question and no answer: the lesson code explains the idea right after your message.`
+    : '';
+  return `${step.card}\n\n${presence}${reveal}`;
 }
 
 /** @param {ChatMessage[]} transcript @param {string} message */
@@ -149,7 +162,7 @@ export function parseModelReply(value, step) {
   }
   if (!data || typeof data !== 'object') return null;
 
-  const allowed = step === 'debate' ? ['aristotle'] : STEPS[step].speakers;
+  const allowed = step === 'debate' ? ['aristotle'] : ['aristotle', 'galileo'];
   const messages = (Array.isArray(data.messages) ? data.messages : [])
     .map((/** @type {any} */ m) => ({
       speaker: typeof m?.speaker === 'string' ? m.speaker.toLowerCase().trim() : '',
@@ -194,6 +207,9 @@ function openerFor(step) {
   return STEPS[step].opener.map((m) => ({ ...m }));
 }
 
+const JOINED = { speaker: 'system', text: 'Galileo joined the chat' };
+const LEFT = { speaker: 'system', text: 'Galileo left the chat' };
+
 /**
  * Words that clearly mean "I give up" or "I'm stuck". Used only when the AI
  * is unavailable and cannot classify the message.
@@ -237,36 +253,65 @@ export function advance(input, result) {
 
     if (reason) {
       messages.push(...galileoJoins(reason));
-      next = { step: 'premise', stepTurns: 0, debateTurns };
+      next = { step: 'premise', stepTurns: 0, debateTurns, galileo: true };
     } else {
       next = { ...state, debateTurns };
     }
     return { messages, state: next, passed, joined: reason };
   }
 
-  if (result) messages.push(...result.messages);
-
   if (state.step === 'done') {
-    if (!result) messages.push({ speaker: 'galileo', text: 'Sorry, I lost my train of thought. Could you ask that again?' });
+    if (result) messages.push(...result.messages);
+    else messages.push({ speaker: 'galileo', text: 'Sorry, I lost my train of thought. Could you ask that again?' });
     return { messages, state: { ...state, stepTurns: state.stepTurns + 1 }, passed, joined: null };
   }
 
-  if (result?.stepDone) {
+  const passedNow = Boolean(result?.stepDone);
+  if (passedNow || revealDue(state)) {
+    // Progress. Galileo (if here) says his piece and steps out; the next
+    // question comes from Aristotle. For the final reflection he comes back.
     passed.push(state.step);
     const step = nextStep(state.step);
+    let galileo = state.galileo;
+    if (passedNow) {
+      const reply = /** @type {NonNullable<typeof result>} */ (result).messages;
+      messages.push(...(galileo ? reply : reply.filter((m) => m.speaker !== 'galileo')));
+    } else {
+      if (result) messages.push(...result.messages);
+      if (!galileo) messages.push(JOINED);
+      galileo = true;
+      messages.push({ speaker: 'galileo', text: `Let's put it together. ${STEPS[state.step].reveal}` });
+    }
+    if (step === 'method') {
+      if (!galileo) messages.push(JOINED);
+      galileo = true;
+    } else if (galileo) {
+      const leave = STEPS[state.step].leave;
+      if (leave) messages.push({ speaker: 'galileo', text: leave });
+      messages.push(LEFT);
+      galileo = false;
+    }
     messages.push(...openerFor(step));
-    next = { ...state, step, stepTurns: 0 };
-  } else if (revealDue(state)) {
-    passed.push(state.step);
-    messages.push({ speaker: 'galileo', text: `Let's put it together. ${STEPS[state.step].reveal}` });
-    const step = nextStep(state.step);
-    messages.push(...openerFor(step));
-    next = { ...state, step, stepTurns: 0 };
-  } else {
-    if (!result) messages.push({ speaker: 'galileo', text: hintFor(state) });
-    next = { ...state, stepTurns: state.stepTurns + 1 };
+    return { messages, state: { ...state, step, stepTurns: 0, galileo }, passed, joined: null };
   }
-  return { messages, state: next, passed, joined: null };
+
+  // Not yet: Galileo is (or comes back) here with a hint.
+  if (result) {
+    const firstGalileo = result.messages.findIndex((m) => m.speaker === 'galileo');
+    const reply = [...result.messages];
+    if (firstGalileo < 0) reply.push({ speaker: 'galileo', text: hintFor(state) });
+    if (!state.galileo) reply.splice(reply.findIndex((m) => m.speaker === 'galileo'), 0, JOINED);
+    messages.push(...reply);
+  } else {
+    if (!state.galileo) messages.push(JOINED, { speaker: 'galileo', text: `${RETURN_LINE} ${hintFor(state)}` });
+    else messages.push({ speaker: 'galileo', text: hintFor(state) });
+  }
+  return {
+    messages,
+    state: { ...state, stepTurns: state.stepTurns + 1, galileo: true },
+    passed,
+    joined: state.galileo ? null : 'return',
+  };
 }
 
 /**
@@ -278,7 +323,7 @@ export function helpTurn(input) {
   if (state.step === 'debate') {
     return {
       messages: [{ speaker: 'aristotle', text: ARISTOTLE_ON_HELP }, ...galileoJoins('asked')],
-      state: { step: 'premise', stepTurns: 0, debateTurns: state.debateTurns },
+      state: { step: 'premise', stepTurns: 0, debateTurns: state.debateTurns, galileo: true },
       passed: [],
       joined: 'asked',
     };

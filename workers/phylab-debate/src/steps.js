@@ -7,9 +7,9 @@
  * Edit wording here; keep the step ids unchanged — the lab page uses them.
  */
 
-export const PROMPT_VERSION = 'debate-aristotle-v1';
+export const PROMPT_VERSION = 'debate-aristotle-v2';
 
-/** Steps after Galileo joins, in order. */
+/** Steps after Galileo first joins, in order. */
 export const STEP_ORDER = [
   'premise',
   'slower',
@@ -83,15 +83,23 @@ export const ENTRANCE = {
 /** Aristotle's line when the student presses the help button before Galileo joins. */
 export const ARISTOTLE_ON_HELP = 'Calling for help already? Very well, bring anyone you like. The stones will still obey me.';
 
+
 /* ------------------------------------------------------------------ */
-/* Steps after Galileo joins                                           */
+/* Steps after Galileo first joins                                     */
 /* ------------------------------------------------------------------ */
+//
+// Galileo is a helper, not a host. He stays only while the student needs him:
+// - he joins when the student is stuck, gives a wrong answer, or presses @Galileo;
+// - as soon as the student passes a step he says one line and leaves;
+// - the next question comes from Aristotle, who walks into the trap himself;
+// - he comes back for the final reflection (method) and stays to the end.
 
 /**
  * @typedef {{speaker: 'aristotle' | 'galileo', text: string, image?: string}} ScriptMessage
  * @typedef {{
- *   speakers: Array<'aristotle' | 'galileo'>,
  *   card: string,
+ *   onPass: {galileo: string, aristotle: string},
+ *   leave: string,
  *   hints: [string, string, string],
  *   reveal: string,
  *   opener: ScriptMessage[],
@@ -101,29 +109,30 @@ export const ARISTOTLE_ON_HELP = 'Calling for help already? Very well, bring any
 /** @type {Record<string, Step>} */
 export const STEPS = {
   premise: {
-    speakers: ['galileo', 'aristotle'],
     opener: [
       {
         speaker: 'galileo',
         text: "Here is a strange first move: let's agree that Aristotle's rule is TRUE, just for now. In one short sentence, what exactly is his rule about weight and falling?",
       },
     ],
-    card: `CURRENT STEP: premise (Galileo has just joined)
-Allowed speakers: galileo, aristotle.
+    card: `CURRENT STEP: premise
+The student says Aristotle's rule as a clear rule we can test.
 
-Goal: the student states Aristotle's rule as a clear rule we can test: heavier bodies fall faster (best: speed grows with weight, twice as heavy falls twice as fast).
-Galileo has just asked the student to say the rule in one sentence, and to treat it as true for now.
+Goal: heavier bodies fall faster (best: speed grows with weight, twice as heavy falls twice as fast).
+The student has been asked to say the rule in one sentence, and to treat it as true for now.
 
 PASS (step_done = true) if the student says, in any words, that by Aristotle's rule heavier things fall faster, or that falling speed depends on weight.
 NOT YET (step_done = false):
-- The student argues that the rule is wrong, without stating it. Galileo: we will test it, but first we must take the rule seriously and say exactly what it claims.
-- The student states the opposite ("all things fall together"). Galileo: that may be your view, but what is ARISTOTLE's rule?
-- The student is unsure or silent: use the hint.
+- The student argues that the rule is wrong, without stating it: we will test it, but first we must take the rule seriously and say exactly what it claims.
+- The student states the opposite ("all things fall together"): that may be your view, but what is ARISTOTLE's rule?
+- Unsure or silent: use the hint.
 
-student_move labels: "pass", "argue", "stuck", "off_topic".
-
-If step_done is true: Galileo praises that the rule is now clear, and says that pretending it is true is the first move of a thought experiment. Aristotle may add one proud line agreeing ("Exactly. Twice as heavy, twice as fast."). Do NOT ask a new question; the next question is added automatically.
-If step_done is false: Aristotle may add one short line only if it fits. Galileo ends with the hint below as a question.`,
+student_move labels: "pass", "argue", "stuck", "off_topic".`,
+    onPass: {
+      galileo: 'say the rule is now clear, and that pretending it is true is the first move of a thought experiment',
+      aristotle: 'proudly agrees: twice as heavy, twice as fast',
+    },
+    leave: "Now ask him this: what happens if you tie a heavy stone and a light stone together? I'll step back. You can do this.",
     hints: [
       'Look back at what Aristotle said. In one short sentence, what is his rule about weight and speed?',
       "Fill the gap: 'According to Aristotle, the ___ a body is, the ___ it falls.'",
@@ -133,36 +142,36 @@ If step_done is false: Aristotle may add one short line only if it fits. Galileo
   },
 
   slower: {
-    speakers: ['galileo', 'aristotle'],
     opener: [
       {
-        speaker: 'galileo',
-        text: 'Now imagine two stones. By Aristotle\'s rule, the heavy one falls at speed 8 and the light one at speed 4.',
+        speaker: 'aristotle',
+        text: 'Tie my stones together? A strange idea, but very well. By my rule, the heavy stone falls at speed 8 and the light stone at speed 4.',
         image: 'stones',
       },
       {
-        speaker: 'galileo',
-        text: 'I tie them together with a short rope and drop them. Think only about the light stone first: does it speed up the heavy stone, or hold it back?',
+        speaker: 'aristotle',
+        text: 'Now they are tied with a short rope. You tell me, young one: does the light stone speed up the heavy one, or hold it back?',
         image: 'tied',
       },
     ],
     card: `CURRENT STEP: slower (first line of reasoning)
-Allowed speakers: galileo, aristotle.
+Setup the student can see: heavy stone falls at speed 8, light stone at speed 4 (by Aristotle's rule). They are tied together with a short rope and dropped. Aristotle has just asked whether the light stone speeds up the heavy one or holds it back.
 
-Setup the student can see: heavy stone falls at speed 8, light stone at speed 4 (by Aristotle's rule). They are tied together with a short rope and dropped.
 Goal: the student concludes that the tied pair falls SLOWER than 8 (somewhere between 4 and 8), because the slow light stone holds back (drags, brakes) the heavy stone, and the heavy stone pulls the light one along.
 
 PASS (step_done = true) if the student says any of: the pair is slower than 8; between 4 and 8; about 6 or "the average"; the light stone slows, drags, pulls back or holds back the heavy stone.
 NOT YET (step_done = false):
-- "Faster, because together they are heavier" or "12": praise it as a very good idea to keep for later, but ask them to think only about the light stone pulling on the heavy stone first.
-- "Same speed" or "8": ask which stone wants to go faster, and what happens to the rope between them.
-- "4": ask whether the heavy stone would really be slowed all the way down to the light one's speed, or whether it would also pull the light one along.
+- "Faster, because together they are heavier" or "12": a very good idea to keep for later, but first think only about the light stone pulling on the heavy stone.
+- "Same speed" or "8": which stone wants to go faster, and what happens to the rope between them?
+- "4": would the heavy stone really be slowed all the way down to the light one's speed, or would it also pull the light one along?
 - Unsure or silent: use the hint.
 
-student_move labels: "pass", "faster_idea", "argue", "stuck", "off_topic".
-
-If step_done is true: Galileo praises the reasoning (name what was good) and asks the student to remember "slower than 8". Aristotle agrees happily, because this is his own logic ("Of course, the slow one holds back the fast one."). Do NOT ask a new question; the next question is added automatically.
-If step_done is false: Galileo ends with the hint below as a question. Aristotle stays quiet unless the student argues with him.`,
+student_move labels: "pass", "faster_idea", "argue", "stuck", "off_topic".`,
+    onPass: {
+      galileo: 'name what was good in the reasoning and ask the student to remember "slower than 8"',
+      aristotle: 'agrees happily, because this is his own logic (the slow one holds back the fast one), and feels his rule is safe',
+    },
+    leave: "Remember that answer. I'll step back again; keep pushing him.",
     hints: [
       'The heavy stone wants to go at 8. The light stone only wants 4. If a fast runner is tied to a slow runner, what happens to the fast runner?',
       'The rope gets tight, and the slow stone pulls back on the fast one. So is the pair faster or slower than 8?',
@@ -172,30 +181,30 @@ If step_done is false: Galileo ends with the hint below as a question. Aristotle
   },
 
   faster: {
-    speakers: ['galileo', 'aristotle'],
     opener: [
       {
-        speaker: 'galileo',
-        text: 'Remember: slower than 8. Now look at the SAME pair in another way. The two stones tied together are one body. Is that body heavier or lighter than the heavy stone alone?',
+        speaker: 'aristotle',
+        text: 'Anything else, young one? Look at the tied pair as one body, if you like. Is it heavier or lighter than my heavy stone alone, and what does my rule say about that?',
       },
     ],
     card: `CURRENT STEP: faster (second line of reasoning)
-Allowed speakers: galileo, aristotle.
+The student already concluded: the tied pair is slower than 8. Aristotle, feeling safe, has just invited the student to look at the pair as one body.
 
-The student already concluded: the tied pair is slower than 8.
 Goal: the student concludes that the tied pair, as one body, is HEAVIER than the heavy stone alone, so by Aristotle's own rule it must fall FASTER than 8 (for example 12).
 
 PASS (step_done = true) only if the student says the pair falls faster than 8 (or "12", or "faster because it is heavier").
 NOT YET (step_done = false):
-- The student says only "heavier" without speed: praise it, then ask what Aristotle's rule says about a heavier body's speed.
-- The student repeats "slower than 8": agree that was one way of looking, but now ask them to look at the pair as one heavy body and use Aristotle's rule.
-- The student says "lighter": ask them to imagine putting both stones on a scale together.
+- The student says only "heavier" without speed: good, now what does Aristotle's rule say about a heavier body's speed?
+- The student repeats "slower than 8": that was one way of looking; now look at the pair as one heavy body and use Aristotle's rule.
+- The student says "lighter": imagine putting both stones on a scale together.
 - Unsure or silent: use the hint.
 
-student_move labels: "pass", "heavier_only", "argue", "stuck", "off_topic".
-
-If step_done is true: Galileo praises the student for using Aristotle's own rule. Aristotle agrees at first ("Naturally, a heavier body falls faster.") and then starts to feel uneasy ("...wait."). Do NOT ask a new question; the next question is added automatically.
-If step_done is false: Galileo ends with the hint below as a question.`,
+student_move labels: "pass", "heavier_only", "argue", "stuck", "off_topic".`,
+    onPass: {
+      galileo: "praise the student for using Aristotle's own rule against him",
+      aristotle: 'agrees at first ("Naturally, a heavier body falls faster.") and then starts to feel uneasy ("...wait.")',
+    },
+    leave: 'You turned his own rule on him. Keep going; I am watching.',
     hints: [
       'Put both stones on a scale together. Do they weigh more or less than the heavy stone alone?',
       "The pair is heavier than the heavy stone. Now use Aristotle's own rule: a heavier body falls ___?",
@@ -205,30 +214,30 @@ If step_done is false: Galileo ends with the hint below as a question.`,
   },
 
   contradiction: {
-    speakers: ['galileo', 'aristotle'],
     opener: [
       {
-        speaker: 'galileo',
-        text: 'So we have two answers for the SAME pair of stones, and both come from Aristotle\'s rule. Answer 1: slower than 8. Answer 2: faster than 8. What do you notice?',
+        speaker: 'aristotle',
+        text: 'Wait. You said this pair falls slower than 8, and now faster than 8, both from my own rule. What are you trying to show me?',
         image: 'contradiction',
       },
     ],
     card: `CURRENT STEP: contradiction
-Allowed speakers: galileo, aristotle.
+The student has derived from Aristotle's rule both: the tied pair is slower than 8, AND the tied pair is faster than 8. Aristotle, uneasy, has just asked what the student is trying to show.
 
-The student has derived from Aristotle's rule both: the tied pair is slower than 8, AND the tied pair is faster than 8.
-Goal: the student sees that these two answers cannot both be true (a contradiction), so the starting rule must be wrong.
+Goal: the student says these two answers cannot both be true (a contradiction), so the starting rule must be wrong.
 
 PASS (step_done = true) if the student says the two answers contradict, cannot both be true, are impossible together, or "the rule is wrong / Aristotle's rule fails".
 NOT YET (step_done = false):
-- The student picks one answer ("it is slower"): ask whether the other answer was also reasoned from the same rule.
-- The student says "maybe it is exactly 8": praise it as a clever idea, then ask whether 8 fits Aristotle's rule for a body heavier than the heavy stone.
+- The student picks one answer ("it is slower"): was the other answer also reasoned from the same rule?
+- The student says "maybe it is exactly 8": clever, but does 8 fit Aristotle's rule for a body heavier than the heavy stone?
 - Unsure or silent: use the hint.
 
-student_move labels: "pass", "picks_one", "argue", "stuck", "off_topic".
-
-If step_done is true: Galileo praises the student for finding the contradiction and says this is the heart of a thought experiment. Aristotle is shaken ("Both from my own rule? This troubles me."). Do NOT ask a new question; the next part is added automatically.
-If step_done is false: Galileo ends with the hint below as a question.`,
+student_move labels: "pass", "picks_one", "argue", "stuck", "off_topic".`,
+    onPass: {
+      galileo: 'praise the student for finding the contradiction, the heart of a thought experiment',
+      aristotle: 'is shaken ("Both from my own rule? This troubles me.")',
+    },
+    leave: 'That is the heart of it. Watch out, he will try to escape. I will let you answer him.',
     hints: [
       'Can one pair of stones fall slower than 8 and faster than 8 at the same time?',
       'Both answers came from the same rule. If a rule gives two answers that fight each other, what does that tell you about the rule?',
@@ -238,33 +247,29 @@ If step_done is false: Galileo ends with the hint below as a question.`,
   },
 
   objection: {
-    speakers: ['galileo', 'aristotle'],
     opener: [
       {
         speaker: 'aristotle',
-        text: 'Wait! I have an answer. Two stones on a rope are not ONE body. They are two bodies. So my rule is safe!',
-      },
-      {
-        speaker: 'galileo',
-        text: 'A clever escape. Can you answer him? Does the rope really change anything?',
+        text: 'Ha! I have an answer. Two stones on a rope are not ONE body. They are two bodies. So my rule is safe! Can you answer that?',
       },
     ],
     card: `CURRENT STEP: objection (Aristotle tries to escape)
-Allowed speakers: galileo, aristotle.
-
 Aristotle has just said: two stones tied by a rope are two bodies, not one body, so his rule is safe.
-Goal: the student closes this loophole. Good answers include: glue them, melt them, or tie them very tightly into one body; any single stone could be seen as two halves joined together; the rope does not change the weight; nature does not care how we count bodies; a body does not know if it is "one" or "two".
+
+Goal: the student closes this loophole. Good answers include: glue them, melt them, or tie them very tightly into one body; any single stone could be seen as two halves joined together; the rope does not change the weight; a body does not know if it is "one" or "two".
 
 PASS (step_done = true) if the student gives any reason why the "two bodies" excuse fails, or turns the pair into one body (glue, weld, melt, tight rope, one stone made of two halves).
 NOT YET (step_done = false):
-- The student agrees with Aristotle: ask what would happen if we glued the stones so they became one stone.
+- The student agrees with Aristotle: what would happen if we glued the stones so they became one stone?
 - The student only says "no" with no reason: ask for a reason.
 - Unsure or silent: use the hint.
 
-student_move labels: "pass", "agrees_aristotle", "argue", "stuck", "off_topic".
-
-If step_done is true: Aristotle has no reply left and admits the loophole is closed (one short, gracious line). Galileo praises the student's answer. Do NOT ask a new question; the next question is added automatically.
-If step_done is false: Aristotle may defend once more in one short line. Galileo ends with the hint below as a question.`,
+student_move labels: "pass", "agrees_aristotle", "argue", "stuck", "off_topic".`,
+    onPass: {
+      galileo: "praise the student's answer to the escape",
+      aristotle: 'has no reply left and admits, graciously, that the escape is closed',
+    },
+    leave: 'He is out of escapes. Finish it yourself!',
     hints: [
       'What if we glue the two stones together, so they really become one stone?',
       'Think about any ordinary stone. Could you see it as two halves stuck together? Would it suddenly fall at a different speed?',
@@ -274,30 +279,30 @@ If step_done is false: Aristotle may defend once more in one short line. Galileo
   },
 
   conclusion: {
-    speakers: ['galileo', 'aristotle'],
     opener: [
       {
-        speaker: 'galileo',
-        text: "So the rule 'heavier falls faster' leads to nonsense. Then what IS true? What speed could the tied pair have, so that there is no contradiction at all?",
+        speaker: 'aristotle',
+        text: 'Then my rule leads to nonsense. So what IS true, clever one? How fast does the tied pair fall, if there is to be no contradiction at all?',
       },
     ],
     card: `CURRENT STEP: conclusion
-Allowed speakers: galileo, aristotle.
+The rule "heavier falls faster" has been destroyed by a contradiction. Aristotle has just asked what is true instead.
 
-The rule "heavier falls faster" has been destroyed by a contradiction.
 Goal: the student states the new rule: weight does not decide how fast a body falls. Heavy and light bodies fall at the same rate (if air does not get in the way). Then the tied pair also falls at that same speed, and there is no contradiction.
 
 PASS (step_done = true) if the student says all bodies fall at the same speed / same rate / together, or that falling speed does not depend on weight, or that the pair falls at the same speed as each stone.
 NOT YET (step_done = false):
-- The student says "8" or "between 4 and 8": ask which starting speeds for the two stones would make tying them change nothing at all.
-- The student says "the light one falls faster": ask whether that would also give a contradiction if we tie them.
-- The student talks about air: praise it and say we will come back to air, but first: without air, what must be true about heavy and light stones?
+- The student says "8" or "between 4 and 8": which starting speeds for the two stones would make tying them change nothing at all?
+- The student says "the light one falls faster": would that also give a contradiction if we tie them?
+- The student talks about air: good, we will come back to air, but first: without air, what must be true about heavy and light stones?
 - Unsure or silent: use the hint.
 
-student_move labels: "pass", "partial", "argue", "stuck", "off_topic".
-
-If step_done is true: Galileo praises the student warmly and repeats the new rule in one sentence (without air, heavy and light bodies fall together). Do NOT ask a new question; the next part is added automatically.
-If step_done is false: Galileo ends with the hint below as a question.`,
+student_move labels: "pass", "partial", "argue", "stuck", "off_topic".`,
+    onPass: {
+      galileo: 'praise warmly and repeat the new rule in one sentence (without air, heavy and light bodies fall together)',
+      aristotle: 'accepts it, thoughtfully, but still wonders about his feather',
+    },
+    leave: '',
     hints: [
       'If tying the stones together changes nothing, then the pair falls at the same speed as each stone. What does that say about the heavy stone and the light stone?',
       'There is only one way the pair is neither slower nor faster than the heavy stone: both stones already fall at the same speed. So does weight decide falling speed?',
@@ -307,11 +312,11 @@ If step_done is false: Galileo ends with the hint below as a question.`,
   },
 
   method: {
-    speakers: ['galileo', 'aristotle'],
     opener: [
       {
         speaker: 'galileo',
-        text: "And Aristotle's feather? Air pushes hard on a light, wide feather and slows it down. Take the air away, like in a glass tube with no air, and a feather and a coin fall side by side.",
+        text: "Bravo! I watched the whole thing. And Aristotle's feather? Air pushes hard on a light, wide feather. Pump the air out of a glass tube, and a feather and a coin fall side by side.",
+        image: 'tube',
       },
       {
         speaker: 'aristotle',
@@ -319,12 +324,10 @@ If step_done is false: Galileo ends with the hint below as a question.`,
       },
       {
         speaker: 'galileo',
-        text: 'You won with no lab and no tools, only your mind. That is called a thought experiment. In your own words: what steps did we follow to win?',
+        text: 'You won with no lab and no tools, only your mind. That is called a thought experiment. In your own words: what steps did you follow to win?',
       },
     ],
-    card: `CURRENT STEP: method (reflection)
-Allowed speakers: galileo, aristotle.
-
+    card: `CURRENT STEP: method (reflection; Galileo has come back to wrap up)
 Goal: the student describes the method of the thought experiment in their own words. The five key ideas are:
 (a) assume the opponent's rule is true;
 (b) imagine a simple, ideal situation (two stones tied together);
@@ -335,24 +338,25 @@ Goal: the student describes the method of the thought experiment in their own wo
 PASS (step_done = true) if the student mentions at least 3 of the 5 ideas, in any words or order. Very short words count (for example "assume, imagine, contradiction" is 3 ideas).
 NOT YET (step_done = false): name what the student already got right, then ask about ONE missing idea using the hint. If they have 2 ideas, ask about the most important missing one (usually (a) or (d)).
 
-student_move labels: "pass", "partial", "stuck", "off_topic".
-
-If step_done is true: Galileo praises the summary in one or two sentences. Aristotle may add one gracious line. Do NOT ask a new question; the ending is added automatically.
-If step_done is false: Galileo ends with the hint below as a question.`,
+student_move labels: "pass", "partial", "stuck", "off_topic".`,
+    onPass: {
+      galileo: 'praise the summary in one or two sentences',
+      aristotle: 'adds one gracious line',
+    },
+    leave: '',
     hints: [
       "Start at the very beginning. What did we do with Aristotle's rule before we tested it?",
-      "Look at the notebook beside the chat. After we imagined the tied stones, what did we find when we reasoned in two ways?",
-      'We assumed his rule was true, imagined tied stones, reasoned two ways, found a contradiction, and so rejected the rule. Can you say these steps in your own short words?',
+      'Look at the notebook beside the chat. After you imagined the tied stones, what did you find when you reasoned in two ways?',
+      'You assumed his rule was true, imagined tied stones, reasoned two ways, found a contradiction, and so rejected the rule. Can you say these steps in your own short words?',
     ],
-    reveal: 'We assumed his rule was true, imagined a simple case, reasoned two ways, found a contradiction, and so rejected the rule.',
+    reveal: 'You assumed his rule was true, imagined a simple case, reasoned two ways, found a contradiction, and so rejected the rule.',
   },
 
   done: {
-    speakers: ['galileo', 'aristotle'],
     opener: [
       {
         speaker: 'galileo',
-        text: 'Here is your method, the same one I used: take the other side\'s rule as true, imagine a simple case, reason it two ways, find the contradiction, close the loopholes, and reject the rule. You can use it on any claim.',
+        text: "Here is your method, the same one I used: take the other side's rule as true, imagine a simple case, reason it two ways, find the contradiction, close the loopholes, and reject the rule. You can use it on any claim.",
         image: 'method',
       },
       {
@@ -361,12 +365,13 @@ If step_done is false: Galileo ends with the hint below as a question.`,
       },
     ],
     card: `CURRENT STEP: done (the debate is won; free questions)
-Allowed speakers: galileo, aristotle.
-
 The student has won. Answer any short follow-up question about falling bodies or thought experiments in 1 or 2 short messages. Galileo answers physics questions simply and correctly (air resistance, why a feather is slow, falling in a tube with no air). Aristotle may joke kindly about losing. If the student wants another challenge, Galileo suggests trying the same method on another claim, for example "a heavier ball rolls down a slope faster".
 
 student_move labels: "question", "chat", "off_topic".
-step_done is always false.`,
+step_done is always false.
+Allowed speakers: galileo, aristotle.`,
+    onPass: { galileo: '', aristotle: '' },
+    leave: '',
     hints: [
       'Ask us anything about falling bodies or thought experiments.',
       'Ask us anything about falling bodies or thought experiments.',
@@ -376,5 +381,5 @@ step_done is always false.`,
   },
 };
 
-/** Preset praise used when the AI is unavailable but a step is revealed. */
-export const REVEAL_PREFIX = "Let's put it together.";
+/** Galileo's first words when he comes back mid-lesson to help. */
+export const RETURN_LINE = "I'm back. Let me help a little.";

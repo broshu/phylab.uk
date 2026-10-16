@@ -25,8 +25,9 @@ test('normalizeInput rejects junk and clamps state', () => {
   assert.equal(n.transcript.length, 0);
 });
 
-test('payload carries the shared rules, the step card and the hint', () => {
-  const p = buildPayload(input('slower'), 'deepseek-flash');
+test('payload carries the shared rules, the step card, presence and the hint', () => {
+  const p = buildPayload(input('slower', { galileo: false }), 'deepseek-flash');
+  assert.match(p.messages[0].content, /Galileo is NOT here/);
   assert.equal(p.model, 'deepseek-flash');
   assert.deepEqual(p.thinking, { type: 'disabled' });
   assert.match(p.messages[0].content, /Aristotle/);
@@ -54,19 +55,54 @@ test('debate: Galileo joins after the turn limit even if the student keeps argui
   assert.equal(advance(input('debate', { debateTurns: 5 }), parsed).joined, 'stalemate');
 });
 
-test('passing a step appends the next opener', () => {
-  const out = advance(input('slower'), { move: 'pass', stepDone: true, messages: [{ speaker: 'galileo', text: 'Yes!' }] });
+test('passing a step: Galileo says one line and leaves, Aristotle asks next', () => {
+  const out = advance(input('slower', { galileo: true }), { move: 'pass', stepDone: true, messages: [{ speaker: 'galileo', text: 'Yes!' }] });
   assert.deepEqual(out.passed, ['slower']);
   assert.equal(out.state.step, 'faster');
+  assert.equal(out.state.galileo, false);
+  assert.ok(out.messages.some((m) => m.text === 'Galileo left the chat'));
+  assert.equal(out.messages.at(-1).speaker, 'aristotle');
   assert.match(out.messages.at(-1).text, /heavier or lighter/);
+});
+
+test('passing while Galileo is away keeps him away and drops his lines', () => {
+  const out = advance(input('faster', { galileo: false }), {
+    move: 'pass', stepDone: true,
+    messages: [{ speaker: 'aristotle', text: 'Naturally... wait.' }, { speaker: 'galileo', text: 'Great!' }],
+  });
+  assert.equal(out.state.galileo, false);
+  assert.ok(!out.messages.some((m) => m.speaker === 'galileo' || m.speaker === 'system'));
+});
+
+test('a wrong answer while Galileo is away brings him back with a hint', () => {
+  const out = advance(input('faster', { galileo: false }), {
+    move: 'stuck', stepDone: false,
+    messages: [{ speaker: 'aristotle', text: 'Hmm?' }, { speaker: 'galileo', text: 'Scale?' }],
+  });
+  assert.equal(out.state.galileo, true);
+  assert.deepEqual(out.messages.map((m) => m.speaker), ['aristotle', 'system', 'galileo']);
+  assert.equal(out.joined, 'return');
+});
+
+test('Galileo comes back for the final reflection', () => {
+  const out = advance(input('conclusion', { galileo: false }), { move: 'pass', stepDone: true, messages: [{ speaker: 'aristotle', text: 'I see.' }] });
+  assert.equal(out.state.step, 'method');
+  assert.equal(out.state.galileo, true);
+  assert.ok(out.messages.some((m) => m.text === 'Galileo joined the chat'));
 });
 
 test('after three failed tries Galileo reveals and moves on', () => {
   const fail = { move: 'stuck', stepDone: false, messages: [{ speaker: 'galileo', text: 'Nice try.' }] };
-  assert.equal(advance(input('faster', { stepTurns: 1 }), fail).state.stepTurns, 2);
-  const out = advance(input('faster', { stepTurns: 3 }), fail);
+  assert.equal(advance(input('faster', { stepTurns: 1, galileo: true }), fail).state.stepTurns, 2);
+  const out = advance(input('faster', { stepTurns: 3, galileo: true }), fail);
   assert.equal(out.state.step, 'contradiction');
   assert.ok(out.messages.some((m) => /put it together/.test(m.text)));
+});
+
+test('help while Galileo is away calls him back without the AI', () => {
+  const out = helpTurn(input('objection', { galileo: false }));
+  assert.equal(out.state.galileo, true);
+  assert.equal(out.messages[0].text, 'Galileo joined the chat');
 });
 
 test('the whole lesson can be finished with the help button alone', () => {
