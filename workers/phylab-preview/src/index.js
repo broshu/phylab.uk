@@ -4,10 +4,9 @@
 //   /api/...   desk actions; every change is a commit in the repository
 import hubHTML from './hub.html';
 import { TOPICS } from './literature.js';
-import { fetchRaw, listBranches, validBranch } from './github.js';
-import { log, pipelineStatus, work } from './jobs.js';
-import { DEFAULT_PROFILE } from './collect.js';
-import { addNote, approve, expire, loadDesk, publicDesk, reject, restore, saveProfile, setFeatured } from './store.js';
+import { fetchRaw, listBranches, recentCommits, validBranch } from './github.js';
+import { DEFAULT_PROFILE, addNote, approve, expire, loadDesk, publicDesk, reject, restore, saveProfile, setFeatured } from './store.js';
+import { REVIEW_DIR } from './reviewfile.js';
 
 const BRANCH_COOKIE = 'pv_branch';
 const YEAR = 60 * 60 * 24 * 400;
@@ -118,11 +117,8 @@ const ids = list => (Array.isArray(list) ? list : []).slice(0, 50).map(id);
 
 async function api(request, env, ctx, url, branch) {
   if (request.method === 'GET' && url.pathname === '/api/desk') {
-    const [desk, pipeline, activity] = await Promise.all([
-      loadDesk(env), pipelineStatus(env.PREVIEW_DB),
-      env.PREVIEW_DB.prepare('SELECT at, kind, message FROM activity ORDER BY id DESC LIMIT 12').all(),
-    ]);
-    return json({ ...publicDesk(desk), pipeline, activity: activity.results, repo: env.GITHUB_REPO || 'broshu/phylab.uk' });
+    const [desk, activity] = await Promise.all([loadDesk(env), recentCommits(env, REVIEW_DIR).catch(() => [])]);
+    return json({ ...publicDesk(desk), activity, repo: env.GITHUB_REPO || 'broshu/phylab.uk' });
   }
   if (request.method === 'GET' && url.pathname === '/api/branches') return json({ branches: await listBranches(env), current: branch });
   if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
@@ -135,24 +131,20 @@ async function api(request, env, ctx, url, branch) {
   if (raw.length > 64 * 1024) return json({ error: 'Too large' }, 413);
   let body;
   try { body = raw ? JSON.parse(raw) : {}; } catch { return json({ error: 'Bad JSON' }, 400); }
-  const db = env.PREVIEW_DB;
   switch (url.pathname) {
     case '/api/approve': {
       const by = reviewer(body);
       const out = await approve(env, { id: id(body.id), choice: body.choice, by, reason: text(body.reason, 300) });
-      ctx.waitUntil(log(db, 'approve', `${by} 收录了 ${body.id}`));
       return json({ ok: true, ...out });
     }
     case '/api/reject': {
       const by = reviewer(body);
       const out = await reject(env, { id: id(body.id), by, reason: text(body.reason, 300) });
-      ctx.waitUntil(log(db, 'reject', `${by} 放弃了 ${body.id}${body.reason ? `：${text(body.reason, 60)}` : ''}`));
       return json({ ok: true, ...out });
     }
     case '/api/restore': {
       const by = reviewer(body);
       const out = await restore(env, { id: id(body.id), by });
-      ctx.waitUntil(log(db, 'restore', `${by} 撤销了对 ${body.id} 的决定`));
       return json({ ok: true, ...out });
     }
     case '/api/note': {
@@ -168,8 +160,6 @@ async function api(request, env, ctx, url, branch) {
     }
     case '/api/profile':
       return json({ ok: true, ...(await saveProfile(env, { profile: cleanProfile(body.profile), by: reviewer(body) })) });
-    case '/api/work':
-      return json(await work(env, { force: Boolean(body.force), budget: 6 }));
     default:
       return json({ error: 'Not found' }, 404);
   }
@@ -199,9 +189,5 @@ export default {
       if (url.pathname.startsWith('/api/')) return json({ error: error.message }, error.status || 500);
       return new Response(`出错了：${error.message}`, { status: 500, headers: { ...BASE_HEADERS, 'Content-Type': 'text/plain; charset=utf-8' } });
     }
-  },
-
-  async scheduled(event, env, ctx) {
-    ctx.waitUntil(work(env, { budget: 30 }).catch(error => console.error('scheduled work failed', error)));
   },
 };

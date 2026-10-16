@@ -2,11 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import worker, { resolvePath, cleanProfile } from '../src/index.js';
-import { parseApsFeed, fromCrossref, usable, invertedToText, collectionPlan, DEFAULT_PROFILE } from '../src/collect.js';
 import { addToCatalog, removeFromCatalog, expiredEntries } from '../src/literature.js';
-import { parseScreen, parseDraft, screenPrompt } from '../src/ai.js';
-import { parseReview, serializeReview, paperFromDraft, catalogEntry, PENDING_DIR, DONE_DIR } from '../src/reviewfile.js';
+import { parseReview, serializeReview, catalogEntry, PENDING_DIR, DONE_DIR } from '../src/reviewfile.js';
 import { approve, reject, restore, addNote, setFeatured, expire, loadDesk, publicDesk } from '../src/store.js';
+import { recentCommits } from '../src/github.js';
 import { validateCatalog } from '../../../literature/core.mjs';
 import { validBranch } from '../src/github.js';
 import { fakeGitHub } from './fake-github.mjs';
@@ -15,21 +14,21 @@ const root = new URL('../../../', import.meta.url);
 const catalogText = await readFile(new URL('literature/data/papers.json', root), 'utf8');
 const template = await readFile(new URL('literature/review/TEMPLATE.md', root), 'utf8');
 
-const meta = {
-  doi: '10.1103/physrevphyseducres.22.020999', title: 'AI feedback and independent transfer in high-school mechanics labs',
-  authors: ['Ada Lovelace', 'Grace Hopper'], year: 2026, published_date: '2026-10-02',
-  source: 'Physical Review Physics Education Research', url: 'https://doi.org/10.1103/physrevphyseducres.22.020999', abstract: 'We studied two classes.',
-};
-const draft = parseDraft({
-  topics: ['ai', 'transfer', 'not-a-topic'], evidence_type: 'Quasi-experiment', reading_priority: 'core',
+const paper = {
+  id: 'lovelace-2026-feedback-independent-transfer', status: 'pending',
+  title: 'AI feedback and independent transfer in high-school mechanics labs', authors: ['Ada Lovelace', 'Grace Hopper'],
+  year: 2026, published_date: '2026-10-02', source: 'Physical Review Physics Education Research',
+  doi: '10.1103/physrevphyseducres.22.020999', url: 'https://doi.org/10.1103/physrevphyseducres.22.020999',
+  added: '2026-10-16', proposed_by: 'ChatGPT', score: 5, topics: ['ai', 'transfer'], reading_priority: 'core',
+  evidence_type: 'Quasi-experiment', featured: false, finding: 'A', decision: null, notes: [],
+  why: '紧扣 AI 与迁移。', summary: '一项准实验。',
   findings: [{ en: 'Students given AI feedback scored higher on the lab task.', zh: '得到 AI 反馈的学生实验得分更高。' },
     { en: 'In a quasi-experiment with two classes, AI feedback improved lab scores but not later independent transfer.', zh: '两个班的准实验。' }],
-  phd_relevance_en: 'Use this study to separate supported performance from independent transfer.', phd_relevance_zh: '区分支持下表现与独立迁移。',
-  reading_recommendation_en: 'Read the design and the transfer test sections.',
-  limitations_en: 'Two intact classes and a short follow-up limit the claims about transfer.',
-  summary_zh: '一项准实验。',
-});
-const paper = paperFromDraft(meta, draft, { id: 'lovelace-2026-feedback-independent-transfer', added: '2026-10-16', proposed_by: 'DeepSeek (test)', score: 5, reason_zh: '紧扣 AI 与迁移。' });
+  phd_relevance: { en: 'Use this study to separate supported performance from independent transfer.', zh: '区分支持下表现与独立迁移。' },
+  reading_recommendation: { en: 'Read the design and the transfer test sections.', zh: '' },
+  limitations: { en: 'Two intact classes and a short follow-up limit the claims about transfer.', zh: '' },
+  abstract: 'We studied two classes.',
+};
 const env = { GITHUB_TOKEN: 't', GITHUB_REPO: 'broshu/phylab.uk', GITHUB_BRANCH: 'main' };
 
 test('review files round-trip', () => {
@@ -63,7 +62,7 @@ test('hand-written files are read tolerantly', () => {
 
 test('catalogue entry passes the site check', () => {
   const entry = catalogEntry({ ...paper, finding: 'B', featured: true }, '2026-10-16');
-  assert.equal(entry.key_finding_en, draft.findings[1].en);
+  assert.equal(entry.key_finding_en, paper.findings[1].en);
   const next = JSON.parse(addToCatalog(catalogText, entry, '2026-10-16'));
   assert.deepEqual(validateCatalog(next), []);
   assert.throws(() => addToCatalog(catalogText, { ...entry, url: 'http://x' }, '2026-10-16'), /HTTPS/);
@@ -136,39 +135,6 @@ test('directory URLs and unsafe paths', () => {
   assert.ok(validBranch('pendulum-mark') && validBranch('feature/x') && !validBranch('../main') && !validBranch(undefined));
 });
 
-test('APS RSS parsing', () => {
-  const xml = `<rdf:RDF><item rdf:about="x"><title>Students&apos; reasoning in &lt;i&gt;labs&lt;/i&gt;</title>
-    <description>&lt;p&gt;We report a study.&lt;/p&gt;</description><dc:creator>A. One, B. Two, and C. Three</dc:creator>
-    <prism:publicationName>Physical Review Physics Education Research</prism:publicationName>
-    <prism:doi>10.1103/abc.1</prism:doi><prism:publicationDate>2026-10-05</prism:publicationDate></item></rdf:RDF>`;
-  const [r] = parseApsFeed(xml);
-  assert.equal(r.title, "Students' reasoning in labs");
-  assert.deepEqual(r.authors, ['A. One', 'B. Two', 'C. Three']);
-  assert.equal(r.abstract, 'We report a study.');
-  assert.throws(() => parseApsFeed('<rss></rss>'));
-});
-
-test('Crossref mapping and filters', () => {
-  const r = fromCrossref({ DOI: '10.1088/1361-6552/AB12', title: ['Low-cost <i>pendulum</i>'], author: [{ given: 'Li', family: 'Wang' }],
-    'container-title': ['Physics Education'], 'published-online': { 'date-parts': [[2026, 9, 20]] }, abstract: '<jats:p>Text</jats:p>' });
-  assert.equal(r.doi, '10.1088/1361-6552/ab12');
-  assert.equal(r.title, 'Low-cost pendulum');
-  assert.ok(usable(r, '2026-09-01', '2026-10-16'));
-  assert.ok(!usable({ ...r, published_date: '2026-08-01' }, '2026-09-01', '2026-10-16'));
-  assert.ok(!usable({ ...r, title: 'Erratum: something' }, '2026-09-01', '2026-10-16'));
-  assert.equal(invertedToText({ world: [1], Hello: [0] }), 'Hello world');
-  assert.ok(collectionPlan(DEFAULT_PROFILE).length < 28, 'one collection fits in a single cron run');
-});
-
-test('AI replies are checked', () => {
-  const scores = parseScreen({ results: [{ i: 0, score: 5, reason_zh: '好' }, { i: 7, score: 4 }, { i: 1, score: 9 }] }, 2);
-  assert.deepEqual([...scores.keys()], [0]);
-  assert.deepEqual(draft.topics, ['ai', 'transfer']);
-  assert.throws(() => parseDraft({ findings: [{ en: '中文' }, { en: 'x' }] }));
-  const { system } = screenPrompt(DEFAULT_PROFILE, { rejected: [{ title: 'Off topic', reason: '离题' }], approved: ['Good one'] }, [meta]);
-  assert.match(system, /REJECTED[\s\S]*Off topic/);
-});
-
 test('papers older than two years', () => {
   const catalog = { papers: [
     { id: 'old', title: 'Old', source: 'J', published_date: '2024-10-01', year: 2024, reading_priority: 'core' },
@@ -195,11 +161,29 @@ test('public desk, guarded writes', async () => {
   assert.match(await home.text(), /论文筛选/);
   const cross = await worker.fetch(new Request('https://preview.phylab.uk/api/reject', { method: 'POST', headers: { Origin: 'https://evil.example' }, body: '{}' }), env, ctx);
   assert.equal(cross.status, 403);
-  const anon = await worker.fetch(new Request('https://preview.phylab.uk/api/reject', { method: 'POST', headers: { Origin: 'https://preview.phylab.uk' }, body: JSON.stringify({ id: 'x' }) }),
-    { ...env, PREVIEW_DB: null }, ctx);
+  const anon = await worker.fetch(new Request('https://preview.phylab.uk/api/reject', { method: 'POST', headers: { Origin: 'https://preview.phylab.uk' }, body: JSON.stringify({ id: 'x' }) }), env, ctx);
   assert.equal(anon.status, 400);
   assert.match((await anon.json()).error, /名字/);
   const limited = await worker.fetch(new Request('https://preview.phylab.uk/api/reject', { method: 'POST', headers: { Origin: 'https://preview.phylab.uk' }, body: '{}' }),
     { ...env, WRITE_LIMIT: { limit: async () => ({ success: false }) } }, ctx);
   assert.equal(limited.status, 429);
+});
+
+test('a duplicate id is refused with a clear message', () => {
+  const existing = JSON.parse(catalogText).papers[0].id;
+  assert.throws(() => addToCatalog(catalogText, catalogEntry({ ...paper, id: existing, doi: '10.1/new' }, '2026-10-16'), '2026-10-16'), /换一个 id/);
+});
+
+test('activity comes from commits', async () => {
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async url => {
+    assert.match(String(url), /commits\?sha=main&path=literature%2Freview&per_page=12/);
+    return Response.json([{ html_url: 'https://github.com/x', author: { login: 'chatgpt-bot' }, commit: { message: 'Literature review: 3 new candidates\n\nFrom ChatGPT', author: { name: 'ChatGPT', date: '2026-10-16T08:00:00Z' }, committer: { date: '2026-10-16T08:00:01Z' } } }]);
+  };
+  try {
+    const [c] = await recentCommits(env, 'literature/review');
+    assert.equal(c.author, 'ChatGPT');
+    assert.equal(c.message, 'Literature review: 3 new candidates');
+    assert.equal(c.body, 'From ChatGPT');
+  } finally { globalThis.fetch = realFetch; }
 });

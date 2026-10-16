@@ -140,3 +140,17 @@ export async function transact(env, wanted, change) {
   }
   return { commit: null };
 }
+
+/** Recent commits touching a folder: the desk's activity feed. */
+export async function recentCommits(env, path, count = 12) {
+  const url = `${API}/repos/${repoOf(env).full}/commits?sha=${encodeURIComponent(branchOf(env))}&path=${encodeURIComponent(path)}&per_page=${count}`;
+  const response = await fetch(url, { headers: headers(env, { Accept: 'application/vnd.github+json' }) });
+  if (!response.ok) throw new Error(`GitHub ${response.status} listing commits`);
+  return (await response.json()).map(c => ({
+    at: c.commit.committer?.date || c.commit.author?.date,
+    author: c.commit.author?.name || c.author?.login || '',
+    message: c.commit.message.split('\n')[0],
+    body: c.commit.message.split('\n').slice(1).join(' ').trim().slice(0, 200),
+    url: c.html_url,
+  }));
+}

@@ -10,18 +10,6 @@ export function shanghaiDate(now = new Date()) {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
 }
 
-/** Stable id like the existing ones: first author's surname, year, a few title words. */
-export function makeId(meta, taken = new Set()) {
-  const surname = (meta.authors?.[0] || 'anon').split(/\s+/).pop();
-  const words = (meta.title || '').toLowerCase().normalize('NFKD').replace(/[^a-z0-9\s]/g, ' ').split(/\s+/)
-    .filter(w => w.length > 3 && !['with', 'from', 'that', 'this', 'their', 'into', 'using', 'study', 'about'].includes(w)).slice(0, 3);
-  const base = [surname, meta.year, ...words].join('-').toLowerCase().normalize('NFKD')
-    .replace(/[^a-z0-9-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') || 'paper';
-  let id = base, n = 2;
-  while (taken.has(id)) id = `${base}-${n++}`;
-  return id;
-}
-
 function serialize(catalog) {
   return JSON.stringify(catalog, null, 2) + '\n';
 }
@@ -35,7 +23,7 @@ export function addToCatalog(text, entry, today) {
   const catalog = JSON.parse(text);
   if (entry.doi && catalog.papers.some(p => normalizeDOI(p.doi || '') === entry.doi)) return null;
   const ids = new Set(catalog.papers.map(p => p.id));
-  if (ids.has(entry.id)) entry = { ...entry, id: makeId({ ...entry }, ids) };
+  if (ids.has(entry.id)) throw new Error(`网站上已经有 id 为 ${entry.id} 的论文，请换一个 id（文件名也要改）`);
   const next = { ...catalog, updated_at: today, papers: [...catalog.papers, entry] };
   check(next);
   return serialize(next);

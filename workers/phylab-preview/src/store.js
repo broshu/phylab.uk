@@ -7,8 +7,34 @@
 import { DONE_DIR, PENDING_DIR, REVIEW_DIR, catalogEntry, parseReview, serializeReview } from './reviewfile.js';
 import { CATALOG_PATH, addToCatalog, expiredEntries, removeFromCatalog, shanghaiDate } from './literature.js';
 import { readRepo, transact } from './github.js';
-import { DEFAULT_PROFILE } from './collect.js';
 import { PRIORITIES, TOPICS, normalizeDOI } from '../../../literature/core.mjs';
+
+// Reviewing criteria. Whoever adds candidates (ChatGPT, another AI, a person) reads them from profile.json.
+export const DEFAULT_PROFILE = {
+  topics: ['hands-on', 'simulation', 'ai', 'transfer', 'assessment', 'icap', 'scaffolding', 'cognitive-load', 'visualization'],
+  keywords: [
+    'physics laboratory learning', 'physics simulation learning transfer', 'artificial intelligence physics teaching',
+    'AI tutor physics', 'physics assessment instrument', 'scaffolding physics problem solving',
+    'augmented reality physics', 'video analysis physics experiment', 'low-cost physics apparatus',
+    'physics olympiad problem solving', 'secondary school physics teaching',
+  ],
+  journals: [
+    { name: 'Physical Review Physics Education Research', issn: '2469-9896', on: true, physics: true },
+    { name: 'American Journal of Physics', issn: '0002-9505', on: true, physics: true },
+    { name: 'The Physics Teacher', issn: '0031-921X', on: true, physics: true },
+    { name: 'European Journal of Physics', issn: '0143-0807', on: true, physics: true },
+    { name: 'Physics Education', issn: '0031-9120', on: true, physics: true },
+    { name: 'International Journal of Science Education', issn: '0950-0693', on: true, physics: false },
+    { name: 'Journal of Research in Science Teaching', issn: '0022-4308', on: true, physics: false },
+    { name: 'Science Education', issn: '0036-8326', on: true, physics: false },
+    { name: 'Research in Science Education', issn: '0157-244X', on: true, physics: false },
+    { name: 'Journal of Science Education and Technology', issn: '1059-0145', on: true, physics: false },
+    { name: 'Computers & Education', issn: '0360-1315', on: true, physics: false },
+  ],
+  notes: 'Secondary-school (Grades 10-12) physics teaching. Most interested in AI-supported learning (AI tutors, AI feedback, AI solutions to physics problems), hands-on and low-cost experiments, video and frame-stacking visualisation, AR, simulations, and whether learning transfers to independent work.',
+  threshold: 4,
+  window_days: 45,
+};
 
 export const PROFILE_PATH = `${REVIEW_DIR}/profile.json`;
 export const KEPT_PATH = `${REVIEW_DIR}/kept-old.json`;

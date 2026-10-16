@@ -2,15 +2,16 @@
 
 待筛选的论文。每篇论文一个 Markdown 文件，在 <https://preview.phylab.uk> 上筛选，也可以直接在这里用任何编辑器或 AI 修改。
 
-This folder is the review queue for the Literature section of phylab.uk. It is read and written by the review desk at <https://preview.phylab.uk> (`workers/phylab-preview`), and anyone (or any AI) can add or edit files here directly, then commit and push.
+This folder is the review queue for the Literature section of phylab.uk. The review desk at <https://preview.phylab.uk> (`workers/phylab-preview`) reads it live from `main`, so a file pushed here shows up on the desk at once. New candidates are added by an AI task (see `CHATGPT.md`) or by hand; reviewers decide on the desk.
 
 ```
 literature/review/
   pending/<id>.md     papers waiting for a decision
   done/<id>.md        approved or rejected papers, with who decided and why
-  profile.json        interest profile for the weekly search (topics, keywords, journals, notes, threshold)
+  profile.json        reviewing criteria the proposing AI reads first (topics, keywords, journals, notes, threshold)
   kept-old.json       ids of catalogue entries older than two years that should stay
   TEMPLATE.md         copy this to add a paper by hand
+  CHATGPT.md          instructions to paste into the AI task that proposes papers
 ```
 
 The published catalogue is still `literature/data/papers.json`. Approving a paper on the desk adds its entry there and moves its file from `pending/` to `done/` in the same commit. Undoing moves it back.
@@ -33,7 +34,7 @@ YAML front matter, then `##` sections. The desk ignores sections it does not kno
 | `title`, `authors`, `year`, `source`, `doi`, `url` | yes | `authors` is a list. `doi` is bare (`10.xxxx/...`). `url` is HTTPS. |
 | `published_date` | if known | `YYYY-MM-DD`. Leave out rather than guess. |
 | `added` | yes | Date the file was created. |
-| `proposed_by` | yes | Who found it: a person, `DeepSeek (...)`, `Claude`, `ChatGPT`, … |
+| `proposed_by` | yes | Who found it: `ChatGPT`, `Claude`, a person's name, … |
 | `score` | no | 1–5 relevance from whoever proposed it. |
 | `topics` | yes | Any of `hands-on`, `simulation`, `ai`, `transfer`, `assessment`, `icap`, `scaffolding`, `cognitive-load`, `visualization`. |
 | `reading_priority` | yes | `core` (必读), `read` (精读) or `skim` (浏览). |

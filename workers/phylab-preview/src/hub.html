@@ -50,10 +50,8 @@
   .pill.solid { background: var(--site-green); border-color: var(--site-green); color: var(--site-on-accent); }
   .pill.solid:hover { background: var(--site-green-hover); }
   .status { font-size: 13px; color: var(--site-muted); margin-top: 8px; }
-  .progress { display: none; align-items: center; gap: 10px; background: var(--site-surface-tint); border-radius: var(--radius); padding: 10px 14px; margin-bottom: 18px; font-size: 14px; }
-  .progress.on { display: flex; }
-  .spinner { width: 14px; height: 14px; border: 2px solid var(--site-green); border-right-color: transparent; border-radius: 50%; animation: spin 0.9s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
+  .fresh { display: none; width: 100%; text-align: left; align-items: center; gap: 10px; background: var(--site-surface-tint); border: 1px solid var(--site-green); border-radius: var(--radius); padding: 10px 14px; margin-bottom: 18px; font-size: 14px; cursor: pointer; color: var(--ink); }
+  .fresh.on { display: flex; }
 
   .filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 18px; }
   .filters button { border: 1px solid var(--site-border-soft); background: transparent; border-radius: 999px; padding: 5px 13px; font-size: 14px; cursor: pointer; color: var(--site-muted); }
@@ -121,7 +119,7 @@
   .slip.decided .editable { display: none; }
   .slip.decided { background: color-mix(in srgb, var(--site-surface) 70%, var(--site-bg)); }
   .slip.decided .body { padding-bottom: 70px; }
-  @media (prefers-reduced-motion: reduce) { .stamp.land, .spinner { animation: none; } }
+  @media (prefers-reduced-motion: reduce) { .stamp.land { animation: none; } }
 
   /* Lists */
   .row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--site-border-soft); }
@@ -160,7 +158,7 @@
     <nav class="tabs" role="tablist" aria-label="版块">
       <button role="tab" data-tab="papers" aria-selected="true">论文筛选</button>
       <button role="tab" data-tab="site" aria-selected="false">网站预览</button>
-      <button role="tab" data-tab="settings" aria-selected="false">兴趣设置</button>
+      <button role="tab" data-tab="settings" aria-selected="false">筛选标准</button>
     </nav>
     <button class="me empty" id="me" type="button">填写名字</button>
   </div>
@@ -171,12 +169,11 @@
     <div class="head">
       <div>
         <h1>论文筛选</h1>
-        <p class="lede">每周自动从期刊找新论文，AI 先筛一遍、写好笔记。勾选主题，选一句关键发现，然后收录或放弃。收录的论文会出现在 phylab.uk 的 Literature 里。</p>
+        <p class="lede">新论文放进 GitHub 的 literature/review/pending/ 后会自动出现在这里。勾选主题，选一句关键发现，然后收录或放弃。收录的论文大约一分钟后出现在 phylab.uk 的 Literature 里。</p>
         <div class="status" id="status">正在读取…</div>
       </div>
-      <button class="pill" id="collect" type="button">立即找新论文</button>
     </div>
-    <div class="progress" id="progress"><span class="spinner"></span><span id="progress-text"></span></div>
+    <button class="fresh" id="fresh" type="button"></button>
     <div class="filters" role="group" aria-label="筛选">
       <button data-filter="pending" aria-pressed="true">待筛选<span class="n" id="n-pending"></span></button>
       <button data-filter="approved" aria-pressed="false">已收录<span class="n" id="n-approved"></span></button>
@@ -205,7 +202,7 @@
   </section>
 
   <section data-panel="settings" hidden>
-    <div class="head"><div><h1>兴趣设置</h1><p class="lede">每周找论文时用这些设置。改动会保存到 GitHub 的 literature/review/profile.json。</p></div></div>
+    <div class="head"><div><h1>筛选标准</h1><p class="lede">保存在 GitHub 的 literature/review/profile.json。ChatGPT 每次找新论文前先读这里，再参考大家收录和放弃的记录。</p></div></div>
     <div id="settings"></div>
   </section>
 </main>
@@ -339,9 +336,9 @@ function slip(p) {
     h('div', {}, h('p', { text: f.en }), f.zh ? h('p', { class: 'zh', text: f.zh }) : null)));
 
   el.append(
-    h('div', { class: 'margin', title: 'AI 打分，满分 5' }, h('b', { text: p.score || '–' }), h('span', { text: '相关度' })),
+    h('div', { class: 'margin', title: '推荐者给的相关度，满分 5' }, h('b', { text: p.score || '–' }), h('span', { text: '相关度' })),
     h('div', { class: 'body' },
-      h('div', { class: 'src', text: [p.published_date || p.year, p.source].filter(Boolean).join('　') }),
+      h('div', { class: 'src', text: [p.published_date || p.year, p.source, p.proposed_by ? `${p.proposed_by} 推荐` : ''].filter(Boolean).join('　') }),
       h('h2', {}, h('a', { href: p.url || `https://doi.org/${p.doi}`, target: '_blank', rel: 'noopener' }, p.title)),
       h('p', { class: 'authors', text: p.authors.slice(0, 6).join(', ') + (p.authors.length > 6 ? ` 等 ${p.authors.length} 人` : '') }),
       p.summary ? h('p', { class: 'brief', text: p.summary }) : null,
@@ -435,8 +432,7 @@ function renderList() {
     const broken = desk.pending.filter(p => p.broken);
     const ok = desk.pending.filter(p => !p.broken);
     if (!ok.length) {
-      const busy = desk.pipeline.busy;
-      list.replaceChildren(empty(busy ? 'AI 正在读新论文' : '都筛完了', busy ? '读完会出现在这里，可以先去做别的。' : '下次每周自动找新论文后会出现在这里。'));
+      list.replaceChildren(empty('都筛完了', 'ChatGPT 下次把新论文放进 GitHub 后，会自动出现在这里。'));
     } else list.replaceChildren(...ok.map(slip));
     for (const p of broken) list.append(h('p', { class: 'msg err', text: `${p.path} 格式有误：${p.broken}` }));
   } else if (filter === 'expired') {
@@ -447,13 +443,16 @@ function renderList() {
   }
 }
 
+function when(iso) {
+  return new Date(iso).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
+}
 function renderStatus() {
-  const pl = desk.pipeline;
   const parts = [`网站已收录 ${desk.published} 篇`];
-  if (pl.last_collect) parts.push(`上次找新论文 ${pl.last_collect}`);
-  if (pl.counts.skipped) parts.push(`AI 累计过滤掉 ${pl.counts.skipped} 篇不相关`);
-  $('#status').textContent = parts.join('，');
-  $('#log').replaceChildren(...desk.activity.map(a => h('div', {}, h('time', { text: new Date(a.at).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }) }), a.message)));
+  const latest = desk.activity[0];
+  if (latest) parts.push(`最近一次更新：${latest.author}，${when(latest.at)}`);
+  $('#status').textContent = parts.join('　');
+  $('#log').replaceChildren(...(desk.activity.length ? desk.activity.map(a => h('div', {}, h('time', { text: when(a.at) }), `${a.author}　`, h('a', { href: a.url, target: '_blank', rel: 'noopener', text: a.message })))
+    : [h('div', { text: '还没有记录。' })]));
 }
 
 function renderSettings() {
@@ -464,7 +463,7 @@ function renderSettings() {
     clearTimeout(timer);
     timer = setTimeout(async () => {
       saved.className = 'msg'; saved.textContent = '保存中…';
-      try { await act('/api/profile', { profile: p }); saved.textContent = '已保存，下次找新论文时生效。'; }
+      try { await act('/api/profile', { profile: p }); saved.textContent = '已保存到 GitHub。'; }
       catch (err) { saved.className = 'msg err'; saved.textContent = err.message; }
     }, 700);
   };
@@ -475,14 +474,14 @@ function renderSettings() {
   const add = () => { const v = kwIn.value.trim(); if (v && !p.keywords.includes(v)) { p.keywords.push(v); drawKw(); save(); } kwIn.value = ''; };
   kwIn.addEventListener('keydown', e => { if (e.key === 'Enter') add(); });
   $('#settings').replaceChildren(
-    h('div', { class: 'panel' }, h('h3', { text: '关心的主题' }), h('p', { text: 'AI 打分时优先这些主题。' }),
+    h('div', { class: 'panel' }, h('h3', { text: '关心的主题' }), h('p', { text: '优先推荐这些主题的论文。' }),
       Object.entries(desk.topics).map(([k, label]) => h('label', { class: 'check' }, h('input', { type: 'checkbox', checked: p.topics.includes(k), on: { change: e => { p.topics = e.target.checked ? [...p.topics, k] : p.topics.filter(t => t !== k); save(); } } }), label))),
-    h('div', { class: 'panel' }, h('h3', { text: '搜索关键词' }), h('p', { text: '在所有期刊里按关键词搜索，点击删除。' }), kw, h('div', { class: 'addrow' }, kwIn, h('button', { class: 'pill', type: 'button', on: { click: add } }, '添加'))),
-    h('div', { class: 'panel' }, h('h3', { text: '期刊' }), h('p', { text: '这些期刊的新文章每周都会看一遍。' }),
+    h('div', { class: 'panel' }, h('h3', { text: '搜索关键词' }), h('p', { text: '在所有期刊里按这些关键词搜索。点击可删除。' }), kw, h('div', { class: 'addrow' }, kwIn, h('button', { class: 'pill', type: 'button', on: { click: add } }, '添加'))),
+    h('div', { class: 'panel' }, h('h3', { text: '期刊' }), h('p', { text: '每次更新都要看一遍这些期刊的新文章。' }),
       p.journals.map(j => h('label', { class: 'check' }, h('input', { type: 'checkbox', checked: j.on, on: { change: e => { j.on = e.target.checked; save(); } } }), j.name))),
-    h('div', { class: 'panel' }, h('h3', { text: '给 AI 的说明' }), h('p', { text: '你在研究什么、想读什么样的论文。英文效果更好。' }),
+    h('div', { class: 'panel' }, h('h3', { text: '给 ChatGPT 的说明' }), h('p', { text: '你在研究什么、想读什么样的论文。' }),
       h('textarea', { style: 'min-height:110px', on: { input: e => { p.notes = e.target.value; save(); } } }, p.notes)),
-    h('div', { class: 'panel' }, h('h3', { text: '推荐门槛' }), h('p', { text: 'AI 打几分以上的论文才进入筛选。' }),
+    h('div', { class: 'panel' }, h('h3', { text: '推荐门槛' }), h('p', { text: '相关度几分以上的论文才放进待筛选。' }),
       h('select', { on: { change: e => { p.threshold = Number(e.target.value); save(); } } },
         [[5, '5 分：只要最相关的'], [4, '4 分以上（推荐）'], [3, '3 分以上：宽一点']].map(([v, t]) => h('option', { value: v, selected: p.threshold === v }, t)))),
     saved);
@@ -503,32 +502,25 @@ async function refresh() {
   counts(); renderStatus(); renderList(); renderSettings();
 }
 
-let running = false;
-async function run(force) {
-  if (running) return;
-  running = true;
-  const bar = $('#progress'), text = $('#progress-text'), btn = $('#collect');
-  btn.disabled = true; bar.classList.add('on'); text.textContent = '开始…';
+// Check GitHub every two minutes while the page is open. New papers are announced,
+// not inserted, so nobody loses ticks they have not submitted yet.
+async function poll() {
+  if (document.hidden || !desk) return;
   try {
-    let first = force;
-    for (let i = 0; i < 80; i++) {
-      const r = await api('/api/work', { force: first });
-      first = false;
-      const c = r.counts;
-      if (r.warning) { text.textContent = 'AI 密钥还没设置好，暂时不能筛选。'; break; }
-      text.textContent = r.collecting ? '正在从期刊数据库找新论文…' : c.new ? `AI 正在初筛，还剩 ${c.new} 篇` : c.screened ? `AI 正在写笔记，还剩 ${c.screened} 篇` : c.drafted ? '正在保存到 GitHub…' : '完成';
-      if (!r.busy || !r.done.length) break;
-    }
-    await refresh();
-  } catch (err) { text.textContent = err.message; }
-  finally { running = false; btn.disabled = false; setTimeout(() => bar.classList.remove('on'), 2500); }
+    const next = await api('/api/desk');
+    const known = new Set(desk.pending.map(p => p.id));
+    const added = next.pending.filter(p => !known.has(p.id)).length;
+    if (added) { const btn = $('#fresh'); btn.textContent = `有 ${added} 篇新论文，点这里刷新`; btn.classList.add('on'); }
+  } catch {}
 }
-$('#collect').addEventListener('click', () => run(true));
+$('#fresh').addEventListener('click', async () => { $('#fresh').classList.remove('on'); await refresh(); });
+setInterval(poll, 120000);
+document.addEventListener('visibilitychange', poll);
 
 showMe();
 const startTab = location.hash.slice(1);
 if (['site', 'settings'].includes(startTab)) document.querySelector(`.tabs [data-tab="${startTab}"]`).click();
-refresh().then(() => { if (desk.pipeline.busy) run(false); }).catch(err => { $('#status').textContent = err.message; });
+refresh().catch(err => { $('#status').textContent = err.message; });
 </script>
 </body>
 </html>

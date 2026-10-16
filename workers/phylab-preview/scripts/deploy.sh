@@ -1,20 +1,13 @@
 #!/bin/sh
 # Deploy command for Cloudflare Workers Builds (`npm run deploy`).
-# DEEPSEEK_API_KEY and GITHUB_TOKEN are build secrets in the dashboard; they
-# are copied to the Worker's runtime secrets on every deploy, the same way as
-# phylab-debate. The D1 schema is applied first (it is idempotent).
+# GITHUB_TOKEN is a build secret in the dashboard; it is copied to the
+# Worker's runtime secret on every deploy, the same way as phylab-debate.
 set -eu
-npx wrangler d1 migrations apply phylab-preview --remote || echo "Could not apply D1 migrations (the schema is idempotent and may already exist)."
+if [ -z "${GITHUB_TOKEN:-}" ]; then
+  echo "GITHUB_TOKEN build secret not set; deploying without updating it."
+  exec npx wrangler deploy
+fi
 secrets=$(mktemp --suffix=.env)
 trap 'rm -f "$secrets"' EXIT
-: > "$secrets"
-for name in DEEPSEEK_API_KEY GITHUB_TOKEN OPENALEX_API_KEY; do
-  value=$(printenv "$name" || true)
-  if [ -n "$value" ]; then printf '%s=%s\n' "$name" "$value" >> "$secrets"; fi
-done
-if [ -s "$secrets" ]; then
-  npx wrangler deploy --secrets-file "$secrets"
-else
-  echo "No build secrets set; deploying without updating secrets."
-  npx wrangler deploy
-fi
+printf 'GITHUB_TOKEN=%s\n' "$GITHUB_TOKEN" > "$secrets"
+npx wrangler deploy --secrets-file "$secrets"

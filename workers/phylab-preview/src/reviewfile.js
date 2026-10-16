@@ -116,38 +116,6 @@ export function serializeReview(paper) {
   return `---\n${stringifyYAML(front, { lineWidth: 0 }).trim()}\n---\n\n${body}`;
 }
 
-/** Build a paper object from collected metadata plus an AI draft. */
-export function paperFromDraft(meta, draft, extra) {
-  return {
-    id: extra.id,
-    status: 'pending',
-    title: meta.title,
-    authors: meta.authors,
-    year: meta.year,
-    published_date: meta.published_date,
-    source: meta.source,
-    doi: meta.doi,
-    url: meta.url,
-    added: extra.added,
-    proposed_by: extra.proposed_by,
-    score: extra.score,
-    topics: draft.topics,
-    reading_priority: draft.priority,
-    evidence_type: draft.evidence_type,
-    featured: false,
-    finding: 'A',
-    decision: null,
-    notes: [],
-    why: extra.reason_zh || '',
-    summary: draft.summary_zh || '',
-    findings: draft.findings,
-    phd_relevance: { en: draft.phd_relevance_en, zh: draft.phd_relevance_zh },
-    reading_recommendation: { en: draft.reading_recommendation_en, zh: draft.reading_recommendation_zh },
-    limitations: { en: draft.limitations_en, zh: draft.limitations_zh },
-    abstract: meta.abstract || '',
-  };
-}
-
 /** Catalogue entry for literature/data/papers.json. */
 export function catalogEntry(paper, today) {
   const finding = paper.findings[paper.finding === 'B' ? 1 : 0] || paper.findings[0] || { en: '', zh: '' };
