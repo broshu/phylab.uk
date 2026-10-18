@@ -1,20 +1,31 @@
 ---
-id: "guerrero-zambrano-2026-socratic-kinematics"
-status: "pending"
-title: "Effects of generative AI-mediated socratic dialogue on preservice physics teachers’ critical thinking in kinematics"
-authors: ["Marcos Guerrero-Zambrano","Bryan Valarezo-Chamba","Leonor Sanchez-Alvarado","Erick Lamilla-Rubio"]
+id: guerrero-zambrano-2026-socratic-kinematics
+status: pending
+title: Effects of generative AI-mediated socratic dialogue on preservice physics teachers’ critical thinking in kinematics
+authors:
+  - Marcos Guerrero-Zambrano
+  - Bryan Valarezo-Chamba
+  - Leonor Sanchez-Alvarado
+  - Erick Lamilla-Rubio
 year: 2026
-published_date: "2026-09-25"
-source: "Physical Review Physics Education Research"
-doi: "10.1103/x7vq-17rq"
-url: "https://journals.aps.org/prper/abstract/10.1103/x7vq-17rq"
-added: "2026-10-18"
-proposed_by: "ChatGPT"
+published_date: 2026-09-25
+source: Physical Review Physics Education Research
+doi: 10.1103/x7vq-17rq
+url: https://journals.aps.org/prper/abstract/10.1103/x7vq-17rq
+added: 2026-10-18
+proposed_by: ChatGPT
 score: 5
-topics: ["ai","scaffolding","cognitive-load","assessment"]
-reading_priority: "core"
-evidence_type: "Mixed-methods sequential within-group preexperimental study"
-featured: false
+topics:
+  - ai
+  - scaffolding
+  - cognitive-load
+  - assessment
+reading_priority: core
+evidence_type: Mixed-methods sequential within-group preexperimental study
+notes:
+  - by: ChatGPT
+    at: 2026-10-18 13:45
+    text: 来源核验与写回测试（2026-10-18）：已核对 APS 官方题名、作者、发布日期及 DOI。摘要显示固定顺序设计，不能把改善单独归因于 AI；全文尚未精读。保留待筛选，由你决定是否收录。
 ---
 
 ## Why recommended
