@@ -95,8 +95,14 @@ const els = {
 let state;
 let busy = false;
 
+function newSession() {
+  try { return crypto.randomUUID(); } catch { return `s${Date.now().toString(36)}${Math.random().toString(36).slice(2, 12)}`; }
+}
+
 function freshState() {
   return {
+    // Random id of this chat; the server uses it to keep the turns of one chat together.
+    session: newSession(),
     lesson: { condition: GROUP, step: 'debate', stepTurns: 0, debateTurns: 0, galileo: GROUP === 'guided' },
     log: OPENING.map((m) => ({ ...m })),
     passed: [],
@@ -117,6 +123,7 @@ function load() {
         const old = saved.log[i];
         if (old && old.speaker === m.speaker && old.text === m.text) old.image = m.image;
       });
+      if (!saved.session) saved.session = newSession();
       return saved;
     }
   } catch { /* ignore */ }
@@ -357,7 +364,7 @@ async function turn(type, message) {
     const res = await fetch(API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type, message, state: state.lesson, transcript: history }),
+      body: JSON.stringify({ type, message, session: state.session, state: state.lesson, transcript: history }),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();

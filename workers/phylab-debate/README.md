@@ -64,7 +64,20 @@ Steps: `debate` → `premise` → `slower` → `faster` → `contradiction` →
 
 `type: "help"` is the help/hint button. The response holds `messages`, the new
 `state`, the steps just `passed`, and `mode` (`ai` or `preset`). The page keeps
-the state; the Worker stores nothing.
+the state.
+
+## Saved turns
+
+Every turn is saved to the D1 database `phylab-debate-records` (binding `DB`,
+table `turns`) for later analysis: time, chat `session` (a random id the page
+makes for each new chat), prompt version, group, step and Galileo presence
+before and after, the student's message, the model's `move` and `step_done`,
+the steps passed, every reply line, and token use. Saving runs after the reply
+and never blocks or breaks it. One chat in order:
+
+```sql
+SELECT * FROM turns WHERE session = ? ORDER BY id;
+```
 
 `GET /health` reports whether the key is set.
 

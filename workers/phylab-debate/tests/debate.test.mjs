@@ -330,3 +330,21 @@ test('both groups show the same pictures at the same steps', () => {
     assert.deepEqual(b, a, step);
   }
 });
+
+test('Worker saves each turn with its chat session', async () => {
+  const rows = [];
+  const DB = { prepare: () => ({ bind: (...v) => ({ run: async () => rows.push(v) }) }) };
+  const waits = [];
+  const ctx = { waitUntil: (p) => waits.push(p) };
+  const req = new Request('https://w.dev/debate', {
+    method: 'POST',
+    headers: { Origin: ORIGIN, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ type: 'help', session: 'abc12345-test', state: { step: 'faster', galileo: false }, transcript: [] }),
+  });
+  const res = await worker.fetch(req, { ...env, DB }, ctx);
+  assert.equal(res.status, 200);
+  await Promise.all(waits);
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0][1], 'abc12345-test');
+  assert.equal(rows[0][10], '@Galileo');
+});

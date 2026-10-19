@@ -11,5 +11,8 @@
     "AI_MODEL": "deepseek-flash",
     "ALLOWED_ORIGINS": "https://phylab.uk,https://www.phylab.uk,https://preview.phylab.uk"
   },
+  "d1_databases": [
+    { "binding": "DB", "database_name": "phylab-debate-records", "database_id": "0edff5ae-1d72-498d-8f30-9a23cb5aeb05" }
+  ],
   "observability": { "enabled": true, "logs": { "enabled": true, "head_sampling_rate": 1 } }
 }

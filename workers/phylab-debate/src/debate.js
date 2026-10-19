@@ -44,7 +44,7 @@ const CJK = /[぀-ヿ㐀-鿿가-힯＀-￯]/;
 /**
  * @typedef {{speaker: string, text?: string, image?: string}} ChatMessage
  * @typedef {{condition: 'debate' | 'guided', step: string, stepTurns: number, helpTurns: number, debateTurns: number, galileo: boolean}} DebateState
- * @typedef {{type: 'turn' | 'help', message: string, toGalileo: boolean, state: DebateState, transcript: ChatMessage[]}} DebateInput
+ * @typedef {{type: 'turn' | 'help', message: string, toGalileo: boolean, session: string, state: DebateState, transcript: ChatMessage[]}} DebateInput
  */
 
 /** @param {unknown} value @param {number} max */
@@ -97,7 +97,10 @@ export function normalizeInput(body) {
     }))
     .filter((item) => item.speaker && item.text);
 
-  return { type, message, toGalileo, state, transcript };
+  // Random id of one chat, made by the page; used only to group the saved turns.
+  const session = typeof raw.session === 'string' && /^[A-Za-z0-9-]{8,64}$/.test(raw.session) ? raw.session : '';
+
+  return { type, message, toGalileo, session, state, transcript };
 }
 
 /** @param {string} step */
