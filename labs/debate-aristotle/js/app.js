@@ -255,8 +255,9 @@ function renderControls() {
   const done = state.lesson.step === 'done';
   els.send.disabled = busy;
   els.input.disabled = busy;
-  // Debate group: after the win, Aristotle answers; @Galileo still calls Galileo.
-  const helpHidden = done && GROUP === 'guided';
+  // Guided group: Galileo is already teaching, so there is no @Galileo button.
+  // Debate group: it stays after the win, so the student can still call Galileo.
+  const helpHidden = GROUP === 'guided';
   els.help.disabled = busy || helpHidden;
   els.help.hidden = helpHidden;
   els.help.textContent = '@Galileo';
