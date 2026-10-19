@@ -7,11 +7,12 @@
  * Edit wording here; keep the step ids unchanged — the lab page uses them.
  */
 
-export const PROMPT_VERSION = 'debate-aristotle-v4';
+export const PROMPT_VERSION = 'debate-aristotle-v5';
 
 /** Steps after Galileo first joins, in order. */
 export const STEP_ORDER = [
   'premise',
+  'tie',
   'slower',
   'faster',
   'contradiction',
@@ -22,6 +23,15 @@ export const STEP_ORDER = [
 ];
 
 export const ALL_STEPS = ['debate', ...STEP_ORDER];
+
+/**
+ * Steps only the debate group takes. In "tie" Aristotle does not suggest the
+ * tied stones himself: he holds his position and the student must come up with
+ * joining the bodies (the textbook is allowed). The guided group goes straight
+ * from premise to slower, where Galileo sets up the stones; a debate student who
+ * already invented the idea in the open debate (spark) skips it too.
+ */
+export const DEBATE_ONLY_STEPS = ['tie'];
 
 /* ------------------------------------------------------------------ */
 /* Step 0 — the open debate (Aristotle only)                           */
@@ -160,16 +170,49 @@ If it passes, student_move is "pass".`,
     reveal: "Aristotle's rule is: the heavier a body, the faster it falls. For now, we will pretend this is true.",
   },
 
+  tie: {
+    opener: [
+      {
+        speaker: 'aristotle',
+        text: 'My rule stands, young one. Read any book you like, it changes nothing: a heavier body falls faster. Break my rule with reasoning alone, if you can.',
+      },
+    ],
+    card: `CURRENT STEP: tie (debate group only: the student must come up with the thought experiment)
+Aristotle's rule has been stated and taken as true for now. Aristotle holds his position and has challenged the student to break the rule by reasoning alone. He does NOT suggest any idea himself. The student may read the textbook.
+
+Goal: the student proposes to imagine joining a heavy and a light body (tie them with a rope, glue them, put them in a bag together), or splitting one body into parts, and asks what Aristotle's rule says about it.
+
+PASS (step_done = true) if the student proposes joining or splitting bodies in their mind, in any words (for example "tie a heavy and a light stone together", "what if we glue them", "cut a stone in half"). The idea may come from the textbook.
+NOT YET (step_done = false). Choose one student_move label:
+- "concede": the student gives up or says the rule cannot be broken. Note: Aristotle talks about one heavy and one light stone; what could you do with them in your mind?
+- "argue": an experiment, air, a book's conclusion, "they land together", or any reason that is not a joined or split body. Aristotle stays firm with his everyday examples and excuses, as in the open debate, and asks for reasoning that breaks his rule.
+- "help": asks for help, or says they are stuck or do not know. Note: use the hint.
+- "off_topic".
+If it passes, student_move is "pass".`,
+    onPass: {
+      galileo: 'praise the idea of joining the stones as the start of a thought experiment',
+      aristotle: 'is surprised but confident ("Tie them together? A strange idea, but my rule fears nothing.")',
+    },
+    leave: "That is the idea. I'll step back; make him follow it.",
+    press: 'Books and drops from towers do not move me, my friend. Every day the heavy body wins. Break my rule with reasoning alone, if you can.',
+    hints: [
+      'Aristotle talks about a heavy stone and a light stone. What could you do with the two stones, only in your mind, to test his rule?',
+      'What if you joined the two stones together, for example with a short rope? Ask Aristotle what his rule says then.',
+      "Try this: tell Aristotle you tie the heavy stone and the light stone together with a short rope, and ask how fast the pair falls by his rule.",
+    ],
+    reveal: "Here is the idea: tie a heavy stone and a light stone together with a short rope, and use Aristotle's own rule on the pair.",
+  },
+
   slower: {
     opener: [
       {
         speaker: 'aristotle',
-        text: 'Very well, let us test my rule with stones. Take my heavy stone and a light stone. By my rule, the heavy stone falls at speed 8 and the light stone at speed 4.',
+        text: 'Very well, let us tie my heavy stone and a light stone together. By my rule, the heavy stone falls at speed 8 and the light stone at speed 4.',
         image: 'stones',
       },
       {
         speaker: 'aristotle',
-        text: 'Now we tie them together with a short rope. You tell me, young one: does the light stone speed up the heavy one, or hold it back?',
+        text: 'The short rope is tight between them. You tell me, young one: does the light stone speed up the heavy one, or hold it back?',
         image: 'tied',
       },
     ],

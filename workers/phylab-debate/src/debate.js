@@ -16,6 +16,7 @@ import {
   ALL_STEPS,
   ARISTOTLE_ON_HELP,
   ARISTOTLE_TAKES_OVER,
+  DEBATE_ONLY_STEPS,
   DEBATE_CARD,
   DEBATE_FALLBACKS,
   ENTRANCE,
@@ -43,7 +44,7 @@ const CJK = /[぀-ヿ㐀-鿿가-힯＀-￯]/;
 
 /**
  * @typedef {{speaker: string, text?: string, image?: string}} ChatMessage
- * @typedef {{condition: 'debate' | 'guided', step: string, stepTurns: number, helpTurns: number, debateTurns: number, galileo: boolean}} DebateState
+ * @typedef {{condition: 'debate' | 'guided', step: string, stepTurns: number, helpTurns: number, debateTurns: number, galileo: boolean, spark?: boolean}} DebateState
  * @typedef {{type: 'turn' | 'help', message: string, toGalileo: boolean, session: string, state: DebateState, transcript: ChatMessage[]}} DebateInput
  */
 
@@ -84,6 +85,8 @@ export function normalizeInput(body) {
     stepTurns: cleanCount(s.stepTurns, 50),
     // Debate group: failed tries in this step while Galileo was helping.
     helpTurns: cleanCount(s.helpTurns, 50),
+    // The student invented the tied stones in the open debate: skip the "tie" step.
+    spark: s.spark === true,
     debateTurns: cleanCount(s.debateTurns, 50),
     // Older pages did not send this; Galileo was always present after joining.
     galileo: condition === 'guided' ? true : step === 'debate' ? false : typeof s.galileo === 'boolean' ? s.galileo : true,
@@ -103,10 +106,21 @@ export function normalizeInput(body) {
   return { type, message, toGalileo, session, state, transcript };
 }
 
-/** @param {string} step */
-export function nextStep(step) {
-  const index = STEP_ORDER.indexOf(step);
-  return index >= 0 && index < STEP_ORDER.length - 1 ? STEP_ORDER[index + 1] : 'done';
+/**
+ * @param {string} step
+ * @param {{condition?: string, spark?: boolean}} [state]
+ */
+export function nextStep(step, state = {}) {
+  let index = STEP_ORDER.indexOf(step);
+  if (index < 0) return 'done';
+  // Skip debate-only steps for the guided group, and "tie" after a spark.
+  while (index < STEP_ORDER.length - 1) {
+    index += 1;
+    const next = STEP_ORDER[index];
+    if (DEBATE_ONLY_STEPS.includes(next) && (state.condition === 'guided' || state.spark)) continue;
+    return next;
+  }
+  return 'done';
 }
 
 /** How many hints Galileo has already given in this step. @param {DebateState} state */
@@ -392,7 +406,7 @@ function advanceStep(input, result) {
       messages.push({ speaker: 'aristotle', text: ARISTOTLE_TAKES_OVER[reason] });
       return {
         messages,
-        state: { ...state, step: 'premise', stepTurns: 0, helpTurns: 0, debateTurns, galileo: false },
+        state: { ...state, step: 'premise', stepTurns: 0, helpTurns: 0, debateTurns, galileo: false, spark: reason === 'spark' },
         passed,
         joined: null,
       };
@@ -417,7 +431,7 @@ function advanceStep(input, result) {
 
   if (passedNow || revealDue(now)) {
     passed.push(state.step);
-    const step = nextStep(state.step);
+    const step = nextStep(state.step, state);
     if (passedNow) {
       const reply = /** @type {NonNullable<typeof result>} */ (result).messages;
       if (!helping) messages.push(...reply.filter((m) => m.speaker !== 'galileo'));
@@ -508,7 +522,7 @@ function advanceGuided(input, result) {
     passed.push(state.step);
     messages.push(...reply);
     if (!passedNow) messages.push({ speaker: 'galileo', text: `Let's put it together. ${STEPS[state.step].reveal}` });
-    const step = nextStep(state.step);
+    const step = nextStep(state.step, state);
     messages.push(...opener(step));
     return { messages, state: { ...state, step, stepTurns: 0 }, passed, joined: null };
   }

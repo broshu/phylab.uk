@@ -217,7 +217,8 @@ function renderNotebook(animateId = null) {
   const started = lessonStarted();
   els.nbEmpty.hidden = started;
   els.nbSteps.hidden = !started;
-  const current = state.lesson.step;
+  // "tie" (debate only: the student proposes the tied stones) belongs to notebook line 2.
+  const current = state.lesson.step === 'tie' ? 'slower' : state.lesson.step;
   els.nbSteps.replaceChildren(
     ...NOTEBOOK.map(([id, label], i) => {
       const li = document.createElement('li');

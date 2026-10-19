@@ -3,7 +3,7 @@ import test from 'node:test';
 
 import worker from '../src/index.js';
 import { advance, buildPayload, guessMove, helpTurn, normalizeInput, parseModelReply } from '../src/debate.js';
-import { STEP_ORDER } from '../src/steps.js';
+import { DEBATE_ONLY_STEPS, STEP_ORDER } from '../src/steps.js';
 
 const ORIGIN = 'https://phylab.uk';
 const env = { DEEPSEEK_API_KEY: 'test-key', ALLOWED_ORIGINS: ORIGIN };
@@ -324,7 +324,7 @@ test('guided: the lesson can be finished with help alone', () => {
 });
 
 test('both groups show the same pictures at the same steps', () => {
-  for (const step of Object.keys(STEPS)) {
+  for (const step of Object.keys(STEPS).filter((s) => !DEBATE_ONLY_STEPS.includes(s))) {
     const a = STEPS[step].opener.map((m) => m.image).filter(Boolean);
     const b = GUIDED_OPENERS[step].map((m) => m.image).filter(Boolean);
     assert.deepEqual(b, a, step);
@@ -347,4 +347,23 @@ test('Worker saves each turn with its chat session', async () => {
   assert.equal(rows.length, 1);
   assert.equal(rows[0][1], 'abc12345-test');
   assert.equal(rows[0][10], '@Galileo');
+});
+
+test('debate: after the premise Aristotle holds his position and the student must propose the tied stones', () => {
+  const out = advance(input('premise', { galileo: false }), { move: 'pass', stepDone: true, messages: [{ speaker: 'aristotle', text: 'Twice as heavy, twice as fast.' }] });
+  assert.equal(out.state.step, 'tie');
+  assert.ok(!/tie my heavy stone/i.test(out.messages.at(-1).text));
+  const argue = advance(input('tie', { galileo: false }), { move: 'argue', stepDone: false, messages: [{ speaker: 'aristotle', text: 'Books do not move me.' }] });
+  assert.deepEqual(argue.messages.map((m) => m.speaker), ['aristotle']);
+  const pass = advance(input('tie', { galileo: false }), { move: 'pass', stepDone: true, messages: [{ speaker: 'aristotle', text: 'A strange idea.' }] });
+  assert.equal(pass.state.step, 'slower');
+});
+
+test('guided group and a debate spark skip the tie step', () => {
+  const guided = advance(normalizeInput({ message: 'x', state: { condition: 'guided', step: 'premise' } }), { move: 'pass', stepDone: true, messages: [{ speaker: 'galileo', text: 'Yes.' }] });
+  assert.equal(guided.state.step, 'slower');
+  const spark = advance(input('debate'), { move: 'thought_experiment', stepDone: false, messages: [{ speaker: 'aristotle', text: 'Tie them?' }] });
+  assert.equal(spark.state.spark, true);
+  const next = advance(normalizeInput({ message: 'x', state: spark.state }), { move: 'pass', stepDone: true, messages: [{ speaker: 'aristotle', text: 'Yes.' }] });
+  assert.equal(next.state.step, 'slower');
 });

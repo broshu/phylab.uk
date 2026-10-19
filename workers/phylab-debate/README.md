@@ -32,7 +32,7 @@ step. Everything else is fixed code and preset text:
 - `src/guided.js` — the guided group's lines, mirroring the debate lines one by one.
 - `src/debate.js` — the step machine for both groups.
 
-Steps: `debate` → `premise` → `slower` → `faster` → `contradiction` →
+Steps: `debate` → `premise` → `tie` (debate group only: Aristotle holds his position and the student must propose joining the stones; skipped after a spark) → `slower` → `faster` → `contradiction` →
 `objection` → `conclusion` → `method` → `done`.
 
 - Debate group, who speaks:
