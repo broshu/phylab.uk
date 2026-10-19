@@ -47,7 +47,7 @@ Notes for Galileo when he helps: the light stone alone wants speed 4, the heavy 
 Aristotle, when he answers alone, keeps his own reasoning (one heavier body, faster) and adds nothing new. He never mentions the light stone holding anything back.`,
     onPass: {
       galileo: 'praise the student for reasoning the other way from the same rule',
-      aristotle: 'is puzzled: the light stone holding back the heavy one is also his own logic',
+      aristotle: 'is puzzled in a few words: the light stone holding back the heavy one is also his own logic (do not start with "Wait"; the next line does)',
     },
     leave: "That is the other side of his own rule. I'll step back.",
     press: 'My reasoning is simple: two stones tied together are one heavier body, and by my rule a heavier body falls faster. So the pair falls faster than 8.',
@@ -84,7 +84,7 @@ Notes for Galileo when he helps: put both stones on a scale together; is the pai
 Aristotle, when he answers alone, keeps his own reasoning (the slow one holds back the fast one) and adds nothing new. He never mentions the weight of the pair.`,
     onPass: {
       galileo: "praise the student for using Aristotle's own rule on the pair as one heavier body",
-      aristotle: 'agrees at first ("Naturally, a heavier body falls faster.") and then starts to feel uneasy ("...wait.")',
+      aristotle: 'agrees at first ("Naturally, a heavier body falls faster.") and starts to feel uneasy (do not use the word "Wait"; the next line does)',
     },
     leave: "You turned his own rule on him. I'll step back.",
     press: 'My reasoning is simple: the slow stone holds back the fast one, so the pair falls between 4 and 8.',
