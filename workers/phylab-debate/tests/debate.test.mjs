@@ -59,8 +59,8 @@ test('debate: no turn limit, Aristotle keeps arguing without suggesting the meth
 
 test('debate: a thought experiment from the student goes straight to the tied stones', () => {
   const out = advance(input('debate'), { move: 'thought_experiment', stepDone: false, messages: [{ speaker: 'aristotle', text: 'Tie them?' }] });
-  assert.equal(out.state.step, 'slower');
-  assert.deepEqual(out.passed, ['premise']);
+  assert.equal(out.state.step, 'counter');
+  assert.deepEqual(out.passed, ['premise', 'slower']);
   assert.equal(out.state.galileo, false);
   assert.ok(out.messages.every((m) => m.speaker === 'aristotle'));
 });
@@ -75,17 +75,17 @@ test('debate: asking for help brings Galileo in; repeating a point does not', ()
 });
 
 test('passing a step: Galileo says one line and leaves, Aristotle asks next', () => {
-  const out = advance(input('slower', { galileo: true }), {
+  const out = advance(input('counter', { galileo: true, view: 'faster' }), {
     move: 'pass', stepDone: true,
     messages: [{ speaker: 'galileo', text: 'Yes!' }, { speaker: 'galileo', text: 'Extra.' }, { speaker: 'aristotle', text: 'Of course.' }],
   });
-  assert.deepEqual(out.passed, ['slower']);
-  assert.equal(out.state.step, 'faster');
+  assert.deepEqual(out.passed, ['counter', 'faster']);
+  assert.equal(out.state.step, 'contradiction');
   assert.equal(out.state.galileo, false);
   assert.equal(out.messages.filter((m) => m.speaker === 'galileo').length, 1);
   assert.ok(out.messages.some((m) => m.text === 'Galileo left the chat'));
   assert.equal(out.messages.at(-1).speaker, 'aristotle');
-  assert.match(out.messages.at(-1).text, /heavier or lighter/);
+  assert.match(out.messages.at(-1).text, /I say the pair falls faster than 8, and you say it falls slower/);
 });
 
 test('passing while Galileo is away keeps him away and drops his lines', () => {
@@ -153,8 +153,8 @@ test('ending: Aristotle answers questions; Galileo only when asked', () => {
 
 test('after three failed tries with Galileo he reveals and moves on; without him Aristotle keeps asking', () => {
   const fail = { move: 'wrong', stepDone: false, messages: [{ speaker: 'galileo', text: 'Nice try.' }] };
-  assert.equal(advance(input('faster', { helpTurns: 1, galileo: true }), fail).state.helpTurns, 2);
-  const out = advance(input('faster', { helpTurns: 3, galileo: true }), fail);
+  assert.equal(advance(input('counter', { helpTurns: 1, galileo: true }), fail).state.helpTurns, 2);
+  const out = advance(input('counter', { helpTurns: 3, galileo: true }), fail);
   assert.equal(out.state.step, 'contradiction');
   assert.ok(out.messages.some((m) => /put it together/.test(m.text)));
   const argue = { move: 'argue', stepDone: false, messages: [{ speaker: 'aristotle', text: 'Well?' }] };
@@ -353,15 +353,18 @@ test('debate: after the premise Aristotle holds his position and the student mus
   assert.ok(!/tie my heavy stone/i.test(out.messages.at(-1).text));
   const argue = advance(input('tie', { galileo: false }), { move: 'argue', stepDone: false, messages: [{ speaker: 'aristotle', text: 'Books do not move me.' }] });
   assert.deepEqual(argue.messages.map((m) => m.speaker), ['aristotle']);
-  const pass = advance(input('tie', { galileo: false }), { move: 'pass', stepDone: true, messages: [{ speaker: 'aristotle', text: 'A strange idea.' }] });
-  assert.equal(pass.state.step, 'slower');
+  const pass = advance(input('tie', { galileo: false }), { move: 'pass', stepDone: true, lean: 'slower', messages: [{ speaker: 'aristotle', text: 'A strange idea.' }] });
+  assert.equal(pass.state.step, 'counter');
+  assert.equal(pass.state.view, 'slower');
+  assert.match(pass.messages.at(-1).text, /holds back the fast heavy one/);
+  assert.equal(pass.messages.at(-1).image, 'tied-slower');
 });
 
 test('guided group and a debate spark skip the tie step', () => {
   const guided = advance(normalizeInput({ message: 'x', state: { condition: 'guided', step: 'premise' } }), { move: 'pass', stepDone: true, messages: [{ speaker: 'galileo', text: 'Yes.' }] });
   assert.equal(guided.state.step, 'slower');
   const spark = advance(input('premise', { spark: true }), { move: 'pass', stepDone: true, messages: [{ speaker: 'aristotle', text: 'Yes.' }] });
-  assert.equal(spark.state.step, 'slower');
+  assert.equal(spark.state.step, 'counter');
 });
 
 test('open debate: a preset label gets Aristotle\'s fixed reply plus a challenge, even with no model words', () => {
@@ -392,11 +395,22 @@ test('tie step: presets end with the reasoning challenge; the whole idea passes;
   const part = advance(input('tie', { galileo: false }), { move: 'thought_partial', stepDone: false, messages: [{ speaker: 'aristotle', text: 'Together? Which stones?' }] });
   assert.deepEqual(part.messages.map((m) => m.text), ['Together? Which stones?']);
   const whole = advance(input('tie', { galileo: false }), { move: 'thought_experiment', stepDone: false, messages: [{ speaker: 'aristotle', text: 'A strange idea.' }] });
-  assert.equal(whole.state.step, 'slower');
+  assert.equal(whole.state.step, 'counter');
+  assert.equal(whole.state.view, 'faster');
 });
 
 test('open debate: giving in gets Aristotle\'s fixed line, then Galileo', () => {
   const out = advance(input('debate'), { move: 'concede', stepDone: false, messages: [] });
   assert.equal(out.messages[0].text, 'Good, you see it at last. The matter is settled.');
   assert.equal(out.joined, 'concede');
+});
+
+test('counter: Aristotle keeps his own view; the other reasoning passes; the guided group never sees it', () => {
+  const argue = advance(input('counter', { galileo: false, view: 'slower' }), { move: 'other', stepDone: false, messages: [] });
+  assert.deepEqual(argue.messages.map((m) => m.speaker), ['aristotle']);
+  assert.match(argue.messages[0].text, /holds back the fast one/);
+  const p = buildPayload(input('counter', { view: 'slower' }), 'm').messages[0].content;
+  assert.match(p, /HEAVIER than the heavy stone alone/);
+  const g = advance(normalizeInput({ message: 'x', state: { condition: 'guided', step: 'faster' } }), { move: 'pass', stepDone: true, messages: [{ speaker: 'galileo', text: 'Yes.' }] });
+  assert.equal(g.state.step, 'contradiction');
 });

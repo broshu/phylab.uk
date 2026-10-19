@@ -12,11 +12,13 @@ import {
   GUIDED_TO_GALILEO,
   guidedPresence,
 } from './guided.js';
+import { CONTRADICTION_OPENER, COUNTER } from './counter.js';
 import { ARGUMENT_REPLIES, BEFORE_GALILEO, DEBATE_TAILS, PISA, PRESET_MOVES, TIE_TAIL } from './replies.js';
 import {
   ALL_STEPS,
   ARISTOTLE_ON_HELP,
   DEBATE_ONLY_STEPS,
+  GUIDED_ONLY_STEPS,
   DEBATE_CARD,
   DEBATE_FALLBACKS,
   ENTRANCE,
@@ -44,7 +46,7 @@ const CJK = /[぀-ヿ㐀-鿿가-힯＀-￯]/;
 
 /**
  * @typedef {{speaker: string, text?: string, image?: string}} ChatMessage
- * @typedef {{condition: 'debate' | 'guided', step: string, stepTurns: number, helpTurns: number, debateTurns: number, galileo: boolean, spark?: boolean, pisaSeen?: boolean}} DebateState
+ * @typedef {{condition: 'debate' | 'guided', step: string, stepTurns: number, helpTurns: number, debateTurns: number, galileo: boolean, spark?: boolean, pisaSeen?: boolean, view?: 'faster' | 'slower'}} DebateState
  * @typedef {{type: 'turn' | 'help', message: string, toGalileo: boolean, session: string, state: DebateState, transcript: ChatMessage[]}} DebateInput
  */
 
@@ -89,6 +91,8 @@ export function normalizeInput(body) {
     spark: s.spark === true,
     // The Pisa easter egg (Galileo steps in once) has been shown.
     pisaSeen: s.pisaSeen === true,
+    // Debate group: which way Aristotle reasoned about the tied pair (counter step).
+    ...(s.view === 'faster' || s.view === 'slower' ? { view: s.view } : {}),
     debateTurns: cleanCount(s.debateTurns, 50),
     // Older pages did not send this; Galileo was always present after joining.
     galileo: condition === 'guided' ? true : step === 'debate' ? false : typeof s.galileo === 'boolean' ? s.galileo : true,
@@ -119,10 +123,21 @@ export function nextStep(step, state = {}) {
   while (index < STEP_ORDER.length - 1) {
     index += 1;
     const next = STEP_ORDER[index];
-    if (DEBATE_ONLY_STEPS.includes(next) && (state.condition === 'guided' || state.spark)) continue;
+    if (DEBATE_ONLY_STEPS.includes(next) && state.condition === 'guided') continue;
+    if (next === 'tie' && state.spark) continue;
+    if (GUIDED_ONLY_STEPS.includes(next) && state.condition !== 'guided') continue;
     return next;
   }
   return 'done';
+}
+
+/**
+ * The script for the current step; "counter" depends on Aristotle's view.
+ * @param {{step: string, view?: string}} state
+ */
+export function stepFor(state) {
+  if (state.step === 'counter') return COUNTER[state.view === 'slower' ? 'slower' : 'faster'];
+  return STEPS[state.step];
 }
 
 /** How many hints Galileo has already given in this step. @param {DebateState} state */
@@ -132,7 +147,7 @@ function helpCount(state) {
 
 /** @param {DebateState} state */
 function hintFor(state) {
-  const step = STEPS[state.step];
+  const step = stepFor(state);
   return step ? step.hints[Math.min(helpCount(state), 2)] : '';
 }
 
@@ -169,7 +184,7 @@ export function buildCard(state, toGalileo = false) {
     if (toGalileo) return ASK_GALILEO_CARD;
     return `${DEBATE_CARD}\n\nThis is student debate turn ${state.debateTurns + 1}.`;
   }
-  const step = STEPS[state.step];
+  const step = stepFor(state);
   if (state.step === 'done') {
     return toGalileo
       ? `${step.card}\n\nThe student wrote "@Galileo", so Galileo answers. Allowed speakers: galileo, aristotle.`
@@ -282,6 +297,7 @@ export function parseModelReply(value, step, toGalileo = false, condition = 'deb
 
   return {
     move,
+    lean: data.lean === 'slower' || data.lean === 'faster' ? data.lean : null,
     stepDone: data.step_done === true && step !== 'debate' && step !== 'done',
     messages,
     truncated: choice?.finish_reason === 'length',
@@ -310,9 +326,15 @@ function galileoJoins(reason) {
   ];
 }
 
-/** @param {string} step */
-function openerFor(step) {
-  return STEPS[step].opener.map((m) => ({ ...m }));
+/**
+ * @param {string} step
+ * @param {{condition?: string, view?: string}} [state]
+ */
+function openerFor(step, state = {}) {
+  if (step === 'contradiction' && state.condition !== 'guided' && (state.view === 'faster' || state.view === 'slower')) {
+    return [{ speaker: 'aristotle', text: CONTRADICTION_OPENER[state.view], image: 'contradiction' }];
+  }
+  return stepFor({ step, view: state.view }).opener.map((/** @type {ChatMessage} */ m) => ({ ...m }));
 }
 
 const JOINED = { speaker: 'system', text: 'Galileo joined the chat' };
@@ -434,11 +456,12 @@ function advanceStep(input, result) {
     // true): Aristotle follows it straight into the tied stones. He never
     // suggests the method himself.
     if (move === 'thought_experiment') {
-      messages.push(...openerFor('slower'));
+      const view = result?.lean === 'slower' ? 'slower' : 'faster';
+      messages.push(...openerFor('counter', { view }));
       return {
         messages,
-        state: { ...state, step: 'slower', stepTurns: 0, helpTurns: 0, debateTurns, galileo: false, spark: true, pisaSeen: state.pisaSeen || pisaNow },
-        passed: ['premise'],
+        state: { ...state, step: 'counter', stepTurns: 0, helpTurns: 0, debateTurns, galileo: false, spark: true, view, pisaSeen: state.pisaSeen || pisaNow },
+        passed: ['premise', 'slower'],
         joined: null,
       };
     }
@@ -463,26 +486,31 @@ function advanceStep(input, result) {
 
   if (passedNow || revealDue(now)) {
     passed.push(state.step);
+    // Aristotle's view for "counter" comes from the student's own words in "tie".
+    const view = state.step === 'tie' ? (result?.lean === 'slower' ? 'slower' : 'faster') : state.view;
     const step = nextStep(state.step, state);
+    // Notebook: Aristotle reasons one way on entering "counter"; the student the other way.
+    if (step === 'counter') passed.push('slower');
+    if (state.step === 'counter') passed.push('faster');
     if (passedNow) {
       const reply = /** @type {NonNullable<typeof result>} */ (result).messages;
       if (!helping) messages.push(...reply.filter((m) => m.speaker !== 'galileo'));
       else {
         // One Galileo line at most, then he steps back.
-        const g = reply.find((m) => m.speaker === 'galileo') || { speaker: 'galileo', text: STEPS[state.step].leave || "Well done. I'll step back now." };
+        const g = reply.find((m) => m.speaker === 'galileo') || { speaker: 'galileo', text: stepFor(state).leave || "Well done. I'll step back now." };
         const a = reply.find((m) => m.speaker === 'aristotle');
         messages.push(g, ...(a ? [a] : []));
       }
     } else {
       messages.push(...only('galileo').slice(0, 1));
-      messages.push({ speaker: 'galileo', text: `Let's put it together. ${STEPS[state.step].reveal}` });
+      messages.push({ speaker: 'galileo', text: `Let's put it together. ${stepFor(state).reveal}` });
     }
     markJoin(messages, wasHere);
     if (helping) messages.push(LEFT);
-    messages.push(...openerFor(step));
+    messages.push(...openerFor(step, { ...state, view }));
     return {
       messages,
-      state: { ...state, step, stepTurns: 0, helpTurns: 0, galileo: false },
+      state: { ...state, step, stepTurns: 0, helpTurns: 0, galileo: false, ...(view ? { view } : {}) },
       passed,
       joined: helping && !wasHere ? 'asked' : null,
     };
@@ -514,7 +542,7 @@ function advanceStep(input, result) {
 
   // Aristotle answers and asks again. No hint, no Galileo.
   const a = only('aristotle').slice(0, 1);
-  const own = a.length ? a : [{ speaker: 'aristotle', text: STEPS[state.step].press }];
+  const own = a.length ? a : [{ speaker: 'aristotle', text: stepFor(state).press }];
   if (state.step === 'tie') {
     const pisaNow = presetReply(move, state, TIE_TAIL, messages, own);
     return { messages, state: { ...state, stepTurns: state.stepTurns + 1, pisaSeen: state.pisaSeen || pisaNow }, passed, joined: null };

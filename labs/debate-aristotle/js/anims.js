@@ -426,7 +426,58 @@ function pisa() {
   };
 }
 
-const SCENES = { falling: stoneFeather, stones: aristotleRule, contradiction, tube, pisa };
+/**
+ * Aristotle's own reasoning about the tied pair (debate group), imagined with
+ * his rule: the heavy stone alone at speed 8, the pair at 12 (one heavier body)
+ * or at 6 (the slow stone holds back the fast one).
+ */
+function tiedView(fast) {
+  const top = 56;
+  const groundY = 206;
+  const span = groundY - top - 22;
+  const tHeavy = 1.5;
+  const tPair = fast ? tHeavy * (8 / 12) : tHeavy * (8 / 6);
+  const pairColor = fast ? C.orange : C.blue;
+  return {
+    label: fast
+      ? "Aristotle's reasoning: tied together the stones are heavier, so the pair falls faster than 8"
+      : "Aristotle's reasoning: the slow stone holds back the fast one, so the pair falls slower than 8",
+    duration: Math.max(tHeavy, tPair) + 1.4,
+    draw(ctx, t) {
+      ctx.fillStyle = '#f6f3ea';
+      ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = '#d8d1bf';
+      ctx.fillRect(0, groundY, W, H - groundY);
+      text(ctx, "Aristotle's reasoning (imagined)", 12, 20, { align: 'left', weight: 700, size: 12 });
+      text(ctx, fast ? 'one heavier body, so faster' : 'the slow stone holds back the fast one', 12, 35, { align: 'left', size: 10.5, color: C.muted });
+      // heavy stone alone
+      const yh = top + Math.min(1, t / tHeavy) * span;
+      stone(ctx, 105, yh + 4, 13, 2, true);
+      text(ctx, 'heavy alone · 8', 105, groundY + 24, { size: 11, color: C.muted, weight: 700 });
+      // the tied pair
+      const yp = top + Math.min(1, t / tPair) * span;
+      stone(ctx, 220, yp - 12, 13, 2, true);
+      ctx.strokeStyle = C.rope;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(220, yp - 2);
+      ctx.lineTo(220, yp + 6);
+      ctx.stroke();
+      stone(ctx, 220, yp + 12, 8, 3, false);
+      text(ctx, fast ? 'tied pair · 12?' : 'tied pair · 6?', 220, groundY + 24, { size: 11, color: pairColor, weight: 700 });
+    },
+  };
+}
+
+const SCENES = {
+  falling: stoneFeather,
+  stones: aristotleRule,
+  contradiction,
+  tube,
+  pisa,
+  'tied-faster': () => tiedView(true),
+  'tied-slower': () => tiedView(false),
+};
 
 export const hasAnimation = (id) => id in SCENES;
 

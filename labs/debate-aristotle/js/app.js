@@ -1,5 +1,5 @@
 import { AVATARS, PICTURES } from './art.js?v=20261016i';
-import { animationCard, hasAnimation } from './anims.js?v=20261019e';
+import { animationCard, hasAnimation } from './anims.js?v=20261019f';
 
 const API = 'https://phylab-debate.dgxwmk9dbm.workers.dev/debate';
 const STORE = 'phylab-debate-aristotle-v1';
@@ -218,7 +218,7 @@ function renderNotebook(animateId = null) {
   els.nbEmpty.hidden = started;
   els.nbSteps.hidden = !started;
   // "tie" (debate only: the student proposes the tied stones) belongs to notebook line 2.
-  const current = state.lesson.step === 'tie' ? 'slower' : state.lesson.step;
+  const current = state.lesson.step === 'tie' ? 'slower' : state.lesson.step === 'counter' ? 'faster' : state.lesson.step;
   els.nbSteps.replaceChildren(
     ...NOTEBOOK.map(([id, label], i) => {
       const li = document.createElement('li');

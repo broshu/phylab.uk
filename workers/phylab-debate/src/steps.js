@@ -7,9 +7,10 @@
  * Edit wording here; keep the step ids unchanged — the lab page uses them.
  */
 
+import { LEAN_RULE } from './counter.js';
 import { ARGUMENT_LABELS } from './replies.js';
 
-export const PROMPT_VERSION = 'debate-aristotle-v8';
+export const PROMPT_VERSION = 'debate-aristotle-v9';
 
 /** Steps after Galileo first joins, in order. */
 export const STEP_ORDER = [
@@ -17,6 +18,7 @@ export const STEP_ORDER = [
   'tie',
   'slower',
   'faster',
+  'counter',
   'contradiction',
   'objection',
   'conclusion',
@@ -33,7 +35,14 @@ export const ALL_STEPS = ['debate', ...STEP_ORDER];
  * from premise to slower, where Galileo sets up the stones; a debate student who
  * already invented the idea in the open debate (spark) goes straight to slower.
  */
-export const DEBATE_ONLY_STEPS = ['tie'];
+export const DEBATE_ONLY_STEPS = ['tie', 'counter'];
+
+/**
+ * Steps only the guided group takes: Galileo walks through both lines of
+ * reasoning. In the debate group Aristotle reasons one way and the student
+ * must find the other ("counter", src/counter.js).
+ */
+export const GUIDED_ONLY_STEPS = ['slower', 'faster'];
 
 /* ------------------------------------------------------------------ */
 /* Step 0 — the open debate (Aristotle only)                           */
@@ -50,7 +59,7 @@ step_done is always false in this step.
 
 What to write in "messages":
 - For "same_time", "experiment", "air", "vacuum", "book", "formula", "pisa", "concede", "help": write "messages": []. The lesson code adds Aristotle's fixed reply.
-- For "thought_experiment": exactly 1 Aristotle message. He is surprised and curious ("Joined together? A strange idea...") but does not answer it yet. No question: the next question is added automatically.
+- For "thought_experiment": exactly 1 Aristotle message. He is surprised and curious ("Joined together? A strange idea...") but does not answer it yet. No question: the next question is added automatically. ${LEAN_RULE}
 - For "thought_partial": exactly 1 Aristotle message. He takes up what the student said and asks them to say exactly what they would do and with which bodies, and what his rule would say then. He adds nothing the student has not said.
 - For "other": exactly 1 Aristotle message. He answers the student's point directly with one everyday example or one excuse, and ends by asking the student to prove their claim.`;
 
@@ -165,7 +174,9 @@ PASS (step_done = true, student_move = "thought_experiment") if the student prop
 NOT YET (step_done = false):
 ${ARGUMENT_LABELS}
 
-Notes for Galileo when he helps: Aristotle talks about one heavy and one light stone; what could you do with them in your mind? If the student has part of the idea, ask which bodies and what happens to them.`,
+Notes for Galileo when he helps: Aristotle talks about one heavy and one light stone; what could you do with them in your mind? If the student has part of the idea, ask which bodies and what happens to them.
+
+When the step passes: ${LEAN_RULE}`,
     onPass: {
       galileo: 'praise the idea of joining the stones as the start of a thought experiment',
       aristotle: 'is surprised but confident ("Tie them together? A strange idea, but my rule fears nothing.")',

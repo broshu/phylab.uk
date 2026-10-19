@@ -32,6 +32,8 @@ step. Everything else is fixed code and preset text:
 - `src/guided.js` — the guided group's lines, mirroring the debate lines one by one.
 - `src/debate.js` — the step machine for both groups.
 
+Debate group: `slower` + `faster` are replaced by `counter` (`src/counter.js`): after the student proposes the tied stones, Aristotle reasons ONE way (the way the student's words lean: `faster` = one heavier body, `slower` = the slow stone holds back the fast one, with an animation) and the student must find the other way. Guided group keeps `slower` and `faster`.
+
 Steps: `debate` → `premise` → `tie` (debate group only: Aristotle holds his position and the student must propose joining the stones; skipped after a spark) → `slower` → `faster` → `contradiction` →
 `objection` → `conclusion` → `method` → `done`.
 
