@@ -49,20 +49,18 @@ test('debate: Aristotle only, and conceding brings Galileo in', () => {
   assert.equal(out.messages.at(-1).speaker, 'galileo');
 });
 
-test('debate: after the turn limit Aristotle moves on to reasoning, without Galileo', () => {
-  const parsed = { move: 'argue', stepDone: false, messages: [{ speaker: 'aristotle', text: 'No.' }] };
-  assert.equal(advance(input('debate', { debateTurns: 2 }), parsed).state.step, 'debate');
-  const out = advance(input('debate', { debateTurns: 5 }), parsed);
-  assert.equal(out.state.step, 'premise');
-  assert.equal(out.state.galileo, false);
-  assert.equal(out.joined, null);
+test('debate: no turn limit, Aristotle keeps arguing without suggesting the method', () => {
+  const parsed = { move: 'vacuum', stepDone: false, messages: [] };
+  const out = advance(input('debate', { debateTurns: 12 }), parsed);
+  assert.equal(out.state.step, 'debate');
   assert.ok(out.messages.every((m) => m.speaker === 'aristotle'));
-  assert.match(buildPayload(input('debate', { debateTurns: 5 }), 'm').messages[0].content, /LAST debate turn/);
+  assert.ok(!/take my rule as true/i.test(out.messages.map((m) => m.text).join(' ')));
 });
 
-test('debate: a thought experiment from the student is taken up by Aristotle', () => {
+test('debate: a thought experiment from the student goes straight to the tied stones', () => {
   const out = advance(input('debate'), { move: 'thought_experiment', stepDone: false, messages: [{ speaker: 'aristotle', text: 'Tie them?' }] });
-  assert.equal(out.state.step, 'premise');
+  assert.equal(out.state.step, 'slower');
+  assert.deepEqual(out.passed, ['premise']);
   assert.equal(out.state.galileo, false);
   assert.ok(out.messages.every((m) => m.speaker === 'aristotle'));
 });
@@ -362,10 +360,8 @@ test('debate: after the premise Aristotle holds his position and the student mus
 test('guided group and a debate spark skip the tie step', () => {
   const guided = advance(normalizeInput({ message: 'x', state: { condition: 'guided', step: 'premise' } }), { move: 'pass', stepDone: true, messages: [{ speaker: 'galileo', text: 'Yes.' }] });
   assert.equal(guided.state.step, 'slower');
-  const spark = advance(input('debate'), { move: 'thought_experiment', stepDone: false, messages: [{ speaker: 'aristotle', text: 'Tie them?' }] });
-  assert.equal(spark.state.spark, true);
-  const next = advance(normalizeInput({ message: 'x', state: spark.state }), { move: 'pass', stepDone: true, messages: [{ speaker: 'aristotle', text: 'Yes.' }] });
-  assert.equal(next.state.step, 'slower');
+  const spark = advance(input('premise', { spark: true }), { move: 'pass', stepDone: true, messages: [{ speaker: 'aristotle', text: 'Yes.' }] });
+  assert.equal(spark.state.step, 'slower');
 });
 
 test('open debate: a preset label gets Aristotle\'s fixed reply plus a challenge, even with no model words', () => {

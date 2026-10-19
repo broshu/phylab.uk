@@ -16,7 +16,6 @@ import { ARGUMENT_REPLIES, BEFORE_GALILEO, DEBATE_TAILS, PISA, PRESET_MOVES, TIE
 import {
   ALL_STEPS,
   ARISTOTLE_ON_HELP,
-  ARISTOTLE_TAKES_OVER,
   DEBATE_ONLY_STEPS,
   DEBATE_CARD,
   DEBATE_FALLBACKS,
@@ -26,8 +25,8 @@ import {
   STEP_ORDER,
 } from './steps.js';
 
-/** Student turns in the open debate before Aristotle moves on to reasoning. */
-export const DEBATE_TURN_LIMIT = 6;
+// The open debate has no turn limit: Aristotle holds his position until the
+// student invents the thought experiment, asks for help, or gives in.
 /**
  * Failed tries in one step before Galileo explains the idea and moves on.
  * Debate group: counts only tries while Galileo is helping (helpTurns).
@@ -168,11 +167,7 @@ export function buildCard(state, toGalileo = false) {
   if (state.condition === 'guided') return buildGuidedCard(state, toGalileo);
   if (state.step === 'debate') {
     if (toGalileo) return ASK_GALILEO_CARD;
-    const last =
-      state.debateTurns + 1 >= DEBATE_TURN_LIMIT
-        ? '\nThis is the LAST debate turn: Aristotle does NOT end with a question. The next part is added automatically.'
-        : '';
-    return `${DEBATE_CARD}\n\nThis is student debate turn ${state.debateTurns + 1}.${last}`;
+    return `${DEBATE_CARD}\n\nThis is student debate turn ${state.debateTurns + 1}.`;
   }
   const step = STEPS[state.step];
   if (state.step === 'done') {
@@ -419,7 +414,6 @@ function advanceStep(input, result) {
 
   if (state.step === 'debate') {
     const debateTurns = state.debateTurns + 1;
-    const last = debateTurns >= DEBATE_TURN_LIMIT;
 
     // Galileo comes only for "help" or "concede".
     if (move === 'concede' || move === 'help') {
@@ -432,18 +426,19 @@ function advanceStep(input, result) {
       };
     }
 
-    const tail = last || move === 'thought_experiment' ? '' : DEBATE_TAILS[state.debateTurns % DEBATE_TAILS.length];
+    const tail = move === 'thought_experiment' ? '' : DEBATE_TAILS[state.debateTurns % DEBATE_TAILS.length];
     const fallback = { speaker: 'aristotle', text: DEBATE_FALLBACKS[state.debateTurns % DEBATE_FALLBACKS.length] };
     const pisaNow = presetReply(move, state, tail, messages, result ? only('aristotle').slice(0, 1) : [fallback]);
 
-    // A good student: Aristotle himself moves from examples to reasoning.
-    const reason = move === 'thought_experiment' ? 'spark' : last ? 'stalemate' : null;
-    if (reason) {
-      messages.push({ speaker: 'aristotle', text: ARISTOTLE_TAKES_OVER[reason] });
+    // The student invented the thought experiment (which takes the rule as
+    // true): Aristotle follows it straight into the tied stones. He never
+    // suggests the method himself.
+    if (move === 'thought_experiment') {
+      messages.push(...openerFor('slower'));
       return {
         messages,
-        state: { ...state, step: 'premise', stepTurns: 0, helpTurns: 0, debateTurns, galileo: false, spark: reason === 'spark', pisaSeen: state.pisaSeen || pisaNow },
-        passed,
+        state: { ...state, step: 'slower', stepTurns: 0, helpTurns: 0, debateTurns, galileo: false, spark: true, pisaSeen: state.pisaSeen || pisaNow },
+        passed: ['premise'],
         joined: null,
       };
     }

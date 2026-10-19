@@ -41,8 +41,9 @@ Steps: `debate` → `premise` → `tie` (debate group only: Aristotle holds his 
     enforces this whatever the model writes.
   - Any other answer that does not pass (`argue`, `partial`, `off_topic`):
     Aristotle reacts and asks his question again, with no hint.
-  - In the open debate, a student `thought_experiment` or 6 debate turns make
-    Aristotle himself move on to reasoning ("take my rule as true…").
+  - The open debate has no turn limit: Aristotle holds his position until the
+    student asks for help, gives in, or invents the thought experiment; then the
+    lesson goes straight to the tied stones (`slower`), with `premise` counted as passed.
   - Galileo helps until the step is passed, then says one line and leaves.
     After 3 failed tries with him (`helpTurns`), he explains the idea and moves
     on. Without him there is no automatic reveal.

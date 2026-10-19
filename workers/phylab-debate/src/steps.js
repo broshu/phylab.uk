@@ -9,7 +9,7 @@
 
 import { ARGUMENT_LABELS } from './replies.js';
 
-export const PROMPT_VERSION = 'debate-aristotle-v6';
+export const PROMPT_VERSION = 'debate-aristotle-v7';
 
 /** Steps after Galileo first joins, in order. */
 export const STEP_ORDER = [
@@ -31,7 +31,7 @@ export const ALL_STEPS = ['debate', ...STEP_ORDER];
  * tied stones himself: he holds his position and the student must come up with
  * joining the bodies (the textbook is allowed). The guided group goes straight
  * from premise to slower, where Galileo sets up the stones; a debate student who
- * already invented the idea in the open debate (spark) skips it too.
+ * already invented the idea in the open debate (spark) goes straight to slower.
  */
 export const DEBATE_ONLY_STEPS = ['tie'];
 
@@ -77,17 +77,6 @@ export const ENTRANCE = {
     "You called? I'm Galileo, and I'm on your side. Examples alone won't beat Aristotle. Let's beat him with pure reasoning instead.",
 };
 
-/**
- * When the student keeps arguing well (6 turns) or invents a thought
- * experiment, Galileo is not needed: Aristotle himself moves the debate from
- * examples to reasoning and asks the first question of the method.
- */
-export const ARISTOTLE_TAKES_OVER = {
-  stalemate:
-    'We could trade examples all day, my friend. Let us use reason instead. Take my rule as true, just for now, and try to break it with your mind alone. First, say my rule in one short sentence, so we both know what you are attacking.',
-  spark:
-    'Before you play with stones, let us be exact. Take my rule as true, just for now. In one short sentence, what does my rule say about weight and falling?',
-};
 
 /** Aristotle's line when the student presses the help button before Galileo joins. */
 export const ARISTOTLE_ON_HELP = 'Calling for help already? Very well, bring anyone you like. The stones will still obey me.';
