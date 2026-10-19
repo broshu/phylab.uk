@@ -7,7 +7,7 @@
  * Edit wording here; keep the step ids unchanged — the lab page uses them.
  */
 
-export const PROMPT_VERSION = 'debate-aristotle-v3';
+export const PROMPT_VERSION = 'debate-aristotle-v4';
 
 /** Steps after Galileo first joins, in order. */
 export const STEP_ORDER = [
@@ -35,8 +35,9 @@ Aristotle answers the student's point directly, gives one everyday example or on
 
 Classify the student's message as student_move:
 - "argue": the student gives any claim or reason against Aristotle (an experiment, "they land together", air resistance, a textbook, a story about a tower, a formula).
-- "concede": the student agrees that heavier things fall faster, gives up, or says things like "you are right", "I lose", "ok fine".
-- "stuck": the student says "I don't know", asks for help, sends a very short or empty reply ("hmm", "?", "no", "idk"), or repeats an earlier point with no new reason.
+  Repeating an earlier point, or a very short reply ("no", "hmm", "?"), also counts as "argue".
+- "concede": the student agrees that heavier things fall faster, or gives up ("you are right", "I lose", "you win").
+- "help": the student asks for help or a hint, or says they are stuck or do not know what to say ("I don't know", "idk", "help").
 - "thought_experiment": the student reasons only from Aristotle's own rule by imagining bodies joined or split — for example tying a light and a heavy stone together, cutting a stone in half, or gluing two bodies.
 - "off_topic": nothing to do with falling bodies.
 
@@ -49,9 +50,9 @@ How Aristotle answers common points (use the idea, in your own words, do not cop
 - A textbook, a teacher, or "g is the same for all": a book is not a reason. Show me with reasoning.
 - A story about a tower or about Galileo: I do not know this man. A story is not a proof.
 - A very heavy and a very light thing landing close together: your hands did not let go at the same moment.
-- If student_move is "concede": Aristotle is pleased and kind, and says the matter is settled.
-- If student_move is "thought_experiment": Aristotle is surprised and curious ("Tie them together? A strange question...") but does not answer it yet.
-- If student_move is "stuck": Aristotle gently offers one more everyday example and asks what the student thinks.`;
+- If student_move is "concede": Aristotle is pleased and kind, and says the matter is settled. No question.
+- If student_move is "help": Aristotle says, amused, that the student may call for help if they like. No question.
+- If student_move is "thought_experiment": Aristotle is surprised and curious ("Tie them together? A strange idea...") but does not answer it yet. No question: the next question is added automatically.`;
 
 /** Aristotle's lines when the AI is unavailable in the debate step. */
 export const DEBATE_FALLBACKS = [
@@ -70,14 +71,22 @@ export const DEBATE_FALLBACKS = [
 export const ENTRANCE = {
   concede:
     "Wait, don't give up yet! I'm Galileo, and I'm on your side. Aristotle argues well, but I think we can beat him with his own rule.",
-  stuck:
+  help:
     "Hard to win with examples, isn't it? Every time you find one, Aristotle finds an excuse. I'm Galileo, and I'm on your side. Let's try a different weapon: pure reasoning.",
-  stalemate:
-    "You made strong points! But notice: whatever you show him, Aristotle can blame the air or your eyes. I'm Galileo, and I'm on your side. Let's use a weapon he cannot dodge: his own rule.",
   asked:
     "You called? I'm Galileo, and I'm on your side. Examples alone won't beat Aristotle. Let's beat him with pure reasoning instead.",
+};
+
+/**
+ * When the student keeps arguing well (6 turns) or invents a thought
+ * experiment, Galileo is not needed: Aristotle himself moves the debate from
+ * examples to reasoning and asks the first question of the method.
+ */
+export const ARISTOTLE_TAKES_OVER = {
+  stalemate:
+    'We could trade examples all day, my friend. Let us use reason instead. Take my rule as true, just for now, and try to break it with your mind alone. First, say my rule in one short sentence, so we both know what you are attacking.',
   spark:
-    "Joining stones together? That is exactly my idea! I'm Galileo, and I'm on your side. Let's build it carefully, one step at a time.",
+    'Before you play with stones, let us be exact. Take my rule as true, just for now. In one short sentence, what does my rule say about weight and falling?',
 };
 
 /** Aristotle's line when the student presses the help button before Galileo joins. */
@@ -85,14 +94,22 @@ export const ARISTOTLE_ON_HELP = 'Calling for help already? Very well, bring any
 
 
 /* ------------------------------------------------------------------ */
-/* Steps after Galileo first joins                                     */
+/* Steps of the method (premise ... done)                              */
 /* ------------------------------------------------------------------ */
 //
-// Galileo is a helper, not a host. He stays only while the student needs him:
-// - he joins when the student is stuck, gives a wrong answer, or presses @Galileo;
-// - as soon as the student passes a step he says one line and leaves;
-// - the next question comes from Aristotle, who walks into the trap himself;
-// - he comes back for the final reflection (method) and stays to the end.
+// Galileo is a helper, not a host. In the debate group he comes ONLY when the
+// student asks for help (@Galileo or student_move "help"), sides with
+// Aristotle ("concede"), or clearly states a wrong idea ("wrong").
+// - Any other answer that does not pass (arguing, half answers, off topic):
+//   Aristotle reacts and asks his question again, with no hint. There is no
+//   automatic reveal while Galileo is away.
+// - Once Galileo has come, he helps until the step is passed, then says one
+//   line and leaves. After 3 failed tries with him, he explains and moves on.
+// - Aristotle asks every next question, including the final reflection.
+//
+// The cards below are shared with the guided group, so they describe the
+// answers only; who speaks is added by debate.js / guided.js. The notes after
+// each label are for the helper (Galileo).
 
 /**
  * @typedef {{speaker: 'aristotle' | 'galileo', text: string, image?: string}} ScriptMessage
@@ -100,6 +117,7 @@ export const ARISTOTLE_ON_HELP = 'Calling for help already? Very well, bring any
  *   card: string,
  *   onPass: {galileo: string, aristotle: string},
  *   leave: string,
+ *   press: string,
  *   hints: [string, string, string],
  *   reveal: string,
  *   opener: ScriptMessage[],
@@ -122,17 +140,18 @@ Goal: heavier bodies fall faster (best: speed grows with weight, twice as heavy 
 The student has been asked to say the rule in one sentence, and to treat it as true for now.
 
 PASS (step_done = true) if the student says, in any words, that by Aristotle's rule heavier things fall faster, or that falling speed depends on weight.
-NOT YET (step_done = false):
-- The student argues that the rule is wrong, without stating it: we will test it, but first we must take the rule seriously and say exactly what it claims.
-- The student states the opposite ("all things fall together"): that may be your view, but what is ARISTOTLE's rule?
-- Unsure or silent: use the hint.
-
-student_move labels: "pass", "argue", "stuck", "off_topic".`,
+NOT YET (step_done = false). Choose one student_move label:
+- "wrong": the student states Aristotle's rule wrongly (for example "by his rule lighter things fall faster"). Note: look back at what Aristotle said.
+- "argue": the student argues that the rule is wrong, or gives their own view ("all things fall together"), without stating the rule. Note: we will test it, but first we must say exactly what the rule claims.
+- "help": asks for help, or says they are stuck or do not know. Note: use the hint.
+- "off_topic".
+If it passes, student_move is "pass".`,
     onPass: {
       galileo: 'say the rule is now clear, and that pretending it is true is the first move of a thought experiment',
       aristotle: 'proudly agrees: twice as heavy, twice as fast',
     },
-    leave: "Now ask him this: what happens if you tie a heavy stone and a light stone together? I'll step back. You can do this.",
+    leave: "Clear. Now let's see if his rule survives a test. I'll step back.",
+    press: 'You want to fight my rule before you can even say it? Say it first, young one. In one sentence, what does my rule say about weight and falling?',
     hints: [
       'Look back at what Aristotle said. In one short sentence, what is his rule about weight and speed?',
       "Fill the gap: 'According to Aristotle, the ___ a body is, the ___ it falls.'",
@@ -145,12 +164,12 @@ student_move labels: "pass", "argue", "stuck", "off_topic".`,
     opener: [
       {
         speaker: 'aristotle',
-        text: 'Tie my stones together? A strange idea, but very well. By my rule, the heavy stone falls at speed 8 and the light stone at speed 4.',
+        text: 'Very well, let us test my rule with stones. Take my heavy stone and a light stone. By my rule, the heavy stone falls at speed 8 and the light stone at speed 4.',
         image: 'stones',
       },
       {
         speaker: 'aristotle',
-        text: 'Now they are tied with a short rope. You tell me, young one: does the light stone speed up the heavy one, or hold it back?',
+        text: 'Now we tie them together with a short rope. You tell me, young one: does the light stone speed up the heavy one, or hold it back?',
         image: 'tied',
       },
     ],
@@ -160,18 +179,19 @@ Setup the student can see: heavy stone falls at speed 8, light stone at speed 4 
 Goal: the student concludes that the tied pair falls SLOWER than 8 (somewhere between 4 and 8), because the slow light stone holds back (drags, brakes) the heavy stone, and the heavy stone pulls the light one along.
 
 PASS (step_done = true) if the student says any of: the pair is slower than 8; between 4 and 8; about 6 or "the average"; the light stone slows, drags, pulls back or holds back the heavy stone.
-NOT YET (step_done = false):
-- "Faster, because together they are heavier" or "12": a very good idea to keep for later, but first think only about the light stone pulling on the heavy stone.
-- "Same speed" or "8": which stone wants to go faster, and what happens to the rope between them?
-- "4": would the heavy stone really be slowed all the way down to the light one's speed, or would it also pull the light one along?
-- Unsure or silent: use the hint.
-
-student_move labels: "pass", "faster_idea", "argue", "stuck", "off_topic".`,
+NOT YET (step_done = false). Choose one student_move label:
+- "wrong": "same speed" or "8" (note: which stone wants to go faster, and what happens to the rope between them?); "4" (note: would the heavy stone be slowed all the way down, or would it also pull the light one along?); "the light stone speeds the heavy one up".
+- "partial": "faster, because together they are heavier" or "12". Note: a very good idea to keep for later, but first think only about the light stone pulling on the heavy stone.
+- "argue": argues with Aristotle or talks about something else in the lesson without answering.
+- "help": asks for help, or says they are stuck or do not know. Note: use the hint.
+- "off_topic".
+If it passes, student_move is "pass".`,
     onPass: {
       galileo: 'name what was good in the reasoning and ask the student to remember "slower than 8"',
       aristotle: 'agrees happily, because this is his own logic (the slow one holds back the fast one), and feels his rule is safe',
     },
     leave: "Remember that answer. I'll step back again; keep pushing him.",
+    press: 'Words, my friend, but not an answer. The heavy stone and the light stone are tied together. Does the light one speed the heavy one up, or hold it back?',
     hints: [
       'The heavy stone wants to go at 8. The light stone only wants 4. If a fast runner is tied to a slow runner, what happens to the fast runner?',
       'The rope gets tight, and the slow stone pulls back on the fast one. So is the pair faster or slower than 8?',
@@ -193,18 +213,19 @@ The student already concluded: the tied pair is slower than 8. The student has j
 Goal: the student concludes that the tied pair, as one body, is HEAVIER than the heavy stone alone, so by Aristotle's own rule it must fall FASTER than 8 (for example 12).
 
 PASS (step_done = true) only if the student says the pair falls faster than 8 (or "12", or "faster because it is heavier").
-NOT YET (step_done = false):
-- The student says only "heavier" without speed: good, now what does Aristotle's rule say about a heavier body's speed?
-- The student repeats "slower than 8": that was one way of looking; now look at the pair as one heavy body and use Aristotle's rule.
-- The student says "lighter": imagine putting both stones on a scale together.
-- Unsure or silent: use the hint.
-
-student_move labels: "pass", "heavier_only", "argue", "stuck", "off_topic".`,
+NOT YET (step_done = false). Choose one student_move label:
+- "wrong": the pair is "lighter" than the heavy stone, or "it falls slower because it is heavier". Note: imagine putting both stones on a scale together.
+- "partial": only "heavier" without speed (note: good, now what does Aristotle's rule say about a heavier body's speed?); or repeats "slower than 8" (note: that was one way of looking; now look at the pair as one heavy body and use Aristotle's rule).
+- "argue": argues with Aristotle or talks about something else in the lesson without answering.
+- "help": asks for help, or says they are stuck or do not know. Note: use the hint.
+- "off_topic".
+If it passes, student_move is "pass".`,
     onPass: {
       galileo: "praise the student for using Aristotle's own rule against him",
       aristotle: 'agrees at first ("Naturally, a heavier body falls faster.") and then starts to feel uneasy ("...wait.")',
     },
     leave: 'You turned his own rule on him. Keep going; I am watching.',
+    press: 'Think again with my own rule. The tied pair, taken as one body: is it heavier or lighter than my heavy stone, and so how fast must it fall?',
     hints: [
       'Put both stones on a scale together. Do they weigh more or less than the heavy stone alone?',
       "The pair is heavier than the heavy stone. Now use Aristotle's own rule: a heavier body falls ___?",
@@ -227,17 +248,19 @@ The student has derived from Aristotle's rule both: the tied pair is slower than
 Goal: the student says these two answers cannot both be true (a contradiction), so the starting rule must be wrong.
 
 PASS (step_done = true) if the student says the two answers contradict, cannot both be true, are impossible together, or "the rule is wrong / Aristotle's rule fails".
-NOT YET (step_done = false):
-- The student picks one answer ("it is slower"): was the other answer also reasoned from the same rule?
-- The student says "maybe it is exactly 8": clever, but does 8 fit Aristotle's rule for a body heavier than the heavy stone?
-- Unsure or silent: use the hint.
-
-student_move labels: "pass", "picks_one", "argue", "stuck", "off_topic".`,
+NOT YET (step_done = false). Choose one student_move label:
+- "concede": the student sides with Aristotle: both answers can be true, there is no problem, or the rule is still fine. Note: can one pair fall slower and faster than 8 at the same time?
+- "partial": picks one answer ("it is slower"; note: was the other answer also reasoned from the same rule?); or "maybe it is exactly 8" (note: clever, but does 8 fit Aristotle's rule for a body heavier than the heavy stone?).
+- "argue": argues with Aristotle or talks about something else in the lesson without answering.
+- "help": asks for help, or says they are stuck or do not know. Note: use the hint.
+- "off_topic".
+If it passes, student_move is "pass".`,
     onPass: {
       galileo: 'praise the student for finding the contradiction, the heart of a thought experiment',
       aristotle: 'is shaken ("Both from my own rule? This troubles me.")',
     },
     leave: 'That is the heart of it. Watch out, he will try to escape. I will let you answer him.',
+    press: 'You gave me two answers for the same pair: slower than 8, and faster than 8. Tell me plainly: what do these two answers show?',
     hints: [
       'Can one pair of stones fall slower than 8 and faster than 8 at the same time?',
       'Both answers came from the same rule. If a rule gives two answers that fight each other, what does that tell you about the rule?',
@@ -259,17 +282,19 @@ The objection just raised: two stones tied by a rope are two bodies, not one bod
 Goal: the student closes this loophole. Good answers include: glue them, melt them, or tie them very tightly into one body; any single stone could be seen as two halves joined together; the rope does not change the weight; a body does not know if it is "one" or "two".
 
 PASS (step_done = true) if the student gives any reason why the "two bodies" excuse fails, or turns the pair into one body (glue, weld, melt, tight rope, one stone made of two halves).
-NOT YET (step_done = false):
-- The student accepts the objection: what would happen if we glued the stones so they became one stone?
-- The student only says "no" with no reason: ask for a reason.
-- Unsure or silent: use the hint.
-
-student_move labels: "pass", "agrees_aristotle", "argue", "stuck", "off_topic".`,
+NOT YET (step_done = false). Choose one student_move label:
+- "concede": the student accepts the objection (they are two bodies, so the rule is safe). Note: what would happen if we glued the stones so they became one stone?
+- "partial": only "no" or "you are wrong" with no reason. Note: ask for a reason.
+- "argue": argues with Aristotle about something else without answering the objection.
+- "help": asks for help, or says they are stuck or do not know. Note: use the hint.
+- "off_topic".
+If it passes, student_move is "pass".`,
     onPass: {
       galileo: "praise the student's answer to the escape",
       aristotle: 'has no reply left and admits, graciously, that the escape is closed',
     },
     leave: 'He is out of escapes. Finish it yourself!',
+    press: 'You have not answered me. Two stones on a rope are two bodies, not one, so my rule is safe. Why should that not save me?',
     hints: [
       'What if we glue the two stones together, so they really become one stone?',
       'Think about any ordinary stone. Could you see it as two halves stuck together? Would it suddenly fall at a different speed?',
@@ -291,18 +316,20 @@ The rule "heavier falls faster" has been destroyed by a contradiction. The stude
 Goal: the student states the new rule: weight does not decide how fast a body falls. Heavy and light bodies fall at the same rate (if air does not get in the way). Then the tied pair also falls at that same speed, and there is no contradiction.
 
 PASS (step_done = true) if the student says all bodies fall at the same speed / same rate / together, or that falling speed does not depend on weight, or that the pair falls at the same speed as each stone.
-NOT YET (step_done = false):
-- The student says "8" or "between 4 and 8": which starting speeds for the two stones would make tying them change nothing at all?
-- The student says "the light one falls faster": would that also give a contradiction if we tie them?
-- The student talks about air: good, we will come back to air, but first: without air, what must be true about heavy and light stones?
-- Unsure or silent: use the hint.
-
-student_move labels: "pass", "partial", "argue", "stuck", "off_topic".`,
+NOT YET (step_done = false). Choose one student_move label:
+- "wrong": "8" or "between 4 and 8" (note: which starting speeds for the two stones would make tying them change nothing at all?); "the light one falls faster" (note: would that also give a contradiction if we tie them?).
+- "concede": the student says heavier bodies fall faster after all. Note: remember the contradiction we just found.
+- "partial": talks only about air. Note: good, we will come back to air, but first: without air, what must be true about heavy and light stones?
+- "argue": argues with Aristotle or talks about something else in the lesson without answering.
+- "help": asks for help, or says they are stuck or do not know. Note: use the hint.
+- "off_topic".
+If it passes, student_move is "pass".`,
     onPass: {
       galileo: 'praise warmly and repeat the new rule in one sentence (without air, heavy and light bodies fall together)',
       aristotle: 'accepts it, thoughtfully, but still wonders about his feather',
     },
-    leave: '',
+    leave: "Well said. I'll step back now.",
+    press: 'Then tell me what IS true, clever one. How fast must the tied pair fall, if there is to be no contradiction at all?',
     hints: [
       'If tying the stones together changes nothing, then the pair falls at the same speed as each stone. What does that say about the heavy stone and the light stone?',
       'There is only one way the pair is neither slower nor faster than the heavy stone: both stones already fall at the same speed. So does weight decide falling speed?',
@@ -314,17 +341,17 @@ student_move labels: "pass", "partial", "argue", "stuck", "off_topic".`,
   method: {
     opener: [
       {
-        speaker: 'galileo',
-        text: "Bravo! I watched the whole thing. And Aristotle's feather? Air pushes hard on a light, wide feather. Pump the air out of a glass tube, and a feather and a coin fall side by side.",
+        speaker: 'aristotle',
+        text: 'And my feather? Now I see it: the air pushes hard on a light, wide feather. Take the air away, and a feather and a coin would fall side by side. So the air fooled me all these years.',
         image: 'tube',
       },
       {
         speaker: 'aristotle',
-        text: 'So the air fooled me all these years. Young one, you have beaten me fairly, and with my own rule. I am not angry. I am impressed.',
+        text: 'Young one, you have beaten me fairly, and with my own rule. I am not angry. I am impressed.',
       },
       {
-        speaker: 'galileo',
-        text: 'You won with no lab and no tools, only your mind. That is called a thought experiment. In your own words: what steps did you follow to win?',
+        speaker: 'aristotle',
+        text: 'You used no lab and no tools, only your mind. Call it a thought experiment. Teach me your trick: in your own words, what steps did you follow to beat me?',
       },
     ],
     card: `CURRENT STEP: method (reflection)
@@ -336,14 +363,18 @@ Goal: the student describes the method of the thought experiment in their own wo
 (e) conclude that the starting rule must be false (and find the rule that has no contradiction).
 
 PASS (step_done = true) if the student mentions at least 3 of the 5 ideas, in any words or order. Very short words count (for example "assume, imagine, contradiction" is 3 ideas).
-NOT YET (step_done = false): name what the student already got right, then ask about ONE missing idea using the hint. If they have 2 ideas, ask about the most important missing one (usually (a) or (d)).
-
-student_move labels: "pass", "partial", "stuck", "off_topic".`,
+NOT YET (step_done = false). Choose one student_move label:
+- "wrong": the student describes the method wrongly (for example "we did a real experiment" or "we measured the stones"). Note: we used no tools; what did we do with the rule in our minds?
+- "partial": 1 or 2 of the ideas. Note: name what the student already got right, then ask about ONE missing idea using the hint (usually (a) or (d)).
+- "help": asks for help, or says they are stuck or do not know. Note: use the hint.
+- "off_topic".
+If it passes, student_move is "pass".`,
     onPass: {
       galileo: 'praise the summary in one or two sentences',
-      aristotle: 'adds one gracious line accepting defeat; he has lost, so no new objections or doubts',
+      aristotle: 'thanks the student for the lesson in one gracious line; he has lost, so no new objections or doubts',
     },
-    leave: '',
+    leave: "Well said. I'll step back now.",
+    press: 'Go on, young one. How did you beat me? Tell me the steps of your trick, one by one.',
     hints: [
       "Start at the very beginning. What did we do with Aristotle's rule before we tested it?",
       'Look at the notebook beside the chat. After you imagined the tied stones, what did you find when you reasoned in two ways?',
@@ -355,23 +386,25 @@ student_move labels: "pass", "partial", "stuck", "off_topic".`,
   done: {
     opener: [
       {
-        speaker: 'galileo',
-        text: "Here is your method, the same one I used: take the rule as true, just for now, imagine a simple case, reason it two ways, find the contradiction, close the loopholes, and reject the rule. You can use it on any claim.",
+        speaker: 'aristotle',
+        text: 'So this is your trick: take the rule as true, just for now, imagine a simple case, reason it two ways, find the contradiction, close the escapes, and reject the rule. It works on any claim, even mine.',
         image: 'method',
       },
       {
         speaker: 'aristotle',
-        text: 'A good debate. Come back and argue with me again some day. You may ask us anything now.',
+        text: 'A good debate. Come back and argue with me again some day. You may ask me anything now.',
       },
     ],
     card: `CURRENT STEP: done (the debate is won; free questions)
-The student has won. Answer any short follow-up question about falling bodies or thought experiments in 1 or 2 short messages. Galileo answers physics questions simply and correctly (air resistance, why a feather is slow, falling in a tube with no air). Aristotle may joke kindly about losing. If the student wants another challenge, Galileo suggests trying the same method on another claim, for example "a heavier ball rolls down a slope faster".
+The student has won. Answer any short follow-up question about falling bodies or thought experiments.
+Aristotle answers. He now accepts the new rule and answers simply and correctly, with everyday reasoning (air pushes hard on light, wide things; without air, heavy and light bodies fall together). He may joke kindly about losing. He does not know modern tools or numbers; for those he says the student can ask Galileo by writing "@Galileo". If the student wants another challenge, he suggests trying the same method on another claim, for example "a heavier ball rolls down a slope faster".
+When the student writes "@Galileo", Galileo answers instead (simply and correctly, also about modern experiments), and Aristotle may add one short line.
 
 student_move labels: "question", "chat", "off_topic".
-step_done is always false.
-Allowed speakers: galileo, aristotle.`,
+step_done is always false.`,
     onPass: { galileo: '', aristotle: '' },
     leave: '',
+    press: 'Forgive me, I lost my thread. Could you ask that again?',
     hints: [
       'Ask us anything about falling bodies or thought experiments.',
       'Ask us anything about falling bodies or thought experiments.',
@@ -381,5 +414,5 @@ Allowed speakers: galileo, aristotle.`,
   },
 };
 
-/** Galileo's first words when he comes back mid-lesson to help. */
-export const RETURN_LINE = "I'm back. Let me help a little.";
+/** Galileo's first words when he comes mid-lesson to help (script fallback). */
+export const RETURN_LINE = "Galileo here, on your side. Let me help a little.";

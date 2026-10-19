@@ -49,17 +49,42 @@ test('debate: Aristotle only, and conceding brings Galileo in', () => {
   assert.equal(out.messages.at(-1).speaker, 'galileo');
 });
 
-test('debate: Galileo joins after the turn limit even if the student keeps arguing', () => {
+test('debate: after the turn limit Aristotle moves on to reasoning, without Galileo', () => {
   const parsed = { move: 'argue', stepDone: false, messages: [{ speaker: 'aristotle', text: 'No.' }] };
   assert.equal(advance(input('debate', { debateTurns: 2 }), parsed).state.step, 'debate');
-  assert.equal(advance(input('debate', { debateTurns: 5 }), parsed).joined, 'stalemate');
+  const out = advance(input('debate', { debateTurns: 5 }), parsed);
+  assert.equal(out.state.step, 'premise');
+  assert.equal(out.state.galileo, false);
+  assert.equal(out.joined, null);
+  assert.ok(out.messages.every((m) => m.speaker === 'aristotle'));
+  assert.match(buildPayload(input('debate', { debateTurns: 5 }), 'm').messages[0].content, /LAST debate turn/);
+});
+
+test('debate: a thought experiment from the student is taken up by Aristotle', () => {
+  const out = advance(input('debate'), { move: 'thought_experiment', stepDone: false, messages: [{ speaker: 'aristotle', text: 'Tie them?' }] });
+  assert.equal(out.state.step, 'premise');
+  assert.equal(out.state.galileo, false);
+  assert.ok(out.messages.every((m) => m.speaker === 'aristotle'));
+});
+
+test('debate: asking for help brings Galileo in; repeating a point does not', () => {
+  const help = advance(input('debate'), { move: 'help', stepDone: false, messages: [{ speaker: 'aristotle', text: 'Call for help, then.' }] });
+  assert.equal(help.joined, 'help');
+  assert.equal(help.state.galileo, true);
+  const argue = advance(input('debate'), { move: 'argue', stepDone: false, messages: [{ speaker: 'aristotle', text: 'Again?' }] });
+  assert.equal(argue.state.step, 'debate');
+  assert.ok(!argue.messages.some((m) => m.speaker === 'galileo'));
 });
 
 test('passing a step: Galileo says one line and leaves, Aristotle asks next', () => {
-  const out = advance(input('slower', { galileo: true }), { move: 'pass', stepDone: true, messages: [{ speaker: 'galileo', text: 'Yes!' }] });
+  const out = advance(input('slower', { galileo: true }), {
+    move: 'pass', stepDone: true,
+    messages: [{ speaker: 'galileo', text: 'Yes!' }, { speaker: 'galileo', text: 'Extra.' }, { speaker: 'aristotle', text: 'Of course.' }],
+  });
   assert.deepEqual(out.passed, ['slower']);
   assert.equal(out.state.step, 'faster');
   assert.equal(out.state.galileo, false);
+  assert.equal(out.messages.filter((m) => m.speaker === 'galileo').length, 1);
   assert.ok(out.messages.some((m) => m.text === 'Galileo left the chat'));
   assert.equal(out.messages.at(-1).speaker, 'aristotle');
   assert.match(out.messages.at(-1).text, /heavier or lighter/);
@@ -74,36 +99,70 @@ test('passing while Galileo is away keeps him away and drops his lines', () => {
   assert.ok(!out.messages.some((m) => m.speaker === 'galileo' || m.speaker === 'system'));
 });
 
-test('a wrong answer while Galileo is away brings him back with a hint', () => {
-  const out = advance(input('faster', { galileo: false }), {
-    move: 'stuck', stepDone: false,
-    messages: [{ speaker: 'aristotle', text: 'Hmm?' }, { speaker: 'galileo', text: 'Scale?' }],
-  });
-  assert.equal(out.state.galileo, true);
+test('a wrong answer, giving in, or asking for help brings Galileo with a hint', () => {
+  for (const move of ['wrong', 'concede', 'help']) {
+    const out = advance(input('faster', { galileo: false }), {
+      move, stepDone: false,
+      messages: [{ speaker: 'aristotle', text: 'Hmm?' }, { speaker: 'galileo', text: 'Scale?' }],
+    });
+    assert.equal(out.state.galileo, true, move);
+    assert.equal(out.state.helpTurns, 1, move);
+    assert.deepEqual(out.messages.map((m) => m.speaker), ['aristotle', 'system', 'galileo'], move);
+    assert.equal(out.joined, move);
+  }
+  // The model forgot Galileo: the code adds his hint.
+  const out = advance(input('faster', { galileo: false }), { move: 'wrong', stepDone: false, messages: [{ speaker: 'aristotle', text: 'Lighter? No.' }] });
   assert.deepEqual(out.messages.map((m) => m.speaker), ['aristotle', 'system', 'galileo']);
-  assert.equal(out.joined, 'return');
 });
 
-test('Galileo comes back for the final reflection', () => {
+test('any other answer that does not pass: Aristotle presses, Galileo stays away', () => {
+  for (const move of ['argue', 'partial', 'off_topic']) {
+    const out = advance(input('faster', { galileo: false }), {
+      move, stepDone: false,
+      messages: [{ speaker: 'aristotle', text: 'And so?' }, { speaker: 'galileo', text: 'Scale?' }],
+    });
+    assert.deepEqual(out.messages.map((m) => m.speaker), ['aristotle'], move);
+    assert.equal(out.state.galileo, false);
+    assert.equal(out.state.stepTurns, 1);
+  }
+  // Without the AI, Aristotle repeats his question from the script.
+  const out = advance(input('faster', { galileo: false }), null);
+  assert.deepEqual(out.messages.map((m) => m.speaker), ['aristotle']);
+  assert.match(buildPayload(input('faster', { galileo: false }), 'm').messages[0].content, /Galileo comes ONLY/);
+});
+
+test('Aristotle leads the final reflection and the ending', () => {
   const out = advance(input('conclusion', { galileo: false }), { move: 'pass', stepDone: true, messages: [{ speaker: 'aristotle', text: 'I see.' }] });
   assert.equal(out.state.step, 'method');
-  assert.equal(out.state.galileo, true);
-  assert.ok(out.messages.some((m) => m.text === 'Galileo joined the chat'));
+  assert.equal(out.state.galileo, false);
+  assert.ok(out.messages.every((m) => m.speaker === 'aristotle'));
+  const end = advance(input('method', { galileo: false }), { move: 'pass', stepDone: true, messages: [{ speaker: 'aristotle', text: 'Thank you.' }] });
+  assert.equal(end.state.step, 'done');
+  assert.equal(end.state.galileo, false);
+  assert.ok(end.messages.every((m) => m.speaker === 'aristotle'));
 });
 
-test('Galileo stays for the ending', () => {
-  const out = advance(input('method', { galileo: true }), { move: 'pass', stepDone: true, messages: [{ speaker: 'galileo', text: 'Yes.' }] });
-  assert.equal(out.state.step, 'done');
-  assert.equal(out.state.galileo, true);
-  assert.ok(!out.messages.some((m) => m.speaker === 'system'));
+test('ending: Aristotle answers questions; Galileo only when asked', () => {
+  const reply = providerReply({ student_move: 'question', step_done: false, messages: [{ speaker: 'galileo', text: 'G' }, { speaker: 'aristotle', text: 'A' }] });
+  const parsed = parseModelReply(reply, 'done', false);
+  assert.deepEqual(parsed.messages.map((m) => m.speaker), ['aristotle']);
+  const plain = normalizeInput({ message: 'why is a feather slow?', state: { step: 'done', galileo: false } });
+  assert.ok(advance(plain, parsed).messages.every((m) => m.speaker === 'aristotle'));
+  const asked = normalizeInput({ message: '@Galileo what is a vacuum pump?', state: { step: 'done', galileo: false } });
+  const out = advance(asked, { move: 'question', stepDone: false, messages: [{ speaker: 'galileo', text: 'A pump that removes air.' }] });
+  assert.deepEqual(out.messages.map((m) => m.speaker), ['system', 'galileo']);
 });
 
-test('after three failed tries Galileo reveals and moves on', () => {
-  const fail = { move: 'stuck', stepDone: false, messages: [{ speaker: 'galileo', text: 'Nice try.' }] };
-  assert.equal(advance(input('faster', { stepTurns: 1, galileo: true }), fail).state.stepTurns, 2);
-  const out = advance(input('faster', { stepTurns: 3, galileo: true }), fail);
+test('after three failed tries with Galileo he reveals and moves on; without him Aristotle keeps asking', () => {
+  const fail = { move: 'wrong', stepDone: false, messages: [{ speaker: 'galileo', text: 'Nice try.' }] };
+  assert.equal(advance(input('faster', { helpTurns: 1, galileo: true }), fail).state.helpTurns, 2);
+  const out = advance(input('faster', { helpTurns: 3, galileo: true }), fail);
   assert.equal(out.state.step, 'contradiction');
   assert.ok(out.messages.some((m) => /put it together/.test(m.text)));
+  const argue = { move: 'argue', stepDone: false, messages: [{ speaker: 'aristotle', text: 'Well?' }] };
+  const alone = advance(input('faster', { stepTurns: 9, galileo: false }), argue);
+  assert.equal(alone.state.step, 'faster');
+  assert.deepEqual(alone.messages.map((m) => m.speaker), ['aristotle']);
 });
 
 test('help while Galileo is away calls him back without the AI', () => {
@@ -148,7 +207,10 @@ test('@Galileo while he is away brings him in to answer', () => {
 
 test('fallback keyword guess catches giving up', () => {
   assert.equal(guessMove("OK you're right"), 'concede');
-  assert.equal(guessMove('idk'), 'stuck');
+  assert.equal(guessMove('idk'), 'help');
+  assert.equal(guessMove('我不知道'), 'help');
+  assert.equal(guessMove('no'), 'argue');
+  assert.equal(guessMove('好吧，但是羽毛呢'), 'argue');
   assert.equal(guessMove('They land together in my experiment'), 'argue');
 });
 

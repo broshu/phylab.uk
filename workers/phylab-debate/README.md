@@ -1,9 +1,9 @@
 # Debate Aristotle Worker
 
 Backend for the **Debate Aristotle** lab (`/labs/debate-aristotle/`). The student
-argues with Aristotle in a group chat. When the student gets stuck, gives in, or
-argues for six turns, Galileo joins and leads them, one small step at a time,
-through his tied-stones thought experiment.
+argues with Aristotle in a group chat, then works through the tied-stones
+thought experiment. Galileo joins only when the student asks for help, sides
+with Aristotle, or clearly states a wrong idea.
 
 ## Two research groups
 
@@ -12,8 +12,9 @@ kept (a link with `?group=debate` or `?group=guided` sets it). A **Debate | Guid
 the same steps, pass rules, hints, reveals, animations, notebook, model and
 settings; only the social setting differs.
 
-- **debate** — the student argues with Aristotle. Galileo helps only when the
-  student is stuck and leaves again after each step the student passes.
+- **debate** — the student argues with Aristotle, who also asks every question of
+  the method. Galileo comes only when the student asks for help, sides with
+  Aristotle, or states a wrong idea, and leaves again once the step is passed.
 - **guided** (control) — Galileo leads from the start and asks the same
   questions himself; nobody argues. Aristotle is only mentioned from history.
 
@@ -34,11 +35,20 @@ step. Everything else is fixed code and preset text:
 Steps: `debate` → `premise` → `slower` → `faster` → `contradiction` →
 `objection` → `conclusion` → `method` → `done`.
 
-- Galileo joins when the model labels the student `concede`, `stuck` or
-  `thought_experiment`, after 6 debate turns, or when the student presses
-  **@Galileo**.
-- After 3 failed tries in one step, Galileo explains the idea and moves on.
-- Galileo leaves as soon as the student passes a step; Aristotle asks the next question. A wrong or stuck answer brings Galileo back with a hint, and he returns for the final reflection.
+- Debate group, who speaks:
+  - Galileo comes only when the model labels the student `help`, `concede` or
+    `wrong`, or the student writes **@Galileo** / presses the button. The code
+    enforces this whatever the model writes.
+  - Any other answer that does not pass (`argue`, `partial`, `off_topic`):
+    Aristotle reacts and asks his question again, with no hint.
+  - In the open debate, a student `thought_experiment` or 6 debate turns make
+    Aristotle himself move on to reasoning ("take my rule as true…").
+  - Galileo helps until the step is passed, then says one line and leaves.
+    After 3 failed tries with him (`helpTurns`), he explains the idea and moves
+    on. Without him there is no automatic reveal.
+  - Aristotle leads the final reflection (`method`) and the free questions
+    (`done`); @Galileo still works there.
+- Guided group: after 3 failed tries in one step (`stepTurns`), Galileo explains the idea and moves on.
 - The **@Galileo** button puts a mention in the message box. A message with "@Galileo" and a question is answered by Galileo (he joins if needed); "@Galileo" on its own works as a help button and never calls the model.
 - If DeepSeek fails, replies in Chinese twice, or returns broken JSON, the
   Worker answers from the script, so a lesson can always be finished.

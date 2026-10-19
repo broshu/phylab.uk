@@ -11,7 +11,7 @@ const NAMES = { aristotle: 'Aristotle', galileo: 'Galileo', student: 'You' };
 /**
  * The two research groups. Same steps, hints, pictures and notebook; only the
  * social setting differs. "debate": the student argues with Aristotle and
- * Galileo helps only when needed. "guided": Galileo leads, nobody argues.
+ * Galileo comes only when the student asks for help, sides with Aristotle, or states a wrong idea. "guided": Galileo leads, nobody argues.
  * The opening lines carry the same examples and the same rule in both.
  */
 const GROUPS = {
@@ -248,15 +248,17 @@ function renderControls() {
   const done = state.lesson.step === 'done';
   els.send.disabled = busy;
   els.input.disabled = busy;
-  els.help.disabled = busy || done;
-  els.help.hidden = done;
+  // Debate group: after the win, Aristotle answers; @Galileo still calls Galileo.
+  const helpHidden = done && GROUP === 'guided';
+  els.help.disabled = busy || helpHidden;
+  els.help.hidden = helpHidden;
   els.help.textContent = '@Galileo';
   els.help.title = 'Mention Galileo to ask him something';
   els.input.placeholder =
     GROUP === 'guided'
       ? done ? 'Ask Galileo anything…' : 'Answer Galileo…'
       : done
-        ? 'Ask Galileo or Aristotle anything…'
+        ? 'Ask Aristotle anything, or @Galileo…'
         : galileoIn()
           ? 'Answer Galileo, or argue with Aristotle…'
           : lessonStarted()

@@ -15,6 +15,7 @@ import {
 import {
   ALL_STEPS,
   ARISTOTLE_ON_HELP,
+  ARISTOTLE_TAKES_OVER,
   DEBATE_CARD,
   DEBATE_FALLBACKS,
   ENTRANCE,
@@ -23,10 +24,16 @@ import {
   STEP_ORDER,
 } from './steps.js';
 
-/** Student turns in the open debate before Galileo joins anyway. */
+/** Student turns in the open debate before Aristotle moves on to reasoning. */
 export const DEBATE_TURN_LIMIT = 6;
-/** Failed tries in one step before Galileo explains the idea and moves on. */
+/**
+ * Failed tries in one step before Galileo explains the idea and moves on.
+ * Debate group: counts only tries while Galileo is helping (helpTurns).
+ * Guided group: counts every try (stepTurns).
+ */
 export const REVEAL_AFTER = 3;
+/** Debate group: the only student moves that bring Galileo in (besides @Galileo). */
+export const GALILEO_MOVES = new Set(['help', 'concede', 'wrong']);
 
 const MAX_MESSAGE_CHARS = 500;
 const MAX_TRANSCRIPT_ITEMS = 16;
@@ -36,7 +43,7 @@ const CJK = /[぀-ヿ㐀-鿿가-힯＀-￯]/;
 
 /**
  * @typedef {{speaker: string, text?: string, image?: string}} ChatMessage
- * @typedef {{condition: 'debate' | 'guided', step: string, stepTurns: number, debateTurns: number, galileo: boolean}} DebateState
+ * @typedef {{condition: 'debate' | 'guided', step: string, stepTurns: number, helpTurns: number, debateTurns: number, galileo: boolean}} DebateState
  * @typedef {{type: 'turn' | 'help', message: string, toGalileo: boolean, state: DebateState, transcript: ChatMessage[]}} DebateInput
  */
 
@@ -63,7 +70,8 @@ export function normalizeInput(body) {
   const message = cleanText(raw.message, MAX_MESSAGE_CHARS);
   // "@Galileo" on its own is the help button; "@Galileo ..." is a message to him.
   const type = raw.type === 'help' || /^@galileo[\s,.:!?]*$/i.test(message) ? 'help' : 'turn';
-  const toGalileo = /@galileo\b/i.test(message);
+  // The help button counts as calling Galileo.
+  const toGalileo = type === 'help' || /@galileo\b/i.test(message);
   if (type === 'turn' && !message) throw new Error('Message is empty.');
 
   const s = raw.state && typeof raw.state === 'object' ? raw.state : {};
@@ -74,6 +82,8 @@ export function normalizeInput(body) {
     condition,
     step,
     stepTurns: cleanCount(s.stepTurns, 50),
+    // Debate group: failed tries in this step while Galileo was helping.
+    helpTurns: cleanCount(s.helpTurns, 50),
     debateTurns: cleanCount(s.debateTurns, 50),
     // Older pages did not send this; Galileo was always present after joining.
     galileo: condition === 'guided' ? true : step === 'debate' ? false : typeof s.galileo === 'boolean' ? s.galileo : true,
@@ -96,15 +106,26 @@ export function nextStep(step) {
   return index >= 0 && index < STEP_ORDER.length - 1 ? STEP_ORDER[index + 1] : 'done';
 }
 
-/** @param {DebateState} state */
-function hintFor(state) {
-  const step = STEPS[state.step];
-  return step ? step.hints[Math.min(state.stepTurns, 2)] : '';
+/** How many hints Galileo has already given in this step. @param {DebateState} state */
+function helpCount(state) {
+  return state.condition === 'guided' ? state.stepTurns : state.helpTurns;
 }
 
 /** @param {DebateState} state */
+function hintFor(state) {
+  const step = STEPS[state.step];
+  return step ? step.hints[Math.min(helpCount(state), 2)] : '';
+}
+
+/**
+ * Galileo explains and moves on. In the debate group only while he is
+ * helping: without him, Aristotle keeps asking.
+ * @param {DebateState} state
+ */
 function revealDue(state) {
-  return state.step !== 'debate' && state.step !== 'done' && state.stepTurns >= REVEAL_AFTER;
+  if (state.step === 'debate' || state.step === 'done') return false;
+  if (state.condition !== 'guided' && !state.galileo) return false;
+  return helpCount(state) >= REVEAL_AFTER;
 }
 
 const ASK_GALILEO_CARD = `CURRENT STEP: the student has just called Galileo into the chat with "@Galileo" and a message. Galileo joins now for the first time.
@@ -126,20 +147,30 @@ const TO_GALILEO = `THE STUDENT IS TALKING TO GALILEO (the message contains "@Ga
 export function buildCard(state, toGalileo = false) {
   if (state.condition === 'guided') return buildGuidedCard(state, toGalileo);
   if (state.step === 'debate') {
-    return toGalileo ? ASK_GALILEO_CARD : `${DEBATE_CARD}\n\nThis is student debate turn ${state.debateTurns + 1}.`;
+    if (toGalileo) return ASK_GALILEO_CARD;
+    const last =
+      state.debateTurns + 1 >= DEBATE_TURN_LIMIT
+        ? '\nThis is the LAST debate turn: Aristotle does NOT end with a question. The next part is added automatically.'
+        : '';
+    return `${DEBATE_CARD}\n\nThis is student debate turn ${state.debateTurns + 1}.${last}`;
   }
   const step = STEPS[state.step];
-  if (state.step === 'done') return toGalileo ? `${step.card}\n\nThe student asked Galileo directly, so Galileo answers.` : step.card;
+  if (state.step === 'done') {
+    return toGalileo
+      ? `${step.card}\n\nThe student wrote "@Galileo", so Galileo answers. Allowed speakers: galileo, aristotle.`
+      : `${step.card}\n\nAllowed speakers: aristotle only. Write exactly 1 message.`;
+  }
   if (toGalileo) state = { ...state, galileo: true };
 
   const hint = `"${hintFor(state)}"`;
   const presence = state.galileo
-    ? `WHO IS IN THE CHAT: Galileo IS here (he came to help). Allowed speakers: galileo, aristotle.
-- If step_done is true: Galileo praises in one or two sentences (${step.onPass.galileo}). Aristotle may add one short line (${step.onPass.aristotle}). Do NOT ask a new question: the next question is added automatically.
+    ? `WHO IS IN THE CHAT: Galileo IS here (he came to help in this step). Allowed speakers: galileo, aristotle.
+- If step_done is true: Galileo writes ONE short message: he praises (${step.onPass.galileo}) and says in a few words that he steps back now. Aristotle may add one short line (${step.onPass.aristotle}). Do NOT ask a new question: the next question is added automatically.
 - If step_done is false: Galileo answers what the student said and ends with this hint as a question: ${hint}. Aristotle stays quiet unless the student argued with him.`
-    : `WHO IS IN THE CHAT: Galileo is NOT here. The student is reasoning alone against Aristotle. Allowed speakers: aristotle, galileo.
+    : `WHO IS IN THE CHAT: Galileo is NOT here. The student is reasoning alone against Aristotle. Galileo comes ONLY if student_move is "help", "concede" or "wrong".
 - If step_done is true: write ONLY one Aristotle message (${step.onPass.aristotle}). No Galileo. Do NOT ask a new question: the next question is added automatically.
-- If step_done is false: Galileo comes back to help. First one short Aristotle message reacting to the student (no hint, no answer). Then one Galileo message that ends with this hint as a question: ${hint}.`;
+- If step_done is false and student_move is "help", "concede" or "wrong": Galileo comes to help. You may first write one short Aristotle message reacting to the student (no question, no hint). Then one Galileo message that reacts to the student's idea and ends with this hint as a question: ${hint}. If Galileo has not spoken in the chat before, he first says in a few words that he is Galileo and on the student's side.
+- If step_done is false and student_move is anything else ("argue", "partial", "off_topic", ...): write ONLY one Aristotle message. No Galileo. Aristotle reacts to what the student said and asks his question again in other words. He gives no hint and never states or suggests the answer of this step.`;
 
   const reveal = revealDue(state)
     ? `\n\nTHIS TURN: the student has already tried ${state.stepTurns} times. If step_done is false, Galileo writes ONLY one short, kind line about what the student tried, with no question and no answer: the lesson code explains the idea right after your message.`
@@ -209,7 +240,13 @@ export function parseModelReply(value, step, toGalileo = false, condition = 'deb
   if (!data || typeof data !== 'object') return null;
 
   const allowed =
-    condition === 'guided' ? ['galileo'] : step === 'debate' ? [toGalileo ? 'galileo' : 'aristotle'] : ['aristotle', 'galileo'];
+    condition === 'guided'
+      ? ['galileo']
+      : step === 'debate'
+        ? [toGalileo ? 'galileo' : 'aristotle']
+        : step === 'done' && !toGalileo
+          ? ['aristotle']
+          : ['aristotle', 'galileo'];
   const messages = (Array.isArray(data.messages) ? data.messages : [])
     .map((/** @type {any} */ m) => ({
       speaker: typeof m?.speaker === 'string' ? m.speaker.toLowerCase().trim() : '',
@@ -240,7 +277,7 @@ export function hasChinese(messages) {
 /* Deterministic lesson flow                                           */
 /* ------------------------------------------------------------------ */
 
-/** @param {'concede'|'stuck'|'stalemate'|'asked'|'spark'} reason */
+/** @param {'concede'|'help'|'asked'} reason */
 function galileoJoins(reason) {
   return [
     { speaker: 'system', text: 'Galileo joined the chat' },
@@ -258,14 +295,15 @@ const JOINED = { speaker: 'system', text: 'Galileo joined the chat' };
 const LEFT = { speaker: 'system', text: 'Galileo left the chat' };
 
 /**
- * Words that clearly mean "I give up" or "I'm stuck". Used only when the AI
- * is unavailable and cannot classify the message.
+ * Words that clearly mean "I give up" or "help me". Used only when the AI
+ * is unavailable and cannot classify the message. Anything else is "argue",
+ * so Aristotle answers.
  * @param {string} text
  */
 export function guessMove(text) {
   const t = text.toLowerCase();
-  if (/(you'?re right|you are right|i give up|i lose|fine,? you win|you win|ok,? heavier|认输|你说得对|你是对的|好吧)/.test(t)) return 'concede';
-  if (/^(\?+|hmm+|um+|idk|no|ok)\.?$/.test(t.trim()) || /(don'?t know|not sure|no idea|help|stuck|不知道|不会|帮)/.test(t)) return 'stuck';
+  if (/(you'?re right|you are right|i give up|i lose|fine,? you win|you win|ok,? heavier|认输|你说得对|你是对的|你赢了)/.test(t)) return 'concede';
+  if (/^idk\.?$/.test(t.trim()) || /(don'?t know|no idea|\bhelp\b|\bhint\b|\bstuck\b|不知道|不会做|帮帮|帮我|提示|求助)/.test(t)) return 'help';
   return 'argue';
 }
 
@@ -277,13 +315,6 @@ export function guessMove(text) {
 export function advance(input, result) {
   if (input.state.condition === 'guided') return advanceGuided(input, result);
   if (input.toGalileo && input.state.step === 'debate') return askGalileoFirst(input, result);
-  if (input.toGalileo && !input.state.galileo) {
-    // Treat Galileo as present, then show him joining before his first line.
-    const out = advanceStep({ ...input, state: { ...input.state, galileo: true } }, result);
-    const first = out.messages.findIndex((m) => m.speaker === 'galileo');
-    if (first >= 0) out.messages.splice(first, 0, JOINED);
-    return { ...out, joined: first >= 0 ? 'asked' : out.joined };
-  }
   return advanceStep(input, result);
 }
 
@@ -300,101 +331,142 @@ function askGalileoFirst(input, result) {
       ...(reply.length ? reply : [{ speaker: 'galileo', text: ENTRANCE.asked }]),
       ...STEPS.premise.opener,
     ],
-    state: { ...input.state, step: 'premise', stepTurns: 0, debateTurns: input.state.debateTurns + 1, galileo: true },
+    state: { ...input.state, step: 'premise', stepTurns: 0, helpTurns: 0, debateTurns: input.state.debateTurns + 1, galileo: true },
     passed: [],
     joined: 'asked',
   };
 }
 
 /**
+ * Put "Galileo joined the chat" before his first line, if he was not here.
+ * @param {ChatMessage[]} messages @param {boolean} wasHere
+ */
+function markJoin(messages, wasHere) {
+  if (wasHere) return messages;
+  const first = messages.findIndex((m) => m.speaker === 'galileo');
+  if (first >= 0) messages.splice(first, 0, JOINED);
+  return messages;
+}
+
+/**
+ * The debate group. Galileo comes only when the student asks for help
+ * (@Galileo or "help"), sides with Aristotle ("concede"), or states a wrong
+ * idea ("wrong"); otherwise Aristotle answers and asks again.
  * @param {DebateInput} input
  * @param {{move: string, stepDone: boolean, messages: ChatMessage[]} | null} result
  */
 function advanceStep(input, result) {
   const { state } = input;
+  const wasHere = state.galileo;
   /** @type {ChatMessage[]} */
   const messages = [];
   /** @type {string[]} */
   const passed = [];
-  let next = { ...state };
+  const move = result ? result.move : guessMove(input.message);
+  const only = (/** @type {string} */ who) => (result ? result.messages.filter((m) => m.speaker === who) : []);
 
   if (state.step === 'debate') {
     const debateTurns = state.debateTurns + 1;
-    const move = result ? result.move : guessMove(input.message);
     messages.push(
       ...(result
         ? result.messages
         : [{ speaker: 'aristotle', text: DEBATE_FALLBACKS[state.debateTurns % DEBATE_FALLBACKS.length] }]),
     );
 
-    /** @type {'concede'|'stuck'|'stalemate'|'spark'|null} */
-    let reason = null;
-    if (move === 'concede') reason = 'concede';
-    else if (move === 'stuck') reason = 'stuck';
-    else if (move === 'thought_experiment') reason = 'spark';
-    else if (debateTurns >= DEBATE_TURN_LIMIT) reason = 'stalemate';
-
-    if (reason) {
-      messages.push(...galileoJoins(reason));
-      next = { ...state, step: 'premise', stepTurns: 0, debateTurns, galileo: true };
-    } else {
-      next = { ...state, debateTurns };
+    // Galileo comes only for "help" or "concede".
+    if (move === 'concede' || move === 'help') {
+      messages.push(...galileoJoins(move));
+      return {
+        messages,
+        state: { ...state, step: 'premise', stepTurns: 0, helpTurns: 0, debateTurns, galileo: true },
+        passed,
+        joined: move,
+      };
     }
-    return { messages, state: next, passed, joined: reason };
+    // A good student: Aristotle himself moves from examples to reasoning.
+    const reason = move === 'thought_experiment' ? 'spark' : debateTurns >= DEBATE_TURN_LIMIT ? 'stalemate' : null;
+    if (reason) {
+      messages.push({ speaker: 'aristotle', text: ARISTOTLE_TAKES_OVER[reason] });
+      return {
+        messages,
+        state: { ...state, step: 'premise', stepTurns: 0, helpTurns: 0, debateTurns, galileo: false },
+        passed,
+        joined: null,
+      };
+    }
+    return { messages, state: { ...state, debateTurns }, passed, joined: null };
   }
 
   if (state.step === 'done') {
+    const here = wasHere || input.toGalileo;
     if (result) messages.push(...result.messages);
-    else messages.push({ speaker: 'galileo', text: 'Sorry, I lost my train of thought. Could you ask that again?' });
-    return { messages, state: { ...state, stepTurns: state.stepTurns + 1 }, passed, joined: null };
+    else if (input.type === 'help') messages.push({ speaker: 'galileo', text: "I'm here. Ask me anything about falling bodies or thought experiments." });
+    else if (input.toGalileo) messages.push({ speaker: 'galileo', text: 'Sorry, I lost my train of thought. Could you ask that again?' });
+    else messages.push({ speaker: 'aristotle', text: STEPS.done.press });
+    markJoin(messages, wasHere);
+    return { messages, state: { ...state, stepTurns: state.stepTurns + 1, galileo: here }, passed, joined: here && !wasHere ? 'asked' : null };
   }
 
+  // Galileo is here if he already came in this step, or the student called him.
+  const helping = wasHere || input.toGalileo;
+  const now = { ...state, galileo: helping };
   const passedNow = Boolean(result?.stepDone);
-  if (passedNow || revealDue(state)) {
-    // Progress. Galileo (if here) says his piece and steps out; the next
-    // question comes from Aristotle. For the final reflection he comes back.
+
+  if (passedNow || revealDue(now)) {
     passed.push(state.step);
     const step = nextStep(state.step);
-    let galileo = state.galileo;
     if (passedNow) {
       const reply = /** @type {NonNullable<typeof result>} */ (result).messages;
-      messages.push(...(galileo ? reply : reply.filter((m) => m.speaker !== 'galileo')));
+      if (!helping) messages.push(...reply.filter((m) => m.speaker !== 'galileo'));
+      else {
+        // One Galileo line at most, then he steps back.
+        const g = reply.find((m) => m.speaker === 'galileo') || { speaker: 'galileo', text: STEPS[state.step].leave || "Well done. I'll step back now." };
+        const a = reply.find((m) => m.speaker === 'aristotle');
+        messages.push(g, ...(a ? [a] : []));
+      }
     } else {
-      if (result) messages.push(...result.messages);
-      if (!galileo) messages.push(JOINED);
-      galileo = true;
+      messages.push(...only('galileo').slice(0, 1));
       messages.push({ speaker: 'galileo', text: `Let's put it together. ${STEPS[state.step].reveal}` });
     }
-    if (step === 'method' || step === 'done') {
-      if (!galileo) messages.push(JOINED);
-      galileo = true;
-    } else if (galileo) {
-      const leave = STEPS[state.step].leave;
-      if (leave) messages.push({ speaker: 'galileo', text: leave });
-      messages.push(LEFT);
-      galileo = false;
-    }
+    markJoin(messages, wasHere);
+    if (helping) messages.push(LEFT);
     messages.push(...openerFor(step));
-    return { messages, state: { ...state, step, stepTurns: 0, galileo }, passed, joined: null };
+    return {
+      messages,
+      state: { ...state, step, stepTurns: 0, helpTurns: 0, galileo: false },
+      passed,
+      joined: helping && !wasHere ? 'asked' : null,
+    };
   }
 
-  // Not yet: Galileo is (or comes back) here with a hint.
-  if (result) {
-    const firstGalileo = result.messages.findIndex((m) => m.speaker === 'galileo');
-    const reply = [...result.messages];
-    if (firstGalileo < 0) reply.push({ speaker: 'galileo', text: hintFor(state) });
-    if (!state.galileo) reply.splice(reply.findIndex((m) => m.speaker === 'galileo'), 0, JOINED);
-    messages.push(...reply);
-  } else {
-    if (!state.galileo) messages.push(JOINED, { speaker: 'galileo', text: `${RETURN_LINE} ${hintFor(state)}` });
-    else messages.push({ speaker: 'galileo', text: hintFor(state) });
+  // Not yet. Galileo helps only if he is here, was called, or the move needs him.
+  if (helping || GALILEO_MOVES.has(move)) {
+    if (result) {
+      // At most one short Aristotle line and one Galileo line, in the model's order.
+      let a = 0;
+      let g = 0;
+      for (const m of result.messages) {
+        if (m.speaker === 'aristotle' && a++ < 1) messages.push(m);
+        if (m.speaker === 'galileo' && g++ < 1) messages.push(m);
+      }
+      if (!g) messages.push({ speaker: 'galileo', text: hintFor(now) });
+    } else {
+      if (!wasHere) messages.push({ speaker: 'galileo', text: `${RETURN_LINE} ${hintFor(now)}` });
+      else messages.push({ speaker: 'galileo', text: hintFor(now) });
+    }
+    markJoin(messages, wasHere);
+    return {
+      messages,
+      state: { ...state, stepTurns: state.stepTurns + 1, helpTurns: state.helpTurns + 1, galileo: true },
+      passed,
+      joined: wasHere ? null : input.toGalileo ? 'asked' : move,
+    };
   }
-  return {
-    messages,
-    state: { ...state, stepTurns: state.stepTurns + 1, galileo: true },
-    passed,
-    joined: state.galileo ? null : 'return',
-  };
+
+  // Aristotle answers and asks again. No hint, no Galileo.
+  const a = only('aristotle').slice(0, 1);
+  messages.push(...(a.length ? a : [{ speaker: 'aristotle', text: STEPS[state.step].press }]));
+  return { messages, state: { ...state, stepTurns: state.stepTurns + 1 }, passed, joined: null };
 }
 
 /**
@@ -460,10 +532,10 @@ export function helpTurn(input) {
   if (state.step === 'debate') {
     return {
       messages: [{ speaker: 'aristotle', text: ARISTOTLE_ON_HELP }, ...galileoJoins('asked')],
-      state: { ...state, step: 'premise', stepTurns: 0, debateTurns: state.debateTurns, galileo: true },
+      state: { ...state, step: 'premise', stepTurns: 0, helpTurns: 0, debateTurns: state.debateTurns, galileo: true },
       passed: [],
       joined: 'asked',
     };
   }
-  return advance(input, null);
+  return advance({ ...input, toGalileo: true }, null);
 }
