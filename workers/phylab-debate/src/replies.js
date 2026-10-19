@@ -50,7 +50,7 @@ export const BEFORE_GALILEO = {
 /** Open debate: each preset reply ends with one of these challenges, in turn. */
 export const DEBATE_TAILS = [
   'What do you say now?',
-  'Can you name one heavy thing that falls slowly?',
+  'Can you name one heavy thing that falls slower than a light one?',
   'So which lands first?',
   'Why should I believe otherwise?',
 ];

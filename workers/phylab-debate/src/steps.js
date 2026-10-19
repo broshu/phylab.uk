@@ -58,7 +58,7 @@ What to write in "messages":
 export const DEBATE_FALLBACKS = [
   'Look around you, my friend. An apple drops quickly, but a leaf drifts down slowly. Is the apple not heavier?',
   'Drop a hammer and a sheet of paper together. Which reaches the floor first? Your own hands will tell you.',
-  'A raindrop falls fast, a snowflake floats down. The heavier one hurries home. Can you name one heavy thing that falls slowly?',
+  'A raindrop falls fast, a snowflake floats down. The heavier one hurries home. Can you name one heavy thing that falls slower than a light one?',
   'You talk about the air, but the air is part of nature. In the real world, heavy things win. Why should I believe otherwise?',
   'An iron ball and a wooden ball of the same size: the iron one lands first. If it wins by a little, it still wins. What do you say?',
 ];
