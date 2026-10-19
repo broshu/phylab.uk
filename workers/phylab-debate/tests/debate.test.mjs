@@ -367,3 +367,40 @@ test('guided group and a debate spark skip the tie step', () => {
   const next = advance(normalizeInput({ message: 'x', state: spark.state }), { move: 'pass', stepDone: true, messages: [{ speaker: 'aristotle', text: 'Yes.' }] });
   assert.equal(next.state.step, 'slower');
 });
+
+test('open debate: a preset label gets Aristotle\'s fixed reply plus a challenge, even with no model words', () => {
+  const parsed = parseModelReply(providerReply({ student_move: 'air', step_done: false, messages: [] }), 'debate');
+  assert.equal(parsed.move, 'air');
+  const out = advance(input('debate'), parsed);
+  assert.equal(out.messages.length, 1);
+  assert.match(out.messages[0].text, /^Even with no air at all/);
+  assert.match(out.messages[0].text, /\?$/);
+  const same = advance(input('debate'), { move: 'same_time', stepDone: false, messages: [] });
+  assert.equal(same.messages[0].image, 'falling');
+});
+
+test('Pisa easter egg: Galileo steps in once, then Aristotle; the second time it is an experiment', () => {
+  const first = advance(input('debate'), { move: 'pisa', stepDone: false, messages: [] });
+  assert.deepEqual(first.messages.map((m) => m.speaker), ['system', 'galileo', 'system', 'aristotle']);
+  assert.equal(first.messages[1].image, 'pisa');
+  assert.equal(first.state.pisaSeen, true);
+  assert.equal(first.state.galileo, false);
+  const again = advance(normalizeInput({ message: 'x', state: first.state }), { move: 'pisa', stepDone: false, messages: [] });
+  assert.deepEqual(again.messages.map((m) => m.speaker), ['aristotle']);
+  assert.match(again.messages[0].text, /not precise enough/);
+});
+
+test('tie step: presets end with the reasoning challenge; the whole idea passes; part of it is discussed', () => {
+  const air = advance(input('tie', { galileo: false }), { move: 'air', stepDone: false, messages: [] });
+  assert.match(air.messages[0].text, /reasoning alone, if you can\.$/);
+  const part = advance(input('tie', { galileo: false }), { move: 'thought_partial', stepDone: false, messages: [{ speaker: 'aristotle', text: 'Together? Which stones?' }] });
+  assert.deepEqual(part.messages.map((m) => m.text), ['Together? Which stones?']);
+  const whole = advance(input('tie', { galileo: false }), { move: 'thought_experiment', stepDone: false, messages: [{ speaker: 'aristotle', text: 'A strange idea.' }] });
+  assert.equal(whole.state.step, 'slower');
+});
+
+test('open debate: giving in gets Aristotle\'s fixed line, then Galileo', () => {
+  const out = advance(input('debate'), { move: 'concede', stepDone: false, messages: [] });
+  assert.equal(out.messages[0].text, 'Good, you see it at last. The matter is settled.');
+  assert.equal(out.joined, 'concede');
+});

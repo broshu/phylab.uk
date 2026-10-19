@@ -363,7 +363,70 @@ function tube() {
   };
 }
 
-const SCENES = { falling: stoneFeather, stones: aristotleRule, contradiction, tube };
+/** Galileo's tower drop (the Pisa story): a heavy and a light iron ball from 56 m. */
+function pisa() {
+  const top = 40;
+  const groundY = 206;
+  const metres = 56;
+  const pxm = (groundY - top - 12) / metres;
+  const slow = 0.55;
+  // Iron balls in air: terminal speed grows with the radius (about 191 and 105 m/s).
+  const heavy = dragFall(metres, 191);
+  const light = dragFall(metres, 105);
+  const end = Math.max(heavy.land, light.land);
+  return {
+    label: 'A heavy and a light iron ball dropped from the Leaning Tower of Pisa land almost together',
+    duration: end / slow + 1.6,
+    draw(ctx, t) {
+      const tp = t * slow;
+      sky(ctx, groundY);
+      // the leaning tower
+      ctx.save();
+      ctx.translate(78, groundY);
+      ctx.rotate(0.07);
+      ctx.fillStyle = '#efe9da';
+      ctx.strokeStyle = 'rgba(29,38,32,0.35)';
+      ctx.lineWidth = 1;
+      const tw = 44;
+      const th = groundY - top + 6;
+      ctx.fillRect(-tw / 2, -th, tw, th);
+      ctx.strokeRect(-tw / 2, -th, tw, th);
+      for (let k = 1; k < 7; k++) {
+        const y = -k * (th / 7);
+        ctx.beginPath();
+        ctx.moveTo(-tw / 2 - 3, y);
+        ctx.lineTo(tw / 2 + 3, y);
+        ctx.stroke();
+        for (let c = -1; c <= 1; c++) {
+          ctx.beginPath();
+          ctx.arc(c * 13, y + th / 14, 3.2, Math.PI, 0);
+          ctx.stroke();
+        }
+      }
+      ctx.restore();
+      text(ctx, 'Pisa, as the story goes', 12, 20, { align: 'left', weight: 700, size: 12 });
+      clock(ctx, Math.min(tp, end));
+      tag(ctx, 'slow motion', W - 10, 40);
+      const lanes = [
+        { x: 170, fall: heavy, r: 13, name: 'heavy ball' },
+        { x: 232, fall: light, r: 6, name: 'light ball' },
+      ];
+      for (const lane of lanes) {
+        const y = Math.min(top + lane.fall.at(tp) * pxm, groundY - lane.r);
+        const g = ctx.createRadialGradient(lane.x - lane.r * 0.4, y - lane.r * 0.4, 1, lane.x, y, lane.r);
+        g.addColorStop(0, '#9aa1a8');
+        g.addColorStop(1, '#3d4248');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(lane.x, y, lane.r, 0, Math.PI * 2);
+        ctx.fill();
+        if (tp >= lane.fall.land) landedNote(ctx, `${lane.name}: ${lane.fall.land.toFixed(2)} s`, lane.x, groundY + 24, '#fff');
+      }
+    },
+  };
+}
+
+const SCENES = { falling: stoneFeather, stones: aristotleRule, contradiction, tube, pisa };
 
 export const hasAnimation = (id) => id in SCENES;
 

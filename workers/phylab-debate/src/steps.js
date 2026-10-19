@@ -7,7 +7,9 @@
  * Edit wording here; keep the step ids unchanged — the lab page uses them.
  */
 
-export const PROMPT_VERSION = 'debate-aristotle-v5';
+import { ARGUMENT_LABELS } from './replies.js';
+
+export const PROMPT_VERSION = 'debate-aristotle-v6';
 
 /** Steps after Galileo first joins, in order. */
 export const STEP_ORDER = [
@@ -38,31 +40,19 @@ export const DEBATE_ONLY_STEPS = ['tie'];
 /* ------------------------------------------------------------------ */
 
 export const DEBATE_CARD = `CURRENT STEP: debate (open debate, Galileo is NOT in the chat yet)
-Allowed speakers: aristotle only. Write exactly 1 message.
+Allowed speakers: aristotle only.
 
-Goal: let the student argue freely. Aristotle defends "heavier bodies fall faster" with everyday examples.
-Aristotle answers the student's point directly, gives one everyday example or one excuse, and ends with one short challenge question to the student.
+Goal: let the student argue freely. Aristotle defends "heavier bodies fall faster" with everyday examples and excuses.
 
-Classify the student's message as student_move:
-- "argue": the student gives any claim or reason against Aristotle (an experiment, "they land together", air resistance, a textbook, a story about a tower, a formula).
-  Repeating an earlier point, or a very short reply ("no", "hmm", "?"), also counts as "argue".
-- "concede": the student agrees that heavier things fall faster, or gives up ("you are right", "I lose", "you win").
-- "help": the student asks for help or a hint, or says they are stuck or do not know what to say ("I don't know", "idk", "help").
-- "thought_experiment": the student reasons only from Aristotle's own rule by imagining bodies joined or split — for example tying a light and a heavy stone together, cutting a stone in half, or gluing two bodies.
-- "off_topic": nothing to do with falling bodies.
+${ARGUMENT_LABELS}
 
 step_done is always false in this step.
 
-How Aristotle answers common points (use the idea, in your own words, do not copy):
-- "They hit the ground at the same time": from such a short height your eyes cannot see the gap. Try a stone and a feather.
-- Air resistance: so you agree the feather is slower! Air is part of nature. You talk about a world without air that nobody has ever seen.
-- Two balls of the same size, different weight: the iron ball still wins. If it wins by a little, it still wins.
-- A textbook, a teacher, or "g is the same for all": a book is not a reason. Show me with reasoning.
-- A story about a tower or about Galileo: I do not know this man. A story is not a proof.
-- A very heavy and a very light thing landing close together: your hands did not let go at the same moment.
-- If student_move is "concede": Aristotle is pleased and kind, and says the matter is settled. No question.
-- If student_move is "help": Aristotle says, amused, that the student may call for help if they like. No question.
-- If student_move is "thought_experiment": Aristotle is surprised and curious ("Tie them together? A strange idea...") but does not answer it yet. No question: the next question is added automatically.`;
+What to write in "messages":
+- For "same_time", "experiment", "air", "vacuum", "book", "formula", "pisa", "concede", "help": write "messages": []. The lesson code adds Aristotle's fixed reply.
+- For "thought_experiment": exactly 1 Aristotle message. He is surprised and curious ("Joined together? A strange idea...") but does not answer it yet. No question: the next question is added automatically.
+- For "thought_partial": exactly 1 Aristotle message. He takes up what the student said and asks them to say exactly what they would do and with which bodies, and what his rule would say then. He adds nothing the student has not said.
+- For "other": exactly 1 Aristotle message. He answers the student's point directly with one everyday example or one excuse, and ends with one short challenge question.`;
 
 /** Aristotle's lines when the AI is unavailable in the debate step. */
 export const DEBATE_FALLBACKS = [
@@ -180,15 +170,13 @@ If it passes, student_move is "pass".`,
     card: `CURRENT STEP: tie (debate group only: the student must come up with the thought experiment)
 Aristotle's rule has been stated and taken as true for now. Aristotle holds his position and has challenged the student to break the rule by reasoning alone. He does NOT suggest any idea himself. The student may read the textbook.
 
-Goal: the student proposes to imagine joining a heavy and a light body (tie them with a rope, glue them, put them in a bag together), or splitting one body into parts, and asks what Aristotle's rule says about it.
+Goal: the student proposes the whole thought experiment: imagine a heavy and a light body joined together (tied with a rope, glued, in one bag, or any design with the same idea) and ask what Aristotle's rule says about the pair.
 
-PASS (step_done = true) if the student proposes joining or splitting bodies in their mind, in any words (for example "tie a heavy and a light stone together", "what if we glue them", "cut a stone in half"). The idea may come from the textbook.
-NOT YET (step_done = false). Choose one student_move label:
-- "concede": the student gives up or says the rule cannot be broken. Note: Aristotle talks about one heavy and one light stone; what could you do with them in your mind?
-- "argue": an experiment, air, a book's conclusion, "they land together", or any reason that is not a joined or split body. Aristotle stays firm with his everyday examples and excuses, as in the open debate, and asks for reasoning that breaks his rule.
-- "help": asks for help, or says they are stuck or do not know. Note: use the hint.
-- "off_topic".
-If it passes, student_move is "pass".`,
+PASS (step_done = true, student_move = "thought_experiment") if the student proposes that whole idea, in any words. The idea may come from the textbook.
+NOT YET (step_done = false):
+${ARGUMENT_LABELS}
+
+Notes for Galileo when he helps: Aristotle talks about one heavy and one light stone; what could you do with them in your mind? If the student has part of the idea, ask which bodies and what happens to them.`,
     onPass: {
       galileo: 'praise the idea of joining the stones as the start of a thought experiment',
       aristotle: 'is surprised but confident ("Tie them together? A strange idea, but my rule fears nothing.")',

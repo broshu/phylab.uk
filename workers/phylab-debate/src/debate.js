@@ -12,6 +12,7 @@ import {
   GUIDED_TO_GALILEO,
   guidedPresence,
 } from './guided.js';
+import { ARGUMENT_REPLIES, BEFORE_GALILEO, DEBATE_TAILS, PISA, PRESET_MOVES, TIE_TAIL } from './replies.js';
 import {
   ALL_STEPS,
   ARISTOTLE_ON_HELP,
@@ -44,7 +45,7 @@ const CJK = /[぀-ヿ㐀-鿿가-힯＀-￯]/;
 
 /**
  * @typedef {{speaker: string, text?: string, image?: string}} ChatMessage
- * @typedef {{condition: 'debate' | 'guided', step: string, stepTurns: number, helpTurns: number, debateTurns: number, galileo: boolean, spark?: boolean}} DebateState
+ * @typedef {{condition: 'debate' | 'guided', step: string, stepTurns: number, helpTurns: number, debateTurns: number, galileo: boolean, spark?: boolean, pisaSeen?: boolean}} DebateState
  * @typedef {{type: 'turn' | 'help', message: string, toGalileo: boolean, session: string, state: DebateState, transcript: ChatMessage[]}} DebateInput
  */
 
@@ -87,6 +88,8 @@ export function normalizeInput(body) {
     helpTurns: cleanCount(s.helpTurns, 50),
     // The student invented the tied stones in the open debate: skip the "tie" step.
     spark: s.spark === true,
+    // The Pisa easter egg (Galileo steps in once) has been shown.
+    pisaSeen: s.pisaSeen === true,
     debateTurns: cleanCount(s.debateTurns, 50),
     // Older pages did not send this; Galileo was always present after joining.
     galileo: condition === 'guided' ? true : step === 'debate' ? false : typeof s.galileo === 'boolean' ? s.galileo : true,
@@ -192,8 +195,14 @@ export function buildCard(state, toGalileo = false) {
   const reveal = revealDue(state)
     ? `\n\nTHIS TURN: the student has already tried ${state.stepTurns} times. If step_done is false, Galileo writes ONLY one short, kind line about what the student tried, with no question and no answer: the lesson code explains the idea right after your message.`
     : '';
-  return `${step.card}\n\n${presence}${reveal}${toGalileo ? `\n\n${TO_GALILEO}` : ''}`;
+  const tie = state.step === 'tie' && !state.galileo ? `\n\n${TIE_ARISTOTLE}` : '';
+  return `${step.card}\n\n${presence}${tie}${reveal}${toGalileo ? `\n\n${TO_GALILEO}` : ''}`;
 }
+
+const TIE_ARISTOTLE = `ARISTOTLE'S LINES IN THIS STEP (when step_done is false and Galileo does not come):
+- For "same_time", "experiment", "air", "vacuum", "book", "formula", "pisa": write "messages": []. The lesson code adds Aristotle's fixed reply.
+- For "thought_partial": one Aristotle message that takes up what the student said and asks them to say exactly what they would do, with which bodies, and what his rule would say then. He adds nothing the student has not said.
+- For "other": one Aristotle message that holds his position with an everyday example or excuse. He never suggests any idea.`;
 
 /** @param {DebateState} state @param {boolean} toGalileo */
 function buildGuidedCard(state, toGalileo) {
@@ -271,10 +280,13 @@ export function parseModelReply(value, step, toGalileo = false, condition = 'deb
     }))
     .filter((/** @type {ChatMessage} */ m) => allowed.includes(m.speaker) && m.text)
     .slice(0, step === 'debate' ? 1 : 2);
-  if (messages.length === 0) return null;
+  const move = cleanText(data.student_move, 32).toLowerCase();
+  // Preset labels need no words from the model: the lesson code adds the reply.
+  const presetOk = condition !== 'guided' && (step === 'debate' || step === 'tie') && PRESET_MOVES.has(move);
+  if (messages.length === 0 && !presetOk) return null;
 
   return {
-    move: cleanText(data.student_move, 32).toLowerCase(),
+    move,
     stepDone: data.step_done === true && step !== 'debate' && step !== 'done',
     messages,
     truncated: choice?.finish_reason === 'length',
@@ -320,6 +332,7 @@ const LEFT = { speaker: 'system', text: 'Galileo left the chat' };
 export function guessMove(text) {
   const t = text.toLowerCase();
   if (/(you'?re right|you are right|i give up|i lose|fine,? you win|you win|ok,? heavier|认输|你说得对|你是对的|你赢了)/.test(t)) return 'concede';
+  if (/(pisa|leaning tower|比萨|斜塔)/.test(t)) return 'pisa';
   if (/^idk\.?$/.test(t.trim()) || /(don'?t know|no idea|\bhelp\b|\bhint\b|\bstuck\b|不知道|不会做|帮帮|帮我|提示|求助)/.test(t)) return 'help';
   return 'argue';
 }
@@ -355,6 +368,28 @@ function askGalileoFirst(input, result) {
 }
 
 /**
+ * Aristotle's answer to an argument (open debate and "tie"): the fixed reply
+ * for a preset label, the Pisa easter egg once, or else his own words.
+ * Pushes onto `messages`; returns true when the Pisa egg was shown.
+ * @param {string} move @param {DebateState} state @param {string} tail
+ * @param {ChatMessage[]} messages @param {ChatMessage[]} own the model's (or script's) line
+ */
+function presetReply(move, state, tail, messages, own) {
+  const end = (/** @type {string} */ text) => (tail ? `${text} ${tail}` : text);
+  if (move === 'pisa' && !state.pisaSeen) {
+    messages.push(JOINED, { speaker: 'galileo', ...PISA.galileo }, LEFT, { speaker: 'aristotle', text: end(PISA.aristotle) });
+    return true;
+  }
+  const preset = ARGUMENT_REPLIES[/** @type {keyof typeof ARGUMENT_REPLIES} */ (move === 'pisa' ? 'experiment' : move)];
+  if (preset) {
+    messages.push({ speaker: 'aristotle', ...preset, text: end(preset.text) });
+    return false;
+  }
+  messages.push(...(own.length ? own : [{ speaker: 'aristotle', text: end('My rule stands.') }]));
+  return false;
+}
+
+/**
  * Put "Galileo joined the chat" before his first line, if he was not here.
  * @param {ChatMessage[]} messages @param {boolean} wasHere
  */
@@ -384,15 +419,11 @@ function advanceStep(input, result) {
 
   if (state.step === 'debate') {
     const debateTurns = state.debateTurns + 1;
-    messages.push(
-      ...(result
-        ? result.messages
-        : [{ speaker: 'aristotle', text: DEBATE_FALLBACKS[state.debateTurns % DEBATE_FALLBACKS.length] }]),
-    );
+    const last = debateTurns >= DEBATE_TURN_LIMIT;
 
     // Galileo comes only for "help" or "concede".
     if (move === 'concede' || move === 'help') {
-      messages.push(...galileoJoins(move));
+      messages.push({ speaker: 'aristotle', text: BEFORE_GALILEO[move] }, ...galileoJoins(move));
       return {
         messages,
         state: { ...state, step: 'premise', stepTurns: 0, helpTurns: 0, debateTurns, galileo: true },
@@ -400,18 +431,23 @@ function advanceStep(input, result) {
         joined: move,
       };
     }
+
+    const tail = last || move === 'thought_experiment' ? '' : DEBATE_TAILS[state.debateTurns % DEBATE_TAILS.length];
+    const fallback = { speaker: 'aristotle', text: DEBATE_FALLBACKS[state.debateTurns % DEBATE_FALLBACKS.length] };
+    const pisaNow = presetReply(move, state, tail, messages, result ? only('aristotle').slice(0, 1) : [fallback]);
+
     // A good student: Aristotle himself moves from examples to reasoning.
-    const reason = move === 'thought_experiment' ? 'spark' : debateTurns >= DEBATE_TURN_LIMIT ? 'stalemate' : null;
+    const reason = move === 'thought_experiment' ? 'spark' : last ? 'stalemate' : null;
     if (reason) {
       messages.push({ speaker: 'aristotle', text: ARISTOTLE_TAKES_OVER[reason] });
       return {
         messages,
-        state: { ...state, step: 'premise', stepTurns: 0, helpTurns: 0, debateTurns, galileo: false, spark: reason === 'spark' },
+        state: { ...state, step: 'premise', stepTurns: 0, helpTurns: 0, debateTurns, galileo: false, spark: reason === 'spark', pisaSeen: state.pisaSeen || pisaNow },
         passed,
         joined: null,
       };
     }
-    return { messages, state: { ...state, debateTurns }, passed, joined: null };
+    return { messages, state: { ...state, debateTurns, pisaSeen: state.pisaSeen || pisaNow }, passed, joined: null };
   }
 
   if (state.step === 'done') {
@@ -427,7 +463,8 @@ function advanceStep(input, result) {
   // Galileo is here if he already came in this step, or the student called him.
   const helping = wasHere || input.toGalileo;
   const now = { ...state, galileo: helping };
-  const passedNow = Boolean(result?.stepDone);
+  // In "tie" the label "thought_experiment" is the pass, whatever step_done says.
+  const passedNow = Boolean(result?.stepDone) || (state.step === 'tie' && move === 'thought_experiment');
 
   if (passedNow || revealDue(now)) {
     passed.push(state.step);
@@ -482,7 +519,12 @@ function advanceStep(input, result) {
 
   // Aristotle answers and asks again. No hint, no Galileo.
   const a = only('aristotle').slice(0, 1);
-  messages.push(...(a.length ? a : [{ speaker: 'aristotle', text: STEPS[state.step].press }]));
+  const own = a.length ? a : [{ speaker: 'aristotle', text: STEPS[state.step].press }];
+  if (state.step === 'tie') {
+    const pisaNow = presetReply(move, state, TIE_TAIL, messages, own);
+    return { messages, state: { ...state, stepTurns: state.stepTurns + 1, pisaSeen: state.pisaSeen || pisaNow }, passed, joined: null };
+  }
+  messages.push(...own);
   return { messages, state: { ...state, stepTurns: state.stepTurns + 1 }, passed, joined: null };
 }
 
