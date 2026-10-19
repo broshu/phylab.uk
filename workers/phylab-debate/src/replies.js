@@ -47,12 +47,15 @@ export const BEFORE_GALILEO = {
   help: 'Call for help if you like. The stones will still obey me.',
 };
 
-/** Open debate: each preset reply ends with one of these challenges, in turn. */
+/**
+ * Open debate: each preset reply ends with one of these, in turn. Aristotle
+ * demands a proof; that is the only nudge towards reasoning he ever gives.
+ */
 export const DEBATE_TAILS = [
-  'What do you say now?',
-  'Can you name one heavy thing that falls slower than a light one?',
-  'So which lands first?',
-  'Why should I believe otherwise?',
+  'You say so, but can you prove it?',
+  'Prove it to me, then.',
+  'Words are easy, young one. Prove it.',
+  'If you are so sure, prove it.',
 ];
 
 /** "tie" step: each preset reply ends with this challenge. */

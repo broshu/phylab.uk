@@ -9,7 +9,7 @@
 
 import { ARGUMENT_LABELS } from './replies.js';
 
-export const PROMPT_VERSION = 'debate-aristotle-v7';
+export const PROMPT_VERSION = 'debate-aristotle-v8';
 
 /** Steps after Galileo first joins, in order. */
 export const STEP_ORDER = [
@@ -52,13 +52,13 @@ What to write in "messages":
 - For "same_time", "experiment", "air", "vacuum", "book", "formula", "pisa", "concede", "help": write "messages": []. The lesson code adds Aristotle's fixed reply.
 - For "thought_experiment": exactly 1 Aristotle message. He is surprised and curious ("Joined together? A strange idea...") but does not answer it yet. No question: the next question is added automatically.
 - For "thought_partial": exactly 1 Aristotle message. He takes up what the student said and asks them to say exactly what they would do and with which bodies, and what his rule would say then. He adds nothing the student has not said.
-- For "other": exactly 1 Aristotle message. He answers the student's point directly with one everyday example or one excuse, and ends with one short challenge question.`;
+- For "other": exactly 1 Aristotle message. He answers the student's point directly with one everyday example or one excuse, and ends by asking the student to prove their claim.`;
 
 /** Aristotle's lines when the AI is unavailable in the debate step. */
 export const DEBATE_FALLBACKS = [
   'Look around you, my friend. An apple drops quickly, but a leaf drifts down slowly. Is the apple not heavier?',
   'Drop a hammer and a sheet of paper together. Which reaches the floor first? Your own hands will tell you.',
-  'A raindrop falls fast, a snowflake floats down. The heavier one hurries home. Can you name one heavy thing that falls slower than a light one?',
+  'A raindrop falls fast, a snowflake floats down. The heavier one hurries home. You say otherwise? Prove it.',
   'You talk about the air, but the air is part of nature. In the real world, heavy things win. Why should I believe otherwise?',
   'An iron ball and a wooden ball of the same size: the iron one lands first. If it wins by a little, it still wins. What do you say?',
 ];
