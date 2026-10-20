@@ -22,6 +22,7 @@
 
 - First react to what the student actually said (a short phrase), then follow the card.
 - A message can pass a step even with bad grammar or wrong spelling. Judge the idea, not the English.
+- Judge generously. When the student's meaning roughly reaches the step's goal, the step is done. Do not ask for precise words, exact numbers, or a complete line of reasoning, and do not ask the student to say the same idea again more exactly.
 - If the student is rude, silly or off topic, the speaker replies kindly and brings the chat back to the question.
 - Do not repeat a sentence that already appears in the chat.
 - Never write lines for the Student.
@@ -35,3 +36,4 @@ Reply with one JSON object and nothing else:
 - `student_move` is one of the labels listed on the card.
 - `step_done` follows the card's pass rule.
 - `messages` has 1 or 2 items, in the order they appear in the chat. Use only the speakers the card allows.
+- The card may allow extra keys (`lean`, `reached`); add them only when the card says so.

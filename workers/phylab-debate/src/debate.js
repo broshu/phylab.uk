@@ -145,6 +145,59 @@ export function nextStep(step, state = {}) {
   return 'done';
 }
 
+/** One line per step: what the student has reached when they are there. */
+const STEP_GOALS = {
+  premise: 'states Aristotle\'s rule: heavier bodies fall faster',
+  tie: 'proposes putting a heavy and a light body together (tied, joined, in any words)',
+  counter: 'gives BOTH lines of reasoning about the joined pair: the light one holds the heavy one back (slower than 8) AND together they are heavier (faster than 8)',
+  slower: 'says the joined pair is slower than the heavy one alone, because the light one holds it back',
+  faster: 'says the joined pair is heavier, so by the rule it falls faster than the heavy one alone',
+  contradiction: 'says the two answers contradict each other, so Aristotle\'s rule must be wrong',
+  objection: 'explains why calling the pair "two bodies" does not save the rule (glue them into one, the weight is the same)',
+  conclusion: 'says all bodies fall at the same rate: falling speed does not depend on weight',
+};
+
+/** @param {{condition?: string, spark?: boolean}} state */
+function stepOrder(state) {
+  return STEP_ORDER.filter(
+    (s) =>
+      !(state.condition === 'guided' && DEBATE_ONLY_STEPS.includes(s)) &&
+      !(state.condition !== 'guided' && GUIDED_ONLY_STEPS.includes(s)) &&
+      !(s === 'tie' && state.spark),
+  );
+}
+
+/**
+ * Steps after the current one that a student may jump to (never past the conclusion).
+ * @param {{step: string, condition?: string, spark?: boolean}} state
+ */
+export function laterSteps(state) {
+  const order = stepOrder(state);
+  const end = order.indexOf('conclusion');
+  return order.slice(order.indexOf(state.step) + 1, end + 1);
+}
+
+/** @param {{step: string, condition?: string, spark?: boolean}} state @param {string} [intro] */
+function skipCard(state, intro = 'If step_done is true and') {
+  const later = laterSteps(state);
+  if (!later.length) return '';
+  const lines = later.map((s) => `- "${s}": the student ${STEP_GOALS[/** @type {keyof typeof STEP_GOALS} */ (s)]}`);
+  return `\n\nSKIPPING AHEAD: the student may already be further on. Later steps:\n${lines.join('\n')}\n${intro} the student's message (read with their recent messages) already roughly reaches the goal of a later step, add "reached": "<the furthest such step>" to the JSON object. Judge generously. Otherwise leave "reached" out. When you add "reached", do not ask about any step up to it.`;
+}
+
+/**
+ * Steps passed when jumping from the current step to `target`, plus the
+ * notebook lines they fill.
+ * @param {{step: string, condition?: string, spark?: boolean}} state @param {string} target
+ */
+function jumpPath(state, target) {
+  const order = stepOrder(state);
+  const from = order.indexOf(state.step);
+  const path = order.slice(from < 0 ? 0 : from, order.indexOf(target) + 1);
+  if (path.includes('counter')) path.push('slower', 'faster');
+  return path;
+}
+
 /**
  * The script for the current step; "counter" depends on Aristotle's view.
  * @param {{step: string, view?: string}} state
@@ -196,7 +249,8 @@ export function buildCard(state, toGalileo = false) {
   if (state.condition === 'guided') return buildGuidedCard(state, toGalileo);
   if (state.step === 'debate') {
     if (toGalileo) return ASK_GALILEO_CARD;
-    return `${DEBATE_CARD}\n\nThis is student debate turn ${state.debateTurns + 1}.`;
+    const ahead = skipCard({ ...state, step: 'tie' }, 'If student_move is "thought_experiment" and');
+    return `${DEBATE_CARD}\n\nThis is student debate turn ${state.debateTurns + 1}.${ahead}`;
   }
   const step = stepFor(state);
   if (state.step === 'done') {
@@ -220,7 +274,7 @@ export function buildCard(state, toGalileo = false) {
     ? `\n\nTHIS TURN: the student has already tried ${state.stepTurns} times. If step_done is false, Galileo writes ONLY one short, kind line about what the student tried, with no question and no answer: the lesson code explains the idea right after your message.`
     : '';
   const tie = state.step === 'tie' && !state.galileo ? `\n\n${TIE_ARISTOTLE}` : '';
-  return `${step.card}\n\n${presence}${tie}${reveal}${toGalileo ? `\n\n${TO_GALILEO}` : ''}`;
+  return `${step.card}\n\n${presence}${tie}${reveal}${toGalileo ? `\n\n${TO_GALILEO}` : ''}${skipCard(state)}`;
 }
 
 const TIE_ARISTOTLE = `ARISTOTLE'S LINES IN THIS STEP (when step_done is false and Galileo does not come):
@@ -237,7 +291,7 @@ function buildGuidedCard(state, toGalileo) {
   const reveal = revealDue(state)
     ? `\n\nTHIS TURN: the student has already tried ${state.stepTurns} times. If step_done is false, Galileo writes ONLY one short, kind line about what the student tried, with no question and no answer: the lesson code explains the idea right after your message.`
     : '';
-  return `${step.card}\n\n${guidedPresence(step.onPass, `"${hintFor(state)}"`)}${reveal}${toGalileo ? `\n\n${GUIDED_TO_GALILEO}` : ''}`;
+  return `${step.card}\n\n${guidedPresence(step.onPass, `"${hintFor(state)}"`)}${reveal}${toGalileo ? `\n\n${GUIDED_TO_GALILEO}` : ''}${skipCard(state)}`;
 }
 
 /** @param {ChatMessage[]} transcript @param {string} message */
@@ -313,6 +367,7 @@ export function parseModelReply(value, step, toGalileo = false, condition = 'deb
   return {
     move,
     lean: data.lean === 'slower' || data.lean === 'faster' ? data.lean : null,
+    reached: typeof data.reached === 'string' ? data.reached.trim().toLowerCase() : null,
     stepDone: data.step_done === true && step !== 'debate' && step !== 'done',
     messages,
     truncated: choice?.finish_reason === 'length',
@@ -492,6 +547,19 @@ function advanceStep(input, result) {
     // suggests the method himself.
     if (move === 'thought_experiment') {
       const view = result?.lean === 'slower' ? 'slower' : 'faster';
+      const sparked = { ...state, step: 'premise', spark: true };
+      const target = result?.reached && laterSteps(sparked).includes(result.reached) ? result.reached : null;
+      if (target) {
+        // The student already went further: skip straight past what they reached.
+        const step = nextStep(target, sparked);
+        messages.push(...openerFor(step, sparked));
+        return {
+          messages,
+          state: { ...state, step, stepTurns: 0, helpTurns: 0, debateTurns, galileo: false, spark: true, ...patch },
+          passed: ['premise', ...jumpPath(sparked, target)],
+          joined: null,
+        };
+      }
       messages.push(...openerFor('counter', { view }));
       return {
         messages,
@@ -520,10 +588,12 @@ function advanceStep(input, result) {
   const passedNow = Boolean(result?.stepDone) || (state.step === 'tie' && move === 'thought_experiment');
 
   if (passedNow || revealDue(now)) {
-    passed.push(state.step);
+    // The student may have reached a later step already: jump past it.
+    const target = passedNow && result?.reached && laterSteps(state).includes(result.reached) ? result.reached : state.step;
+    passed.push(...(target === state.step ? [state.step] : jumpPath(state, target)));
     // Aristotle's view for "counter" comes from the student's own words in "tie".
-    const view = state.step === 'tie' ? (result?.lean === 'slower' ? 'slower' : 'faster') : state.view;
-    const step = nextStep(state.step, state);
+    const view = target === 'tie' ? (result?.lean === 'slower' ? 'slower' : 'faster') : state.view;
+    const step = nextStep(target, state);
     // Notebook: Aristotle reasons one way on entering "counter"; the student the other way.
     if (step === 'counter') passed.push('slower');
     if (state.step === 'counter') passed.push('faster');
@@ -626,10 +696,11 @@ function advanceGuided(input, result) {
 
   const passedNow = Boolean(result?.stepDone);
   if (passedNow || revealDue(state)) {
-    passed.push(state.step);
+    const target = passedNow && result?.reached && laterSteps(state).includes(result.reached) ? result.reached : state.step;
+    passed.push(...(target === state.step ? [state.step] : jumpPath(state, target)));
     messages.push(...reply);
     if (!passedNow) messages.push({ speaker: 'galileo', text: `Let's put it together. ${STEPS[state.step].reveal}` });
-    const step = nextStep(state.step, state);
+    const step = nextStep(target, state);
     messages.push(...opener(step));
     return { messages, state: { ...state, step, stepTurns: 0 }, passed, joined: null };
   }
