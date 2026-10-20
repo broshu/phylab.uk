@@ -10,7 +10,7 @@
 import { LEAN_RULE } from './counter.js';
 import { ARGUMENT_LABELS, ARISTOTLE_IDEAS } from './replies.js';
 
-export const PROMPT_VERSION = 'debate-aristotle-v21';
+export const PROMPT_VERSION = 'debate-aristotle-v22';
 
 /** Steps after Galileo first joins, in order. */
 export const STEP_ORDER = [
@@ -173,7 +173,7 @@ If it passes, student_move is "pass".`,
     opener: [
       {
         speaker: 'aristotle',
-        text: 'My rule stands, young one. Read any book you like, it changes nothing: a heavier body falls faster. Break my rule with reasoning alone, if you can.',
+        text: 'My rule stands, young one: a heavier body falls faster. Break my rule with reasoning alone, if you can.',
       },
     ],
     card: `CURRENT STEP: tie (debate group only: the student must come up with the thought experiment)

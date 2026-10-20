@@ -19,8 +19,8 @@ export const ZH = {
   "Aristotle's rule is: the heavier a body, the faster it falls. For now, we will pretend this is true.": '亚里士多德的规则是：物体越重，下落越快。我们暂且假设它是对的。',
 
   // ---- tie
-  'My rule stands, young one. Read any book you like, it changes nothing: a heavier body falls faster. Break my rule with reasoning alone, if you can.':
-    '年轻人，我的规则立得住。你随便翻什么书都改变不了：重的物体落得更快。有本事就只用推理推翻我的规则。',
+  'My rule stands, young one: a heavier body falls faster. Break my rule with reasoning alone, if you can.':
+    '年轻人，我的规则立得住：重的物体落得更快。有本事就只用推理推翻我的规则。',
   "That is the idea. I'll step back; make him follow it.": '就是这个想法。我退到一边，让他顺着你的想法往下走。',
   'Books and drops from towers do not move me, my friend. Every day the heavy body wins. Break my rule with reasoning alone, if you can.':
     '朋友，书本和从塔上扔东西都说服不了我。每天都是重的物体赢。有本事就只用推理推翻我的规则。',
