@@ -1,3 +1,5 @@
+import { L } from './lang.js?v=20261020d';
+
 // Avatars and the small diagrams Galileo sends in the chat.
 // Drawn here as inline SVG so the lab has no image files to load.
 
@@ -61,51 +63,51 @@ export const PICTURES = {
   stones: FRAME(
     300,
     170,
-    `${stone(80, 46, 30, 22, HEAVY, 'heavy')}${arrow(80, 74, 150, BLUE, 'speed 8')}
-     ${stone(210, 50, 17, 13, LIGHT, 'light')}${arrow(210, 70, 110, ORANGE, 'speed 4')}
+    `${stone(80, 46, 30, 22, HEAVY, L('heavy', '重'))}${arrow(80, 74, 150, BLUE, L('speed 8', '速度 8'))}
+     ${stone(210, 50, 17, 13, LIGHT, L('light', '轻'))}${arrow(210, 70, 110, ORANGE, L('speed 4', '速度 4'))}
      <line x1="20" y1="160" x2="280" y2="160" stroke="#c9c3b3" stroke-width="2"/>`,
-    'A heavy stone falling at speed 8 and a light stone falling at speed 4',
+    L('A heavy stone falling at speed 8 and a light stone falling at speed 4', '重石头以速度 8 下落，轻石头以速度 4 下落'),
   ),
   tied: FRAME(
     300,
     170,
-    `${stone(150, 40, 30, 22, HEAVY, 'heavy')}
+    `${stone(150, 40, 30, 22, HEAVY, L('heavy', '重'))}
      <path d="M150 62 C 140 74, 160 82, 150 94" stroke="#8a6a3c" stroke-width="2.5" fill="none"/>
-     ${stone(150, 106, 17, 13, LIGHT, 'light')}
+     ${stone(150, 106, 17, 13, LIGHT, L('light', '轻'))}
      <text x="196" y="80" font-size="34" font-weight="700" fill="${INK}">?</text>
-     <text x="40" y="80" font-size="12" fill="#62695f">tied with</text><text x="40" y="95" font-size="12" fill="#62695f">a rope</text>
+     <text x="40" y="80" font-size="12" fill="#62695f">${L('tied with', '用绳子')}</text><text x="40" y="95" font-size="12" fill="#62695f">${L('a rope', '绑在一起')}</text>
      <line x1="20" y1="160" x2="280" y2="160" stroke="#c9c3b3" stroke-width="2"/>`,
-    'The heavy and the light stone tied together with a rope, falling at an unknown speed',
+    L('The heavy and the light stone tied together with a rope, falling at an unknown speed', '重石头和轻石头用绳子绑在一起，下落速度未知'),
   ),
   contradiction: FRAME(
     320,
     190,
     `<rect x="10" y="10" width="140" height="170" rx="8" fill="#eef4f9"/>
      <rect x="170" y="10" width="140" height="170" rx="8" fill="#fbefe8"/>
-     <text x="80" y="32" text-anchor="middle" font-size="12.5" font-weight="700" fill="${BLUE}">The light stone</text>
-     <text x="80" y="48" text-anchor="middle" font-size="12.5" font-weight="700" fill="${BLUE}">holds it back</text>
-     <text x="240" y="32" text-anchor="middle" font-size="12.5" font-weight="700" fill="${ORANGE}">Together they</text>
-     <text x="240" y="48" text-anchor="middle" font-size="12.5" font-weight="700" fill="${ORANGE}">are heavier</text>
+     <text x="80" y="32" text-anchor="middle" font-size="12.5" font-weight="700" fill="${BLUE}">${L('The light stone', '轻石头')}</text>
+     <text x="80" y="48" text-anchor="middle" font-size="12.5" font-weight="700" fill="${BLUE}">${L('holds it back', '拖住重石头')}</text>
+     <text x="240" y="32" text-anchor="middle" font-size="12.5" font-weight="700" fill="${ORANGE}">${L('Together they', '合在一起')}</text>
+     <text x="240" y="48" text-anchor="middle" font-size="12.5" font-weight="700" fill="${ORANGE}">${L('are heavier', '更重')}</text>
      ${stone(80, 82, 22, 16, HEAVY, 'H')}${stone(80, 116, 13, 10, LIGHT, 'L')}
      <line x1="80" y1="98" x2="80" y2="106" stroke="#8a6a3c" stroke-width="2.5"/>
      ${stone(240, 82, 22, 16, HEAVY, 'H')}${stone(240, 116, 13, 10, LIGHT, 'L')}
      <line x1="240" y1="98" x2="240" y2="106" stroke="#8a6a3c" stroke-width="2.5"/>
-     <text x="80" y="160" text-anchor="middle" font-size="15" font-weight="700" fill="${BLUE}">slower than 8</text>
-     <text x="240" y="160" text-anchor="middle" font-size="15" font-weight="700" fill="${ORANGE}">faster than 8</text>
+     <text x="80" y="160" text-anchor="middle" font-size="15" font-weight="700" fill="${BLUE}">${L('slower than 8', '比 8 慢')}</text>
+     <text x="240" y="160" text-anchor="middle" font-size="15" font-weight="700" fill="${ORANGE}">${L('faster than 8', '比 8 快')}</text>
      <circle cx="160" cy="98" r="15" fill="#b7354a"/><text x="160" y="104" text-anchor="middle" font-size="17" font-weight="700" fill="#fff">≠</text>`,
-    'One way of reasoning says the tied pair is slower than 8, the other says faster than 8',
+    L('One way of reasoning says the tied pair is slower than 8, the other says faster than 8', '一种推理说绑在一起的石头比 8 慢，另一种说比 8 快'),
   ),
   method: FRAME(
     320,
     212,
-    `<text x="20" y="30" font-size="14" font-weight="700" fill="${INK}">How a thought experiment wins</text>
+    `<text x="20" y="30" font-size="14" font-weight="700" fill="${INK}">${L('How a thought experiment wins', '思想实验怎样取胜')}</text>
      ${[
-       'Take the rule as true, just for now',
-       'Imagine a simple case',
-       'Reason it one way',
-       'Reason it another way',
-       'Spot the contradiction',
-       'Reject the rule',
+       L('Take the rule as true, just for now', '暂且承认规则成立'),
+       L('Imagine a simple case', '设想一个简单情境'),
+       L('Reason it one way', '用一种方式推理'),
+       L('Reason it another way', '换一种方式推理'),
+       L('Spot the contradiction', '找出矛盾'),
+       L('Reject the rule', '否定这条规则'),
      ]
        .map(
          (t, i) => `<circle cx="32" cy="${54 + i * 26}" r="10" fill="#2f5d4f"/>
@@ -113,6 +115,6 @@ export const PICTURES = {
        <text x="52" y="${58 + i * 26}" font-size="13" fill="${INK}">${t}</text>`,
        )
        .join('')}`,
-    'The six steps of a thought experiment',
+    L('The six steps of a thought experiment', '思想实验的六个步骤'),
   ),
 };

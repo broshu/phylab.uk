@@ -13,6 +13,7 @@ import {
   guidedPresence,
 } from './guided.js';
 import { CONTRADICTION_OPENER, COUNTER } from './counter.js';
+import { toZh } from './zh.js';
 import { ARGUMENT_REPLIES, ARISTOTLE_IDEAS, BEFORE_GALILEO, DEBATE_TAILS, PISA, PRESET_MOVES, REPEAT_LIMIT, TIE_TAIL } from './replies.js';
 import {
   ALL_STEPS,
@@ -85,9 +86,9 @@ export function normalizeInput(body) {
   const raw = /** @type {Record<string, any>} */ (body);
   const message = cleanText(raw.message, MAX_MESSAGE_CHARS);
   // "@Galileo" on its own is the help button; "@Galileo ..." is a message to him.
-  const type = raw.type === 'help' || /^@galileo[\s,.:!?]*$/i.test(message) ? 'help' : 'turn';
+  const type = raw.type === 'help' || /^@(galileo|伽利略)[\s,.:!?，。：！？]*$/i.test(message) ? 'help' : 'turn';
   // The help button counts as calling Galileo.
-  const toGalileo = type === 'help' || /@galileo\b/i.test(message);
+  const toGalileo = type === 'help' || /@(galileo\b|伽利略)/i.test(message);
   if (type === 'turn' && !message) throw new Error('Message is empty.');
 
   const s = raw.state && typeof raw.state === 'object' ? raw.state : {};
@@ -96,6 +97,8 @@ export function normalizeInput(body) {
   const condition = s.condition === 'guided' ? 'guided' : 'debate';
   const state = {
     condition,
+    // Chat language: "zh" for browsers in Chinese, else "en".
+    lang: s.lang === 'zh' ? 'zh' : 'en',
     step,
     stepTurns: cleanCount(s.stepTurns, 50),
     // Debate group: failed tries in this step while Galileo was helping.
@@ -217,7 +220,21 @@ function helpCount(state) {
 /** @param {DebateState} state */
 function hintFor(state) {
   const step = stepFor(state);
-  return step ? step.hints[Math.min(helpCount(state), 2)] : '';
+  const hint = step ? step.hints[Math.min(helpCount(state), 2)] : '';
+  return state.lang === 'zh' ? toZh(hint) : hint;
+}
+
+const CHINESE_RULES = `LANGUAGE (this overrides the language rules above): this chat is in Chinese. Write every message in simplified Chinese (简体中文), in short, plain sentences that a Chinese high-school student reads easily, at most about 80 characters per message. No English words except numbers and "@Galileo". Aristotle calls the student 年轻人 or 朋友. The student writes in Chinese; judge their meaning as usual. Keep the JSON keys and the student_move labels in English.`;
+
+/**
+ * Every line the student sees, in the chat's language.
+ * @template {{messages: ChatMessage[]}} T
+ * @param {T} outcome @param {string} lang
+ * @returns {T}
+ */
+export function localize(outcome, lang) {
+  if (lang !== 'zh') return outcome;
+  return { ...outcome, messages: outcome.messages.map((m) => (m.speaker === 'system' || !m.text ? m : { ...m, text: toZh(m.text) })) };
 }
 
 /**
@@ -309,9 +326,13 @@ function chatLog(transcript, message) {
  * @param {boolean} [strictEnglish]
  */
 export function buildPayload(input, model, strictEnglish = false) {
+  const zh = input.state.lang === 'zh';
   const reminder = strictEnglish
-    ? '\n\nIMPORTANT: your last answer contained Chinese characters. Write every message in English only.'
+    ? zh
+      ? '\n\nIMPORTANT: your last answer was not in Chinese. Write every message in simplified Chinese only.'
+      : '\n\nIMPORTANT: your last answer contained Chinese characters. Write every message in English only.'
     : '';
+  const language = zh ? `\n\n${CHINESE_RULES}` : '';
   return {
     model,
     thinking: { type: 'disabled' },
@@ -320,7 +341,7 @@ export function buildPayload(input, model, strictEnglish = false) {
     max_tokens: 700,
     stream: false,
     messages: [
-      { role: 'system', content: `${input.state.condition === 'guided' ? GUIDED_INTRO : DEBATE_INTRO}\n\n${SHARED_RULES}\n\n---\n\n${buildCard(input.state, input.toGalileo)}${reminder}` },
+      { role: 'system', content: `${input.state.condition === 'guided' ? GUIDED_INTRO : DEBATE_INTRO}\n\n${SHARED_RULES}\n\n---\n\n${buildCard(input.state, input.toGalileo)}${language}${reminder}` },
       { role: 'user', content: chatLog(input.transcript, input.message) },
     ],
   };
@@ -383,6 +404,15 @@ export function parseModelReply(value, step, toGalileo = false, condition = 'deb
 /** @param {ChatMessage[]} messages */
 export function hasChinese(messages) {
   return messages.some((m) => CJK.test(m.text || ''));
+}
+
+/**
+ * True when the model wrote in the wrong language for this chat.
+ * @param {ChatMessage[]} messages @param {string} lang
+ */
+export function wrongLanguage(messages, lang) {
+  if (lang === 'zh') return messages.some((m) => m.text && !CJK.test(m.text));
+  return hasChinese(messages);
 }
 
 /* ------------------------------------------------------------------ */

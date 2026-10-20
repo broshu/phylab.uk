@@ -1,4 +1,4 @@
-import { advance, buildPayload, hasChinese, helpTurn, normalizeInput, parseModelReply } from './debate.js';
+import { advance, buildPayload, helpTurn, localize, normalizeInput, parseModelReply, wrongLanguage } from './debate.js';
 import { PROMPT_VERSION } from './steps.js';
 
 const MAX_REQUEST_BYTES = 16 * 1024;
@@ -154,7 +154,7 @@ async function handleDebate(request, env, ctx) {
   }
 
   if (input.type === 'help') {
-    const outcome = helpTurn(input);
+    const outcome = localize(helpTurn(input), input.state.lang);
     ctx?.waitUntil(saveTurn(env, input, outcome, { mode: 'preset', move: 'help_button' }));
     return json({ ...outcome, mode: 'preset', version: PROMPT_VERSION }, 200, cors);
   }
@@ -167,10 +167,11 @@ async function handleDebate(request, env, ctx) {
   } else {
     try {
       result = await askModel(settings, input, false);
-      if (!result || result.truncated || hasChinese(result.messages)) {
-        const strict = Boolean(result && hasChinese(result.messages));
+      const lang = input.state.lang;
+      if (!result || result.truncated || wrongLanguage(result.messages, lang)) {
+        const strict = Boolean(result && wrongLanguage(result.messages, lang));
         result = await askModel(settings, input, strict);
-        if (result && (result.truncated || hasChinese(result.messages))) result = null;
+        if (result && (result.truncated || wrongLanguage(result.messages, lang))) result = null;
       }
     } catch (error) {
       console.error(JSON.stringify({ event: 'deepseek_failed', error: error instanceof Error ? error.name : 'unknown' }));
@@ -179,7 +180,7 @@ async function handleDebate(request, env, ctx) {
     if (!result) notice = 'AI is busy right now. Using the lesson script.';
   }
 
-  const outcome = advance(input, result);
+  const outcome = localize(advance(input, result), input.state.lang);
   ctx?.waitUntil(
     saveTurn(env, input, outcome, {
       mode: result ? 'ai' : 'preset',

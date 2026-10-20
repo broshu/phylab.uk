@@ -1,3 +1,5 @@
+import { L } from './lang.js?v=20261020d';
+
 // Falling-body animations shown inside chat messages.
 // Each scene draws on a 320 × 240 logical canvas with its own fixed palette
 // (like the site's other figures), so it reads the same in light and dark mode.
@@ -187,7 +189,7 @@ function stoneFeather() {
   const s = freeFall(metres);
   const f = dragFall(metres, 0.75);
   return {
-    label: 'A stone and a feather dropped together in air',
+    label: L('A stone and a feather dropped together in air', '石头和羽毛在空气中同时下落'),
     duration: f.land / slow + 1.4,
     draw(ctx, t) {
       const tp = t * slow;
@@ -199,20 +201,20 @@ function stoneFeather() {
       ctx.lineTo(280, top);
       ctx.stroke();
       ctx.setLineDash([]);
-      text(ctx, 'In air', 12, 20, { align: 'left', weight: 700, size: 12 });
+      text(ctx, L('In air', '有空气'), 12, 20, { align: 'left', weight: 700, size: 12 });
       clock(ctx, Math.min(tp, f.land));
-      tag(ctx, 'slow motion', W - 10, 40);
+      tag(ctx, L('slow motion', '慢动作'), W - 10, 40);
 
       const sy = top + s.at(tp) * pxm;
       stone(ctx, 105, Math.min(sy, groundY - 13), 16, 1.3);
-      if (tp >= s.land) landedNote(ctx, `stone: ${s.land.toFixed(2)} s`, 105, groundY + 24, '#fff');
+      if (tp >= s.land) landedNote(ctx, `${L('stone', '石头')}: ${s.land.toFixed(2)} s`, 105, groundY + 24, '#fff');
 
       const fy = top + f.at(tp) * pxm;
       const sway = Math.min(1, tp * 1.5) * 16 * Math.sin(tp * 5.2);
       const ang = 0.35 * Math.cos(tp * 5.2) + 0.15;
       const landed = tp >= f.land;
       feather(ctx, 215 + (landed ? 16 * Math.sin(f.land * 5.2) : sway), Math.min(fy, groundY - 5), landed ? 0.05 : ang);
-      if (landed) landedNote(ctx, `feather: ${f.land.toFixed(2)} s`, 215, groundY + 24, '#fff');
+      if (landed) landedNote(ctx, `${L('feather', '羽毛')}: ${f.land.toFixed(2)} s`, 215, groundY + 24, '#fff');
     },
   };
 }
@@ -224,18 +226,18 @@ function aristotleRule() {
   const span = groundY - top - 14;
   const tHeavy = 1.5;
   return {
-    label: "Aristotle's rule imagined: the heavy stone falls at speed 8, the light one at speed 4",
+    label: L("Aristotle's rule imagined: the heavy stone falls at speed 8, the light one at speed 4", '想象中亚里士多德的规则：重石头以速度 8 下落，轻石头以速度 4 下落'),
     duration: tHeavy * 2 + 1.4,
     draw(ctx, t) {
       ctx.fillStyle = '#f6f3ea';
       ctx.fillRect(0, 0, W, H);
       ctx.fillStyle = '#d8d1bf';
       ctx.fillRect(0, groundY, W, H - groundY);
-      text(ctx, "Aristotle's rule (imagined)", 12, 20, { align: 'left', weight: 700, size: 12 });
-      text(ctx, 'speed grows with weight', 12, 35, { align: 'left', size: 10.5, color: C.muted });
+      text(ctx, L("Aristotle's rule (imagined)", '亚里士多德的规则（想象）'), 12, 20, { align: 'left', weight: 700, size: 12 });
+      text(ctx, L('speed grows with weight', '速度随重量增大'), 12, 35, { align: 'left', size: 10.5, color: C.muted });
       const lanes = [
-        { x: 105, r: 16, v: 1 / tHeavy, color: C.blue, label: 'heavy · speed 8' },
-        { x: 220, r: 10, v: 1 / (2 * tHeavy), color: C.orange, label: 'light · speed 4' },
+        { x: 105, r: 16, v: 1 / tHeavy, color: C.blue, label: L('heavy · speed 8', '重 · 速度 8') },
+        { x: 220, r: 10, v: 1 / (2 * tHeavy), color: C.orange, label: L('light · speed 4', '轻 · 速度 4') },
       ];
       for (const lane of lanes) {
         const p = Math.min(1, t * lane.v);
@@ -258,12 +260,12 @@ function contradiction() {
   const groundY = 200;
   const span = groundY - top - 22;
   const lanes = [
-    { x: 55, t: 1.5, pair: false, color: C.muted, l1: 'heavy alone', l2: 'speed 8' },
-    { x: 160, t: 2.0, pair: true, color: C.blue, l1: 'light holds it back', l2: 'slower than 8' },
-    { x: 265, t: 1.0, pair: true, color: C.orange, l1: 'heavier together', l2: 'faster than 8' },
+    { x: 55, t: 1.5, pair: false, color: C.muted, l1: L('heavy alone', '单独的重石头'), l2: L('speed 8', '速度 8') },
+    { x: 160, t: 2.0, pair: true, color: C.blue, l1: L('light holds it back', '轻的拖住它'), l2: L('slower than 8', '比 8 慢') },
+    { x: 265, t: 1.0, pair: true, color: C.orange, l1: L('heavier together', '合起来更重'), l2: L('faster than 8', '比 8 快') },
   ];
   return {
-    label: 'The same tied pair falls slower than 8 by one argument and faster than 8 by the other',
+    label: L('The same tied pair falls slower than 8 by one argument and faster than 8 by the other', '同一对绑在一起的石头，按一种推理比 8 慢，按另一种推理比 8 快'),
     duration: 3.6,
     draw(ctx, t) {
       ctx.fillStyle = '#f6f3ea';
@@ -306,7 +308,7 @@ function contradiction() {
         roundRect(ctx, 133, 100, 160, 22, 11);
         ctx.fillStyle = 'rgba(183, 53, 74, 0.92)';
         ctx.fill();
-        text(ctx, 'Same pair, two answers!', 213, 115, { size: 11, color: '#fff', weight: 700 });
+        text(ctx, L('Same pair, two answers!', '同一对石头，两个答案！'), 213, 115, { size: 11, color: '#fff', weight: 700 });
         ctx.globalAlpha = 1;
       }
     },
@@ -323,18 +325,18 @@ function tube() {
   const c = freeFall(metres);
   const fa = dragFall(metres, 1.0);
   const tubes = [
-    { x: 95, air: true, label: 'With air' },
-    { x: 225, air: false, label: 'Air pumped out' },
+    { x: 95, air: true, label: L('With air', '有空气') },
+    { x: 225, air: false, label: L('Air pumped out', '抽掉空气') },
   ];
   return {
-    label: 'A coin and a feather in a tube with air, and in a tube with no air',
+    label: L('A coin and a feather in a tube with air, and in a tube with no air', '硬币和羽毛分别在有空气和没有空气的管子里下落'),
     duration: fa.land / slow + 1.4,
     draw(ctx, t) {
       const tp = t * slow;
       ctx.fillStyle = '#f4f6f8';
       ctx.fillRect(0, 0, W, H);
       clock(ctx, Math.min(tp, fa.land), W - 10, 18);
-      tag(ctx, 'slow motion', 96, H - 8);
+      tag(ctx, L('slow motion', '慢动作'), 96, H - 8);
       for (const tb of tubes) {
         text(ctx, tb.label, tb.x, top - 12, { size: 11.5, weight: 700, color: tb.air ? C.ink : C.blue });
         // glass
@@ -375,7 +377,7 @@ function pisa() {
   const light = dragFall(metres, 105);
   const end = Math.max(heavy.land, light.land);
   return {
-    label: 'A heavy and a light iron ball dropped from the Leaning Tower of Pisa land almost together',
+    label: L('A heavy and a light iron ball dropped from the Leaning Tower of Pisa land almost together', '从比萨斜塔放下的重铁球和轻铁球几乎同时落地'),
     duration: end / slow + 1.6,
     draw(ctx, t) {
       const tp = t * slow;
@@ -404,12 +406,12 @@ function pisa() {
         }
       }
       ctx.restore();
-      text(ctx, 'Pisa, as the story goes', 12, 20, { align: 'left', weight: 700, size: 12 });
+      text(ctx, L('Pisa, as the story goes', '传说中的比萨斜塔'), 12, 20, { align: 'left', weight: 700, size: 12 });
       clock(ctx, Math.min(tp, end));
-      tag(ctx, 'slow motion', W - 10, 40);
+      tag(ctx, L('slow motion', '慢动作'), W - 10, 40);
       const lanes = [
-        { x: 170, fall: heavy, r: 13, name: 'heavy ball' },
-        { x: 232, fall: light, r: 6, name: 'light ball' },
+        { x: 170, fall: heavy, r: 13, name: L('heavy ball', '重球') },
+        { x: 232, fall: light, r: 6, name: L('light ball', '轻球') },
       ];
       for (const lane of lanes) {
         const y = Math.min(top + lane.fall.at(tp) * pxm, groundY - lane.r);
@@ -440,20 +442,20 @@ function tiedView(fast) {
   const pairColor = fast ? C.orange : C.blue;
   return {
     label: fast
-      ? "Aristotle's reasoning: tied together the stones are heavier, so the pair falls faster than 8"
-      : "Aristotle's reasoning: the slow stone holds back the fast one, so the pair falls slower than 8",
+      ? L("Aristotle's reasoning: tied together the stones are heavier, so the pair falls faster than 8", '亚里士多德的推理：绑在一起的石头更重，所以比 8 快')
+      : L("Aristotle's reasoning: the slow stone holds back the fast one, so the pair falls slower than 8", '亚里士多德的推理：慢的石头拖住快的石头，所以比 8 慢'),
     duration: Math.max(tHeavy, tPair) + 1.4,
     draw(ctx, t) {
       ctx.fillStyle = '#f6f3ea';
       ctx.fillRect(0, 0, W, H);
       ctx.fillStyle = '#d8d1bf';
       ctx.fillRect(0, groundY, W, H - groundY);
-      text(ctx, "Aristotle's reasoning (imagined)", 12, 20, { align: 'left', weight: 700, size: 12 });
-      text(ctx, fast ? 'one heavier body, so faster' : 'the slow stone holds back the fast one', 12, 35, { align: 'left', size: 10.5, color: C.muted });
+      text(ctx, L("Aristotle's reasoning (imagined)", '亚里士多德的推理（想象）'), 12, 20, { align: 'left', weight: 700, size: 12 });
+      text(ctx, fast ? L('one heavier body, so faster', '合成更重的物体，所以更快') : L('the slow stone holds back the fast one', '慢的石头拖住快的石头'), 12, 35, { align: 'left', size: 10.5, color: C.muted });
       // heavy stone alone
       const yh = top + Math.min(1, t / tHeavy) * span;
       stone(ctx, 105, yh + 4, 13, 2, true);
-      text(ctx, 'heavy alone · 8', 105, groundY + 24, { size: 11, color: C.muted, weight: 700 });
+      text(ctx, L('heavy alone · 8', '单独的重石头 · 8'), 105, groundY + 24, { size: 11, color: C.muted, weight: 700 });
       // the tied pair
       const yp = top + Math.min(1, t / tPair) * span;
       stone(ctx, 220, yp - 12, 13, 2, true);
@@ -464,7 +466,7 @@ function tiedView(fast) {
       ctx.lineTo(220, yp + 6);
       ctx.stroke();
       stone(ctx, 220, yp + 12, 8, 3, false);
-      text(ctx, fast ? 'tied pair · 12?' : 'tied pair · 6?', 220, groundY + 24, { size: 11, color: pairColor, weight: 700 });
+      text(ctx, fast ? L('tied pair · 12?', '绑在一起 · 12？') : L('tied pair · 6?', '绑在一起 · 6？'), 220, groundY + 24, { size: 11, color: pairColor, weight: 700 });
     },
   };
 }
@@ -497,7 +499,7 @@ export function animationCard(id) {
   const button = document.createElement('button');
   button.type = 'button';
   button.className = 'replay';
-  button.textContent = reduceMotion ? '▶ Play' : '↻ Replay';
+  button.textContent = reduceMotion ? L('▶ Play', '▶ 播放') : L('↻ Replay', '↻ 重播');
   const bar = document.createElement('div');
   bar.className = 'anim-bar';
   bar.append(button);
@@ -534,7 +536,7 @@ export function animationCard(id) {
   size();
   frame(0);
   button.addEventListener('click', () => {
-    button.textContent = '↻ Replay';
+    button.textContent = L('↻ Replay', '↻ 重播');
     play();
   });
 

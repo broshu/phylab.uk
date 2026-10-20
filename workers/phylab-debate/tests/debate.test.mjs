@@ -492,3 +492,29 @@ test('the "two bodies" objection is gone from both groups', () => {
   const g = advance(normalizeInput({ message: 'x', state: { condition: 'guided', step: 'contradiction' } }), { move: 'pass', stepDone: true, messages: [{ speaker: 'galileo', text: 'Yes.' }] });
   assert.equal(g.state.step, 'conclusion');
 });
+
+test('Chinese: every preset line has a Chinese version, and a Chinese chat gets Chinese', async () => {
+  const { ZH, toZh } = await import('../src/zh.js');
+  const { COUNTER, CONTRADICTION_OPENER } = await import('../src/counter.js');
+  const R = await import('../src/replies.js');
+  const S = await import('../src/steps.js');
+  const G = await import('../src/guided.js');
+  const lines = [];
+  const msgs = (a) => (a || []).forEach((m) => lines.push(m.text));
+  for (const [id, st] of Object.entries(S.STEPS)) {
+    if (S.RETIRED_STEPS.includes(id)) continue;
+    msgs(st.opener); lines.push(st.press, st.reveal, ...st.hints); if (st.leave) lines.push(st.leave);
+  }
+  for (const st of Object.values(COUNTER)) { msgs(st.opener); lines.push(st.press, st.reveal, st.leave, ...st.hints); }
+  lines.push(...Object.values(CONTRADICTION_OPENER), ...Object.values(S.ENTRANCE), S.ARISTOTLE_ON_HELP, ...S.DEBATE_FALLBACKS, S.RETURN_LINE);
+  for (const a of Object.values(R.ARGUMENT_REPLIES)) msgs(a);
+  lines.push(R.PISA.galileo.text, R.PISA.aristotle, ...Object.values(R.BEFORE_GALILEO), ...R.DEBATE_TAILS, R.TIE_TAIL);
+  for (const [id, a] of Object.entries(G.GUIDED_OPENERS)) if (!S.RETIRED_STEPS.includes(id)) msgs(a);
+  lines.push(...G.EXPLORE_FALLBACKS, G.EXPLORE_HINT, ...Object.values(G.BRIDGE));
+  const missing = lines.filter((l) => l && !ZH[l]);
+  assert.deepEqual(missing, []);
+  assert.equal(toZh('Even with no air at all, the heavier body would still fall faster. Prove me wrong, then.'), '就算完全没有空气，更重的物体也还是会落得更快。那就证明我错了。');
+  const n = normalizeInput({ message: '我不知道', state: { step: 'faster', lang: 'zh', galileo: false } });
+  assert.equal(n.state.lang, 'zh');
+  assert.match(buildPayload(n, 'm').messages[0].content, /simplified Chinese/);
+});

@@ -1,5 +1,6 @@
-import { AVATARS, PICTURES } from './art.js?v=20261020a';
-import { animationCard, hasAnimation } from './anims.js?v=20261020a';
+import { AVATARS, PICTURES } from './art.js?v=20261020d';
+import { animationCard, hasAnimation } from './anims.js?v=20261020d';
+import { L, LANG } from './lang.js?v=20261020d';
 
 // The chat server on the phylab.uk domain (reachable from mainland China),
 // with the workers.dev address as a fallback.
@@ -22,10 +23,11 @@ async function postChat(body) {
   throw lastError;
 }
 const STORE = 'phylab-debate-aristotle-v1';
-const GROUP_STORE = 'phylab-debate-aristotle-group';
+// v2: from Oct 2026 the page opens in debate mode unless a link or the switch chose guided.
+const GROUP_STORE = 'phylab-debate-aristotle-group-v2';
 const TRANSCRIPT_LIMIT = 16;
 
-const NAMES = { aristotle: 'Aristotle', galileo: 'Galileo', student: 'You' };
+const NAMES = L({ aristotle: 'Aristotle', galileo: 'Galileo', student: 'You' }, { aristotle: '亚里士多德', galileo: '伽利略', student: '你' });
 
 /**
  * The two research groups. Same steps, hints, pictures and notebook; only the
@@ -33,7 +35,7 @@ const NAMES = { aristotle: 'Aristotle', galileo: 'Galileo', student: 'You' };
  * Galileo comes only when the student asks for help, sides with Aristotle, or states a wrong idea. "guided": Galileo leads, nobody argues.
  * The opening lines carry the same examples and the same rule in both.
  */
-const GROUPS = {
+const GROUPS_EN = {
   debate: {
     title: 'Debate Aristotle',
     pinned: 'Aristotle says heavier things fall faster. Your task: convince him he is wrong.',
@@ -60,19 +62,48 @@ const GROUPS = {
   },
 };
 
+const GROUPS_ZH = {
+  debate: {
+    title: '辩论亚里士多德',
+    pinned: '亚里士多德说重的物体落得更快。你的任务：说服他，让他承认自己错了。',
+    opening: [
+      { speaker: 'aristotle', text: '你好，年轻人！我是亚里士多德。让我告诉你一件人人都看得见的事。' },
+      { speaker: 'aristotle', text: '把石头和羽毛同时放手：石头先落地。苹果落得很快，树叶却慢慢飘下来。锤子每次都比纸先落地。', image: 'falling' },
+      { speaker: 'aristotle', text: '所以规则很简单：物体越重，下落越快。重一倍的物体，下落也快一倍。你敢反对吗？' },
+    ],
+    starters: ['重的和轻的东西同时落地！', '羽毛慢是因为空气。', '嗯，我觉得你说得对。'],
+    nbEmpty: '先辩论吧。你发现方法的每一步，都会出现在这里。',
+    firstPlaceholder: '和亚里士多德辩论…',
+  },
+  guided: {
+    title: '和伽利略一起探索',
+    pinned: '重的物体落得更快吗？你的任务：和伽利略一起一步步把它弄清楚。',
+    opening: [
+      { speaker: 'galileo', text: '你好！我是伽利略。我们一起来看一件人人都看得见的事。' },
+      { speaker: 'galileo', text: '把石头和羽毛同时放手：石头先落地。苹果落得很快，树叶却慢慢飘下来。锤子每次都比纸先落地。', image: 'falling' },
+      { speaker: 'galileo', text: '亚里士多德的规则说：物体越重，下落越快。重一倍的物体，下落也快一倍。你怎么看？为什么？' },
+    ],
+    starters: ['我觉得重的东西落得更快。', '我觉得它们落得一样快。', '也许空气有影响。'],
+    nbEmpty: '先和伽利略聊聊吧。你发现方法的每一步，都会出现在这里。',
+    firstPlaceholder: '回答伽利略…',
+  },
+};
+
+const GROUPS = L(GROUPS_EN, GROUPS_ZH);
+
 /**
  * Which group this browser is in: ?group=debate|guided sets it (for a teacher
- * handing out two links); otherwise it is chosen at random once and kept.
+ * handing out two links) or the switch; otherwise debate mode.
  */
 function chooseGroup() {
   const asked = new URLSearchParams(location.search).get('group');
   let group = asked in GROUPS ? asked : null;
   try {
     if (!group) group = localStorage.getItem(GROUP_STORE);
-    if (!(group in GROUPS)) group = Math.random() < 0.5 ? 'debate' : 'guided';
+    if (!(group in GROUPS)) group = 'debate';
     localStorage.setItem(GROUP_STORE, group);
   } catch {
-    if (!(group in GROUPS)) group = Math.random() < 0.5 ? 'debate' : 'guided';
+    if (!(group in GROUPS)) group = 'debate';
   }
   return group;
 }
@@ -84,12 +115,12 @@ const STARTERS = G.starters;
 
 /** Notebook lines, revealed as each step is passed. Ids match the Worker. */
 const NOTEBOOK = [
-  ['premise', 'Take the rule as true, just for now'],
-  ['slower', 'Imagine a simple case and reason one way'],
-  ['faster', 'Reason the same case another way'],
-  ['contradiction', 'Spot the contradiction'],
-  ['conclusion', 'Reject the rule and keep what has no contradiction'],
-  ['method', 'Name it: a thought experiment'],
+  ['premise', L('Take the rule as true, just for now', '暂且承认规则成立')],
+  ['slower', L('Imagine a simple case and reason one way', '设想一个简单情境，用一种方式推理')],
+  ['faster', L('Reason the same case another way', '对同一情境换一种方式推理')],
+  ['contradiction', L('Spot the contradiction', '找出矛盾')],
+  ['conclusion', L('Reject the rule and keep what has no contradiction', '否定这条规则，留下没有矛盾的结论')],
+  ['method', L('Name it: a thought experiment', '给它命名：思想实验')],
 ];
 
 const $ = (id) => document.getElementById(id);
@@ -121,7 +152,7 @@ function freshState() {
   return {
     // Random id of this chat; the server uses it to keep the turns of one chat together.
     session: newSession(),
-    lesson: { condition: GROUP, step: 'debate', stepTurns: 0, debateTurns: 0, galileo: GROUP === 'guided' },
+    lesson: { condition: GROUP, lang: LANG, step: 'debate', stepTurns: 0, debateTurns: 0, galileo: GROUP === 'guided' },
     log: OPENING.map((m) => ({ ...m })),
     passed: [],
   };
@@ -135,7 +166,8 @@ function load() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORE) || 'null');
     // A saved chat from the other group (the link changed) is not reused.
-    if (saved && saved.lesson && Array.isArray(saved.log) && (saved.lesson.condition || 'debate') === GROUP) {
+    // A saved chat from the other group or in the other language is not reused.
+    if (saved && saved.lesson && Array.isArray(saved.log) && (saved.lesson.condition || 'debate') === GROUP && (saved.lesson.lang || 'en') === LANG) {
       // Chats saved before an update keep their text; give the opening its current pictures.
       OPENING.forEach((m, i) => {
         const old = saved.log[i];
@@ -166,7 +198,7 @@ function avatar(speaker) {
 function renderMembers(animate = false, present = galileoIn()) {
   if (GROUP === 'guided') {
     els.members.replaceChildren(avatar('galileo'), avatar('student'));
-    els.memberCount.textContent = '2 members';
+    els.memberCount.textContent = L('2 members', '2 位成员');
     return;
   }
   els.members.replaceChildren(avatar('aristotle'), avatar('student'));
@@ -175,7 +207,7 @@ function renderMembers(animate = false, present = galileoIn()) {
     if (animate) g.classList.add('arrive');
     els.members.append(g);
   }
-  els.memberCount.textContent = present ? '3 members' : '2 members';
+  els.memberCount.textContent = present ? L('3 members', '3 位成员') : L('2 members', '2 位成员');
 }
 
 /*
@@ -192,24 +224,35 @@ function rewardNode() {
   li.className = 'reward';
   const title = document.createElement('div');
   title.className = 'reward-title';
-  title.textContent = 'Your completion code';
+  title.textContent = L('Your completion code', '你的完成密码');
   const code = document.createElement('div');
   code.className = 'reward-code';
   code.textContent = completionCode(DEMO_STUDENT_NUMBER);
   const note = document.createElement('p');
   note.className = 'reward-note';
-  note.textContent =
-    'Hand this code to your teacher as proof that you finished. In class, each student gets their own code, made from their 9-digit student number × 3 + 6, so the teacher can work back to who finished. This is the demo version: the code above is for the example student number 202612345.';
+  note.textContent = L(
+    'Hand this code to your teacher as proof that you finished. In class, each student gets their own code, made from their 9-digit student number × 3 + 6, so the teacher can work back to who finished. This is the demo version: the code above is for the example student number 202612345.',
+    '把这串密码交给老师，证明你完成了任务。正式使用时，每位同学的密码由自己的 9 位学号 × 3 + 6 得出，老师可以据此反推出是谁完成的。这是展示版：上面的密码对应示例学号 202612345。',
+  );
   li.append(title, code, note);
   return li;
 }
+
+/** System lines are stored in English; show them in the page language. */
+const SYSTEM_ZH = {
+  'Galileo joined the chat': '伽利略加入了群聊',
+  'Galileo left the chat': '伽利略离开了群聊',
+  'You won the debate!': '你赢得了这场辩论！',
+  'Lesson complete!': '课程完成！',
+};
+const systemText = (text) => (LANG === 'zh' && SYSTEM_ZH[text]) || text;
 
 function messageNode(m, prev) {
   if (m.speaker === 'system' && m.reward) return rewardNode();
   const li = document.createElement('li');
   if (m.speaker === 'system') {
     li.className = m.win ? 'system win' : 'system';
-    li.textContent = m.text;
+    li.textContent = systemText(m.text);
     return li;
   }
   li.className = `msg ${m.speaker}${m.speaker === 'student' ? ' mine' : ''}${prev && prev.speaker === m.speaker ? ' cont' : ''}`;
@@ -274,7 +317,7 @@ function renderNotebook(animateId = null) {
       num.className = 'num';
       num.textContent = String(i + 1);
       const text = document.createElement('span');
-      text.textContent = done ? label : id === current ? 'In progress…' : '?';
+      text.textContent = done ? label : id === current ? L('In progress…', '进行中…') : '?';
       li.append(num, text);
       return li;
     }),
@@ -307,16 +350,16 @@ function renderControls() {
   els.help.disabled = busy || helpHidden;
   els.help.hidden = helpHidden;
   els.help.textContent = '@Galileo';
-  els.help.title = 'Mention Galileo to ask him something';
+  els.help.title = L('Mention Galileo to ask him something', '@伽利略，向他提问');
   els.input.placeholder =
     GROUP === 'guided'
-      ? done ? 'Ask Galileo anything…' : 'Answer Galileo…'
+      ? done ? L('Ask Galileo anything…', '问伽利略任何问题…') : L('Answer Galileo…', '回答伽利略…')
       : done
-        ? 'Ask Aristotle anything, or @Galileo…'
+        ? L('Ask Aristotle anything, or @Galileo…', '问亚里士多德任何问题，或 @Galileo…')
         : galileoIn()
-          ? 'Answer Galileo, or argue with Aristotle…'
+          ? L('Answer Galileo, or argue with Aristotle…', '回答伽利略，或和亚里士多德辩论…')
           : lessonStarted()
-            ? 'Answer Aristotle…'
+            ? L('Answer Aristotle…', '回答亚里士多德…')
             : G.firstPlaceholder;
 }
 
@@ -343,7 +386,7 @@ function showTyping(speaker) {
   body.className = 'msg-body';
   const name = document.createElement('span');
   name.className = 'name';
-  name.textContent = `${NAMES[speaker]} is typing…`;
+  name.textContent = L(`${NAMES[speaker]} is typing…`, `${NAMES[speaker]}正在输入…`);
   const bubble = document.createElement('div');
   bubble.className = 'bubble';
   bubble.innerHTML = '<i></i><i></i><i></i>';
@@ -378,6 +421,11 @@ async function play(messages) {
 }
 
 /* ---------------- talking to the Worker ---------------- */
+
+const NOTICE_ZH = {
+  'AI is busy right now. Using the lesson script.': 'AI 暂时繁忙，正在使用预设的课程台词。',
+  'AI is not configured yet.': 'AI 尚未配置。',
+};
 
 function transcript() {
   return state.log
@@ -420,7 +468,7 @@ async function turn(type, message) {
 
     let messages = data.messages || [];
     if (before !== 'done' && state.lesson.step === 'done') {
-      const win = GROUP === 'guided' ? 'Lesson complete!' : 'You won the debate!';
+      const win = GROUP === 'guided' ? 'Lesson complete!' : 'You won the debate!'; // shown in the page language
       messages = [
         ...messages.slice(0, -2),
         { speaker: 'system', text: win, win: true },
@@ -432,14 +480,14 @@ async function turn(type, message) {
     const joinedNow = before === 'debate' && state.lesson.step !== 'debate';
     await play(messages);
     if (joinedNow || newlyPassed.length) renderNotebook(newlyPassed.at(-1));
-    if (data.notice) setNotice(data.notice);
+    if (data.notice) setNotice(L(data.notice, NOTICE_ZH[data.notice] || data.notice));
   } catch {
     hideTyping();
     // Take the unanswered message back so the student can resend it.
     state.log.pop();
     els.messages.lastElementChild?.remove();
     if (type === 'turn') els.input.value = message;
-    setNotice('Could not reach the chat server. Check the connection and try again.');
+    setNotice(L('Could not reach the chat server. Check the connection and try again.', '连不上聊天服务器。请检查网络后再试一次。'));
   } finally {
     busy = false;
     save();
@@ -490,7 +538,7 @@ els.help.addEventListener('click', () => {
 });
 els.restart.addEventListener('click', () => {
   if (busy) return;
-  if (state.log.some((m) => m.speaker === 'student') && !confirm('Start a new debate? This chat will be cleared.')) return;
+  if (state.log.some((m) => m.speaker === 'student') && !confirm(L('Start a new debate? This chat will be cleared.', '重新开始？当前对话会被清空。'))) return;
   state = freshState();
   save();
   setNotice('');
@@ -504,7 +552,7 @@ document.querySelectorAll('.mode-option').forEach((btn) => {
   btn.addEventListener('click', () => {
     const next = btn.dataset.group;
     if (next === GROUP || busy) return;
-    if (state.log.some((m) => m.speaker === 'student') && !confirm('Switch teaching mode? This chat will be cleared.')) return;
+    if (state.log.some((m) => m.speaker === 'student') && !confirm(L('Switch teaching mode? This chat will be cleared.', '切换教学模式？当前对话会被清空。'))) return;
     try {
       localStorage.setItem(GROUP_STORE, next);
       localStorage.removeItem(STORE);
@@ -518,6 +566,19 @@ document.querySelectorAll('.mode-option').forEach((btn) => {
 if (matchMedia('(max-width: 900px)').matches) els.details.open = false;
 addEventListener('resize', autosize);
 
+document.documentElement.lang = L('en', 'zh-CN');
+if (LANG === 'zh') {
+  const set = (sel, text) => { const el = document.querySelector(sel); if (el) el.textContent = text; };
+  set('.chat-title h2', '重的物体落得更快吗？');
+  set('#restartBtn', '重新开始');
+  set('.pin-label', '置顶');
+  set('.notebook summary span', '思想实验笔记本');
+  set('.mode-option[data-group="debate"]', '辩论');
+  set('.mode-option[data-group="guided"]', '引导');
+  els.restart.title = '开始新的对话';
+  els.input.setAttribute('aria-label', '你的消息');
+  els.send.setAttribute('aria-label', '发送');
+}
 document.title = G.title;
 document.querySelector('.top-bar h1').textContent = G.title;
 document.querySelector('.pinned p').textContent = G.pinned;
