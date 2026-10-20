@@ -298,7 +298,7 @@ function askBox(p) {
   const upload = h('button', { class: 'upload', type: 'button', hidden: true, on: { click: () => file.click() } }, '上传 PDF');
   const retry = h('button', { class: 'upload', type: 'button', hidden: true, on: { click: () => { checked = null; check(true); } } }, '再找一次');
   const log = h('div', { class: 'log' });
-  const input = h('textarea', { placeholder: '问这篇论文，例如：有没有做学生实验，结果是什么？', maxlength: 1000, rows: 1 });
+  const input = h('textarea', { placeholder: '输入你对这篇论文的问题，回车发送', maxlength: 1000, rows: 1 });
   const send = h('button', { class: 'btn yes', type: 'button' }, '提问');
   let checked = null;
 
