@@ -679,7 +679,8 @@ function advanceStep(input, result) {
       let a = 0;
       let g = 0;
       for (const m of result.messages) {
-        if (m.speaker === 'aristotle' && a++ < 1) messages.push(m);
+        // In "counter" Aristotle's own reaction tends to hint at the other reasoning: Galileo speaks alone.
+        if (m.speaker === 'aristotle' && state.step !== 'counter' && a++ < 1) messages.push(m);
         if (m.speaker === 'galileo' && g++ < 1) messages.push(m);
       }
       if (!g) messages.push({ speaker: 'galileo', text: hintFor(now) });

@@ -10,7 +10,7 @@
 import { LEAN_RULE } from './counter.js';
 import { ARGUMENT_LABELS, ARISTOTLE_IDEAS } from './replies.js';
 
-export const PROMPT_VERSION = 'debate-aristotle-v19';
+export const PROMPT_VERSION = 'debate-aristotle-v20';
 
 /** Steps after Galileo first joins, in order. */
 export const STEP_ORDER = [
