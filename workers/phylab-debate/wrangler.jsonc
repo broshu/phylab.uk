@@ -4,6 +4,9 @@
   "main": "src/index.js",
   "compatibility_date": "2026-10-01",
   "workers_dev": true,
+  // *.workers.dev is often unreachable from mainland China; the page calls this
+  // domain on the phylab.uk zone first and keeps workers.dev as a fallback.
+  "routes": [{ "pattern": "debate-api.phylab.uk", "custom_domain": true }],
   "preview_urls": false,
   "rules": [{ "type": "Text", "globs": ["**/*.md"], "fallthrough": true }],
   "vars": {

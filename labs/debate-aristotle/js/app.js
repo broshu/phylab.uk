@@ -1,7 +1,26 @@
 import { AVATARS, PICTURES } from './art.js?v=20261020a';
 import { animationCard, hasAnimation } from './anims.js?v=20261020a';
 
-const API = 'https://phylab-debate.dgxwmk9dbm.workers.dev/debate';
+// The chat server on the phylab.uk domain (reachable from mainland China),
+// with the workers.dev address as a fallback.
+const APIS = ['https://debate-api.phylab.uk/debate', 'https://phylab-debate.dgxwmk9dbm.workers.dev/debate'];
+
+/** POST to the first chat server that answers; remember which one worked. */
+let apiIndex = 0;
+async function postChat(body) {
+  let lastError;
+  for (let k = 0; k < APIS.length; k++) {
+    const i = (apiIndex + k) % APIS.length;
+    try {
+      const res = await fetch(APIS[i], { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
+      apiIndex = i;
+      return res;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError;
+}
 const STORE = 'phylab-debate-aristotle-v1';
 const GROUP_STORE = 'phylab-debate-aristotle-group';
 const TRANSCRIPT_LIMIT = 16;
@@ -389,11 +408,7 @@ async function turn(type, message) {
   showTyping(typer);
 
   try {
-    const res = await fetch(API, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type, message, session: state.session, state: state.lesson, transcript: history }),
-    });
+    const res = await postChat(JSON.stringify({ type, message, session: state.session, state: state.lesson, transcript: history }));
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     hideTyping();
