@@ -10,15 +10,28 @@ test('published catalogue validates and covers all requested themes', () => {
   assert.deepEqual(validateCatalog(catalog), []);
   for (const topic of Object.keys(TOPICS)) assert.ok(catalog.papers.some(p => p.topics.includes(topic)), topic);
 });
+// The catalogue changes whenever a paper is approved or rejected on preview.phylab.uk,
+// so these tests check the filtering rules against whatever the catalogue holds,
+// plus small fixed fixtures, instead of a hard-coded list of ids.
+const fixture = (id, topics, priority, extra = {}) => ({ ...catalog.papers[0], id, topics, reading_priority: priority, featured: false, ...extra });
 test('multiple tags use intersection and combine with priority', () => {
+  const published = catalog.papers.filter(p => p.status === 'published');
+  const expected = published.filter(p => ['simulation', 'hands-on'].every(t => p.topics.includes(t)) && p.reading_priority === 'core').map(p => p.id);
   const papers = filterPapers(catalog.papers, { topics: ['simulation', 'hands-on'], priority: 'core' });
-  assert.deepEqual(new Set(papers.map(p => p.id)), new Set(['ben-zion-2026-ai-simulation']));
-  assert.equal(filterPapers(catalog.papers, { topics: ['icap', 'simulation'] }).length, 0);
+  assert.deepEqual(new Set(papers.map(p => p.id)), new Set(expected));
+  const set = [fixture('both', ['simulation', 'hands-on'], 'core'), fixture('one', ['simulation'], 'core'), fixture('skim', ['simulation', 'hands-on'], 'skim')];
+  assert.deepEqual(filterPapers(set, { topics: ['simulation', 'hands-on'], priority: 'core' }).map(p => p.id), ['both']);
+  assert.deepEqual(filterPapers(set, { topics: ['icap', 'simulation'] }), []);
 });
 test('Chinese notes, authors, DOI and case-insensitive English tags are searchable', () => {
-  assert.ok(filterPapers(catalog.papers, { query: '独立迁移' }).length > 0);
-  assert.equal(filterPapers(catalog.papers, { query: '10.1103/nvf1-zrq8' })[0].id, 'becker-2026-ai-scaffolding');
-  assert.equal(filterPapers(catalog.papers, { query: 'JHO ICAP' })[0].id, 'kim-2026-ai-tutoring-engagement');
+  const sample = catalog.papers.find(p => p.status === 'published' && p.doi && p.key_finding_zh);
+  assert.ok(sample, 'catalogue has a published paper with a DOI and Chinese notes');
+  assert.ok(filterPapers(catalog.papers, { query: sample.key_finding_zh.slice(0, 4) }).some(p => p.id === sample.id));
+  assert.equal(filterPapers(catalog.papers, { query: sample.doi.toUpperCase() })[0].id, sample.id);
+  const surname = sample.authors[0].split(' ').at(-1);
+  assert.ok(filterPapers(catalog.papers, { query: surname.toLowerCase() }).some(p => p.id === sample.id));
+  const tagged = [fixture('icap-paper', ['icap'], 'read', { authors: ['Jho Lee'] })];
+  assert.equal(filterPapers(tagged, { query: 'JHO ICAP' })[0]?.id, 'icap-paper');
 });
 test('drafts remain hidden, latest picks are date ordered, new recommendations can replace old ones', () => {
   const draft = { ...catalog.papers[0], id: 'draft', status: 'draft' };
