@@ -1,21 +1,27 @@
 ---
 id: garg-2026-ai-virtual-physics-labs
-status: pending
+status: approved
 title: "Teacher-guided AI-assisted development of virtual physics laboratories: classroom case studies in secondary physics"
 authors:
-  - "Anurag Garg"
+  - Anurag Garg
 year: 2026
 published_date: 2026-09-23
-source: "Physics Education"
+source: Physics Education
 doi: 10.1088/1361-6552/aea260
 url: https://doi.org/10.1088/1361-6552/aea260
 added: 2026-10-20
 proposed_by: Claude
 score: 5
-topics: [ai, simulation, hands-on]
+topics:
+  - hands-on
+  - simulation
+  - ai
 reading_priority: core
-evidence_type: "Classroom case study"
+evidence_type: Classroom case study
+decision:
+  at: 2026-10-20 19:48
 ---
+
 ## Why recommended
 
 一位中学物理教师用生成式 AI 快速开发虚拟实验，和你用 AI 搭建 phylab 互动实验、课件的做法几乎一致，可作为同类工作的直接参照。

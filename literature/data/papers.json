@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-07",
+  "updated_at": "2026-10-20",
   "papers": [
     {
       "id": "malikova-2026-ai-physics-review",
@@ -779,6 +779,38 @@
       "date_added": "2026-10-07",
       "verified_at": "2026-10-07",
       "verification_url": "https://api.crossref.org/works/10.1088/1361-6404/aeb0e1"
+    },
+    {
+      "id": "garg-2026-ai-virtual-physics-labs",
+      "status": "published",
+      "title": "Teacher-guided AI-assisted development of virtual physics laboratories: classroom case studies in secondary physics",
+      "authors": [
+        "Anurag Garg"
+      ],
+      "year": 2026,
+      "published_date": "2026-09-23",
+      "source": "Physics Education",
+      "doi": "10.1088/1361-6552/aea260",
+      "url": "https://doi.org/10.1088/1361-6552/aea260",
+      "topics": [
+        "hands-on",
+        "simulation",
+        "ai"
+      ],
+      "evidence_type": "Classroom case study",
+      "reading_priority": "core",
+      "key_finding_zh": "一位中学物理教师把生成式 AI 当作原型开发助手，制作虚拟实验、测量工具和工作单，教学设计与物理内容核查仍由教师负责。",
+      "phd_relevance_zh": "可作为教师用 AI 自建实验（如 phylab.uk 上的实验）最接近的已发表先例；你的研究可定位为补充有对照的学习效果证据。",
+      "reading_recommendation_zh": "精读两个案例和教师核查流程，学生反馈部分可略读。",
+      "limitations_zh": "单一教师的案例研究，反馈为探索性质；摘要未报告对照组、样本量或可测量的学习收益。",
+      "featured": false,
+      "date_added": "2026-10-20",
+      "verified_at": "2026-10-20",
+      "verification_url": "https://doi.org/10.1088/1361-6552/aea260",
+      "key_finding_en": "A secondary physics teacher used generative AI as a prototyping partner to build virtual laboratories, measurement tools and worksheets. The teacher stayed responsible for pedagogy and for checking the physics.",
+      "phd_relevance_en": "Use it as the closest published precedent for teacher-built AI labs such as those on phylab.uk, and position your own work as adding controlled evidence of learning.",
+      "reading_recommendation_en": "Read the two case studies and the description of the teacher verification workflow; skim the student feedback.",
+      "limitations_en": "Single-teacher case studies with exploratory feedback. The abstract reports no comparison group, sample size or measured learning gains."
     }
   ]
 }
