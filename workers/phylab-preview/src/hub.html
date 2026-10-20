@@ -108,7 +108,8 @@
   .ask .examples button { border: 0; background: var(--site-surface-soft); border-radius: 6px; padding: 3px 9px; font-size: 12.5px; cursor: pointer; color: var(--site-muted); }
   .ask .examples button:hover { color: var(--ink); }
   .ask .row2 { display: flex; gap: 6px; margin-top: 10px; align-items: flex-end; }
-  .ask textarea { min-height: 40px; height: 40px; }
+  .ask textarea { flex: 1; min-width: 0; min-height: 40px; height: 40px; }
+  .ask .row2 .btn { flex: none; white-space: nowrap; }
   label.field { display: block; margin-top: 10px; }
   label.field span { display: block; font-size: 12.5px; color: var(--site-muted); margin-bottom: 3px; }
   textarea, input[type=text], select { width: 100%; font: inherit; font-size: 14px; color: var(--ink); background: var(--site-bg); border: 1px solid var(--site-border); border-radius: 8px; padding: 7px 10px; }
