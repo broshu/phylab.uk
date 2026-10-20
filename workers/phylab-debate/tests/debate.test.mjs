@@ -373,7 +373,7 @@ test('open debate: a preset label gets Aristotle\'s fixed reply plus a challenge
   const out = advance(input('debate'), parsed);
   assert.equal(out.messages.length, 1);
   assert.match(out.messages[0].text, /^Even with no air at all/);
-  assert.match(out.messages[0].text, /\?$/);
+  assert.match(out.messages[0].text, /prove it\.$/);
   const same = advance(input('debate'), { move: 'same_time', stepDone: false, messages: [] });
   assert.equal(same.messages[0].image, 'falling');
 });
