@@ -46,7 +46,7 @@ const CJK = /[぀-ヿ㐀-鿿가-힯＀-￯]/;
 
 /**
  * @typedef {{speaker: string, text?: string, image?: string}} ChatMessage
- * @typedef {{condition: 'debate' | 'guided', step: string, stepTurns: number, helpTurns: number, debateTurns: number, galileo: boolean, spark?: boolean, pisaSeen?: boolean, view?: 'faster' | 'slower'}} DebateState
+ * @typedef {{condition: 'debate' | 'guided', step: string, stepTurns: number, helpTurns: number, debateTurns: number, galileo: boolean, spark?: boolean, pisaSeen?: boolean, view?: 'faster' | 'slower', used?: Record<string, number>}} DebateState
  * @typedef {{type: 'turn' | 'help', message: string, toGalileo: boolean, session: string, state: DebateState, transcript: ChatMessage[]}} DebateInput
  */
 
@@ -54,6 +54,18 @@ const CJK = /[぀-ヿ㐀-鿿가-힯＀-￯]/;
 function cleanText(value, max) {
   if (typeof value !== 'string') return '';
   return value.replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, '').trim().slice(0, max);
+}
+
+/** @param {unknown} value */
+function cleanUsed(value) {
+  /** @type {Record<string, number>} */
+  const out = {};
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return out;
+  for (const key of Object.keys(ARGUMENT_REPLIES)) {
+    const n = cleanCount(/** @type {any} */ (value)[key], 50);
+    if (n) out[key] = n;
+  }
+  return out;
 }
 
 /** @param {unknown} value @param {number} max */
@@ -91,6 +103,8 @@ export function normalizeInput(body) {
     spark: s.spark === true,
     // The Pisa easter egg (Galileo steps in once) has been shown.
     pisaSeen: s.pisaSeen === true,
+    // How often each preset reply has been given in this chat, so a repeated argument gets new words.
+    used: cleanUsed(s.used),
     // Debate group: which way Aristotle reasoned about the tied pair (counter step).
     ...(s.view === 'faster' || s.view === 'slower' ? { view: s.view } : {}),
     debateTurns: cleanCount(s.debateTurns, 50),
@@ -386,8 +400,9 @@ function askGalileoFirst(input, result) {
 
 /**
  * Aristotle's answer to an argument (open debate and "tie"): the fixed reply
- * for a preset label, the Pisa easter egg once, or else his own words.
- * Pushes onto `messages`; returns true when the Pisa egg was shown.
+ * for a preset label (the next wording each time the same label comes back),
+ * the Pisa easter egg once, or else his own words.
+ * Pushes onto `messages`; returns the state fields to update.
  * @param {string} move @param {DebateState} state @param {string} tail
  * @param {ChatMessage[]} messages @param {ChatMessage[]} own the model's (or script's) line
  */
@@ -395,15 +410,18 @@ function presetReply(move, state, tail, messages, own) {
   const end = (/** @type {string} */ text) => (tail ? `${text} ${tail}` : text);
   if (move === 'pisa' && !state.pisaSeen) {
     messages.push(JOINED, { speaker: 'galileo', ...PISA.galileo }, LEFT, { speaker: 'aristotle', text: end(PISA.aristotle) });
-    return true;
+    return { pisaSeen: true };
   }
-  const preset = ARGUMENT_REPLIES[/** @type {keyof typeof ARGUMENT_REPLIES} */ (move === 'pisa' ? 'experiment' : move)];
-  if (preset) {
+  const label = move === 'pisa' ? 'experiment' : move;
+  const options = ARGUMENT_REPLIES[/** @type {keyof typeof ARGUMENT_REPLIES} */ (label)];
+  if (options) {
+    const n = state.used?.[label] || 0;
+    const preset = options[n % options.length];
     messages.push({ speaker: 'aristotle', ...preset, text: end(preset.text) });
-    return false;
+    return { used: { ...state.used, [label]: n + 1 } };
   }
   messages.push(...(own.length ? own : [{ speaker: 'aristotle', text: end('My rule stands.') }]));
-  return false;
+  return {};
 }
 
 /**
@@ -450,7 +468,7 @@ function advanceStep(input, result) {
 
     const tail = move === 'thought_experiment' ? '' : DEBATE_TAILS[state.debateTurns % DEBATE_TAILS.length];
     const fallback = { speaker: 'aristotle', text: DEBATE_FALLBACKS[state.debateTurns % DEBATE_FALLBACKS.length] };
-    const pisaNow = presetReply(move, state, tail, messages, result ? only('aristotle').slice(0, 1) : [fallback]);
+    const patch = presetReply(move, state, tail, messages, result ? only('aristotle').slice(0, 1) : [fallback]);
 
     // The student invented the thought experiment (which takes the rule as
     // true): Aristotle follows it straight into the tied stones. He never
@@ -460,12 +478,12 @@ function advanceStep(input, result) {
       messages.push(...openerFor('counter', { view }));
       return {
         messages,
-        state: { ...state, step: 'counter', stepTurns: 0, helpTurns: 0, debateTurns, galileo: false, spark: true, view, pisaSeen: state.pisaSeen || pisaNow },
+        state: { ...state, step: 'counter', stepTurns: 0, helpTurns: 0, debateTurns, galileo: false, spark: true, view, ...patch },
         passed: ['premise', 'slower'],
         joined: null,
       };
     }
-    return { messages, state: { ...state, debateTurns, pisaSeen: state.pisaSeen || pisaNow }, passed, joined: null };
+    return { messages, state: { ...state, debateTurns, ...patch }, passed, joined: null };
   }
 
   if (state.step === 'done') {
@@ -544,8 +562,8 @@ function advanceStep(input, result) {
   const a = only('aristotle').slice(0, 1);
   const own = a.length ? a : [{ speaker: 'aristotle', text: stepFor(state).press }];
   if (state.step === 'tie') {
-    const pisaNow = presetReply(move, state, TIE_TAIL, messages, own);
-    return { messages, state: { ...state, stepTurns: state.stepTurns + 1, pisaSeen: state.pisaSeen || pisaNow }, passed, joined: null };
+    const patch = presetReply(move, state, TIE_TAIL, messages, own);
+    return { messages, state: { ...state, stepTurns: state.stepTurns + 1, ...patch }, passed, joined: null };
   }
   messages.push(...own);
   return { messages, state: { ...state, stepTurns: state.stepTurns + 1 }, passed, joined: null };

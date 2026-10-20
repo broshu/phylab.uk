@@ -9,27 +9,43 @@
  * they are saved with every turn for analysis.
  */
 
-/** Argument labels that get a fixed Aristotle reply. */
+/**
+ * Argument labels that get a fixed Aristotle reply. Each label has several
+ * wordings with the same meaning; a student who repeats the same argument
+ * hears the next one, so Aristotle never says the same line twice in a row.
+ * The first wording is the one in the logic doc's table.
+ */
 export const ARGUMENT_REPLIES = {
-  same_time: {
-    text: 'No, the heavy one lands first. Watch!',
-    image: 'falling',
-  },
-  experiment: {
-    text: 'Your experiment is not precise enough. There is a small difference, and the heavy body still wins.',
-  },
-  air: {
-    text: 'Even with no air at all, the heavier body would still fall faster.',
-  },
-  vacuum: {
-    text: 'A place with no air? I have never seen one, and neither have you. In the real world, the heavy body wins.',
-  },
-  book: {
-    text: 'Whoever wrote that never watched an apple and a leaf fall together. Every day my own eyes see the heavy body win.',
-  },
-  formula: {
-    text: 'Letters on paper, and the laws of this Newton, do not make a stone fall. Show me one heavy body that loses.',
-  },
+  same_time: [
+    { text: 'No, the heavy one lands first. Watch!', image: 'falling' },
+    { text: 'Look again, young one. The heavy body touches the ground first, every time.' },
+    { text: 'The same time? Only to careless eyes. The heavier body always lands first.' },
+  ],
+  experiment: [
+    { text: 'Your experiment is not precise enough. There is a small difference, and the heavy body still wins.' },
+    { text: 'Did you measure it closely? There is always a small gap, and the heavy body is ahead.' },
+    { text: 'Hands and eyes are not perfect, my friend. A tiny difference is still a difference, and it favours the heavy body.' },
+  ],
+  air: [
+    { text: 'Even with no air at all, the heavier body would still fall faster.' },
+    { text: 'Take the air away if you like. The heavy body still has the stronger desire to fall, so it still falls faster.' },
+    { text: 'Air is not the reason. Without it, the heavier body would still win the race.' },
+  ],
+  vacuum: [
+    { text: 'A place with no air? I have never seen one, and neither have you. In the real world, the heavy body wins.' },
+    { text: 'You speak again of a place without air. Neither of us has stood in one. Here, where we live, the heavy body falls first.' },
+    { text: 'Far-away places with no air are only stories to me. On this Earth, which we can both see, the heavier body wins.' },
+  ],
+  book: [
+    { text: 'Whoever wrote that never watched an apple and a leaf fall together. Every day my own eyes see the heavy body win.' },
+    { text: 'A book can say anything, my friend. The stones in my garden say otherwise.' },
+    { text: 'Your teacher has read books; I have watched things fall. The heavy body wins.' },
+  ],
+  formula: [
+    { text: 'Letters on paper, and the laws of this Newton, do not make a stone fall. Show me one heavy body that loses.' },
+    { text: 'Symbols again! Symbols do not fall; stones do, and the heavy stone falls faster.' },
+    { text: 'Your Newton and his letters cannot change what my eyes see: the heavier body is quicker.' },
+  ],
 };
 
 /** The Pisa easter egg: Galileo steps in once, then Aristotle answers. */

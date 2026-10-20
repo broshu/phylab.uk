@@ -414,3 +414,15 @@ test('counter: Aristotle keeps his own view; the other reasoning passes; the gui
   const g = advance(normalizeInput({ message: 'x', state: { condition: 'guided', step: 'faster' } }), { move: 'pass', stepDone: true, messages: [{ speaker: 'galileo', text: 'Yes.' }] });
   assert.equal(g.state.step, 'contradiction');
 });
+
+test('a repeated argument gets a different wording each time', () => {
+  let state = input('debate').state;
+  const seen = [];
+  for (let i = 0; i < 3; i++) {
+    const out = advance(normalizeInput({ message: 'moon', state }), { move: 'vacuum', stepDone: false, messages: [] });
+    seen.push(out.messages[0].text.split('.')[0]);
+    state = out.state;
+  }
+  assert.equal(new Set(seen).size, 3);
+  assert.equal(state.used.vacuum, 3);
+});
