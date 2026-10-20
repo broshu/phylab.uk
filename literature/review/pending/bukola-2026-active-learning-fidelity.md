@@ -67,5 +67,15 @@ We then evaluate the fidelity with which 18 different introductory physics instr
 
 At the same time, we observe substantial variation in the sequences of activities through which broader implementers operationalize these critical components (e.g., doing a few long activities versus many short activities). Finally, we find no clear relationship between fidelity of implementation (as measured by student and instructor behaviors during class) and student conceptual learning gains for our study’s sample of instructors.
 
+> 针对大学入门物理，人们已开发出多种主动学习方法，越来越多的教师开始采用这些方法。然而，教师在实施时往往不会完全按照开发者的原始设计进行：他们可能面临主动学习的经费和院校支持问题，和/或所处的教学情境（例如学生群体）和环境（例如教室的物理布局）与开发者不同。
+>
+> 现有研究未能充分刻画教师在实施成熟主动学习方法时的差异范围，尤其缺少与高保真实施的比较。
+>
+> 在本研究中，我们首先确定三种具名主动学习方法的关键要素（即缺少它们就不能认为实施了该方法的要素）：以学生为中心、采用“翻转”教学法的主动学习环境（SCALE-UP）、探究式科学学习环境（ISLE）以及 Tutorials。
+>
+> 随后，我们通过分析课堂观察数据，评估 18 位不同的入门物理教师实施这些方法的保真度，并比较这些更广泛的实施与高保真实施在课堂中使用各关键要素的程度。我们发现，对于全部三种主动学习方法，广泛实施与高保真实施在关键要素上花费的课堂时间相近。
+>
+> 与此同时，我们观察到，广泛实施者通过不同的活动序列来落实这些关键要素，差异相当大（例如做少数几个长活动还是许多短活动）。最后，在本研究的教师样本中，我们没有发现实施保真度（以课堂上学生和教师的行为衡量）与学生概念学习收益之间存在明确关系。
+
 Source: Ibukunoluwa Bukola, Meagan Sundstrom, Justin Gambrell, Colin Green, Adrienne L. Traxler, Eric Brewe. Measuring fidelity of implementation of named active learning methods in physics. Phys. Rev. Phys. Educ. Res. 22, 020142 (2026). https://doi.org/10.1103/xcdt-txzh
 Reproduced under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Mathematical typography normalised where necessary. Curatorial summaries above are by ChatGPT, based on the publisher's abstract; full text has not been reviewed.

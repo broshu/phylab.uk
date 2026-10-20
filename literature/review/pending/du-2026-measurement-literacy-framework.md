@@ -67,5 +67,15 @@ Cohort-level summaries showed immediate post-test means 34–54 points above pre
 
 It provides evidence for the schema’s teachability and its utility as a short-term organizer for measurement reasoning, specifically within the instructional context studied.
 
+> 测量结论往往事关重大，但学生和职业早期人员很少接受关于支撑这些结论的推理链条的明确训练。尽管人们越来越强调可迁移的能力，测量推理仍是一个盲点：学习者很少把被测量（感兴趣的量）对应到估计量（根据数据推断并报告的量），很少把推断建立在明确的噪声模型或似然模型之上，也很少在报告结果时给出不确定度和可追溯性。
+>
+> 这种割裂削弱了各领域的严谨性和交流。我们把跨学科测量素养定义为：将被测量与估计量联系起来、在明确的噪声和似然模型下论证推断、并附带不确定度和可追溯性报告结果的能力。
+>
+> 我们通过一个与计量闭环相结合的统一“编码 → 演化 → 读出 → 估计”框架来实现这一构念，并将其实施为一个 4 × 2 小时的教学模块。这项多队列描述性评价包括五个有核实前后测记录的队列（N = 114）以及两个本科团队任务队列。
+>
+> 队列层面的汇总显示，在与干预内容一致的测验上，即时后测平均分比前测高 34–54 分，归一化增益为 0.642–0.782。团队量规汇总提供了证据，表明该框架可以在小组层面可行地落实，而不确定度预算和可追溯性仍是主要难点。本研究被设计为一项有边界的描述性评价。
+>
+> 它为该框架的可教性及其作为测量推理短期组织工具的作用提供了证据，但仅限于所研究的教学情境。
+
 Source: Zhenhui Du, Zehua Wang. Cultivating cross-disciplinary measurement literacy via a unified classical-to-quantum interferometry framework and metrological practices. Phys. Rev. Phys. Educ. Res. 22, 020146 (2026). https://doi.org/10.1103/wn6j-gzxz
 Reproduced under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Mathematical typography normalised where necessary. Curatorial summaries above are by ChatGPT, based on the publisher's abstract; full text has not been reviewed.

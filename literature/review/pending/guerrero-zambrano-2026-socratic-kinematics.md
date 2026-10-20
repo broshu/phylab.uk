@@ -76,5 +76,13 @@ In the first stage, students engaged in instructor-guided Socratic dialogue; in 
 
 Students also reported higher self-efficacy and intrinsic motivation, while cognitive load exhibited heterogeneous responses associated with the need for verification and epistemic control when interacting with GAI. These results suggest that integrating generative AI into a teacher-mediated Socratic framework can support critical thinking in kinematics, although the sequential preexperimental design requires cautious interpretation.
 
+> 职前物理教师教育常把运动学解题当作程序性活动，对概念推理、论证和元认知调节的投入有限。本研究考察由生成式人工智能（GAI）中介的苏格拉底式对话，与仅由教师引导的苏格拉底式对话相比，对一维运动学中学科特定批判性思维（CT）的影响。
+>
+> 研究采用并行混合方法的组内前实验设计，18 名职前物理教师以小组形式，在两个先后进行的阶段中使用平行的运动学题组。由于教学条件按固定顺序实施，观察到的差异无法与可能的练习、学习和延续效应区分开来。
+>
+> 第一阶段，学生参与教师引导的苏格拉底式对话；第二阶段保持相同结构，并在教师监督下加入 GAI 中介的苏格拉底式支持。批判性思维通过应用于小组书面解答的分析性量规进行评估，并辅以李克特量表问卷和开放式回答。在 GAI 中介阶段，所有小组的量规得分都持续提高，没有观察到下降。
+>
+> 学生还报告了更高的自我效能感和内在动机，而认知负荷则呈现出不一致的反应，这与在和 GAI 互动时需要核实与认识控制有关。这些结果表明，把生成式 AI 融入教师中介的苏格拉底式框架可以支持运动学中的批判性思维，但由于采用顺序式前实验设计，需要谨慎解读。
+
 Source: Marcos Guerrero-Zambrano, Bryan Valarezo-Chamba, Leonor Sanchez-Alvarado, Erick Lamilla-Rubio. Effects of generative AI-mediated socratic dialogue on preservice physics teachers’ critical thinking in kinematics. Phys. Rev. Phys. Educ. Res. 22, 020134 (2026). https://doi.org/10.1103/x7vq-17rq
 Reproduced under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Mathematical typography normalised where necessary. Curatorial summaries above are by ChatGPT, based on the publisher's abstract; full text has not been reviewed.
