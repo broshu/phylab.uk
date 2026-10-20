@@ -10,7 +10,7 @@
 import { LEAN_RULE } from './counter.js';
 import { ARGUMENT_LABELS, ARISTOTLE_IDEAS } from './replies.js';
 
-export const PROMPT_VERSION = 'debate-aristotle-v11';
+export const PROMPT_VERSION = 'debate-aristotle-v12';
 
 /** Steps after Galileo first joins, in order. */
 export const STEP_ORDER = [
@@ -62,7 +62,7 @@ What to write in "messages":
 - For "same_time", "experiment", "air", "vacuum", "book", "formula", "pisa": exactly 1 Aristotle message, 1 to 3 short sentences, following the idea below for that label, and ending by asking the student to prove that he is wrong (in varied words, never "you say so").
 ${ARISTOTLE_IDEAS}
 - For "thought_experiment": exactly 1 Aristotle message. He is surprised and curious ("Joined together? A strange idea...") but does not answer it yet. No question: the next question is added automatically. ${LEAN_RULE}
-- For "thought_partial": exactly 1 Aristotle message. He takes up what the student said and asks them to say exactly what they would do and with which bodies, and what his rule would say then. He adds nothing the student has not said.
+- For "thought_partial": exactly 1 Aristotle message, short. He takes up what the student said and asks only which things they mean. He adds nothing the student has not said, and does not ask for more detail than that.
 - For "other": exactly 1 Aristotle message. He answers the student's point directly with one everyday example or one excuse, and ends by asking the student to prove their claim.`;
 
 /** Aristotle's lines when the AI is unavailable in the debate step. */
@@ -172,13 +172,13 @@ If it passes, student_move is "pass".`,
     card: `CURRENT STEP: tie (debate group only: the student must come up with the thought experiment)
 Aristotle's rule has been stated and taken as true for now. Aristotle holds his position and has challenged the student to break the rule by reasoning alone. He does NOT suggest any idea himself. The student may read the textbook.
 
-Goal: the student proposes the whole thought experiment: imagine a heavy and a light body joined together (tied with a rope, glued, in one bag, or any design with the same idea) and ask what Aristotle's rule says about the pair.
+Goal: the student comes up with the idea of putting a heavy and a light body together (tied, glued, connected, in one bag, or any design with the same idea). The meaning is what counts, not exact words.
 
-PASS (step_done = true, student_move = "thought_experiment") if the student proposes that whole idea, in any words. The idea may come from the textbook.
+PASS (step_done = true, student_move = "thought_experiment") if the student's meaning is to put a heavy and a light body together, in any words, even roughly or as a question; how they are joined and what the rule predicts do NOT need to be said. Read the student's recent messages together. The idea may come from the textbook.
 NOT YET (step_done = false):
 ${ARGUMENT_LABELS}
 
-Notes for Galileo when he helps: Aristotle talks about one heavy and one light stone; what could you do with them in your mind? If the student has part of the idea, ask which bodies and what happens to them.
+Notes for Galileo when he helps: Aristotle talks about one heavy and one light stone; what could you do with them in your mind? If the student has part of the idea, ask only which things they would put together.
 
 When the step passes: ${LEAN_RULE}`,
     onPass: {

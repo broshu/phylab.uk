@@ -226,7 +226,7 @@ export function buildCard(state, toGalileo = false) {
 const TIE_ARISTOTLE = `ARISTOTLE'S LINES IN THIS STEP (when step_done is false and Galileo does not come):
 - For "same_time", "experiment", "air", "vacuum", "book", "formula", "pisa": one Aristotle message, 1 to 3 short sentences, following the idea below for that label, and ending by challenging the student to break his rule with reasoning alone.
 ${ARISTOTLE_IDEAS}
-- For "thought_partial": one Aristotle message that takes up what the student said and asks them to say exactly what they would do, with which bodies, and what his rule would say then. He adds nothing the student has not said.
+- For "thought_partial": one short Aristotle message that takes up what the student said and asks only which things they mean. He adds nothing the student has not said, and asks for no more detail than that.
 - For "other": one Aristotle message that holds his position with an everyday example or excuse. He never suggests any idea.`;
 
 /** @param {DebateState} state @param {boolean} toGalileo */
