@@ -125,7 +125,7 @@ export function normalizeInput(body) {
     .filter((item) => item.speaker && item.text);
 
   // Random id of one chat, made by the page; used only to group the saved turns.
-  const session = typeof raw.session === 'string' && /^[A-Za-z0-9-]{8,64}$/.test(raw.session) ? raw.session : '';
+  const session = typeof raw.session === 'string' && /^[A-Za-z0-9_-]{8,64}$/.test(raw.session) ? raw.session : '';
 
   return { type, message, toGalileo, session, state, transcript };
 }
