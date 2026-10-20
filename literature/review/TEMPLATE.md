@@ -58,4 +58,9 @@ What the evidence cannot show (English).
 
 ## Abstract
 
-The original abstract, copied from the publisher or Crossref.
+The original abstract in English, complete, copied from Crossref, OpenAlex or Semantic Scholar.
+
+> 摘要的完整中文翻译，逐句译出，不要缩写或改成概括。
+
+Source: Authors. Title. Journal (year). https://doi.org/10.xxxx/xxxxx
+Abstract retrieved from Crossref. Curatorial summaries above are by the AI named in proposed_by, based on the abstract.

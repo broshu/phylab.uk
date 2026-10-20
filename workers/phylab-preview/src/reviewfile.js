@@ -18,7 +18,7 @@ export const SECTIONS = [
   ['phd_relevance', 'PhD relevance', true],
   ['reading_recommendation', 'Reading recommendation', true],
   ['limitations', 'Limitations', true],
-  ['abstract', 'Abstract', false],
+  ['abstract', 'Abstract', true],
 ];
 const BY_HEADING = new Map(SECTIONS.map(([key, heading]) => [heading.toLowerCase(), key]));
 
@@ -78,7 +78,7 @@ export function parseReview(text, path = '') {
     phd_relevance: pair('phd_relevance'),
     reading_recommendation: pair('reading_recommendation'),
     limitations: pair('limitations'),
-    abstract: plain('abstract'),
+    abstract: pair('abstract'),
   };
 }
 
@@ -88,13 +88,23 @@ function bilingual(value) {
   return [en, zh ? zh.split('\n').map(l => `> ${l}`).join('\n') : ''].filter(Boolean).join('\n\n');
 }
 
+// Abstract: English original, then the Chinese translation, then the Source/credit lines.
+function abstractText(value) {
+  const [en, ...credit] = (value?.en || '').trim().split(/\n+(?=Source:)/);
+  const zh = (value?.zh || '').trim();
+  return [en.trim(), zh ? zh.split('\n').map(l => (l ? `> ${l}` : '>')).join('\n') : '', credit.join('\n').trim()].filter(Boolean).join('\n\n');
+}
+
+// Reviewers are no longer named; drop empty fields such as `by: ""`.
+const withoutEmpty = o => Object.fromEntries(Object.entries(o).filter(([, v]) => v !== '' && v != null));
+
 /** Serialise a paper object back to Markdown. Round-trips with parseReview. */
 export function serializeReview(paper) {
   const front = {};
   const values = {
     ...paper,
-    decision: paper.decision && (paper.decision.by || paper.decision.at || paper.decision.reason) ? paper.decision : undefined,
-    notes: paper.notes?.length ? paper.notes : undefined,
+    decision: paper.decision && (paper.decision.by || paper.decision.at || paper.decision.reason) ? withoutEmpty(paper.decision) : undefined,
+    notes: paper.notes?.length ? paper.notes.map(withoutEmpty) : undefined,
     score: paper.score || undefined,
     featured: paper.featured || undefined,
     finding: paper.finding === 'B' ? 'B' : undefined,
@@ -107,10 +117,11 @@ export function serializeReview(paper) {
     why: { en: paper.why }, summary: { en: paper.summary },
     finding_a: paper.findings?.[0], finding_b: paper.findings?.[1],
     phd_relevance: paper.phd_relevance, reading_recommendation: paper.reading_recommendation,
-    limitations: paper.limitations, abstract: { en: paper.abstract },
+    limitations: paper.limitations,
+    abstract: typeof paper.abstract === 'string' ? { en: paper.abstract } : paper.abstract,
   };
   const body = SECTIONS.map(([key, heading, two]) => {
-    const text = two ? bilingual(sections[key]) : (sections[key]?.en || '').trim();
+    const text = key === 'abstract' ? abstractText(sections.abstract) : two ? bilingual(sections[key]) : (sections[key]?.en || '').trim();
     return text ? `## ${heading}\n\n${text}\n` : '';
   }).filter(Boolean).join('\n');
   return `---\n${stringifyYAML(front, { lineWidth: 0 }).trim()}\n---\n\n${body}`;

@@ -109,18 +109,18 @@ function move(paper, from, to) {
   return { additions: [{ path: `${to}/${paper.id}.md`, contents: serializeReview(paper) }], deletions: from === to ? [] : [`${from}/${paper.id}.md`] };
 }
 
-export async function approve(env, { id, choice, by, reason }) {
+export async function approve(env, { id, choice, reason }) {
   const today = shanghaiDate();
   return transact(env, WANTED, snapshot => {
     const desk = deskFrom(snapshot);
     const { paper } = find(desk, id, ['pending']);
-    const next = { ...applyChoice(paper, choice), status: 'approved', decision: { by, at: now(), reason: reason || '' } };
+    const next = { ...applyChoice(paper, choice), status: 'approved', decision: { at: now(), reason: reason || '' } };
     if (!next.topics.length) throw new Error('至少选一个主题');
     const catalogText = addToCatalog(desk.catalogText, catalogEntry(next, today), today);
     const moved = move(next, PENDING_DIR, DONE_DIR);
     return {
       headline: `Literature: add ${next.id}`,
-      body: `Approved by ${by} on preview.phylab.uk.${reason ? `\nReason: ${reason}` : ''}`,
+      body: `Approved on preview.phylab.uk.${reason ? `\nReason: ${reason}` : ''}`,
       additions: [...moved.additions, ...(catalogText ? [{ path: CATALOG_PATH, contents: catalogText }] : [])],
       deletions: moved.deletions,
       result: { id: next.id },
@@ -128,17 +128,17 @@ export async function approve(env, { id, choice, by, reason }) {
   });
 }
 
-export async function reject(env, { id, by, reason }) {
+export async function reject(env, { id, reason }) {
   return transact(env, WANTED, snapshot => {
     const desk = deskFrom(snapshot);
     const { paper } = find(desk, id, ['pending']);
-    const next = { ...paper, status: 'rejected', decision: { by, at: now(), reason: reason || '' } };
-    return { headline: `Literature review: reject ${id}`, body: `Rejected by ${by}${reason ? `: ${reason}` : ''}.`, ...move(next, PENDING_DIR, DONE_DIR), result: { id } };
+    const next = { ...paper, status: 'rejected', decision: { at: now(), reason: reason || '' } };
+    return { headline: `Literature review: reject ${id}`, body: `Rejected on preview.phylab.uk${reason ? `: ${reason}` : ''}.`, ...move(next, PENDING_DIR, DONE_DIR), result: { id } };
   });
 }
 
 /** Undo a decision: the paper goes back to pending (and leaves the catalogue if it was published). */
-export async function restore(env, { id, by }) {
+export async function restore(env, { id }) {
   const today = shanghaiDate();
   return transact(env, WANTED, snapshot => {
     const desk = deskFrom(snapshot);
@@ -148,7 +148,7 @@ export async function restore(env, { id, by }) {
     const moved = move(next, DONE_DIR, PENDING_DIR);
     return {
       headline: paper.status === 'approved' ? `Literature: withdraw ${id}` : `Literature review: reopen ${id}`,
-      body: `Reopened by ${by} on preview.phylab.uk.`,
+      body: 'Reopened on preview.phylab.uk.',
       additions: [...moved.additions, ...(catalogText ? [{ path: CATALOG_PATH, contents: catalogText }] : [])],
       deletions: moved.deletions,
       result: { id },
@@ -156,17 +156,17 @@ export async function restore(env, { id, by }) {
   });
 }
 
-export async function addNote(env, { id, by, text }) {
+export async function addNote(env, { id, text }) {
   return transact(env, WANTED, snapshot => {
     const desk = deskFrom(snapshot);
     const { paper, place } = find(desk, id);
     const dir = place === 'pending' ? PENDING_DIR : DONE_DIR;
-    const next = { ...paper, notes: [...paper.notes, { by, at: now(), text }] };
-    return { headline: `Literature review: note on ${id}`, body: `Note by ${by}.`, ...move(next, dir, dir), result: { id } };
+    const next = { ...paper, notes: [...paper.notes, { at: now(), text }] };
+    return { headline: `Literature review: note on ${id}`, body: 'Note added on preview.phylab.uk.', ...move(next, dir, dir), result: { id } };
   });
 }
 
-export async function setFeatured(env, { id, by, on }) {
+export async function setFeatured(env, { id, on }) {
   const today = shanghaiDate();
   return transact(env, WANTED, snapshot => {
     const desk = deskFrom(snapshot);
@@ -179,14 +179,14 @@ export async function setFeatured(env, { id, by, on }) {
     catalog.updated_at = today > catalog.updated_at ? today : catalog.updated_at;
     const next = { ...paper, featured: Boolean(on) };
     return {
-      headline: `Literature: ${on ? 'feature' : 'unfeature'} ${id}`, body: `Changed by ${by} on preview.phylab.uk.`,
+      headline: `Literature: ${on ? 'feature' : 'unfeature'} ${id}`, body: 'Changed on preview.phylab.uk.',
       additions: [{ path: CATALOG_PATH, contents: json(catalog) }, ...move(next, DONE_DIR, DONE_DIR).additions],
       result: { id },
     };
   });
 }
 
-export async function expire(env, { remove = [], keep = [], by }) {
+export async function expire(env, { remove = [], keep = [] }) {
   const today = shanghaiDate();
   return transact(env, WANTED, snapshot => {
     const desk = deskFrom(snapshot);
@@ -198,17 +198,17 @@ export async function expire(env, { remove = [], keep = [], by }) {
     }
     return {
       headline: remove.length ? `Literature: remove ${remove.length} paper(s) older than two years` : 'Literature review: keep older papers',
-      body: `By ${by} on preview.phylab.uk.${remove.length ? `\nRemoved: ${remove.join(', ')}` : ''}${keep.length ? `\nKept: ${keep.join(', ')}` : ''}`,
+      body: `On preview.phylab.uk.${remove.length ? `\nRemoved: ${remove.join(', ')}` : ''}${keep.length ? `\nKept: ${keep.join(', ')}` : ''}`,
       additions,
     };
   });
 }
 
-export async function saveProfile(env, { profile, by }) {
+export async function saveProfile(env, { profile }) {
   return transact(env, { folders: [], files: [PROFILE_PATH] }, snapshot => {
     const text = json(profile);
     if (snapshot.files[PROFILE_PATH] === text) return null;
-    return { headline: 'Literature review: update interest profile', body: `By ${by} on preview.phylab.uk.`, additions: [{ path: PROFILE_PATH, contents: text }] };
+    return { headline: 'Literature review: update interest profile', body: 'On preview.phylab.uk.', additions: [{ path: PROFILE_PATH, contents: text }] };
   });
 }
 

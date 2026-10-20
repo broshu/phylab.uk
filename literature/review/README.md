@@ -41,8 +41,8 @@ YAML front matter, then `##` sections. The desk ignores sections it does not kno
 | `evidence_type` | yes | e.g. Randomised experiment, Quasi-experiment, Systematic review, Case study, Instrument validation. |
 | `featured` | no | `true` to put it on the homepage shelf when approved. |
 | `finding` | no | `A` or `B`: which key finding is published. Default `A`. |
-| `decision` | set by the desk | `by`, `at`, `reason`. |
-| `notes` | set by the desk | List of `{ by, at, text }` comments from reviewers. |
+| `decision` | set by the desk | `at`, `reason`. Reviews are anonymous. (Older files may also have `by`.) |
+| `notes` | set by the desk | List of `{ at, text }` comments from reviewers. |
 
 Sections, in this order (headings must match exactly):
 
@@ -50,6 +50,6 @@ Sections, in this order (headings must match exactly):
 - `## Summary` — Chinese, two sentences.
 - `## Key finding A`, `## Key finding B` — English (≤ 55 words) plus `>` Chinese. The chosen one is published on phylab.uk.
 - `## PhD relevance`, `## Reading recommendation`, `## Limitations` — English plus `>` Chinese.
-- `## Abstract` — the original abstract.
+- `## Abstract` — the complete original abstract in English, then the complete Chinese translation in `>` lines (a full translation, not a summary), then the `Source:` lines. The desk shows both in full on every card.
 
 The English sections must contain no Chinese characters, because they are published on the English site.

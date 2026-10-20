@@ -2,7 +2,7 @@
 
 A public working site next to phylab.uk.
 
-- **`/` — paper screening** (the first section). Candidates from the weekly search, or added by hand, appear as cards. Reviewers tick topics, choose a priority and one of two key findings, star a paper for the homepage shelf, write a reason, and press 收录 (approve) or 放弃 (reject). They can also leave a note without deciding. Every action is a commit to this repository, signed with the reviewer's name (asked once, kept in the browser). Approved papers reach phylab.uk about a minute later; any decision can be undone.
+- **`/` — paper screening** (the first section). Candidates proposed by an AI, or added by hand, appear as cards showing the one-line recommendation, a short summary and the full abstract in English with a Chinese translation. Reviewers tick topics, choose a priority and one of two key findings, star a paper for the homepage shelf, write a reason, and press 收录 (approve) or 放弃 (reject). They can also leave a note without deciding. Every action is a commit to this repository. Reviewing is anonymous: no name is asked for or recorded. Approved papers reach phylab.uk about a minute later; any decision can be undone.
 - **`/site/` — site preview.** A live copy of phylab.uk read straight from GitHub. Pick any branch in the 网站预览 tab to see it before merging; the public site is untouched. HTML pages carry a small badge that leads back to the desk.
 - **筛选标准** — topics, keywords, journals, notes and a score threshold, saved as `literature/review/profile.json` for whoever proposes papers to read.
 

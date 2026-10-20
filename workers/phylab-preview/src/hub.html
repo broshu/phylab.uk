@@ -33,8 +33,6 @@
   .tabs { display: flex; gap: 2px; flex: 1; overflow-x: auto; scrollbar-width: none; }
   .tabs button { border: 0; background: none; padding: 8px 12px; border-radius: 8px; color: var(--site-muted); cursor: pointer; white-space: nowrap; font-size: 14px; }
   .tabs button[aria-selected="true"] { color: var(--ink); background: var(--site-surface-soft); font-weight: 600; }
-  .me { border: 1px solid var(--site-border); background: var(--site-surface); border-radius: 999px; padding: 5px 12px; font-size: 13px; cursor: pointer; white-space: nowrap; }
-  .me.empty { border-color: var(--score); color: var(--score); }
   @media (max-width: 560px) {
     .bar-in { flex-wrap: wrap; height: auto; padding-top: 10px; gap: 6px 10px; }
     .brand { flex: 1; }
@@ -87,7 +85,13 @@
   .finding .zh { color: var(--site-muted); font-size: 13px; margin-top: 3px; }
   details { margin-top: 12px; border-top: 1px solid var(--site-border-soft); padding-top: 10px; }
   summary { cursor: pointer; font-size: 13.5px; color: var(--site-green); }
-  .abstract { font-size: 13.5px; color: var(--site-muted); margin: 8px 0 0; }
+  .abstract { margin: 12px 0 0; display: grid; gap: 10px; grid-template-columns: 1fr 1fr; }
+  .abstract .abs { background: var(--site-surface-soft); border-radius: 10px; padding: 10px 12px; }
+  .abstract .lang { font-size: 12px; color: var(--site-muted); margin-bottom: 4px; letter-spacing: .02em; }
+  .abstract p { margin: 0; font-size: 13.5px; line-height: 1.6; white-space: pre-line; }
+  .abstract .credit { grid-column: 1 / -1; font-size: 12px; color: var(--site-muted); }
+  .abstract.none, .abstract .none { font-size: 13.5px; color: var(--site-muted); margin: 8px 0 0; display: block; }
+  @media (max-width: 720px) { .abstract { grid-template-columns: 1fr; } }
   label.field { display: block; margin-top: 10px; }
   label.field span { display: block; font-size: 12.5px; color: var(--site-muted); margin-bottom: 3px; }
   textarea, input[type=text], select { width: 100%; font: inherit; font-size: 14px; color: var(--ink); background: var(--site-bg); border: 1px solid var(--site-border); border-radius: 8px; padding: 7px 10px; }
@@ -144,11 +148,6 @@
   .log div { padding: 3px 0; }
   .log time { font-variant-numeric: tabular-nums; margin-right: 8px; }
 
-  dialog { border: 1px solid var(--site-border); border-radius: var(--radius); background: var(--site-surface); color: var(--ink); padding: 22px; width: min(360px, calc(100% - 32px)); }
-  dialog::backdrop { background: var(--site-backdrop); }
-  dialog h3 { margin: 0 0 6px; font: 600 24px/1.2 "Cormorant Garamond", Georgia, serif; }
-  dialog p { margin: 0 0 12px; color: var(--site-muted); font-size: 14px; }
-  dialog .actions { margin-top: 14px; justify-content: flex-end; }
   [hidden] { display: none !important; }
 </style>
 </head>
@@ -161,7 +160,6 @@
       <button role="tab" data-tab="site" aria-selected="false">网站预览</button>
       <button role="tab" data-tab="settings" aria-selected="false">筛选标准</button>
     </nav>
-    <button class="me empty" id="me" type="button">填写名字</button>
   </div>
 </header>
 
@@ -208,15 +206,6 @@
   </section>
 </main>
 
-<dialog id="who">
-  <form method="dialog">
-    <h3>你是谁？</h3>
-    <p>收录、放弃和留言都会记下名字，方便大家知道是谁做的决定。</p>
-    <input type="text" id="who-name" maxlength="30" placeholder="名字" autocomplete="nickname" required>
-    <div class="actions"><button class="btn ghost" value="cancel" formnovalidate>取消</button><button class="btn yes" value="ok">好</button></div>
-  </form>
-</dialog>
-
 <script>
 const PRI = { core: '必读', read: '精读', skim: '浏览' };
 const QUICK = ['离题', '不是物理教育', '证据太弱', '太偏理论', '已经读过'];
@@ -235,23 +224,6 @@ function h(tag, attrs = {}, ...kids) {
   return n;
 }
 
-// Reviewer name, kept in this browser
-const store = { get: k => { try { return localStorage.getItem(k) || ''; } catch { return ''; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch {} } };
-function showMe() { const n = store.get('reviewer'); const b = $('#me'); b.textContent = n ? `我是 ${n}` : '填写名字'; b.classList.toggle('empty', !n); }
-function askName() {
-  return new Promise(resolve => {
-    const d = $('#who'), input = $('#who-name');
-    input.value = store.get('reviewer');
-    d.onclose = () => {
-      if (d.returnValue === 'ok' && input.value.trim()) { store.set('reviewer', input.value.trim()); showMe(); resolve(input.value.trim()); }
-      else resolve('');
-    };
-    d.showModal();
-  });
-}
-async function me() { return store.get('reviewer') || askName(); }
-$('#me').addEventListener('click', askName);
-
 async function api(path, body) {
   const opts = body === undefined ? {} : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
   const res = await fetch(path, opts);
@@ -259,11 +231,8 @@ async function api(path, body) {
   if (!res.ok) throw new Error(data.error || `出错了（${res.status}）`);
   return data;
 }
-async function act(path, body) {
-  const by = await me();
-  if (!by) throw new Error('需要先填写名字');
-  return api(path, { ...body, by });
-}
+// Reviewing is anonymous: no name is asked for or recorded.
+const act = (path, body) => api(path, body);
 
 // Tabs
 document.querySelectorAll('.tabs button').forEach(tab => tab.addEventListener('click', () => {
@@ -278,8 +247,19 @@ document.querySelectorAll('.filters button').forEach(b => b.addEventListener('cl
   renderList();
 }));
 
-function stamp(kind, by, when, land) {
-  return h('div', { class: `stamp ${kind}${land ? ' land' : ''}` }, kind === 'yes' ? '收录' : '不要', h('small', { text: [by, when].filter(Boolean).join(' · ') }));
+function stamp(kind, when, land) {
+  return h('div', { class: `stamp ${kind}${land ? ' land' : ''}` }, kind === 'yes' ? '收录' : '不要', when ? h('small', { text: when }) : null);
+}
+
+// The full abstract, original English and Chinese translation, always visible.
+function abstractBlock(a) {
+  const en = (a?.en || '').trim(), zh = (a?.zh || '').trim();
+  if (!en && !zh) return h('p', { class: 'abstract none', text: '没有找到摘要，笔记只依据标题。点标题看原文。' });
+  const [body, ...credit] = en.split(/\n(?=Source:)/);
+  return h('section', { class: 'abstract' },
+    h('div', { class: 'abs' }, h('div', { class: 'lang', text: 'Abstract' }), h('p', { lang: 'en', text: body.trim() })),
+    zh ? h('div', { class: 'abs' }, h('div', { class: 'lang', text: '摘要（中文翻译）' }), h('p', { lang: 'zh', text: zh })) : h('p', { class: 'none', text: '还没有中文翻译。' }),
+    credit.length ? h('p', { class: 'credit', text: credit.join('\n') }) : null);
 }
 
 function slip(p) {
@@ -308,7 +288,7 @@ function slip(p) {
       };
       await act(kind === 'yes' ? '/api/approve' : '/api/reject', body);
       el.classList.add('decided');
-      el.append(stamp(kind, store.get('reviewer'), '', true));
+      el.append(stamp(kind, '', true));
       msg.textContent = kind === 'yes' ? '已收录，大约一分钟后在 phylab.uk 上可见。' : '已放弃。';
       msg.append(' ', h('button', { class: 'quick-undo pill', type: 'button', style: 'padding:3px 10px;font-size:13px', on: { click: async e => {
         e.currentTarget.disabled = true;
@@ -325,13 +305,13 @@ function slip(p) {
     lock(true);
     try {
       await act('/api/note', { id: p.id, text });
-      notes.append(h('li', {}, h('b', { text: store.get('reviewer') + '：' }), text));
+      notes.append(h('li', {}, text));
       reason.value = ''; msg.className = 'msg'; msg.textContent = '留言已保存。';
     } catch (err) { msg.className = 'msg err'; msg.textContent = err.message; }
     lock(false);
   }
 
-  const notes = h('ul', { class: 'notes' }, p.notes.map(n => h('li', {}, h('b', { text: `${n.by}：` }), n.text)));
+  const notes = h('ul', { class: 'notes' }, p.notes.map(n => h('li', {}, n.by ? h('b', { text: `${n.by}：` }) : null, n.text)));
   const findings = p.findings.map((f, i) => h('label', { class: 'finding' },
     h('input', { type: 'radio', name, value: i ? 'B' : 'A', checked: (p.finding || 'A') === (i ? 'B' : 'A') }),
     h('div', {}, h('p', { text: f.en }), f.zh ? h('p', { class: 'zh', text: f.zh }) : null)));
@@ -344,6 +324,7 @@ function slip(p) {
       h('p', { class: 'authors', text: p.authors.slice(0, 6).join(', ') + (p.authors.length > 6 ? ` 等 ${p.authors.length} 人` : '') }),
       p.summary ? h('p', { class: 'brief', text: p.summary }) : null,
       p.why ? h('p', { class: 'brief why', text: `推荐理由：${p.why}` }) : null,
+      abstractBlock(p.abstract),
       notes,
       h('div', { class: 'editable' },
         h('div', { class: 'group' }, h('div', { class: 'g', text: '主题' }), h('div', { class: 'chips' },
@@ -360,7 +341,6 @@ function slip(p) {
           field('reading_recommendation', `Reading recommendation${p.reading_recommendation.zh ? '　' + p.reading_recommendation.zh : ''}`, p.reading_recommendation.en),
           field('limitations', `Limitations${p.limitations.zh ? '　' + p.limitations.zh : ''}`, p.limitations.en),
           h('label', { class: 'field' }, h('span', { text: '研究类型' }), h('input', { type: 'text', 'data-edit': 'evidence_type', value: p.evidence_type || '' }))),
-        p.abstract ? h('details', {}, h('summary', { text: '原文摘要' }), h('p', { class: 'abstract', text: p.abstract })) : h('p', { class: 'abstract', text: '没有找到摘要，笔记只依据标题。点标题看原文。' }),
         h('div', { class: 'decide' },
           h('div', { class: 'reason' }, reason),
           h('div', { class: 'quick' }, QUICK.map(q => h('button', { type: 'button', on: { click: () => { reason.value = reason.value ? `${reason.value}；${q}` : q; reason.focus(); } } }, q))),
@@ -398,7 +378,7 @@ function doneRow(p) {
     h('div', { class: 't' },
       h('a', { href: p.url || `https://doi.org/${p.doi}`, target: '_blank', rel: 'noopener', text: p.title }),
       h('div', { class: 'm' }, h('span', { class: yes ? 'yes' : 'no', text: yes ? (p.live ? '已收录' : '已收录（已不在网站上）') : '已放弃' }),
-        `　${d.by || ''} ${d.at || ''}`, d.reason ? `　“${d.reason}”` : '', p.notes.length ? `　${p.notes.length} 条留言` : ''), msg),
+        `　${d.at || ''}`, d.reason ? `　“${d.reason}”` : '', p.notes.length ? `　${p.notes.length} 条留言` : ''), msg),
     b);
 }
 
@@ -518,7 +498,6 @@ $('#fresh').addEventListener('click', async () => { $('#fresh').classList.remove
 setInterval(poll, 120000);
 document.addEventListener('visibilitychange', poll);
 
-showMe();
 const startTab = location.hash.slice(1);
 if (['site', 'settings'].includes(startTab)) document.querySelector(`.tabs [data-tab="${startTab}"]`).click();
 refresh().catch(err => { $('#status').textContent = err.message; });

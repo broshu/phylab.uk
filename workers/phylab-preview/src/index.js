@@ -102,11 +102,6 @@ export function cleanProfile(input) {
   };
 }
 
-function reviewer(body) {
-  const by = String(body.by || '').replace(/[\r\n<>]/g, ' ').trim().slice(0, 30);
-  if (!by) throw Object.assign(new Error('请先填写你的名字'), { status: 400 });
-  return by;
-}
 const text = (value, max) => String(value || '').replace(/\r/g, '').trim().slice(0, max);
 const id = value => {
   const s = String(value || '');
@@ -133,33 +128,29 @@ async function api(request, env, ctx, url, branch) {
   try { body = raw ? JSON.parse(raw) : {}; } catch { return json({ error: 'Bad JSON' }, 400); }
   switch (url.pathname) {
     case '/api/approve': {
-      const by = reviewer(body);
-      const out = await approve(env, { id: id(body.id), choice: body.choice, by, reason: text(body.reason, 300) });
+      const out = await approve(env, { id: id(body.id), choice: body.choice, reason: text(body.reason, 300) });
       return json({ ok: true, ...out });
     }
     case '/api/reject': {
-      const by = reviewer(body);
-      const out = await reject(env, { id: id(body.id), by, reason: text(body.reason, 300) });
+      const out = await reject(env, { id: id(body.id), reason: text(body.reason, 300) });
       return json({ ok: true, ...out });
     }
     case '/api/restore': {
-      const by = reviewer(body);
-      const out = await restore(env, { id: id(body.id), by });
+      const out = await restore(env, { id: id(body.id) });
       return json({ ok: true, ...out });
     }
     case '/api/note': {
       const note = text(body.text, 500);
       if (!note) return json({ error: '留言是空的' }, 400);
-      return json({ ok: true, ...(await addNote(env, { id: id(body.id), by: reviewer(body), text: note })) });
+      return json({ ok: true, ...(await addNote(env, { id: id(body.id), text: note })) });
     }
     case '/api/feature':
-      return json({ ok: true, ...(await setFeatured(env, { id: id(body.id), by: reviewer(body), on: Boolean(body.on) })) });
+      return json({ ok: true, ...(await setFeatured(env, { id: id(body.id), on: Boolean(body.on) })) });
     case '/api/expire': {
-      const by = reviewer(body);
-      return json({ ok: true, ...(await expire(env, { remove: ids(body.remove), keep: ids(body.keep), by })) });
+      return json({ ok: true, ...(await expire(env, { remove: ids(body.remove), keep: ids(body.keep) })) });
     }
     case '/api/profile':
-      return json({ ok: true, ...(await saveProfile(env, { profile: cleanProfile(body.profile), by: reviewer(body) })) });
+      return json({ ok: true, ...(await saveProfile(env, { profile: cleanProfile(body.profile) })) });
     default:
       return json({ error: 'Not found' }, 404);
   }

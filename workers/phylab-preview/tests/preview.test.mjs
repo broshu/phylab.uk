@@ -27,7 +27,7 @@ const paper = {
   phd_relevance: { en: 'Use this study to separate supported performance from independent transfer.', zh: '区分支持下表现与独立迁移。' },
   reading_recommendation: { en: 'Read the design and the transfer test sections.', zh: '' },
   limitations: { en: 'Two intact classes and a short follow-up limit the claims about transfer.', zh: '' },
-  abstract: 'We studied two classes.',
+  abstract: { en: 'We studied two classes.', zh: '我们研究了两个班级。' },
 };
 const env = { GITHUB_TOKEN: 't', GITHUB_REPO: 'broshu/phylab.uk', GITHUB_BRANCH: 'main' };
 
@@ -47,7 +47,8 @@ test('the template is a valid review file', () => {
   assert.equal(p.findings.length, 2);
   assert.equal(p.findings[0].zh, '中文翻译。');
   assert.deepEqual(p.topics, ['ai', 'hands-on']);
-  assert.ok(p.abstract);
+  assert.ok(p.abstract.en);
+  assert.ok(p.abstract.zh, 'template shows the Chinese abstract translation');
 });
 
 test('hand-written files are read tolerantly', () => {
@@ -79,14 +80,14 @@ test('approve, note, feature, undo and reject are single commits', async () => {
     let desk = publicDesk(await loadDesk(env));
     assert.equal(desk.pending.length, 2);
 
-    await addNote(env, { id: paper.id, by: '小王', text: '方法部分值得看' });
+    await addNote(env, { id: paper.id, text: '方法部分值得看' });
     gh.bump(); // someone else pushed meanwhile: the next write must retry on the new head
-    await approve(env, { id: paper.id, by: 'Lango', reason: '紧扣研究', choice: { topics: ['ai'], priority: 'core', finding: 'B', featured: false,
+    await approve(env, { id: paper.id, reason: '紧扣研究', choice: { topics: ['ai'], priority: 'core', finding: 'B', featured: false,
       edits: { limitations: 'Edited limitation text for the catalogue.' } } });
     const last = gh.commits.at(-1);
     assert.deepEqual(last.additions.sort(), [`${DONE_DIR}/${paper.id}.md`, 'literature/data/papers.json'].sort());
     assert.deepEqual(last.deletions, [`${PENDING_DIR}/${paper.id}.md`]);
-    assert.match(last.message.body, /Approved by Lango/);
+    assert.match(last.message.body, /Approved on preview\.phylab\.uk/);
     const catalog = JSON.parse(gh.files.get('literature/data/papers.json'));
     const entry = catalog.papers.find(p => p.id === paper.id);
     assert.equal(entry.reading_priority, 'core');
@@ -94,21 +95,22 @@ test('approve, note, feature, undo and reject are single commits', async () => {
     assert.deepEqual(validateCatalog(catalog), []);
     const done = parseReview(gh.files.get(`${DONE_DIR}/${paper.id}.md`));
     assert.equal(done.status, 'approved');
-    assert.equal(done.decision.by, 'Lango');
+    assert.equal(done.decision.by, '', 'reviewers are not named');
+    assert.doesNotMatch(gh.files.get(`${DONE_DIR}/${paper.id}.md`), /^\s*-?\s*by:/m, 'no reviewer names in the file');
     assert.equal(done.notes[0].text, '方法部分值得看');
 
-    await setFeatured(env, { id: paper.id, by: 'Lango', on: true });
+    await setFeatured(env, { id: paper.id, on: true });
     assert.equal(JSON.parse(gh.files.get('literature/data/papers.json')).papers.find(p => p.id === paper.id).featured, true);
 
-    await restore(env, { id: paper.id, by: 'Lango' });
+    await restore(env, { id: paper.id });
     assert.ok(gh.files.has(`${PENDING_DIR}/${paper.id}.md`));
     assert.ok(!JSON.parse(gh.files.get('literature/data/papers.json')).papers.some(p => p.id === paper.id));
 
-    await reject(env, { id: 'other-2026-paper', by: '小王', reason: '离题' });
+    await reject(env, { id: 'other-2026-paper', reason: '离题' });
     desk = publicDesk(await loadDesk(env));
     assert.deepEqual(desk.pending.map(p => p.id), [paper.id]);
     assert.equal(desk.done[0].decision.reason, '离题');
-    await assert.rejects(reject(env, { id: 'other-2026-paper', by: 'x' }), /找不到/);
+    await assert.rejects(reject(env, { id: 'other-2026-paper' }), /找不到/);
   } finally { gh.restore(); }
 });
 
@@ -117,7 +119,7 @@ test('expiry removes or keeps', async () => {
   gh.install();
   try {
     const first = JSON.parse(catalogText).papers[0].id;
-    await expire(env, { remove: [first], keep: ['some-old-paper'], by: 'Lango' });
+    await expire(env, { remove: [first], keep: ['some-old-paper'] });
     assert.ok(!JSON.parse(gh.files.get('literature/data/papers.json')).papers.some(p => p.id === first));
     assert.deepEqual(JSON.parse(gh.files.get('literature/review/kept-old.json')), ['some-old-paper']);
   } finally { gh.restore(); }
@@ -161,9 +163,8 @@ test('public desk, guarded writes', async () => {
   assert.match(await home.text(), /论文筛选/);
   const cross = await worker.fetch(new Request('https://preview.phylab.uk/api/reject', { method: 'POST', headers: { Origin: 'https://evil.example' }, body: '{}' }), env, ctx);
   assert.equal(cross.status, 403);
-  const anon = await worker.fetch(new Request('https://preview.phylab.uk/api/reject', { method: 'POST', headers: { Origin: 'https://preview.phylab.uk' }, body: JSON.stringify({ id: 'x' }) }), env, ctx);
-  assert.equal(anon.status, 400);
-  assert.match((await anon.json()).error, /名字/);
+  const bad = await worker.fetch(new Request('https://preview.phylab.uk/api/reject', { method: 'POST', headers: { Origin: 'https://preview.phylab.uk' }, body: JSON.stringify({ id: 'Not An Id' }) }), env, ctx);
+  assert.equal(bad.status, 400, 'no name needed, but ids are still checked');
   const limited = await worker.fetch(new Request('https://preview.phylab.uk/api/reject', { method: 'POST', headers: { Origin: 'https://preview.phylab.uk' }, body: '{}' }),
     { ...env, WRITE_LIMIT: { limit: async () => ({ success: false }) } }, ctx);
   assert.equal(limited.status, 429);
