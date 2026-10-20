@@ -182,6 +182,9 @@ export const ZH = {
   'Words are easy, young one. Show me a proof.': '年轻人，说说很容易。拿出证明来。',
   'Can you prove that I am wrong?': '你能证明我是错的吗？',
   'Break my rule with reasoning alone, if you can.': '有本事就只用推理推翻我的规则。',
+  'Tied together? A strange idea, but my rule fears nothing.': '绑在一起？真是个奇怪的想法，不过我的规则什么都不怕。',
+  'Joined together? A strange idea, young one. Very well, let us see.': '连在一起？年轻人，这想法真奇怪。好吧，我们来看看。',
+  'Put them together? Hm, I have never thought of that. My rule will still win.': '把它们放在一起？嗯，我从没想过。不过我的规则照样会赢。',
 
   // ---- guided group
   "Here is a smart first move: let's take Aristotle's rule as TRUE, just for now, so we can test it. In one short sentence, what exactly is the rule about weight and falling?":

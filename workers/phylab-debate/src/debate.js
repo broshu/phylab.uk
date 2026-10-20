@@ -14,7 +14,7 @@ import {
 } from './guided.js';
 import { CONTRADICTION_OPENER, COUNTER } from './counter.js';
 import { toZh } from './zh.js';
-import { ARGUMENT_REPLIES, ARISTOTLE_IDEAS, BEFORE_GALILEO, DEBATE_TAILS, PISA, PRESET_MOVES, REPEAT_LIMIT, TIE_TAIL } from './replies.js';
+import { ARGUMENT_REPLIES, ARISTOTLE_IDEAS, BEFORE_GALILEO, COUNTED_MOVES, DEBATE_TAILS, PISA, PRESET_MOVES, REPEAT_LIMIT, THOUGHT_REPLIES, TIE_TAIL } from './replies.js';
 import {
   ALL_STEPS,
   ARISTOTLE_ON_HELP,
@@ -63,7 +63,7 @@ function cleanUsed(value) {
   /** @type {Record<string, number>} */
   const out = {};
   if (!value || typeof value !== 'object' || Array.isArray(value)) return out;
-  for (const key of Object.keys(ARGUMENT_REPLIES)) {
+  for (const key of COUNTED_MOVES) {
     const n = cleanCount(/** @type {any} */ (value)[key], 50);
     if (n) out[key] = n;
   }
@@ -187,7 +187,7 @@ function skipCard(state, intro = 'If step_done is true and') {
   const later = laterSteps(state);
   if (!later.length) return '';
   const lines = later.map((s) => `- "${s}": the student ${STEP_GOALS[/** @type {keyof typeof STEP_GOALS} */ (s)]}`);
-  return `\n\nSKIPPING AHEAD: the student may already be further on. Later steps:\n${lines.join('\n')}\n${intro} the student's message (read with their recent messages) already roughly reaches the goal of a later step, add "reached": "<the furthest such step>" to the JSON object. Judge generously. Otherwise leave "reached" out. When you add "reached", do not ask about any step up to it.`;
+  return `\n\nSKIPPING AHEAD: the student may already be further on. Later steps:\n${lines.join('\n')}\n${intro} the student's own words (in this message or their recent ones) already STATE the goal of a later step, add "reached": "<the furthest such step>" to the JSON object. Stating means the student says it, not just something that leads towards it: for example, saying the two answers contradict reaches "contradiction" but NOT "conclusion"; "conclusion" needs the student to say that heavy and light bodies fall at the same speed. If unsure, leave "reached" out. When you add "reached", do not ask about any step up to it.`;
 }
 
 /**
@@ -269,7 +269,9 @@ export function buildCard(state, toGalileo = false) {
   if (state.step === 'debate') {
     if (toGalileo) return ASK_GALILEO_CARD;
     const ahead = skipCard({ ...state, step: 'tie' }, 'If student_move is "thought_experiment" and');
-    return `${DEBATE_CARD}\n\nThis is student debate turn ${state.debateTurns + 1}.${ahead}`;
+    const closing = DEBATE_TAILS[state.debateTurns % DEBATE_TAILS.length];
+    const said = state.lang === 'zh' ? toZh(closing) : closing;
+    return `${DEBATE_CARD}\n\nThis is student debate turn ${state.debateTurns + 1}.\nCLOSING SENTENCE (end Aristotle's message with exactly this): "${said}"${ahead}`;
   }
   const step = stepFor(state);
   if (state.step === 'done') {
@@ -297,7 +299,7 @@ export function buildCard(state, toGalileo = false) {
 }
 
 const TIE_ARISTOTLE = `ARISTOTLE'S LINES IN THIS STEP (when step_done is false and Galileo does not come):
-- For "same_time", "experiment", "air", "vacuum", "book", "formula", "pisa": one Aristotle message, 1 to 3 short sentences, following the idea below for that label, and ending by challenging the student to break his rule with reasoning alone.
+- For "same_time", "experiment", "air", "vacuum", "book", "formula", "pisa": one Aristotle message, 1 to 3 short sentences, following the idea below for that label, and ending with exactly: "${TIE_TAIL}" (in the chat's language).
 ${ARISTOTLE_IDEAS}
 - For "thought_partial": one short Aristotle message that takes up what the student said and asks only which things they mean. He adds nothing the student has not said, and asks for no more detail than that.
 - For "other": one Aristotle message that holds his position with an everyday example or excuse. He never suggests any idea.`;
@@ -462,9 +464,13 @@ export function guessMove(text) {
  * @param {{move: string, stepDone: boolean, messages: ChatMessage[]} | null} result null when the AI failed
  */
 export function advance(input, result) {
-  if (input.state.condition === 'guided') return advanceGuided(input, result);
-  if (input.toGalileo && input.state.step === 'debate') return askGalileoFirst(input, result);
-  return advanceStep(input, result);
+  const out =
+    input.state.condition === 'guided'
+      ? advanceGuided(input, result)
+      : input.toGalileo && input.state.step === 'debate'
+        ? askGalileoFirst(input, result)
+        : advanceStep(input, result);
+  return { ...out, passed: [...new Set(out.passed)] };
 }
 
 /**
@@ -512,8 +518,13 @@ function presetReply(move, state, tail, messages, own) {
     messages.push({ speaker: 'aristotle', text, ...(image ? { image } : {}) });
     return { used: { ...state.used, [label]: n + 1 } };
   }
+  const n = state.used?.[move] || 0;
+  if (move === 'thought_experiment') {
+    messages.push({ speaker: 'aristotle', text: THOUGHT_REPLIES[n % THOUGHT_REPLIES.length] });
+    return { used: { ...state.used, [move]: n + 1 } };
+  }
   messages.push(...(own.length ? own : [{ speaker: 'aristotle', text: end('My rule stands.') }]));
-  return {};
+  return COUNTED_MOVES.includes(move) ? { used: { ...state.used, [move]: n + 1 } } : {};
 }
 
 /**
@@ -558,7 +569,7 @@ function advanceStep(input, result) {
       };
     }
 
-    const tail = move === 'thought_experiment' ? '' : DEBATE_TAILS[state.debateTurns % DEBATE_TAILS.length];
+    const tail = DEBATE_TAILS[state.debateTurns % DEBATE_TAILS.length];
     const fallback = { speaker: 'aristotle', text: DEBATE_FALLBACKS[state.debateTurns % DEBATE_FALLBACKS.length] };
     const patch = presetReply(move, state, tail, messages, result ? only('aristotle').slice(0, 1) : ARGUMENT_REPLIES[/** @type {keyof typeof ARGUMENT_REPLIES} */ (move)] ? [] : [fallback]);
     const label = move === 'pisa' && !patch.pisaSeen ? 'experiment' : move;

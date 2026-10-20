@@ -77,7 +77,7 @@ Every turn is saved to the D1 database `phylab-debate-records` (binding `DB`,
 table `turns`) for later analysis: time, chat `session` (a random id the page
 makes for each new chat), prompt version, group, step and Galileo presence
 before and after, the student's message, the model's `move` and `step_done`,
-the steps passed, every reply line, and token use. Saving runs after the reply
+the steps passed, every reply line, and token use, and `source` (`claude` for simulated students run by Claude, whose sessions start with `claude-`; `human` otherwise). Saving runs after the reply
 and never blocks or breaks it. One chat in order:
 
 ```sql

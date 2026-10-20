@@ -10,7 +10,7 @@
 import { LEAN_RULE } from './counter.js';
 import { ARGUMENT_LABELS, ARISTOTLE_IDEAS } from './replies.js';
 
-export const PROMPT_VERSION = 'debate-aristotle-v16';
+export const PROMPT_VERSION = 'debate-aristotle-v17';
 
 /** Steps after Galileo first joins, in order. */
 export const STEP_ORDER = [
@@ -66,11 +66,11 @@ step_done is always false in this step.
 
 What to write in "messages":
 - For "concede" and "help": write "messages": []. The lesson code adds the reply.
-- For "same_time", "experiment", "air", "vacuum", "book", "formula", "pisa": exactly 1 Aristotle message, 1 to 3 short sentences, following the idea below for that label, and ending by asking the student to prove that he is wrong (in varied words, never "you say so").
+- For "same_time", "experiment", "air", "vacuum", "book", "formula", "pisa": exactly 1 Aristotle message, 1 to 3 short sentences, following the idea below for that label, ending with the CLOSING SENTENCE given below.
 ${ARISTOTLE_IDEAS}
-- For "thought_experiment": exactly 1 Aristotle message. He is surprised and curious ("Joined together? A strange idea...") but does not answer it yet. No question: the next question is added automatically. ${LEAN_RULE}
+- For "thought_experiment": write "messages": [] (the lesson code adds Aristotle's lines). ${LEAN_RULE}
 - For "thought_partial": exactly 1 Aristotle message, short. He takes up what the student said and asks only which things they mean. He adds nothing the student has not said, and does not ask for more detail than that.
-- For "other": exactly 1 Aristotle message. He answers the student's point directly with one everyday example or one excuse, and ends by asking the student to prove their claim.`;
+- For "other": exactly 1 Aristotle message. He answers the student's point directly (if it is a question, he answers it honestly) with one everyday example or one excuse, ending with the CLOSING SENTENCE given below.`;
 
 /** Aristotle's lines when the AI is unavailable in the debate step. */
 export const DEBATE_FALLBACKS = [
@@ -404,7 +404,7 @@ Goal: the student describes the method of the thought experiment in their own wo
 (d) find that the results contradict each other;
 (e) conclude that the starting rule must be false (and find the rule that has no contradiction).
 
-PASS (step_done = true) if the student mentions at least 3 of the 5 ideas, in any words or order. Very short words count (for example "assume, imagine, contradiction" is 3 ideas).
+PASS (step_done = true) if the student has mentioned at least 3 of the 5 ideas, in any words or order, counting ALL of the student's messages in this step together (not only the last one). Very short words count (for example "assume, imagine, contradiction" is 3 ideas).
 NOT YET (step_done = false). Choose one student_move label:
 - "wrong": the student describes the method wrongly (for example "we did a real experiment" or "we measured the stones"). Note: we used no tools; what did we do with the rule in our minds?
 - "partial": 1 or 2 of the ideas. Note: name what the student already got right, then ask about ONE missing idea using the hint (usually (a) or (d)).

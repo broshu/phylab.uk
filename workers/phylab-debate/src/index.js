@@ -103,8 +103,8 @@ async function saveTurn(env, input, outcome, extra) {
     await env.DB.prepare(
       `INSERT INTO turns (created_at, session, version, condition, type, to_galileo, step_before, step_after,
         galileo_before, galileo_after, student_message, move, step_done, passed, joined, mode, replies,
-        state_before, state_after, input_tokens, output_tokens)
-       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21)`,
+        state_before, state_after, input_tokens, output_tokens, source)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22)`,
     )
       .bind(
         new Date().toISOString(),
@@ -128,6 +128,8 @@ async function saveTurn(env, input, outcome, extra) {
         JSON.stringify(outcome.state || null),
         extra.usage?.inputTokens ?? null,
         extra.usage?.outputTokens ?? null,
+        // Simulated students run by Claude use sessions named "claude-…"; everything else is a real tester.
+        (input.session || '').startsWith('claude-') ? 'claude' : 'human',
       )
       .run();
   } catch (error) {

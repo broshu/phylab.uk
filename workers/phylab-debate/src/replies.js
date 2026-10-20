@@ -80,6 +80,16 @@ export const TIE_TAIL = 'Break my rule with reasoning alone, if you can.';
 /** How many times one kind of argument may come back before Galileo steps in. */
 export const REPEAT_LIMIT = 6;
 
+/** Labels whose repeats are counted towards REPEAT_LIMIT (arguments that make no progress). */
+export const COUNTED_MOVES = ['same_time', 'experiment', 'air', 'vacuum', 'book', 'formula', 'thought_partial', 'other'];
+
+/** Aristotle's first reaction when the student proposes joining the bodies (no question: the code goes on). */
+export const THOUGHT_REPLIES = [
+  'Tied together? A strange idea, but my rule fears nothing.',
+  'Joined together? A strange idea, young one. Very well, let us see.',
+  'Put them together? Hm, I have never thought of that. My rule will still win.',
+];
+
 /**
  * What Aristotle says to each kind of argument (the logic doc's table). The
  * model writes his reply in its own words around this idea, reacting to what
@@ -91,19 +101,20 @@ export const ARISTOTLE_IDEAS = `Aristotle's answer to each kind of argument (kee
 - "air": even with no air at all, the heavier body would still fall faster.
 - "vacuum": he has never seen a place with no air, and neither has the student; in the real world the heavy body wins.
 - "book": a book or a teacher is not a reason; his own eyes see the heavy body win every day.
-- "formula": letters on paper, or the laws of this Newton, do not make a stone fall; let the student show him one heavy body that loses.
+- "formula": letters on paper, or the laws of this Newton, do not make a stone fall.
 - "pisa" (only if the chat already shows Galileo's tower story): treat it as "experiment".
 He never says or suggests how to beat his rule, and never puts his own claim in the student's mouth.`;
 
 /** Every label that the code answers without the model's own words. */
-export const PRESET_MOVES = new Set([...Object.keys(ARGUMENT_REPLIES), 'pisa', 'concede', 'help']);
+export const PRESET_MOVES = new Set([...Object.keys(ARGUMENT_REPLIES), 'pisa', 'concede', 'help', 'thought_experiment']);
 
 /** The labels the model chooses from in the open debate and the "tie" step. */
 export const ARGUMENT_LABELS = `Classify the student's message as student_move (choose the FIRST that fits):
+Read a very short reply together with the chat before it: "same", "same time", "same speed", "together" mean the bodies land together ("same_time"); "no", "not true", "wrong", "I disagree" mean the student disagrees with Aristotle ("other"). Never treat a short reply as "concede" unless it clearly agrees with Aristotle or gives up.
 - "help": asks for help or a hint, or says they are stuck or do not know what to say.
-- "concede": agrees that heavier things fall faster, or gives up ("you are right", "I lose", "you win").
-- "thought_experiment": the student's MEANING is to put a heavy body and a light body together (connect, link, tie, glue, put in one bag, make one thing, in any words, even as a question, even in poor English) and see what happens. Judge the meaning, not the precision: the student does NOT need to say how they are joined or what Aristotle's rule predicts. Read the student's recent messages together: if an earlier message named the heavy and light bodies and this one says they are joined (or the reverse), that is enough. Examples that count: "if a heavy thing connect a light, what will happen?", "they are connected, it's a heavier thing", "put the two stones together". A question to Aristotle about how fast such a joined pair falls ("it's faster or middle speed?") also counts.
-- "thought_partial": the student talks about joining or combining, but there is still no sign at all of which bodies (for example only "what if we put things together?" with nothing before it about a heavy and a light body). Use it rarely; when in doubt, choose "thought_experiment".
+- "concede": clearly agrees that heavier things fall faster ("you are right", "yes, heavy is faster"), or gives up ("I lose", "you win", "I give up").
+- "thought_experiment": the student's MEANING is to put bodies together, or split one, in the mind and see what Aristotle's rule says (connect, link, tie, glue, put in one bag, make one thing, cut in half; any two bodies count, a heavy and a light one or two stones; in any words, even as a question, even in poor English). Judge the meaning, not the precision: the student does NOT need to say how they are joined or what Aristotle's rule predicts. Read the student's recent messages together: if an earlier message named the heavy and light bodies and this one says they are joined (or the reverse), that is enough. Examples that count: "if a heavy thing connect a light, what will happen?", "they are connected, it's a heavier thing", "put the two stones together". A question to Aristotle about how fast such a joined pair falls ("it's faster or middle speed?") also counts.
+- "thought_partial": the student hints at combining but names no bodies at all and nothing in the chat shows which (for example only "what about together?"). Use it rarely; when in doubt, choose "thought_experiment".
 - "pisa": mentions Galileo's experiment at the Leaning Tower of Pisa (or Galileo dropping balls from a tower).
 - "same_time": says the bodies hit the ground at the same time, with no experiment of their own.
 - "experiment": describes an experiment they did or imagine doing with real bodies (for example an iron ball and a lead ball dropped together).
