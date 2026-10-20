@@ -567,7 +567,9 @@ function advanceStep(input, result) {
   const messages = [];
   /** @type {string[]} */
   const passed = [];
-  const move = result ? result.move : guessMove(input.message);
+  // "I don't know" is always a call for help, whatever label the model chose.
+  const guessed = guessMove(input.message);
+  const move = result ? (guessed === 'help' && !result.stepDone && ['other', 'argue', 'off_topic'].includes(result.move) ? 'help' : result.move) : guessed;
   const only = (/** @type {string} */ who) => (result ? result.messages.filter((m) => m.speaker === who) : []);
 
   if (state.step === 'debate') {

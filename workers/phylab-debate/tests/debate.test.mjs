@@ -545,3 +545,8 @@ test('Galileo never writes a mention of himself inside his line either', () => {
   const parsed = parseModelReply(providerReply({ student_move: 'help', step_done: false, messages: [{ speaker: 'galileo', text: '我是@伽利略，别慌。@伽利略想想：' }] }), 'conclusion', false, 'guided');
   assert.equal(parsed.messages[0].text, '我是伽利略，别慌。想想：');
 });
+
+test('"I don\'t know" brings Galileo even if the model labelled it "other"', () => {
+  const out = advance(normalizeInput({ message: '我不知道', state: { condition: 'debate', step: 'tie', galileo: false } }), { move: 'other', stepDone: false, messages: [{ speaker: 'aristotle', text: '不知道？' }] });
+  assert.equal(out.state.galileo, true);
+});
