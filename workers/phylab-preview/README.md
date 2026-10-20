@@ -24,7 +24,7 @@ Approving moves the file to `done/` and adds the catalogue entry in one commit, 
 
 ## Where new papers come from
 
-The site does not search for papers itself. An AI task (for example a scheduled ChatGPT task with GitHub access) follows [`literature/review/CHATGPT.md`](../../literature/review/CHATGPT.md) and commits new files to `literature/review/pending/`. The desk reads `main` live, so they appear on the next page load; an open page checks every two minutes and offers to refresh. The activity feed is the list of recent commits touching `literature/review/`.
+The site does not search for papers itself. Any AI with GitHub access (Claude, ChatGPT, Gemini, a scheduled task, …) follows [`literature/review/FIND-PAPERS.md`](../../literature/review/FIND-PAPERS.md) and commits new files to `literature/review/pending/`. The desk reads `main` live, so they appear on the next page load; an open page checks every two minutes and offers to refresh. The activity feed is the list of recent commits touching `literature/review/`.
 
 ## Settings
 

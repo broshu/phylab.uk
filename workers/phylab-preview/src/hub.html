@@ -203,7 +203,7 @@
   </section>
 
   <section data-panel="settings" hidden>
-    <div class="head"><div><h1>筛选标准</h1><p class="lede">保存在 GitHub 的 literature/review/profile.json。ChatGPT 每次找新论文前先读这里，再参考大家收录和放弃的记录。</p></div></div>
+    <div class="head"><div><h1>筛选标准</h1><p class="lede">保存在 GitHub 的 literature/review/profile.json。AI 每次找新论文前先读这里（说明见 literature/review/FIND-PAPERS.md），再参考大家收录和放弃的记录。</p></div></div>
     <div id="settings"></div>
   </section>
 </main>
@@ -433,7 +433,7 @@ function renderList() {
     const broken = desk.pending.filter(p => p.broken);
     const ok = desk.pending.filter(p => !p.broken);
     if (!ok.length) {
-      list.replaceChildren(empty('都筛完了', 'ChatGPT 下次把新论文放进 GitHub 后，会自动出现在这里。'));
+      list.replaceChildren(empty('都筛完了', 'AI 下次把新论文放进 GitHub 后，会自动出现在这里。'));
     } else list.replaceChildren(...ok.map(slip));
     for (const p of broken) list.append(h('p', { class: 'msg err', text: `${p.path} 格式有误：${p.broken}` }));
   } else if (filter === 'expired') {
@@ -480,7 +480,7 @@ function renderSettings() {
     h('div', { class: 'panel' }, h('h3', { text: '搜索关键词' }), h('p', { text: '在所有期刊里按这些关键词搜索。点击可删除。' }), kw, h('div', { class: 'addrow' }, kwIn, h('button', { class: 'pill', type: 'button', on: { click: add } }, '添加'))),
     h('div', { class: 'panel' }, h('h3', { text: '期刊' }), h('p', { text: '每次更新都要看一遍这些期刊的新文章。' }),
       p.journals.map(j => h('label', { class: 'check' }, h('input', { type: 'checkbox', checked: j.on, on: { change: e => { j.on = e.target.checked; save(); } } }), j.name))),
-    h('div', { class: 'panel' }, h('h3', { text: '给 ChatGPT 的说明' }), h('p', { text: '你在研究什么、想读什么样的论文。' }),
+    h('div', { class: 'panel' }, h('h3', { text: '给 AI 的说明' }), h('p', { text: '你在研究什么、想读什么样的论文。' }),
       h('textarea', { style: 'min-height:110px', on: { input: e => { p.notes = e.target.value; save(); } } }, p.notes)),
     h('div', { class: 'panel' }, h('h3', { text: '推荐门槛' }), h('p', { text: '相关度几分以上的论文才放进待筛选。' }),
       h('select', { on: { change: e => { p.threshold = Number(e.target.value); save(); } } },

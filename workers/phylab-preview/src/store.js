@@ -9,7 +9,7 @@ import { CATALOG_PATH, addToCatalog, expiredEntries, removeFromCatalog, shanghai
 import { readRepo, transact } from './github.js';
 import { PRIORITIES, TOPICS, normalizeDOI } from '../../../literature/core.mjs';
 
-// Reviewing criteria. Whoever adds candidates (ChatGPT, another AI, a person) reads them from profile.json.
+// Reviewing criteria. Whoever adds candidates (any AI or a person) reads them from profile.json.
 export const DEFAULT_PROFILE = {
   topics: ['hands-on', 'simulation', 'ai', 'transfer', 'assessment', 'icap', 'scaffolding', 'cognitive-load', 'visualization'],
   keywords: [
