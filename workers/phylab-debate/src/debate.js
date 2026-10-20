@@ -683,7 +683,8 @@ function advanceStep(input, result) {
         if (m.speaker === 'aristotle' && state.step !== 'counter' && a++ < 1) messages.push(m);
         if (m.speaker === 'galileo' && g++ < 1) messages.push(m);
       }
-      if (!g) messages.push({ speaker: 'galileo', text: hintFor(now) });
+      // Galileo arriving without words of his own (e.g. after a stall) first says who he is.
+      if (!g) messages.push({ speaker: 'galileo', text: wasHere ? hintFor(now) : `${RETURN_LINE} ${hintFor(now)}` });
     } else {
       if (!wasHere) messages.push({ speaker: 'galileo', text: `${RETURN_LINE} ${hintFor(now)}` });
       else messages.push({ speaker: 'galileo', text: hintFor(now) });
