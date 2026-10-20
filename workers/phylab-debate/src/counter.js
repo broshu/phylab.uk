@@ -35,6 +35,7 @@ export const COUNTER = {
 The student must find the OTHER reasoning from the same rule: the light stone is slow (speed 4), so it holds back, drags or brakes the heavy stone (speed 8), and the pair falls SLOWER than 8, between 4 and 8.
 
 PASS (step_done = true) if the student says, in any words, that the light stone holds back / drags / slows the heavy one, or that the pair is slower than 8 / between 4 and 8.
+ALSO PASS (step_done = true, student_move = "asked") if the student ASKS Aristotle a question that leads him there (for example "what does the light stone do to the heavy one?", "is the light one slower?", "faster or middle speed?"). Then Aristotle answers honestly with his own rule, so that he himself says the other reasoning: the light stone alone is slow, so on the rope it holds the fast heavy one back, and the pair should fall slower than 8. His answer is the one Aristotle message for this turn; he sounds a little unsure as he says it, and does not ask a new question.
 NOT YET (step_done = false). Choose one student_move label:
 - "concede": the student agrees with Aristotle (yes, faster, 12) and raises no objection.
 - "wrong": "same speed" or "8"; "4"; "the light stone speeds the heavy one up".
@@ -44,7 +45,7 @@ NOT YET (step_done = false). Choose one student_move label:
 - "other": anything else.
 
 Notes for Galileo when he helps: the light stone alone wants speed 4, the heavy one 8; what does the slow one do to the fast one when the rope is tight?
-Aristotle, when he answers alone, keeps his own reasoning (one heavier body, faster) and adds nothing new. He never mentions the light stone holding anything back.`,
+Aristotle, when he answers alone and the student has not asked him such a question, keeps his own reasoning (one heavier body, faster) and adds nothing new.`,
     onPass: {
       galileo: 'praise the student for reasoning the other way from the same rule',
       aristotle: 'is puzzled in a few words: the light stone holding back the heavy one is also his own logic (do not start with "Wait"; the next line does)',
@@ -72,6 +73,7 @@ Aristotle, when he answers alone, keeps his own reasoning (one heavier body, fas
 The student must find the OTHER reasoning from the same rule: tied together, the two stones are one body, HEAVIER than the heavy stone alone, so by his rule the pair must fall FASTER than 8 (for example 12).
 
 PASS (step_done = true) if the student says, in any words, that the pair is heavier than the heavy stone and so (by his rule) faster than 8, or "12", or "faster because it is heavier".
+ALSO PASS (step_done = true, student_move = "asked") if the student ASKS Aristotle a question that leads him there (for example "is the pair heavier or lighter than the heavy stone?", "what does your rule say about a heavier body?", "faster or middle speed?"). Then Aristotle answers honestly with his own rule, so that he himself says the other reasoning: tied together the stones are one body, heavier than the heavy stone, and by his rule a heavier body falls faster, so the pair should fall faster than 8. His answer is the one Aristotle message for this turn; he sounds a little unsure as he says it, and does not ask a new question.
 NOT YET (step_done = false). Choose one student_move label:
 - "concede": the student agrees with Aristotle (yes, slower, 6) and raises no objection.
 - "wrong": "lighter"; "same speed" or "8"; "it falls slower because it is heavier".
@@ -81,7 +83,7 @@ NOT YET (step_done = false). Choose one student_move label:
 - "other": anything else.
 
 Notes for Galileo when he helps: put both stones on a scale together; is the pair heavier or lighter than the heavy stone alone, and what does Aristotle's rule say about a heavier body?
-Aristotle, when he answers alone, keeps his own reasoning (the slow one holds back the fast one) and adds nothing new. He never mentions the weight of the pair.`,
+Aristotle, when he answers alone and the student has not asked him such a question, keeps his own reasoning (the slow one holds back the fast one) and adds nothing new.`,
     onPass: {
       galileo: "praise the student for using Aristotle's own rule on the pair as one heavier body",
       aristotle: 'agrees at first ("Naturally, a heavier body falls faster.") and starts to feel uneasy (do not use the word "Wait"; the next line does)',
@@ -99,8 +101,8 @@ Aristotle, when he answers alone, keeps his own reasoning (the slow one holds ba
 
 /** Debate group: the contradiction opener names who said what. */
 export const CONTRADICTION_OPENER = {
-  faster: 'Wait. I say the pair falls faster than 8, and you say it falls slower than 8, and both come from my own rule. What are you trying to show me?',
-  slower: 'Wait. I say the pair falls slower than 8, and you say it falls faster than 8, and both come from my own rule. What are you trying to show me?',
+  faster: 'Wait. By my own rule the pair falls faster than 8, and by my own rule it also falls slower than 8. What are you trying to show me?',
+  slower: 'Wait. By my own rule the pair falls slower than 8, and by my own rule it also falls faster than 8. What are you trying to show me?',
 };
 
 /** What the model adds when the student proposes the thought experiment. */

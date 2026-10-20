@@ -85,7 +85,7 @@ test('passing a step: Galileo says one line and leaves, Aristotle asks next', ()
   assert.equal(out.messages.filter((m) => m.speaker === 'galileo').length, 1);
   assert.ok(out.messages.some((m) => m.text === 'Galileo left the chat'));
   assert.equal(out.messages.at(-1).speaker, 'aristotle');
-  assert.match(out.messages.at(-1).text, /I say the pair falls faster than 8, and you say it falls slower/);
+  assert.match(out.messages.at(-1).text, /falls faster than 8, and by my own rule it also falls slower/);
 });
 
 test('passing while Galileo is away keeps him away and drops his lines', () => {
@@ -450,4 +450,17 @@ test('the same argument six times brings Galileo to guide', () => {
   assert.equal(t.joined, 'repeat');
   assert.equal(t.state.galileo, true);
   assert.equal(t.state.step, 'tie');
+});
+
+test('counter: a question that makes Aristotle say the other reasoning himself passes the step', () => {
+  const p = buildPayload(input('counter', { view: 'faster' }), 'm').messages[0].content;
+  assert.match(p, /student_move = "asked"/);
+  assert.match(p, /never refuses a question/);
+  const out = advance(input('counter', { galileo: false, view: 'faster' }), {
+    move: 'asked', stepDone: true,
+    messages: [{ speaker: 'aristotle', text: 'Hmm. The light stone alone is slow, so on the rope it would hold the heavy one back... slower than 8?' }],
+  });
+  assert.equal(out.state.step, 'contradiction');
+  assert.ok(!out.messages.some((m) => m.speaker === 'galileo'));
+  assert.match(out.messages[0].text, /hold the heavy one back/);
 });
