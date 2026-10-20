@@ -55,11 +55,12 @@ const GROUPS_EN = {
     title: 'Explore with Galileo',
     pinned: 'Do heavier things fall faster? Your task: work it out step by step with Galileo.',
     opening: [
-      { speaker: 'galileo', text: "Hello! I am Galileo. Let's look together at something that everyone can see." },
-      { speaker: 'galileo', text: 'Drop a stone and a feather together: the stone lands first. An apple falls fast, but a leaf drifts down slowly. A hammer beats a sheet of paper every time.', image: 'falling' },
-      { speaker: 'galileo', text: "Aristotle's rule says: the heavier a body, the faster it falls. A body twice as heavy falls twice as fast. What do you think, and why?" },
+      { speaker: 'aristotle', text: 'Greetings, young one! I am Aristotle. Watch: I drop a stone and a feather together. The stone lands first, every time.', image: 'falling' },
+      { speaker: 'aristotle', text: 'So the rule is simple: the heavier a body, the faster it falls.' },
+      { speaker: 'galileo', text: 'Hello, I am Galileo. I once dropped a heavy iron ball and a light one from the Leaning Tower of Pisa, and they landed almost together.', image: 'pisa' },
+      { speaker: 'galileo', text: 'So which idea do you agree with: Aristotle\'s (heavier falls faster), or mine (they fall together)?' },
     ],
-    starters: ['I think heavier things fall faster.', 'I think they fall at the same speed.', 'Maybe the air matters.'],
+    starters: ['I agree with Aristotle: heavier falls faster.', 'I agree with Galileo: they fall together.', 'I am not sure.'],
     nbEmpty: 'Talk with Galileo first. The steps of the method will appear here as you discover them.',
     firstPlaceholder: 'Answer Galileo…',
   },
@@ -67,7 +68,7 @@ const GROUPS_EN = {
 
 const GROUPS_ZH = {
   debate: {
-    title: '辩论亚里士多德',
+    title: '与亚里士多德辩论',
     pinned: '亚里士多德说重的物体落得更快。你的任务：说服他，让他承认自己错了。',
     opening: [
       { speaker: 'aristotle', text: '你好，年轻人！我是亚里士多德。让我告诉你一件人人都看得见的事。' },
@@ -82,11 +83,12 @@ const GROUPS_ZH = {
     title: '和伽利略一起探索',
     pinned: '重的物体落得更快吗？你的任务：和伽利略一起一步步把它弄清楚。',
     opening: [
-      { speaker: 'galileo', text: '你好！我是伽利略。我们一起来看一件人人都看得见的事。' },
-      { speaker: 'galileo', text: '把石头和羽毛同时放手：石头先落地。苹果落得很快，树叶却慢慢飘下来。锤子每次都比纸先落地。', image: 'falling' },
-      { speaker: 'galileo', text: '亚里士多德的规则说：物体越重，下落越快。重一倍的物体，下落也快一倍。你怎么看？为什么？' },
+      { speaker: 'aristotle', text: '你好，年轻人！我是亚里士多德。看：我把石头和羽毛同时放手，每次都是石头先落地。', image: 'falling' },
+      { speaker: 'aristotle', text: '所以规则很简单：物体越重，下落越快。' },
+      { speaker: 'galileo', text: '你好，我是伽利略。我曾从比萨斜塔上同时放下一个重铁球和一个轻铁球，它们几乎同时落地。', image: 'pisa' },
+      { speaker: 'galileo', text: '你同意哪个观点：亚里士多德的（重的落得快），还是我的（它们一起落地）？' },
     ],
-    starters: ['我觉得重的东西落得更快。', '我觉得它们落得一样快。', '也许空气有影响。'],
+    starters: ['我同意亚里士多德：重的落得快。', '我同意伽利略：它们一起落地。', '我不确定。'],
     nbEmpty: '先和伽利略聊聊吧。你发现方法的每一步，都会出现在这里。',
     firstPlaceholder: '回答伽利略…',
   },
@@ -200,8 +202,8 @@ function avatar(speaker) {
 /** `present` overrides the saved state while a reply is still playing out. */
 function renderMembers(animate = false, present = galileoIn()) {
   if (GROUP === 'guided') {
-    els.members.replaceChildren(avatar('galileo'), avatar('student'));
-    els.memberCount.textContent = L('2 members', '2 位成员');
+    els.members.replaceChildren(avatar('aristotle'), avatar('galileo'), avatar('student'));
+    els.memberCount.textContent = L('3 members', '3 位成员');
     return;
   }
   els.members.replaceChildren(avatar('aristotle'), avatar('student'));
@@ -328,11 +330,21 @@ function renderNotebook(animateId = null) {
   els.progress.textContent = `${NOTEBOOK.filter(([id]) => state.passed.includes(id)).length} / ${NOTEBOOK.length}`;
 }
 
+/** Answer buttons for a question later in the lesson; the student may still type. */
+const STEP_CHOICES = {
+  guided: {
+    contradiction: L(["No, it can't be right.", 'Yes, it is right.', 'I am not sure.'], ['不正确。', '正确。', '我不确定。']),
+  },
+};
+
 function renderStarters() {
-  const show = state.lesson.step === 'debate' && !state.log.some((m) => m.speaker === 'student');
+  const first = state.lesson.step === 'debate' && !state.log.some((m) => m.speaker === 'student');
+  const later = (STEP_CHOICES[GROUP] || {})[state.lesson.step];
+  const choices = first ? STARTERS : later && !state.lesson.stepTurns && state.log.at(-1)?.speaker !== 'student' ? later : [];
+  const show = choices.length > 0;
   els.starters.replaceChildren(
     ...(show
-      ? STARTERS.map((text) => {
+      ? choices.map((text) => {
           const b = document.createElement('button');
           b.type = 'button';
           b.textContent = text;

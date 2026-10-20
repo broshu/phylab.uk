@@ -9,21 +9,19 @@
  * physics content and a similar length. Keep them in step when editing.
  */
 
-/** Student turns in the opening exploration before the method starts. */
-export const EXPLORE_TURNS = 2;
+/** Student turns in the opening (the vote) before the method starts. */
+export const EXPLORE_TURNS = 1;
 
-export const EXPLORE_CARD = `CURRENT STEP: explore (opening; only Galileo and the student are in the chat)
+export const EXPLORE_CARD = `CURRENT STEP: explore (opening vote)
 Allowed speakers: galileo only. Write exactly 1 message.
 
-Galileo has shown everyday examples (a stone lands before a feather, an apple before a leaf) and Aristotle's old rule: the heavier a body, the faster it falls. He asked the student what they think and why.
-Goal: the student shares their own ideas. There is no right answer to reach yet.
+Aristotle has shown his everyday experiment (a stone lands before a feather) and his rule: the heavier a body, the faster it falls. Galileo has told the story of the Leaning Tower of Pisa (a heavy and a light ball landed almost together). Galileo asked the student which idea they agree with.
+Goal: the student picks a side or gives an idea. There is no right answer to reach yet.
 
-Galileo answers positively: he names one thing in the student's idea that is worth thinking about, and gently adds one everyday observation that helps them think (for example: a flat sheet of paper and a crumpled one of the same weight). He does not say whether heavy things fall faster, and he does not argue.
-If this is turn 1, he ends with one short open question about the student's idea.
-If this is turn 2, he does NOT ask a question: the next part is added automatically.
+Galileo answers in one or two short sentences: he thanks the student and names their choice or idea, without saying who is right and without arguing. He does NOT ask a question: the next part is added automatically.
 
 Classify the student's message as student_move:
-- "idea": any idea or opinion about falling bodies.
+- "idea": any choice, idea or opinion about falling bodies.
 - "thought_experiment": the student reasons from the rule by imagining bodies joined or split (tying, gluing, cutting).
 - "stuck": "I don't know", very short or empty reply, or asks for help.
 - "off_topic": nothing to do with falling bodies.
@@ -31,18 +29,20 @@ step_done is always false in this step.`;
 
 /** Galileo's lines when the AI is unavailable in the exploration. */
 export const EXPLORE_FALLBACKS = [
-  'Good, thank you. Now look at a flat sheet of paper and the same sheet crumpled into a ball. Same weight, but do they fall the same way? What do you think?',
-  'That is worth thinking about. Notice how air seems to push more on wide, light things, like a feather or an open sheet of paper.',
+  'Thank you for choosing. Let us see who is right.',
 ];
 
 /** Galileo's line for the help button during the exploration. */
-export const EXPLORE_HINT = 'There is no wrong answer yet. Do you think a heavy stone falls faster than a light one? Say why you think so.';
+export const EXPLORE_HINT = 'There is no wrong answer yet. Do you agree with Aristotle (heavier falls faster) or with me (they fall together)?';
 
 /** Bridges from the exploration into the method. */
 export const BRIDGE = {
-  idea: "Thank you for sharing your ideas. Examples can be tricky, because air gets in the way. So let's test the rule with a sharper tool: pure reasoning.",
+  idea: "Then let's not argue about whose eyes are better. Let's prove it with a thought experiment, using only reasoning.",
   spark: 'Joining stones together? That is exactly my idea! Let us build it carefully, one step at a time.',
 };
+
+/** Aristotle is not convinced by the tower story (guided group, after the vote). */
+export const ARISTOTLE_UNCONVINCED = 'Almost together is not together! There was a small difference, and you did not look closely. My rule stands: the heavier body falls faster.';
 
 /**
  * Openers for each step, spoken by Galileo.
@@ -55,41 +55,39 @@ export const GUIDED_OPENERS = {
       text: "Here is a smart first move: let's take Aristotle's rule as TRUE, just for now, so we can test it. In one short sentence, what exactly is the rule about weight and falling?",
     },
   ],
-  slower: [
+  faster: [
     {
       speaker: 'galileo',
-      text: "Let's test the rule with two stones. By the rule, the heavy stone falls at speed 8 and the light stone at speed 4.",
+      text: "First, let's take Aristotle's rule as TRUE, just for now: the heavier a body, the faster it falls. By his rule, a heavy stone falls at speed 8 and a light stone at speed 4.",
       image: 'stones',
     },
     {
       speaker: 'galileo',
-      text: 'Now I tie them together with a short rope. Think about it with me: does the light stone speed up the heavy one, or hold it back?',
+      text: "Now put them together with a short rope. Seen as ONE body, the pair is heavier than the heavy stone alone. By Aristotle's rule, how fast should the pair fall?",
       image: 'tied',
     },
   ],
-  faster: [
+  slower: [
     {
       speaker: 'galileo',
-      text: 'Now look at the tied pair as one body. Is it heavier or lighter than the heavy stone alone, and what does the rule say about that?',
+      text: 'But we can also see it another way: the heavy stone pulls the light stone along as they fall, and the light stone alone only wants speed 4. By the same rule, what is the speed of the pair now?',
     },
   ],
   contradiction: [
     {
       speaker: 'galileo',
-      text: 'So you said this pair falls slower than 8, and now faster than 8, both from the same rule. What do these two answers show?',
+      text: "So by Aristotle's own rule, the tied pair falls faster than 8, and also slower than 8.",
       image: 'contradiction',
     },
-  ],
-  objection: [
     {
       speaker: 'galileo',
-      text: 'Someone might say: two stones on a rope are not ONE body. They are two bodies. So the rule is safe! How would you answer that?',
+      text: "Then is Aristotle's rule right?",
     },
   ],
   conclusion: [
     {
       speaker: 'galileo',
-      text: 'Then the rule leads to nonsense. So what IS true? How fast does the tied pair fall, if there is to be no contradiction at all?',
+      text: 'So? If his rule is wrong, what is true? Think about the tied pair first: how fast can it fall, if there is to be no contradiction at all?',
     },
   ],
   method: [
@@ -120,6 +118,102 @@ export const GUIDED_OPENERS = {
   ],
 };
 
+/** Guided steps in order, after the opening vote. Galileo states the premise himself. */
+export const GUIDED_ORDER = ['faster', 'slower', 'contradiction', 'conclusion', 'method', 'done'];
+
+/**
+ * Guided-group versions of the step cards (what the student has seen differs:
+ * Galileo sets up each question himself, "faster" comes first).
+ * Fields here replace the same fields of STEPS[step].
+ */
+export const GUIDED_STEPS = {
+  faster: {
+    card: `CURRENT STEP: faster (first line of reasoning)
+Setup the student can see: Galileo took Aristotle's rule as true for now (heavier falls faster). By the rule the heavy stone falls at speed 8 and the light stone at speed 4. Galileo tied them together and said: seen as ONE body, the pair is heavier than the heavy stone alone. He asked how fast the pair should fall by Aristotle's rule.
+
+Goal: by Aristotle's rule the heavier pair falls FASTER than 8 (for example 12).
+
+PASS (step_done = true) if the student says the pair falls faster than 8, more than 8, "12", or simply "faster" (because it is heavier).
+NOT YET (step_done = false). Choose one student_move label:
+- "partial": "slower" or "between 4 and 8" because the light stone holds it back (note: a very good idea, we will use it next; for now look only at the weight of the pair and Aristotle's rule); or only "heavier" without the speed.
+- "wrong": "same speed" or "8"; "lighter" (note: put both stones on a scale together).
+- "help": asks for help, or says they are stuck or do not know.
+- "off_topic".
+If it passes, student_move is "pass".`,
+    onPass: { galileo: "say that this is exactly what Aristotle's rule gives: faster than 8", aristotle: '' },
+    hints: [
+      'Put both stones on a scale together. Do they weigh more or less than the heavy stone alone?',
+      "The pair is heavier than the heavy stone. Aristotle's rule says a heavier body falls ___?",
+      "By Aristotle's rule, the heavier pair must fall faster than 8, maybe 12. Can you say it?",
+    ],
+    reveal: "Together the stones weigh more than the heavy stone alone, so by Aristotle's rule the pair must fall faster than 8.",
+  },
+  slower: {
+    card: `CURRENT STEP: slower (second line of reasoning)
+The student already found: as one heavier body, the pair falls faster than 8. Galileo has now asked them to see it another way: the heavy stone (speed 8) pulls the light stone (speed 4) along as they fall. What is the speed of the pair?
+
+Goal: the slow light stone holds back (drags, brakes) the heavy stone, so the pair falls SLOWER than 8, somewhere between 4 and 8.
+
+PASS (step_done = true) if the student says any of: slower than 8; between 4 and 8; about 6 or "the average"; the light stone slows, drags, pulls back or holds back the heavy stone.
+NOT YET (step_done = false). Choose one student_move label:
+- "partial": repeats "faster" or "12" (note: that was the first way of looking; now think about the slow light stone on the rope).
+- "wrong": "same speed" or "8"; "4"; "the light stone speeds the heavy one up".
+- "help": asks for help, or says they are stuck or do not know.
+- "off_topic".
+If it passes, student_move is "pass".`,
+    onPass: { galileo: 'name what was good in the reasoning: the slow stone holds back the fast one, so slower than 8', aristotle: '' },
+    hints: [
+      'The heavy stone wants to go at 8. The light stone only wants 4. If a fast runner is tied to a slow runner, what happens to the fast runner?',
+      'The rope gets tight, and the slow stone pulls back on the fast one. So is the pair faster or slower than 8?',
+      'The light stone acts like a brake, so the pair falls slower than 8, somewhere between 4 and 8. Can you say it?',
+    ],
+    reveal: 'The light stone acts like a brake on the heavy one, so the tied pair falls slower than 8, somewhere between 4 and 8.',
+  },
+  contradiction: {
+    card: `CURRENT STEP: contradiction
+The student has derived from Aristotle's rule both: the tied pair falls faster than 8, AND it falls slower than 8. Galileo has just asked: then is Aristotle's rule right?
+
+Goal: the student says no, the rule is wrong, because the two answers cannot both be true.
+
+PASS (step_done = true) if the student says no / not right / wrong / it fails, or that the two answers contradict or cannot both be true.
+NOT YET (step_done = false). Choose one student_move label:
+- "concede": the student says yes, the rule is right, or both answers can be true. Note: can one pair fall faster than 8 and slower than 8 at the same time?
+- "partial": picks one answer ("it is slower"; note: the other answer came from the same rule).
+- "help": asks for help, or says they are stuck or do not know, or "not sure".
+- "off_topic".
+If it passes, student_move is "pass".`,
+    onPass: { galileo: 'agree: one pair cannot fall faster and slower than 8 at once, so the rule contradicts itself', aristotle: '' },
+    hints: [
+      'Can one tied pair fall faster than 8 and slower than 8 at the same time?',
+      "Both answers came from Aristotle's own rule, and they cannot both be true. So what does that say about the rule?",
+      "The rule gives two answers that cannot both be true, so Aristotle's rule must be wrong. Do you agree?",
+    ],
+    reveal: "One pair cannot fall faster and slower than 8 at the same time. The rule contradicts itself, so Aristotle's rule must be wrong.",
+  },
+  conclusion: {
+    card: `CURRENT STEP: conclusion (Galileo guides in small steps)
+Aristotle's rule has failed by a contradiction. Galileo asked "So?": what is true, starting with how fast the tied pair can fall without a contradiction.
+
+Goal: the student states the new rule: heavy and light bodies fall at the same speed (if air does not get in the way); weight does not decide falling speed.
+
+PASS (step_done = true) if the student says all bodies, or heavy and light bodies, fall at the same speed / same rate / together, or that falling speed does not depend on weight.
+NOT YET (step_done = false). Choose one student_move label:
+- "partial": the pair falls at 8, or at the same speed as the heavy stone, or "neither faster nor slower" (note: good; then adding the light stone changes nothing, so how fast does the light stone fall?); or the light stone falls at 8 too (note: good; so what can you say about heavy and light bodies in general?); or talks only about air (note: without air, what is true?).
+- "wrong": "between 4 and 8", or "the light one falls faster".
+- "concede": heavier bodies fall faster after all. Note: remember the contradiction.
+- "help": asks for help, or says they are stuck or do not know.
+- "off_topic".
+If it passes, student_move is "pass".`,
+    onPass: { galileo: 'praise warmly and repeat the new rule in one sentence (without air, heavy and light bodies fall together)', aristotle: '' },
+    hints: [
+      'The pair cannot be faster than 8, and it cannot be slower than 8. So what speed is left for the pair?',
+      'If the pair falls at 8, just like the heavy stone, then adding the light stone changed nothing. So how fast must the light stone fall on its own?',
+      'So the heavy stone and the light stone fall at the same speed. Can you say the new rule about heavy and light bodies in your own words?',
+    ],
+    reveal: 'Without air in the way, heavy and light bodies fall at the same speed. Weight does not decide how fast a body falls.',
+  },
+};
+
 export const GUIDED_DONE_CARD = `CURRENT STEP: done (the lesson is finished; free questions)
 Allowed speakers: galileo only.
 Answer any short follow-up question about falling bodies or thought experiments in 1 or 2 short messages. Galileo answers physics questions simply and correctly (air resistance, why a feather is slow, falling in a tube with no air). If the student wants another challenge, Galileo suggests trying the same method on another claim, for example "a heavier ball rolls down a slope faster".
@@ -133,7 +227,7 @@ step_done is always false.`;
  * @param {string} hint
  */
 export function guidedPresence(onPass, hint) {
-  return `WHO IS IN THE CHAT: only Galileo (the student's tutor) and the student. Aristotle is NOT in the chat. Allowed speakers: galileo only.
+  return `WHO IS IN THE CHAT: Galileo (the student's tutor), the student, and Aristotle, who stays silent now. Allowed speakers: galileo only.
 - If step_done is true: Galileo praises in one or two sentences (${onPass.galileo}). Do NOT ask a new question: the next question is added automatically.
 - If step_done is false: Galileo answers what the student said, kindly and positively, and ends with this hint as a question: ${hint}.`;
 }

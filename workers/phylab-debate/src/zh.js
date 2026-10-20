@@ -18,6 +18,51 @@ export const ZH = {
   'His rule is: the heavier a body, the faster it falls. Can you say it in your own words, so we all agree on it?': '他的规则是：物体越重，下落越快。你能用自己的话说一遍，让大家对它达成一致吗？',
   "Aristotle's rule is: the heavier a body, the faster it falls. For now, we will pretend this is true.": '亚里士多德的规则是：物体越重，下落越快。我们暂且假设它是对的。',
 
+  // ---- guided group (v24)
+  "First, let's take Aristotle's rule as TRUE, just for now: the heavier a body, the faster it falls. By his rule, a heavy stone falls at speed 8 and a light stone at speed 4.":
+    "首先，我们暂且承认亚里士多德的规则是对的：物体越重，下落越快。按他的规则，重石头的下落速度是 8，轻石头是 4。",
+  "Now put them together with a short rope. Seen as ONE body, the pair is heavier than the heavy stone alone. By Aristotle's rule, how fast should the pair fall?":
+    "现在用一根短绳把它们绑在一起。把它们看成一个物体，这一对比重石头还重。按亚里士多德的规则，这一对应该落得多快？",
+  "But we can also see it another way: the heavy stone pulls the light stone along as they fall, and the light stone alone only wants speed 4. By the same rule, what is the speed of the pair now?":
+    "但我们也可以换个角度看：下落时，重石头拉着轻石头一起落，而轻石头自己只想以 4 的速度下落。按同一条规则，这一对的速度现在是多少？",
+  "So by Aristotle's own rule, the tied pair falls faster than 8, and also slower than 8.":
+    "所以，按亚里士多德自己的规则，这一对既比 8 快，又比 8 慢。",
+  "Then is Aristotle's rule right?":
+    "那么，亚里士多德的规则正确吗？",
+  "So? If his rule is wrong, what is true? Think about the tied pair first: how fast can it fall, if there is to be no contradiction at all?":
+    "所以呢？如果他的规则错了，什么才是对的？先想想绑在一起的这一对：要完全没有矛盾，它只能以多快的速度下落？",
+  "Thank you for choosing. Let us see who is right.":
+    "谢谢你的选择。我们来看看到底谁对。",
+  "There is no wrong answer yet. Do you agree with Aristotle (heavier falls faster) or with me (they fall together)?":
+    "现在还没有错误答案。你同意亚里士多德（重的落得快），还是同意我（它们一起落地）？",
+  "Then let's not argue about whose eyes are better. Let's prove it with a thought experiment, using only reasoning.":
+    "那我们就不争谁的眼睛更准了。我们只用推理，做一个思想实验来证明。",
+  "Almost together is not together! There was a small difference, and you did not look closely. My rule stands: the heavier body falls faster.":
+    "几乎一起落地，那就不是一起落地！其中有细微的差别，是你没看清楚。我的规则立得住：重的物体落得更快。",
+  "The pair is heavier than the heavy stone. Aristotle's rule says a heavier body falls ___?":
+    "这一对比重石头更重。亚里士多德的规则说，更重的物体下落得更___？",
+  "By Aristotle's rule, the heavier pair must fall faster than 8, maybe 12. Can you say it?":
+    "按亚里士多德的规则，更重的这一对一定比 8 快，也许是 12。你能说出来吗？",
+  "Together the stones weigh more than the heavy stone alone, so by Aristotle's rule the pair must fall faster than 8.":
+    "两块石头合起来比重石头单独更重，所以按亚里士多德的规则，这一对一定比 8 快。",
+  "The light stone acts like a brake, so the pair falls slower than 8, somewhere between 4 and 8. Can you say it?":
+    "轻石头像刹车一样，所以这一对比 8 慢，在 4 和 8 之间。你能说出来吗？",
+  "Can one tied pair fall faster than 8 and slower than 8 at the same time?":
+    "同一对绑在一起的石头，能同时比 8 快又比 8 慢吗？",
+  "Both answers came from Aristotle's own rule, and they cannot both be true. So what does that say about the rule?":
+    "两个答案都来自亚里士多德自己的规则，而且不可能同时成立。这说明这条规则怎么样？",
+  "The rule gives two answers that cannot both be true, so Aristotle's rule must be wrong. Do you agree?":
+    "这条规则给出了两个不能同时成立的答案，所以亚里士多德的规则一定是错的。你同意吗？",
+  "One pair cannot fall faster and slower than 8 at the same time. The rule contradicts itself, so Aristotle's rule must be wrong.":
+    "同一对石头不可能同时比 8 快又比 8 慢。这条规则自相矛盾，所以亚里士多德的规则一定是错的。",
+  "The pair cannot be faster than 8, and it cannot be slower than 8. So what speed is left for the pair?":
+    "这一对不能比 8 快，也不能比 8 慢。那它只剩下什么速度？",
+  "If the pair falls at 8, just like the heavy stone, then adding the light stone changed nothing. So how fast must the light stone fall on its own?":
+    "如果这一对以 8 下落，和重石头一样，那加上轻石头什么也没改变。那么轻石头自己必须以多快的速度下落？",
+  "So the heavy stone and the light stone fall at the same speed. Can you say the new rule about heavy and light bodies in your own words?":
+    "所以重石头和轻石头下落得一样快。你能用自己的话说出关于轻重物体的新规则吗？",
+  "Without air in the way, heavy and light bodies fall at the same speed. Weight does not decide how fast a body falls.":
+    "没有空气阻碍时，轻重物体下落得一样快。物体下落的快慢不由重量决定。",
   // ---- counter: "same speed"
   'Not so! I hold that a heavier body falls faster. The pair is heavier than my heavy stone, so it should fall faster than 8.':
     '不对！我认为重的物体下落快。这一对比我的重石头还重，所以应该比 8 更快。',
@@ -223,7 +268,7 @@ export const ZH = {
   'There is no wrong answer yet. Do you think a heavy stone falls faster than a light one? Say why you think so.': '现在还没有错误答案。你觉得重石头比轻石头落得快吗？说说你为什么这样想。',
   "Thank you for sharing your ideas. Examples can be tricky, because air gets in the way. So let's test the rule with a sharper tool: pure reasoning.":
     '谢谢你分享想法。举例子容易出问题，因为空气会碍事。所以我们换一件更锋利的工具来检验这条规则：纯粹的推理。',
-  'Joining stones together? That is exactly my idea! Let us build it carefully, one step at a time.': '把石头连在一起？这正是我的想法！我们一步一步仔细地把它搭起来。',
+  'Joining stones together? That is exactly my idea! Let us build it carefully, one step at a time.': '把石头连在一起？这正是我的想法！我们一步一步仔细地推下去。',
 };
 
 const KEYS = Object.keys(ZH).sort((a, b) => b.length - a.length);

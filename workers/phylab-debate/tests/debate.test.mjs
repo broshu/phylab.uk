@@ -295,24 +295,24 @@ test('guided: prompt has no debate opponent and only Galileo may speak', () => {
   assert.deepEqual(parsed.messages.map((m) => m.speaker), ['galileo']);
 });
 
-test('guided: two exploration turns, then the method starts', () => {
-  const r = { move: 'idea', stepDone: false, messages: [{ speaker: 'galileo', text: 'Interesting.' }] };
+test('guided: one vote, Aristotle is not convinced, Galileo sets up the tied stones (faster first)', () => {
+  const r = { move: 'idea', stepDone: false, messages: [{ speaker: 'galileo', text: 'Thanks.' }] };
   const one = advance(guided('debate'), r);
-  assert.equal(one.state.step, 'debate');
-  const two = advance(guided('debate', { debateTurns: 1 }), r);
-  assert.equal(two.state.step, 'premise');
-  assert.equal(two.state.condition, 'guided');
-  assert.ok(two.messages.every((m) => m.speaker === 'galileo'));
+  assert.equal(one.state.step, 'faster');
+  assert.equal(one.state.condition, 'guided');
+  assert.deepEqual(one.messages.map((m) => m.speaker), ['galileo', 'aristotle', 'galileo', 'galileo', 'galileo']);
+  assert.ok(one.passed.includes('premise'));
+  assert.deepEqual(one.messages.map((m) => m.image).filter(Boolean), ['stones', 'tied']);
 });
 
 test('guided: passing a step — no joining or leaving, Galileo asks next', () => {
-  const out = advance(guided('slower'), { move: 'pass', stepDone: true, messages: [{ speaker: 'galileo', text: 'Yes!' }] });
-  assert.equal(out.state.step, 'faster');
+  const out = advance(guided('faster'), { move: 'pass', stepDone: true, messages: [{ speaker: 'galileo', text: 'Yes!' }] });
+  assert.equal(out.state.step, 'slower');
   assert.ok(out.messages.every((m) => m.speaker === 'galileo'));
 });
 
 test('guided: same reveal rule as the debate group', () => {
-  const out = advance(guided('faster', { stepTurns: 3 }), { move: 'stuck', stepDone: false, messages: [{ speaker: 'galileo', text: 'Nice try.' }] });
+  const out = advance(guided('slower', { stepTurns: 3 }), { move: 'stuck', stepDone: false, messages: [{ speaker: 'galileo', text: 'Nice try.' }] });
   assert.equal(out.state.step, 'contradiction');
   assert.ok(out.messages.some((m) => /put it together/.test(m.text)));
 });
@@ -325,8 +325,8 @@ test('guided: the lesson can be finished with help alone', () => {
   assert.equal(state.condition, 'guided');
 });
 
-test('both groups show the same pictures at the same steps', () => {
-  for (const step of Object.keys(STEPS).filter((s) => !DEBATE_ONLY_STEPS.includes(s))) {
+test('both groups show the same pictures from the contradiction on', () => {
+  for (const step of ['contradiction', 'conclusion', 'method', 'done']) {
     const a = STEPS[step].opener.map((m) => m.image).filter(Boolean);
     const b = GUIDED_OPENERS[step].map((m) => m.image).filter(Boolean);
     assert.deepEqual(b, a, step);
@@ -366,7 +366,7 @@ test('debate: after the premise Aristotle holds his position and the student mus
 
 test('guided group and a debate spark skip the tie step', () => {
   const guided = advance(normalizeInput({ message: 'x', state: { condition: 'guided', step: 'premise' } }), { move: 'pass', stepDone: true, messages: [{ speaker: 'galileo', text: 'Yes.' }] });
-  assert.equal(guided.state.step, 'slower');
+  assert.equal(guided.state.step, 'faster');
   const spark = advance(input('premise', { spark: true }), { move: 'pass', stepDone: true, messages: [{ speaker: 'aristotle', text: 'Yes.' }] });
   assert.equal(spark.state.step, 'counter');
 });
@@ -415,7 +415,7 @@ test('counter: Aristotle keeps his own view; the other reasoning passes; the gui
   assert.match(argue.messages[0].text, /holds back the fast one/);
   const p = buildPayload(input('counter', { view: 'slower' }), 'm').messages[0].content;
   assert.match(p, /HEAVIER than the heavy stone alone/);
-  const g = advance(normalizeInput({ message: 'x', state: { condition: 'guided', step: 'faster' } }), { move: 'pass', stepDone: true, messages: [{ speaker: 'galileo', text: 'Yes.' }] });
+  const g = advance(normalizeInput({ message: 'x', state: { condition: 'guided', step: 'slower' } }), { move: 'pass', stepDone: true, messages: [{ speaker: 'galileo', text: 'Yes.' }] });
   assert.equal(g.state.step, 'contradiction');
 });
 
@@ -484,9 +484,9 @@ test('skipping ahead: a student who already reached a later step jumps past it',
   assert.equal(bad.state.step, 'counter');
   const spark = advance(input('debate'), { move: 'thought_experiment', stepDone: false, reached: 'conclusion', messages: [{ speaker: 'aristotle', text: 'Hm.' }] });
   assert.equal(spark.state.step, 'method');
-  const g = advance(normalizeInput({ message: 'x', state: { condition: 'guided', step: 'slower' } }), { move: 'pass', stepDone: true, reached: 'contradiction', messages: [{ speaker: 'galileo', text: 'Yes!' }] });
+  const g = advance(normalizeInput({ message: 'x', state: { condition: 'guided', step: 'faster' } }), { move: 'pass', stepDone: true, reached: 'contradiction', messages: [{ speaker: 'galileo', text: 'Yes!' }] });
   assert.equal(g.state.step, 'conclusion');
-  assert.deepEqual(g.passed, ['slower', 'faster', 'contradiction']);
+  assert.deepEqual(g.passed, ['faster', 'slower', 'contradiction']);
 });
 
 test('the "two bodies" objection is gone from both groups', () => {
@@ -514,7 +514,8 @@ test('Chinese: every preset line has a Chinese version, and a Chinese chat gets 
   for (const a of Object.values(R.ARGUMENT_REPLIES)) msgs(a);
   lines.push(R.PISA.galileo.text, R.PISA.aristotle, ...Object.values(R.BEFORE_GALILEO), ...R.DEBATE_TAILS, R.TIE_TAIL);
   for (const [id, a] of Object.entries(G.GUIDED_OPENERS)) if (!S.RETIRED_STEPS.includes(id)) msgs(a);
-  lines.push(...G.EXPLORE_FALLBACKS, G.EXPLORE_HINT, ...Object.values(G.BRIDGE));
+  lines.push(...G.EXPLORE_FALLBACKS, G.EXPLORE_HINT, ...Object.values(G.BRIDGE), G.ARISTOTLE_UNCONVINCED);
+  for (const st of Object.values(G.GUIDED_STEPS)) lines.push(...st.hints, st.reveal);
   const missing = lines.filter((l) => l && !ZH[l]);
   assert.deepEqual(missing, []);
   assert.equal(toZh('Even with no air at all, the heavier body would still fall faster. Prove me wrong, then.'), '就算完全没有空气，更重的物体也还是会落得更快。那就证明我错了。');

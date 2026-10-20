@@ -2,6 +2,7 @@ import DEBATE_INTRO from '../prompts/debate-intro.md';
 import GUIDED_INTRO from '../prompts/guided-intro.md';
 import SHARED_RULES from '../prompts/shared-rules.md';
 import {
+  ARISTOTLE_UNCONVINCED,
   BRIDGE,
   EXPLORE_CARD,
   EXPLORE_FALLBACKS,
@@ -9,6 +10,8 @@ import {
   EXPLORE_TURNS,
   GUIDED_DONE_CARD,
   GUIDED_OPENERS,
+  GUIDED_ORDER,
+  GUIDED_STEPS,
   GUIDED_TO_GALILEO,
   guidedPresence,
 } from './guided.js';
@@ -135,6 +138,10 @@ export function normalizeInput(body) {
  * @param {{condition?: string, spark?: boolean}} [state]
  */
 export function nextStep(step, state = {}) {
+  if (state.condition === 'guided') {
+    const at = GUIDED_ORDER.indexOf(step);
+    return at < 0 ? (step === 'debate' || step === 'premise' ? GUIDED_ORDER[0] : 'done') : GUIDED_ORDER[at + 1] || 'done';
+  }
   let index = STEP_ORDER.indexOf(step);
   if (index < 0) return 'done';
   // Skip debate-only steps for the guided group, and "tie" after a spark.
@@ -163,6 +170,7 @@ const STEP_GOALS = {
 
 /** @param {{condition?: string, spark?: boolean}} state */
 function stepOrder(state) {
+  if (state.condition === 'guided') return GUIDED_ORDER;
   return STEP_ORDER.filter(
     (s) =>
       !(state.condition === 'guided' && DEBATE_ONLY_STEPS.includes(s)) &&
@@ -209,7 +217,8 @@ function jumpPath(state, target) {
  */
 export function stepFor(state) {
   if (state.step === 'counter') return COUNTER[state.view === 'slower' ? 'slower' : 'faster'];
-  return STEPS[state.step];
+  const guided = state.condition === 'guided' && GUIDED_STEPS[/** @type {keyof typeof GUIDED_STEPS} */ (state.step)];
+  return guided ? { ...STEPS[state.step], ...guided } : STEPS[state.step];
 }
 
 /** How many hints Galileo has already given in this step. @param {DebateState} state */
@@ -308,7 +317,7 @@ ${ARISTOTLE_IDEAS}
 function buildGuidedCard(state, toGalileo) {
   if (state.step === 'debate') return `${EXPLORE_CARD}\n\nThis is turn ${state.debateTurns + 1} of ${EXPLORE_TURNS}.`;
   if (state.step === 'done') return GUIDED_DONE_CARD;
-  const step = STEPS[state.step];
+  const step = stepFor(state);
   const reveal = revealDue(state)
     ? `\n\nTHIS TURN: the student has already tried ${state.stepTurns} times. If step_done is false, Galileo writes ONLY one short, kind line about what the student tried, with no question and no answer: the lesson code explains the idea right after your message.`
     : '';
@@ -739,8 +748,13 @@ function advanceGuided(input, result) {
     const move = result ? result.move : guessMove(input.message);
     messages.push(...(reply.length ? reply : [{ speaker: 'galileo', text: EXPLORE_FALLBACKS[state.debateTurns % EXPLORE_FALLBACKS.length] }]));
     if (move === 'thought_experiment' || debateTurns >= EXPLORE_TURNS) {
-      messages.push({ speaker: 'galileo', text: move === 'thought_experiment' ? BRIDGE.spark : BRIDGE.idea }, ...opener('premise'));
-      return { messages, state: { ...state, step: 'premise', stepTurns: 0, debateTurns }, passed, joined: null };
+      // Aristotle is not convinced; Galileo proposes to prove it by reasoning,
+      // states the premise himself and sets up the tied stones.
+      if (move !== 'thought_experiment') messages.push({ speaker: 'aristotle', text: ARISTOTLE_UNCONVINCED });
+      const first = nextStep('debate', state);
+      messages.push({ speaker: 'galileo', text: move === 'thought_experiment' ? BRIDGE.spark : BRIDGE.idea }, ...opener(first));
+      passed.push('premise');
+      return { messages, state: { ...state, step: first, stepTurns: 0, debateTurns }, passed, joined: null };
     }
     return { messages, state: { ...state, debateTurns }, passed, joined: null };
   }
@@ -755,7 +769,7 @@ function advanceGuided(input, result) {
     const target = passedNow && result?.reached && laterSteps(state).includes(result.reached) ? result.reached : state.step;
     passed.push(...(target === state.step ? [state.step] : jumpPath(state, target)));
     messages.push(...reply);
-    if (!passedNow) messages.push({ speaker: 'galileo', text: `Let's put it together. ${STEPS[state.step].reveal}` });
+    if (!passedNow) messages.push({ speaker: 'galileo', text: `Let's put it together. ${stepFor(state).reveal}` });
     const step = nextStep(target, state);
     messages.push(...opener(step));
     return { messages, state: { ...state, step, stepTurns: 0 }, passed, joined: null };
