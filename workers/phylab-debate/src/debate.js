@@ -391,6 +391,8 @@ export function parseModelReply(value, step, toGalileo = false, condition = 'deb
       speaker: typeof m?.speaker === 'string' ? m.speaker.toLowerCase().trim() : '',
       text: cleanText(m?.text, MAX_REPLY_CHARS),
     }))
+    // Galileo never opens his own line by mentioning himself ("@伽利略谢谢你").
+    .map((/** @type {ChatMessage} */ m) => (m.speaker === 'galileo' ? { ...m, text: m.text.replace(/^\s*@(伽利略|Galileo)[\s,，:：]*/i, '') } : m))
     .filter((/** @type {ChatMessage} */ m) => allowed.includes(m.speaker) && m.text)
     .slice(0, step === 'debate' ? 1 : 2);
   const move = cleanText(data.student_move, 32).toLowerCase();

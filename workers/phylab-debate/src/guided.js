@@ -229,7 +229,7 @@ step_done is always false.`;
 export function guidedPresence(onPass, hint) {
   return `WHO IS IN THE CHAT: Galileo (the student's tutor), the student, and Aristotle, who stays silent now. Allowed speakers: galileo only.
 - If step_done is true: Galileo praises in one or two sentences (${onPass.galileo}). Do NOT ask a new question: the next question is added automatically.
-- If step_done is false: Galileo answers what the student said, kindly and positively, and ends with this hint as a question: ${hint}.`;
+- If step_done is false: Galileo answers what the student said, kindly and positively, and ends with this hint as a question: ${hint}. If the student has already answered that hint's question, ask instead the next small question from the notes under the labels. Write it all in ONE message.`;
 }
 
 export const GUIDED_TO_GALILEO = `THE STUDENT IS TALKING TO GALILEO directly (the message contains "@Galileo"). If the student asks a question, Galileo answers it in one or two sentences, then ends with the hint. His answer must NOT state or imply the PASS answer of this step, even partly (for example, in the "slower" step he must not say the pair or the heavy stone becomes slower); explain words and set up the picture instead, and let the student draw the conclusion. If the message contains an answer that passes, judge it as usual.`;

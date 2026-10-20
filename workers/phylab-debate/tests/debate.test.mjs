@@ -535,3 +535,8 @@ test('counter: "same speed" gets Aristotle holding his rule, not Galileo', () =>
     assert.match(r.messages[0].text, /heavier body falls faster|slower by my rule/);
   }
 });
+
+test('Galileo never starts his own line with a mention of himself', () => {
+  const parsed = parseModelReply(providerReply({ student_move: 'idea', step_done: false, messages: [{ speaker: 'galileo', text: '@伽利略谢谢你的选择。' }] }), 'debate', false, 'guided');
+  assert.equal(parsed.messages[0].text, '谢谢你的选择。');
+});
