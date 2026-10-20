@@ -1,5 +1,5 @@
-import { AVATARS, PICTURES } from './art.js?v=20261016i';
-import { animationCard, hasAnimation } from './anims.js?v=20261019f';
+import { AVATARS, PICTURES } from './art.js?v=20261020a';
+import { animationCard, hasAnimation } from './anims.js?v=20261020a';
 
 const API = 'https://phylab-debate.dgxwmk9dbm.workers.dev/debate';
 const STORE = 'phylab-debate-aristotle-v1';
@@ -69,7 +69,6 @@ const NOTEBOOK = [
   ['slower', 'Imagine a simple case and reason one way'],
   ['faster', 'Reason the same case another way'],
   ['contradiction', 'Spot the contradiction'],
-  ['objection', 'Close the loophole'],
   ['conclusion', 'Reject the rule and keep what has no contradiction'],
   ['method', 'Name it: a thought experiment'],
 ];

@@ -474,13 +474,21 @@ test('skipping ahead: a student who already reached a later step jumps past it',
     move: 'thought_experiment', stepDone: true, reached: 'contradiction',
     messages: [{ speaker: 'aristotle', text: 'Both from my rule? This troubles me.' }],
   });
-  assert.equal(out.state.step, 'objection');
+  assert.equal(out.state.step, 'conclusion');
   for (const id of ['tie', 'counter', 'contradiction', 'slower', 'faster']) assert.ok(out.passed.includes(id), id);
   const bad = advance(input('tie', { galileo: false }), { move: 'thought_experiment', stepDone: true, reached: 'method', messages: [] });
   assert.equal(bad.state.step, 'counter');
   const spark = advance(input('debate'), { move: 'thought_experiment', stepDone: false, reached: 'conclusion', messages: [{ speaker: 'aristotle', text: 'Hm.' }] });
   assert.equal(spark.state.step, 'method');
   const g = advance(normalizeInput({ message: 'x', state: { condition: 'guided', step: 'slower' } }), { move: 'pass', stepDone: true, reached: 'contradiction', messages: [{ speaker: 'galileo', text: 'Yes!' }] });
-  assert.equal(g.state.step, 'objection');
+  assert.equal(g.state.step, 'conclusion');
   assert.deepEqual(g.passed, ['slower', 'faster', 'contradiction']);
+});
+
+test('the "two bodies" objection is gone from both groups', () => {
+  const d = advance(input('contradiction', { galileo: false }), { move: 'pass', stepDone: true, messages: [{ speaker: 'aristotle', text: 'This troubles me.' }] });
+  assert.equal(d.state.step, 'conclusion');
+  assert.ok(!d.messages.some((m) => /two bodies/i.test(m.text)));
+  const g = advance(normalizeInput({ message: 'x', state: { condition: 'guided', step: 'contradiction' } }), { move: 'pass', stepDone: true, messages: [{ speaker: 'galileo', text: 'Yes.' }] });
+  assert.equal(g.state.step, 'conclusion');
 });

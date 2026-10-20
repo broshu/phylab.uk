@@ -10,7 +10,7 @@
 import { LEAN_RULE } from './counter.js';
 import { ARGUMENT_LABELS, ARISTOTLE_IDEAS } from './replies.js';
 
-export const PROMPT_VERSION = 'debate-aristotle-v14';
+export const PROMPT_VERSION = 'debate-aristotle-v15';
 
 /** Steps after Galileo first joins, in order. */
 export const STEP_ORDER = [
@@ -36,6 +36,13 @@ export const ALL_STEPS = ['debate', ...STEP_ORDER];
  * already invented the idea in the open debate (spark) goes straight to slower.
  */
 export const DEBATE_ONLY_STEPS = ['tie', 'counter'];
+
+/**
+ * Steps no longer used by either group (kept so chats saved mid-step still
+ * work). "objection" (the "two bodies" excuse) was dropped in Oct 2026: the
+ * student has already treated the pair as one body by then.
+ */
+export const RETIRED_STEPS = ['objection'];
 
 /**
  * Steps only the guided group takes: Galileo walks through both lines of
@@ -294,7 +301,7 @@ If it passes, student_move is "pass".`,
       galileo: 'praise the student for finding the contradiction, the heart of a thought experiment',
       aristotle: 'is shaken ("Both from my own rule? This troubles me.")',
     },
-    leave: 'That is the heart of it. Watch out, he will try to escape. I will let you answer him.',
+    leave: "That is the heart of it. I'll step back; finish it yourself.",
     press: 'You gave me two answers for the same pair: slower than 8, and faster than 8. Tell me plainly: what do these two answers show?',
     hints: [
       'Can one pair of stones fall slower than 8 and faster than 8 at the same time?',
@@ -422,7 +429,7 @@ If it passes, student_move is "pass".`,
     opener: [
       {
         speaker: 'aristotle',
-        text: 'So this is your trick: take the rule as true, just for now, imagine a simple case, reason it two ways, find the contradiction, close the escapes, and reject the rule. It works on any claim, even mine.',
+        text: 'So this is your trick: take the rule as true, just for now, imagine a simple case, reason it two ways, find the contradiction, and reject the rule. It works on any claim, even mine.',
         image: 'method',
       },
       {

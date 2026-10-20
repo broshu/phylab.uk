@@ -34,8 +34,7 @@ step. Everything else is fixed code and preset text:
 
 Debate group: `slower` + `faster` are replaced by `counter` (`src/counter.js`): after the student proposes the tied stones, Aristotle reasons ONE way (the way the student's words lean: `faster` = one heavier body, `slower` = the slow stone holds back the fast one, with an animation) and the student must find the other way. Guided group keeps `slower` and `faster`.
 
-Steps: `debate` → `premise` → `tie` (debate group only: Aristotle holds his position and the student must propose joining the stones; skipped after a spark) → `slower` → `faster` → `contradiction` →
-`objection` → `conclusion` → `method` → `done`.
+Steps: `debate` → `premise` → `tie` (debate group only: Aristotle holds his position and the student must propose joining the stones; skipped after a spark) → `slower` → `faster` → `contradiction` → `conclusion` → `method` → `done`.
 
 - Debate group, who speaks:
   - Galileo comes only when the model labels the student `help`, `concede` or
@@ -52,6 +51,7 @@ Steps: `debate` → `premise` → `tie` (debate group only: Aristotle holds his 
   - Aristotle leads the final reflection (`method`) and the free questions
     (`done`); @Galileo still works there.
 - Aristotle's replies (`src/replies.js`): in the open debate and the `tie` step the model labels the student's argument (`same_time`, `experiment`, `air`, `vacuum`, `book`, `formula`, `pisa`, …) and writes Aristotle's reply in its own words around that label's fixed idea, reacting to what the student wrote; the fixed wordings are the fallback. When one kind of argument comes back 6 times (`REPEAT_LIMIT`), Galileo steps in to guide. `pisa` is an easter egg: once per chat Galileo steps in with the tower drop (animation), then Aristotle answers.
+- Both groups: the "two bodies" objection step was dropped (Oct 2026); contradiction leads straight to the conclusion.
 - Both groups: the model judges generously (the rough meaning passes a step) and may return `reached` = a later step the student has already reached (never past `conclusion`); the code then skips every step up to it.
 - Guided group: after 3 failed tries in one step (`stepTurns`), Galileo explains the idea and moves on.
 - The **@Galileo** button puts a mention in the message box. A message with "@Galileo" and a question is answered by Galileo (he joins if needed); "@Galileo" on its own works as a help button and never calls the model.

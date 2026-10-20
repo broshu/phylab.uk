@@ -110,7 +110,7 @@ export const GUIDED_OPENERS = {
   done: [
     {
       speaker: 'galileo',
-      text: "Here is your method, the same one I used: take the rule as true, just for now, imagine a simple case, reason it two ways, find the contradiction, close the loopholes, and reject the rule. You can use it on any claim.",
+      text: "Here is your method, the same one I used: take the rule as true, just for now, imagine a simple case, reason it two ways, find the contradiction, and reject the rule. You can use it on any claim.",
       image: 'method',
     },
     {

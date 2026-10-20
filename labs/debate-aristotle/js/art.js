@@ -97,7 +97,7 @@ export const PICTURES = {
   ),
   method: FRAME(
     320,
-    238,
+    212,
     `<text x="20" y="30" font-size="14" font-weight="700" fill="${INK}">How a thought experiment wins</text>
      ${[
        'Take the rule as true, just for now',
@@ -105,7 +105,6 @@ export const PICTURES = {
        'Reason it one way',
        'Reason it another way',
        'Spot the contradiction',
-       'Close the loopholes',
        'Reject the rule',
      ]
        .map(
@@ -114,6 +113,6 @@ export const PICTURES = {
        <text x="52" y="${58 + i * 26}" font-size="13" fill="${INK}">${t}</text>`,
        )
        .join('')}`,
-    'The seven steps of a thought experiment',
+    'The six steps of a thought experiment',
   ),
 };

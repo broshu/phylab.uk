@@ -18,6 +18,7 @@ import {
   ALL_STEPS,
   ARISTOTLE_ON_HELP,
   DEBATE_ONLY_STEPS,
+  RETIRED_STEPS,
   GUIDED_ONLY_STEPS,
   DEBATE_CARD,
   DEBATE_FALLBACKS,
@@ -137,6 +138,7 @@ export function nextStep(step, state = {}) {
   while (index < STEP_ORDER.length - 1) {
     index += 1;
     const next = STEP_ORDER[index];
+    if (RETIRED_STEPS.includes(next)) continue;
     if (DEBATE_ONLY_STEPS.includes(next) && state.condition === 'guided') continue;
     if (next === 'tie' && state.spark) continue;
     if (GUIDED_ONLY_STEPS.includes(next) && state.condition !== 'guided') continue;
@@ -153,7 +155,6 @@ const STEP_GOALS = {
   slower: 'says the joined pair is slower than the heavy one alone, because the light one holds it back',
   faster: 'says the joined pair is heavier, so by the rule it falls faster than the heavy one alone',
   contradiction: 'says the two answers contradict each other, so Aristotle\'s rule must be wrong',
-  objection: 'explains why calling the pair "two bodies" does not save the rule (glue them into one, the weight is the same)',
   conclusion: 'says all bodies fall at the same rate: falling speed does not depend on weight',
 };
 
@@ -163,7 +164,8 @@ function stepOrder(state) {
     (s) =>
       !(state.condition === 'guided' && DEBATE_ONLY_STEPS.includes(s)) &&
       !(state.condition !== 'guided' && GUIDED_ONLY_STEPS.includes(s)) &&
-      !(s === 'tie' && state.spark),
+      !(s === 'tie' && state.spark) &&
+      !RETIRED_STEPS.includes(s),
   );
 }
 
