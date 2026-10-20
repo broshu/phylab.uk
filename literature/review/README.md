@@ -51,5 +51,6 @@ Sections, in this order (headings must match exactly):
 - `## Key finding A`, `## Key finding B` — English (≤ 55 words) plus `>` Chinese. The chosen one is published on phylab.uk.
 - `## PhD relevance`, `## Reading recommendation`, `## Limitations` — English plus `>` Chinese.
 - `## Abstract` — the complete original abstract in English, then the complete Chinese translation in `>` lines (a full translation, not a summary), then the `Source:` lines. The desk shows both in full on every card.
+- `## Suggested questions` — one to three questions in Chinese, as `- ` list items, specific to this paper (its design, instrument, data or classroom use), that a reader would want answered from the full text before deciding. They appear as one-click prompts in the card's 问这篇论文 box. No generic questions that would fit any paper.
 
 The English sections must contain no Chinese characters, because they are published on the English site.

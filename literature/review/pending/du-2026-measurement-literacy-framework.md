@@ -79,3 +79,9 @@ It provides evidence for the schema’s teachability and its utility as a short-
 
 Source: Zhenhui Du, Zehua Wang. Cultivating cross-disciplinary measurement literacy via a unified classical-to-quantum interferometry framework and metrological practices. Phys. Rev. Phys. Educ. Res. 22, 020146 (2026). https://doi.org/10.1103/wn6j-gzxz
 Reproduced under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Mathematical typography normalised where necessary. Curatorial summaries above are by ChatGPT, based on the publisher's abstract; full text has not been reviewed.
+
+## Suggested questions
+
+- “编码→演化→读出→估计”框架在 4 次课里具体怎么教？
+- 前后测题目测的是什么？有没有适合高中的题？
+- 学生在不确定度预算和可追溯性上最常见的问题是什么？

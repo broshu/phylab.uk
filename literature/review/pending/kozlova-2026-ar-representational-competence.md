@@ -67,3 +67,9 @@ Prior knowledge plays a crucial role in learning in STEM education. The potentia
 
 Source: Zoya Kozlova, Peter A. Edelsbrunner, Max Warkentin, Christoph Hoyer, Stefan Küchemann, Jochen Kuhn, Sarah I. Hofer. Exploring the role of conceptual knowledge and representational competence in an augmented reality physics environment. Comput. Educ. 252, 105658 (2026). https://doi.org/10.1016/j.compedu.2026.105658
 Abstract retrieved from OpenAlex. Curatorial summaries above are by Claude, based on the abstract; full text has not been reviewed.
+
+## Suggested questions
+
+- AR 组和传统组的教学内容、时长和分组方式是否相同？
+- 表征能力和概念知识分别用什么测验测量？
+- 先前表征能力较弱的学生能从 AR 中获益吗？

@@ -86,3 +86,9 @@ Students also reported higher self-efficacy and intrinsic motivation, while cogn
 
 Source: Marcos Guerrero-Zambrano, Bryan Valarezo-Chamba, Leonor Sanchez-Alvarado, Erick Lamilla-Rubio. Effects of generative AI-mediated socratic dialogue on preservice physics teachers’ critical thinking in kinematics. Phys. Rev. Phys. Educ. Res. 22, 020134 (2026). https://doi.org/10.1103/x7vq-17rq
 Reproduced under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Mathematical typography normalised where necessary. Curatorial summaries above are by ChatGPT, based on the publisher's abstract; full text has not been reviewed.
+
+## Suggested questions
+
+- AI 苏格拉底对话的提示词和流程是怎样的？
+- 批判性思维评分量规有哪些维度？
+- 学生提到“需要核实 AI”，具体是哪些情况？

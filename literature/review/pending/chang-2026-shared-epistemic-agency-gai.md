@@ -64,3 +64,9 @@ Generative artificial intelligence (GAI) is increasingly used as a pedagogical a
 
 Source: Hsin-Yi Chang, Bo-Ren Mau, Jyh-Chong Liang, Chin-Chung Tsai. Investigating Secondary School Students’ Shared Epistemic Agency with GAI in Online Scientific Explanation Writing. Comput. Educ. 105769 (2026). https://doi.org/10.1016/j.compedu.2026.105769
 Abstract retrieved from OpenAlex. Curatorial summaries above are by Claude, based on the abstract; full text has not been reviewed.
+
+## Suggested questions
+
+- 七类共享认识能动性分别是什么？各举一个例子。
+- GAI 的提示词是怎么设计的，怎样避免它替学生写答案？
+- 语言水平不同的学生与 AI 的互动有什么差别？

@@ -79,3 +79,9 @@ At the same time, we observe substantial variation in the sequences of activitie
 
 Source: Ibukunoluwa Bukola, Meagan Sundstrom, Justin Gambrell, Colin Green, Adrienne L. Traxler, Eric Brewe. Measuring fidelity of implementation of named active learning methods in physics. Phys. Rev. Phys. Educ. Res. 22, 020142 (2026). https://doi.org/10.1103/xcdt-txzh
 Reproduced under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Mathematical typography normalised where necessary. Curatorial summaries above are by ChatGPT, based on the publisher's abstract; full text has not been reviewed.
+
+## Suggested questions
+
+- SCALE-UP、ISLE 和 Tutorials 的关键要素分别是什么？
+- 18 位教师的实施保真度是怎么通过课堂观察测量的？
+- 为什么保真度和学生概念收益之间没有明显关系？

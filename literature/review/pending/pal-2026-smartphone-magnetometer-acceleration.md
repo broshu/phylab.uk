@@ -62,3 +62,9 @@ Smartphone magnetometers are widely used for measuring static magnetic fields bu
 
 Source: Sanjoy Kumar Pal. Tracking uniformly accelerated motion using a smartphone magnetometer: a low-cost investigation based on time-derivative analysis of magnetic field data. Phys. Educ. 61, 055010 (2026). https://doi.org/10.1088/1361-6552/ae9c18
 Abstract retrieved from Crossref. Curatorial summaries above are by Claude, based on the abstract; full text has not been reviewed.
+
+## Suggested questions
+
+- 装置怎么搭，Phyphox 和磁铁的具体设置是什么？
+- 取了哪些斜面倾角，数据与 sin θ 的拟合结果如何？
+- 有没有在课堂上使用过，学生做下来效果如何？

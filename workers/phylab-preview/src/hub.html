@@ -291,7 +291,6 @@ function md(text) {
 }
 
 // Ask this paper: DeepSeek answers from the full text (or the abstract if there is none).
-const ASK_EXAMPLES = ['有没有做学生实验？结果是什么？', '样本、年级和研究设计是什么？', '主要的测量工具是什么？', '对高中物理教学有什么启示？'];
 function askBox(p) {
   const history = [];
   const basis = h('span', { class: 'basis', text: '会先找这篇论文的全文' });
@@ -365,7 +364,7 @@ function askBox(p) {
   return h('section', { class: 'ask' },
     h('div', { class: 'top' }, h('b', { text: '问这篇论文' }), basis, upload, retry, file),
     log,
-    h('div', { class: 'examples' }, ASK_EXAMPLES.map(q => h('button', { type: 'button', on: { click: () => ask(q) } }, q))),
+    p.questions?.length ? h('div', { class: 'examples' }, p.questions.slice(0, 3).map(q => h('button', { type: 'button', on: { click: () => ask(q) } }, q))) : null,
     h('div', { class: 'row2' }, input, send));
 }
 

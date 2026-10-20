@@ -64,3 +64,9 @@ The original abstract in English, complete, copied from Crossref, OpenAlex or Se
 
 Source: Authors. Title. Journal (year). https://doi.org/10.xxxx/xxxxx
 Abstract retrieved from Crossref. Curatorial summaries above are by the AI named in proposed_by, based on the abstract.
+
+## Suggested questions
+
+- 针对这篇论文的第一个问题（例如：前后测用的是什么题目？）
+- 第二个问题
+- 第三个问题

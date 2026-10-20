@@ -66,3 +66,9 @@ Automated scoring tools have shown promise for assessing student scientific reas
 
 Source: Cheng-Wen He, Peng He, Tingting Li, Logan Fiorella, Paula P. Lemons. Automated scoring of constructed responses: BERT performance on near- and far-transfer biochemistry problems. J. Sci. Educ. Technol. (2026). https://doi.org/10.1007/s10956-026-10362-0
 Abstract retrieved from Crossref. Curatorial summaries above are by Claude, based on the abstract; full text has not been reviewed.
+
+## Suggested questions
+
+- 近迁移和远迁移题目分别是什么样的？
+- 模型在哪类学生回答上最容易和人工评分不一致？
+- 评分量规的各个类别是怎么定义的？

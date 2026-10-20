@@ -19,11 +19,14 @@ export const SECTIONS = [
   ['reading_recommendation', 'Reading recommendation', true],
   ['limitations', 'Limitations', true],
   ['abstract', 'Abstract', true],
+  ['questions', 'Suggested questions', false],
 ];
 const BY_HEADING = new Map(SECTIONS.map(([key, heading]) => [heading.toLowerCase(), key]));
 
 const FRONT_ORDER = ['id', 'status', 'title', 'authors', 'year', 'published_date', 'source', 'doi', 'url', 'added', 'proposed_by',
   'score', 'topics', 'reading_priority', 'evidence_type', 'featured', 'finding', 'decision', 'notes'];
+
+const listItems = text => String(text || '').split('\n').map(l => l.match(/^\s*(?:[-*]|\d+[.)])\s+(.+)$/)?.[1]?.trim()).filter(Boolean);
 
 function splitSection(text) {
   const en = [], zh = [];
@@ -79,6 +82,8 @@ export function parseReview(text, path = '') {
     reading_recommendation: pair('reading_recommendation'),
     limitations: pair('limitations'),
     abstract: pair('abstract'),
+    // Up to three questions about this paper, offered as one-click prompts in the ask box.
+    questions: listItems(pair('questions').en).slice(0, 3),
   };
 }
 
@@ -119,6 +124,7 @@ export function serializeReview(paper) {
     phd_relevance: paper.phd_relevance, reading_recommendation: paper.reading_recommendation,
     limitations: paper.limitations,
     abstract: typeof paper.abstract === 'string' ? { en: paper.abstract } : paper.abstract,
+    questions: { en: (paper.questions || []).slice(0, 3).map(q => `- ${q}`).join('\n') },
   };
   const body = SECTIONS.map(([key, heading, two]) => {
     const text = key === 'abstract' ? abstractText(sections.abstract) : two ? bilingual(sections[key]) : (sections[key]?.en || '').trim();

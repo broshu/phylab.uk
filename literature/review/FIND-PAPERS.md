@@ -44,6 +44,7 @@ Use only the open scholarly APIs below. They need no login, no browser and no on
   - `## Key finding A` (short plain version) and `## Key finding B` (adds design and the most specific result): British English, at most 55 words each, paraphrased, then a `>` line with the Chinese translation.
   - `## PhD relevance`, `## Reading recommendation`, `## Limitations`: English, then `>` Chinese.
   - `## Abstract`: the complete original abstract in English; then the complete Chinese translation of the whole abstract in `>` lines (translate every sentence, do not shorten or summarise); then a `Source:` line (authors, title, journal, DOI link) and a line saying which API the abstract came from and that the summaries are yours, based on the abstract. The review page shows both versions in full.
+  - `## Suggested questions`: one to three questions in Chinese, as `- ` list items, written for this particular paper: what a physics teacher deciding whether to read it would ask about its design, instruments, data or classroom use, and that the full text can answer (for example "前后测用的是哪套题？", not "这篇论文讲了什么？"). Never more than three, and no generic questions that would fit any paper.
 - English sections must contain no Chinese characters.
 
 ## 4. Commit

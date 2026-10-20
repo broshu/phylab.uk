@@ -65,3 +65,9 @@ Research on the use of artificial intelligence in education is rapidly accumulat
 
 Source: Alyssa P. Lawson, Amedee Marchand Martella, Joshua Weidlich, Miriam Mulders, Josef Buchner. Color me confounded: A critical analysis of media comparisons on ChatGPT in education. Comput. Educ. 254, 105701 (2026). https://doi.org/10.1016/j.compedu.2026.105701
 Abstract retrieved from OpenAlex. Curatorial summaries above are by Claude, based on the abstract; full text has not been reviewed.
+
+## Suggested questions
+
+- 判断两组“可比”的三条标准具体怎么编码？
+- 有没有条件匹配良好的 ChatGPT 研究？结果如何？
+- 作者对今后设计 AI 教学实验有哪些建议？

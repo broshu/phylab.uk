@@ -64,3 +64,9 @@ As the conversational AI agents become integrated into digital learning environm
 
 Source: Jihyun Rho, Rui Guo, Hai Li, Chenglu Li. Disengaged conversational behaviors and learning in student-AI dialogues for mathematical problem solving. Comput. Educ. 257, 105766 (2027). https://doi.org/10.1016/j.compedu.2026.105766
 Abstract retrieved from OpenAlex. Curatorial summaries above are by Claude, based on the abstract; full text has not been reviewed.
+
+## Suggested questions
+
+- 六类对话脱离行为的定义和例子是什么？
+- 可教智能体是怎么回应学生捣乱或敷衍的？
+- 敏感性分析为什么没能复现脱离行为与成绩的正相关？

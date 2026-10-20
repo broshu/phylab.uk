@@ -28,6 +28,7 @@ const paper = {
   reading_recommendation: { en: 'Read the design and the transfer test sections.', zh: '' },
   limitations: { en: 'Two intact classes and a short follow-up limit the claims about transfer.', zh: '' },
   abstract: { en: 'We studied two classes.', zh: '我们研究了两个班级。' },
+  questions: ['两个班的 AI 反馈有什么不同？', '迁移测验是怎么设计的？'],
 };
 const env = { GITHUB_TOKEN: 't', GITHUB_REPO: 'broshu/phylab.uk', GITHUB_BRANCH: 'main' };
 
@@ -36,7 +37,7 @@ test('review files round-trip', () => {
   assert.match(text, /^---\nid: lovelace-2026-feedback-independent-transfer\nstatus: pending\n/);
   assert.match(text, /## Key finding B\n\nIn a quasi-experiment[^\n]+\n\n> 两个班的准实验。/);
   const back = parseReview(text, `${PENDING_DIR}/x.md`);
-  for (const key of ['id', 'status', 'title', 'authors', 'year', 'published_date', 'doi', 'topics', 'reading_priority', 'score', 'why', 'summary', 'findings', 'phd_relevance', 'limitations', 'abstract']) {
+  for (const key of ['id', 'status', 'title', 'authors', 'year', 'published_date', 'doi', 'topics', 'reading_priority', 'score', 'why', 'summary', 'findings', 'phd_relevance', 'limitations', 'abstract', 'questions']) {
     assert.deepEqual(back[key], paper[key], key);
   }
   assert.equal(serializeReview(back), text, 'stable when saved again');
@@ -49,6 +50,7 @@ test('the template is a valid review file', () => {
   assert.deepEqual(p.topics, ['ai', 'hands-on']);
   assert.ok(p.abstract.en);
   assert.ok(p.abstract.zh, 'template shows the Chinese abstract translation');
+  assert.ok(p.questions.length > 0 && p.questions.length <= 3, 'template has up to three suggested questions');
 });
 
 test('hand-written files are read tolerantly', () => {

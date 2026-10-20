@@ -62,3 +62,9 @@ Goalless problems—physical scenarios presented without a specific question—h
 
 Source: Ravi Lall. Goalless problems as a tool for developing mental models in physics. Phys. Educ. 61, 055046 (2026). https://doi.org/10.1088/1361-6552/aeaf34
 Abstract retrieved from Crossref. Curatorial summaries above are by Claude, based on the abstract; full text has not been reviewed.
+
+## Suggested questions
+
+- 文中那道无目标动力学问题的原题是什么？
+- 形成性评价量规分哪几个等级？
+- 作者建议怎样把无目标问题放进常规教学和备考？
