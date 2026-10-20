@@ -552,6 +552,8 @@ function advanceStep(input, result) {
       if (target) {
         // The student already went further: skip straight past what they reached.
         const step = nextStep(target, sparked);
+        // A question about a step the student already passed would sound odd now.
+        while (messages.length && /\?\s*$/.test(messages.at(-1)?.text || '')) messages.pop();
         messages.push(...openerFor(step, sparked));
         return {
           messages,
@@ -598,7 +600,9 @@ function advanceStep(input, result) {
     if (step === 'counter') passed.push('slower');
     if (state.step === 'counter') passed.push('faster');
     if (passedNow) {
-      const reply = /** @type {NonNullable<typeof result>} */ (result).messages;
+      let reply = /** @type {NonNullable<typeof result>} */ (result).messages;
+      // After a jump, drop lines that still ask about a step already passed.
+      if (target !== state.step) reply = reply.filter((m) => !/\?\s*$/.test(m.text || ''));
       if (!helping) messages.push(...reply.filter((m) => m.speaker !== 'galileo'));
       else {
         // One Galileo line at most, then he steps back.
