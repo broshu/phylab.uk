@@ -10,7 +10,7 @@
 import { LEAN_RULE } from './counter.js';
 import { ARGUMENT_LABELS, ARISTOTLE_IDEAS } from './replies.js';
 
-export const PROMPT_VERSION = 'debate-aristotle-v25';
+export const PROMPT_VERSION = 'debate-aristotle-v26';
 
 /** Steps after Galileo first joins, in order. */
 export const STEP_ORDER = [
@@ -404,10 +404,13 @@ Goal: the student describes the method of the thought experiment in their own wo
 (d) find that the results contradict each other;
 (e) conclude that the starting rule must be false (and find the rule that has no contradiction).
 
-PASS (step_done = true) if the student has mentioned at least 3 of the 5 ideas, in any words or order, counting ALL of the student's messages in this step together (not only the last one). Very short words count (for example "assume, imagine, contradiction" is 3 ideas).
+Judge generously: this is a reflection, not a test of wording.
+PASS (step_done = true) if ANY of these is true, counting ALL of the student's messages in this step together (not only the last one):
+- the student names the core of the method in any words: proof by contradiction / reductio (反证法), the rule contradicts itself (自相矛盾), "assume your rule is right and show it leads to a contradiction", "I used your own rule against you", "your rule gives two answers, so it is wrong";
+- or the student mentions at least 2 of the 5 ideas, in any words or order. Very short words count (for example "assume, contradiction" is 2 ideas).
 NOT YET (step_done = false). Choose one student_move label:
 - "wrong": the student describes the method wrongly (for example "we did a real experiment" or "we measured the stones"). Note: we used no tools; what did we do with the rule in our minds?
-- "partial": 1 or 2 of the ideas. Note: name what the student already got right, then ask about ONE missing idea using the hint (usually (a) or (d)).
+- "partial": only 1 of the ideas, and not the core of the method. Note: name what the student already got right, then ask about ONE missing idea using the hint (usually (a) or (d)).
 - "help": asks for help, or says they are stuck or do not know. Note: use the hint.
 - "off_topic".
 If it passes, student_move is "pass".`,
