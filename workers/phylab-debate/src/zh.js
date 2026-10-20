@@ -9,7 +9,7 @@
 export const ZH = {
   // ---- premise
   "Here is a strange first move: let's agree that Aristotle's rule is TRUE, just for now. In one short sentence, what exactly is his rule about weight and falling?":
-    '先来一步奇怪的棋：我们暂且承认亚里士多德的规则是对的。用一句话说说，他关于重量和下落的规则到底是什么？',
+    '我们先走看似奇怪的一步：暂且承认亚里士多德的规则是对的。用一句话说说，他关于重量和下落的规则到底是什么？',
   "Clear. Now let's see if his rule survives a test. I'll step back.": '说清楚了。现在看看他的规则经不经得起检验。我先退到一边。',
   'You want to fight my rule before you can even say it? Say it first, young one. In one sentence, what does my rule say about weight and falling?':
     '连我的规则都还没说出来，就想反驳它？年轻人，先把它说出来。用一句话说说，我的规则对重量和下落是怎么说的？',

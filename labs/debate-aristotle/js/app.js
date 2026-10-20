@@ -27,6 +27,9 @@ const STORE = 'phylab-debate-aristotle-v1';
 const GROUP_STORE = 'phylab-debate-aristotle-group-v2';
 const TRANSCRIPT_LIMIT = 16;
 
+/** How the student calls Galileo in the chat. */
+const MENTION = L('@Galileo', '@伽利略');
+
 const NAMES = L({ aristotle: 'Aristotle', galileo: 'Galileo', student: 'You' }, { aristotle: '亚里士多德', galileo: '伽利略', student: '你' });
 
 /**
@@ -267,12 +270,12 @@ function messageNode(m, prev) {
   if (m.text) {
     const bubble = document.createElement('div');
     bubble.className = 'bubble';
-    // Show "@Galileo" as a mention, like in a group chat.
-    for (const part of m.text.split(/(@galileo\b)/i)) {
-      if (/^@galileo$/i.test(part)) {
+    // Show "@Galileo" / "@伽利略" as a mention, like in a group chat.
+    for (const part of m.text.split(/(@galileo\b|@伽利略)/i)) {
+      if (/^(@galileo|@伽利略)$/i.test(part)) {
         const at = document.createElement('span');
         at.className = 'mention';
-        at.textContent = '@Galileo';
+        at.textContent = MENTION;
         bubble.append(at);
       } else if (part) {
         bubble.append(part);
@@ -349,13 +352,13 @@ function renderControls() {
   const helpHidden = GROUP === 'guided';
   els.help.disabled = busy || helpHidden;
   els.help.hidden = helpHidden;
-  els.help.textContent = '@Galileo';
+  els.help.textContent = MENTION;
   els.help.title = L('Mention Galileo to ask him something', '@伽利略，向他提问');
   els.input.placeholder =
     GROUP === 'guided'
       ? done ? L('Ask Galileo anything…', '问伽利略任何问题…') : L('Answer Galileo…', '回答伽利略…')
       : done
-        ? L('Ask Aristotle anything, or @Galileo…', '问亚里士多德任何问题，或 @Galileo…')
+        ? L('Ask Aristotle anything, or @Galileo…', '问亚里士多德任何问题，或 @伽利略…')
         : galileoIn()
           ? L('Answer Galileo, or argue with Aristotle…', '回答伽利略，或和亚里士多德辩论…')
           : lessonStarted()
@@ -445,11 +448,11 @@ async function turn(type, message) {
   renderControls();
   setNotice('');
 
-  const typer = /@galileo\b/i.test(message) || galileoIn() ? 'galileo' : 'aristotle';
+  const typer = /@(galileo\b|伽利略)/i.test(message) || galileoIn() ? 'galileo' : 'aristotle';
   // The transcript sent to the Worker must not include the new message twice.
   const history = transcript();
   // The help button shows up in the chat as the student mentioning Galileo.
-  const mine = { speaker: 'student', text: type === 'turn' ? message : '@Galileo' };
+  const mine = { speaker: 'student', text: type === 'turn' ? message : MENTION };
   state.log.push(mine);
   append(mine);
   renderStarters();
@@ -530,8 +533,8 @@ els.input.addEventListener('keydown', (e) => {
 els.input.addEventListener('input', autosize);
 // Insert a mention; the student keeps typing and sends it themselves.
 els.help.addEventListener('click', () => {
-  const text = els.input.value.replace(/^\s*@galileo\b\s*/i, '');
-  els.input.value = `@Galileo ${text}`;
+  const text = els.input.value.replace(/^\s*(@galileo\b|@伽利略)\s*/i, '');
+  els.input.value = `${MENTION} ${text}`;
   autosize();
   els.input.focus();
   els.input.setSelectionRange(els.input.value.length, els.input.value.length);

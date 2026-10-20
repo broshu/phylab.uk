@@ -224,7 +224,7 @@ function hintFor(state) {
   return state.lang === 'zh' ? toZh(hint) : hint;
 }
 
-const CHINESE_RULES = `LANGUAGE (this overrides the language rules above): this chat is in Chinese. Write every message in simplified Chinese (简体中文), in short, plain sentences that a Chinese high-school student reads easily, at most about 80 characters per message. No English words except numbers and "@Galileo". Aristotle calls the student 年轻人 or 朋友. The student writes in Chinese; judge their meaning as usual. Keep the JSON keys and the student_move labels in English.`;
+const CHINESE_RULES = `LANGUAGE (this overrides the language rules above): this chat is in Chinese. Write every message in simplified Chinese (简体中文), in short, plain sentences that a Chinese high-school student reads easily, at most about 80 characters per message. No English words at all except numbers; to mention Galileo write "@伽利略". Aristotle calls the student 年轻人 or 朋友. The student writes in Chinese; judge their meaning as usual. Keep the JSON keys and the student_move labels in English.`;
 
 /**
  * Every line the student sees, in the chat's language.
