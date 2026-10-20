@@ -120,7 +120,7 @@ async function api(request, env, ctx, url, branch) {
   if (request.method === 'GET' && url.pathname === '/api/branches') return json({ branches: await listBranches(env), current: branch });
   if (request.method === 'GET' && url.pathname === '/api/fulltext') {
     const paper = findPaper(await loadDesk(env), id(url.searchParams.get('id')));
-    return json(describe(await getFullText(env, paper)));
+    return json(describe(await getFullText(env, paper, { retry: url.searchParams.get('retry') === '1' })));
   }
   if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
   if (request.headers.get('Origin') !== url.origin) return json({ error: 'Forbidden' }, 403);

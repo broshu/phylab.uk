@@ -275,6 +275,7 @@ function askBox(p) {
   const basis = h('span', { class: 'basis', text: '会先找这篇论文的全文' });
   const file = h('input', { type: 'file', accept: 'application/pdf,.pdf', hidden: true });
   const upload = h('button', { class: 'upload', type: 'button', hidden: true, on: { click: () => file.click() } }, '上传 PDF');
+  const retry = h('button', { class: 'upload', type: 'button', hidden: true, on: { click: () => { checked = null; check(true); } } }, '再找一次');
   const log = h('div', { class: 'log' });
   const input = h('textarea', { placeholder: '问这篇论文，例如：有没有做学生实验，结果是什么？', maxlength: 1000, rows: 1 });
   const send = h('button', { class: 'btn yes', type: 'button' }, '提问');
@@ -286,11 +287,12 @@ function askBox(p) {
     basis.textContent = full ? `依据全文：${info.source}${info.pages ? `，${info.pages} 页` : ''}` : '没找到可自动下载的全文，回答只依据摘要。';
     upload.hidden = false;
     upload.textContent = full ? '换一个 PDF' : '上传 PDF 全文';
+    retry.hidden = full;
   }
-  function check() {
+  function check(again) {
     if (!checked) {
-      basis.textContent = '正在找全文…';
-      checked = api(`/api/fulltext?id=${encodeURIComponent(p.id)}`).then(show).catch(err => { basis.textContent = err.message; checked = null; });
+      basis.className = 'basis'; basis.textContent = '正在找全文…'; retry.hidden = true;
+      checked = api(`/api/fulltext?id=${encodeURIComponent(p.id)}${again === true ? '&retry=1' : ''}`).then(show).catch(err => { basis.textContent = err.message; checked = null; });
     }
     return checked;
   }
@@ -339,7 +341,7 @@ function askBox(p) {
   input.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); ask(input.value); } });
   input.addEventListener('focus', check, { once: true });
   return h('section', { class: 'ask' },
-    h('div', { class: 'top' }, h('b', { text: '问这篇论文' }), basis, upload, file),
+    h('div', { class: 'top' }, h('b', { text: '问这篇论文' }), basis, upload, retry, file),
     log,
     h('div', { class: 'examples' }, ASK_EXAMPLES.map(q => h('button', { type: 'button', on: { click: () => ask(q) } }, q))),
     h('div', { class: 'row2' }, input, send));

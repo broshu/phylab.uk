@@ -39,6 +39,21 @@ export async function pdfToText(bytes) {
   return { pages: totalPages, text: clean.slice(0, MAX_TEXT_CHARS) };
 }
 
+/** PDF links for preprint/repository landing pages: OSF (incl. EdArXiv, SocArXiv), Zenodo, arXiv. */
+export async function repositoryPdfs(url, get) {
+  const u = String(url);
+  const osf = u.match(/osf\.io\/([a-z0-9]{5,})(?:_v(\d+))?/i);
+  if (osf) return [{ url: `https://osf.io/download/${osf[1].toLowerCase()}${osf[2] ? `_v${osf[2]}` : ''}/`, source: 'OSF 预印本' }];
+  const arxiv = u.match(/arxiv\.org\/(?:abs|pdf)\/([\w.\/-]+?)(?:\.pdf)?$/i) || u.match(/10\.48550\/arxiv\.([\w.-]+)/i);
+  if (arxiv) return [{ url: `https://arxiv.org/pdf/${arxiv[1]}`, source: 'arXiv' }];
+  const zenodo = u.match(/zenodo\.(\d+)/i) || u.match(/zenodo\.org\/records?\/(\d+)/i);
+  if (zenodo && get) {
+    const rec = await get(`https://zenodo.org/api/records/${zenodo[1]}`);
+    return (rec?.files || []).filter(f => /\.pdf$/i.test(f.key || '')).slice(0, 2).map(f => ({ url: f.links?.self || f.links?.content, source: 'Zenodo' })).filter(f => f.url);
+  }
+  return [];
+}
+
 async function candidateUrls(doi, title) {
   const urls = [];
   const add = (url, source) => {
@@ -53,8 +68,14 @@ async function candidateUrls(doi, title) {
     get(`https://api.semanticscholar.org/graph/v1/paper/DOI:${encodeURIComponent(doi)}?fields=openAccessPdf,externalIds`),
     title ? fetch(`https://export.arxiv.org/api/query?max_results=3&search_query=${encodeURIComponent(`ti:"${title.slice(0, 200)}"`)}`, { signal: AbortSignal.timeout(10_000) }).then(r => (r.ok ? r.text() : '')).catch(() => '') : '',
   ]);
-  for (const loc of openalex?.locations || []) if (loc.pdf_url) add(loc.pdf_url, `OpenAlex: ${loc.source?.display_name || new URL(loc.pdf_url).hostname}`);
-  if (s2?.openAccessPdf?.url) add(s2.openAccessPdf.url, 'Semantic Scholar');
+  const landing = [];
+  for (const loc of openalex?.locations || []) {
+    if (loc.pdf_url) add(loc.pdf_url, `OpenAlex: ${loc.source?.display_name || new URL(loc.pdf_url).hostname}`);
+    if (loc.landing_page_url) landing.push(loc.landing_page_url);
+  }
+  if (s2?.openAccessPdf?.url) { add(s2.openAccessPdf.url, 'Semantic Scholar'); landing.push(s2.openAccessPdf.url); }
+  // Repository landing pages (often given only as a DOI) -> direct PDF downloads.
+  for (const url of landing) for (const hit of await repositoryPdfs(url, get)) add(hit.url, hit.source);
   if (s2?.externalIds?.ArXiv) add(`https://arxiv.org/pdf/${s2.externalIds.ArXiv}`, 'arXiv');
   for (const m of String(arxiv).matchAll(/<link[^>]+title="pdf"[^>]+href="([^"]+)"/g)) add(m[1].replace(/^http:/, 'https:'), 'arXiv');
   return urls;
@@ -70,11 +91,11 @@ async function fetchPdf(url) {
 }
 
 /** Stored full text for a paper, trying open-access copies once if none is stored. */
-export async function getFullText(env, paper, { tryOpenAccess = true } = {}) {
+export async function getFullText(env, paper, { tryOpenAccess = true, retry = false } = {}) {
   if (!env.FULLTEXT) return null;
   const stored = await env.FULLTEXT.get(textKey(paper.id), 'json');
   if (stored?.text) return stored;
-  if (!tryOpenAccess || !paper.doi || await env.FULLTEXT.get(missKey(paper.id))) return null;
+  if (!tryOpenAccess || !paper.doi || (!retry && await env.FULLTEXT.get(missKey(paper.id)))) return null;
   for (const { url, source } of (await candidateUrls(paper.doi, paper.title)).slice(0, 6)) {
     try {
       const bytes = await fetchPdf(url);

@@ -230,3 +230,12 @@ test('ask endpoint streams the answer and checks origin', async () => {
     assert.equal(seen.messages.at(-1).content, '有没有做学生实验？');
   } finally { gh.restore?.(); }
 });
+
+test('repository landing pages become PDF links', async () => {
+  const { repositoryPdfs } = await import('../src/paperchat.js');
+  assert.deepEqual(await repositoryPdfs('https://doi.org/10.31235/osf.io/6t4fa_v1'), [{ url: 'https://osf.io/download/6t4fa_v1/', source: 'OSF 预印本' }]);
+  assert.equal((await repositoryPdfs('https://arxiv.org/abs/2401.01234'))[0].url, 'https://arxiv.org/pdf/2401.01234');
+  const get = async () => ({ files: [{ key: 'paper.pdf', links: { self: 'https://zenodo.org/api/records/1/files/paper.pdf/content' } }, { key: 'data.csv', links: { self: 'x' } }] });
+  assert.deepEqual(await repositoryPdfs('https://doi.org/10.5281/zenodo.21929675', get), [{ url: 'https://zenodo.org/api/records/1/files/paper.pdf/content', source: 'Zenodo' }]);
+  assert.deepEqual(await repositoryPdfs('https://doi.org/10.1016/j.compedu.2026.105701', get), []);
+});
