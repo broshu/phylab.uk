@@ -102,7 +102,11 @@
   .ask .log { display: grid; gap: 8px; margin: 10px 0 0; }
   .ask .q, .ask .a { font-size: 14px; line-height: 1.6; white-space: pre-wrap; border-radius: 10px; padding: 8px 11px; max-width: 100%; }
   .ask .q { justify-self: end; background: var(--site-tint-green); }
-  .ask .a { background: var(--site-surface-soft); }
+  .ask .a { background: var(--site-surface-soft); white-space: normal; }
+  .ask .a p { margin: 0 0 6px; }
+  .ask .a p:last-child { margin-bottom: 0; }
+  .ask .a ul { margin: 2px 0 6px; padding-left: 20px; }
+  .ask .a li { margin: 2px 0; }
   .ask .a.err { color: var(--score); }
   .ask .examples { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
   .ask .examples button { border: 0; background: var(--site-surface-soft); border-radius: 6px; padding: 3px 9px; font-size: 12.5px; cursor: pointer; color: var(--site-muted); }
@@ -269,6 +273,23 @@ function stamp(kind, when, land) {
   return h('div', { class: `stamp ${kind}${land ? ' land' : ''}` }, kind === 'yes' ? '收录' : '不要', when ? h('small', { text: when }) : null);
 }
 
+// Minimal, safe Markdown for answers: paragraphs, "- " lists, **bold**. Built from text nodes, never innerHTML.
+function md(text) {
+  const out = document.createDocumentFragment();
+  const inline = line => line.split(/(\*\*[^*]+\*\*)/g).filter(Boolean).map(part => /^\*\*[^*]+\*\*$/.test(part) ? h('strong', { text: part.slice(2, -2) }) : part.replace(/^#+\s*/, ''));
+  let list = null;
+  for (const line of text.split('\n')) {
+    const item = line.match(/^\s*(?:[-*•]|\d+[.)])\s+(.*)$/);
+    if (item) {
+      if (!list) { list = h('ul'); out.append(list); }
+      list.append(h('li', {}, inline(item[1])));
+    } else if (line.trim()) {
+      list = null; out.append(h('p', {}, inline(line)));
+    } else list = null;
+  }
+  return out;
+}
+
 // Ask this paper: DeepSeek answers from the full text (or the abstract if there is none).
 const ASK_EXAMPLES = ['有没有做学生实验？结果是什么？', '样本、年级和研究设计是什么？', '主要的测量工具是什么？', '对高中物理教学有什么启示？'];
 function askBox(p) {
@@ -329,7 +350,7 @@ function askBox(p) {
         const { done, value } = await reader.read();
         if (done) break;
         text += dec.decode(value, { stream: true });
-        answer.textContent = text;
+        answer.replaceChildren(md(text));
       }
       if (!text.trim()) throw new Error('没有收到回答，请再试一次');
       history.push({ role: 'assistant', content: text });
