@@ -10,7 +10,7 @@
 import { LEAN_RULE } from './counter.js';
 import { ARGUMENT_LABELS, ARISTOTLE_IDEAS } from './replies.js';
 
-export const PROMPT_VERSION = 'debate-aristotle-v26';
+export const PROMPT_VERSION = 'debate-aristotle-v27';
 
 /** Steps after Galileo first joins, in order. */
 export const STEP_ORDER = [
@@ -181,7 +181,7 @@ Aristotle's rule has been stated and taken as true for now. Aristotle holds his 
 
 Goal: the student comes up with the idea of putting a heavy and a light body together (tied, glued, connected, in one bag, or any design with the same idea). The meaning is what counts, not exact words.
 
-PASS (step_done = true, student_move = "thought_experiment") if the student's meaning is to put a heavy and a light body together, in any words, even roughly or as a question; how they are joined and what the rule predicts do NOT need to be said. Read the student's recent messages together. The idea may come from the textbook.
+PASS (step_done = true, student_move = "thought_experiment") if the student's meaning is to put a heavy and a light body together, in any words, even roughly or as a question; how they are joined and what the rule predicts do NOT need to be said. Read the student's recent messages together, and read a short reply with the chat just before it: if Aristotle or Galileo has just talked about the heavy and the light stone, a reply like "tie them?", "绑起来？" or "连在一起" counts. The idea may come from the textbook.
 NOT YET (step_done = false):
 ${ARGUMENT_LABELS}
 

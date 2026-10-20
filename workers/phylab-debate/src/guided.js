@@ -18,7 +18,7 @@ Allowed speakers: galileo only. Write exactly 1 message.
 Aristotle has shown his everyday experiment (a stone lands before a feather) and his rule: the heavier a body, the faster it falls. Galileo has told the story of the Leaning Tower of Pisa (a heavy and a light ball landed almost together). Galileo asked the student which idea they agree with.
 Goal: the student picks a side or gives an idea. There is no right answer to reach yet.
 
-Galileo answers in one or two short sentences: he thanks the student and names their choice or idea, without saying who is right and without arguing. He does NOT ask a question: the next part is added automatically.
+Galileo answers in one or two short sentences: he thanks the student and names their choice or idea, without saying who is right and without arguing. He does NOT ask any question (no question mark): Aristotle answers next, then the lesson goes on automatically.
 
 Classify the student's message as student_move:
 - "idea": any choice, idea or opinion about falling bodies.
@@ -133,7 +133,7 @@ Setup the student can see: Galileo took Aristotle's rule as true for now (heavie
 
 Goal: by Aristotle's rule the heavier pair falls FASTER than 8 (for example 12).
 
-PASS (step_done = true) if the student says the pair falls faster than 8, more than 8, "12", or simply "faster" (because it is heavier).
+PASS (step_done = true) if the student says the pair falls faster than 8, more than 8, "12", or simply "faster" / "fast" / "快" / "更快" (because it is heavier).
 NOT YET (step_done = false). Choose one student_move label:
 - "partial": "slower" or "between 4 and 8" because the light stone holds it back (note: a very good idea, we will use it next; for now look only at the weight of the pair and Aristotle's rule); or only "heavier" without the speed.
 - "wrong": "same speed" or "8"; "lighter" (note: put both stones on a scale together).
@@ -154,7 +154,7 @@ The student already found: as one heavier body, the pair falls faster than 8. Ga
 
 Goal: the slow light stone holds back (drags, brakes) the heavy stone, so the pair falls SLOWER than 8, somewhere between 4 and 8.
 
-PASS (step_done = true) if the student says any of: slower than 8; between 4 and 8; about 6 or "the average"; the light stone slows, drags, pulls back or holds back the heavy stone.
+PASS (step_done = true) if the student says any of: slower than 8; simply "slower" / "slow" / "慢" / "变慢"; between 4 and 8; about 6 or "the average"; the light stone slows, drags, pulls back or holds back the heavy stone.
 NOT YET (step_done = false). Choose one student_move label:
 - "partial": repeats "faster" or "12" (note: that was the first way of looking; now think about the slow light stone on the rope).
 - "wrong": "same speed" or "8"; "4"; "the light stone speeds the heavy one up".
@@ -197,6 +197,7 @@ Aristotle's rule has failed by a contradiction. Galileo asked "So?": what is tru
 Goal: the student states the new rule: heavy and light bodies fall at the same speed (if air does not get in the way); weight does not decide falling speed.
 
 PASS (step_done = true) if the student says all bodies, or heavy and light bodies, fall at the same speed / same rate / together, or that falling speed does not depend on weight.
+Read a short reply with Galileo's question just before it: after a question about how fast the light stone falls, or about heavy and light bodies, "same", "the same", "一样", "一样快" or "8 too" means they fall at the same speed: PASS.
 NOT YET (step_done = false). Choose one student_move label:
 - "partial": the pair falls at 8, or at the same speed as the heavy stone, or "neither faster nor slower" (note: good; then adding the light stone changes nothing, so how fast does the light stone fall?); or the light stone falls at 8 too (note: good; so what can you say about heavy and light bodies in general?); or talks only about air (note: without air, what is true?).
 - "wrong": "between 4 and 8", or "the light one falls faster".

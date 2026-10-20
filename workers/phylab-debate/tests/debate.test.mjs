@@ -540,3 +540,8 @@ test('Galileo never starts his own line with a mention of himself', () => {
   const parsed = parseModelReply(providerReply({ student_move: 'idea', step_done: false, messages: [{ speaker: 'galileo', text: '@伽利略谢谢你的选择。' }] }), 'debate', false, 'guided');
   assert.equal(parsed.messages[0].text, '谢谢你的选择。');
 });
+
+test('Galileo never writes a mention of himself inside his line either', () => {
+  const parsed = parseModelReply(providerReply({ student_move: 'help', step_done: false, messages: [{ speaker: 'galileo', text: '我是@伽利略，别慌。@伽利略想想：' }] }), 'conclusion', false, 'guided');
+  assert.equal(parsed.messages[0].text, '我是伽利略，别慌。想想：');
+});
