@@ -811,6 +811,44 @@
       "phd_relevance_en": "Use it as the closest published precedent for teacher-built AI labs such as those on phylab.uk, and position your own work as adding controlled evidence of learning.",
       "reading_recommendation_en": "Read the two case studies and the description of the teacher verification workflow; skim the student feedback.",
       "limitations_en": "Single-teacher case studies with exploratory feedback. The abstract reports no comparison group, sample size or measured learning gains."
+    },
+    {
+      "id": "kozlova-2026-ar-representational-competence",
+      "status": "published",
+      "title": "Exploring the role of conceptual knowledge and representational competence in an augmented reality physics environment",
+      "authors": [
+        "Zoya Kozlova",
+        "Peter A. Edelsbrunner",
+        "Max Warkentin",
+        "Christoph Hoyer",
+        "Stefan Küchemann",
+        "Jochen Kuhn",
+        "Sarah I. Hofer"
+      ],
+      "year": 2026,
+      "published_date": null,
+      "source": "Computers & Education",
+      "doi": "10.1016/j.compedu.2026.105658",
+      "url": "https://doi.org/10.1016/j.compedu.2026.105658",
+      "topics": [
+        "transfer",
+        "cognitive-load",
+        "visualization"
+      ],
+      "evidence_type": "Quasi-experiment with cross-lagged path analysis",
+      "reading_priority": "core",
+      "key_finding_zh": "使用增强现实学习物理的高中生比传统教学组获得更多概念知识；先前的表征能力在两种环境中都能预测之后的概念学习。",
+      "phd_relevance_zh": "在 AR 电场研究中可把表征能力作为前测协变量，并检验 AR 是否能帮助表征能力较弱的学生。",
+      "reading_recommendation_zh": "精读研究设计、表征能力测量工具和路径模型，留意分组方式。",
+      "limitations_zh": "摘要未说明物理主题、干预时长以及是否随机分组，也没有给出效应量。",
+      "featured": false,
+      "date_added": "2026-10-20",
+      "verified_at": "2026-10-20",
+      "verification_url": "https://doi.org/10.1016/j.compedu.2026.105658",
+      "key_finding_en": "High school students who learned physics with augmented reality gained more conceptual knowledge than those taught traditionally. Prior representational competence predicted later conceptual learning in both settings.",
+      "phd_relevance_en": "Measure representational competence as a pre-test covariate in an AR electric-field study, and test whether AR helps students with weaker representational skills.",
+      "reading_recommendation_en": "Read the design, the representational-competence measure and the path model; note how conditions were assigned.",
+      "limitations_en": "The abstract does not state the physics topic, the duration or whether groups were randomised, and gives no effect sizes."
     }
   ]
 }

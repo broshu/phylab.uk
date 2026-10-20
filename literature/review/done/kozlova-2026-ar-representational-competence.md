@@ -1,26 +1,32 @@
 ---
 id: kozlova-2026-ar-representational-competence
-status: pending
-title: "Exploring the role of conceptual knowledge and representational competence in an augmented reality physics environment"
+status: approved
+title: Exploring the role of conceptual knowledge and representational competence in an augmented reality physics environment
 authors:
-  - "Zoya Kozlova"
-  - "Peter A. Edelsbrunner"
-  - "Max Warkentin"
-  - "Christoph Hoyer"
-  - "Stefan Küchemann"
-  - "Jochen Kuhn"
-  - "Sarah I. Hofer"
+  - Zoya Kozlova
+  - Peter A. Edelsbrunner
+  - Max Warkentin
+  - Christoph Hoyer
+  - Stefan Küchemann
+  - Jochen Kuhn
+  - Sarah I. Hofer
 year: 2026
-source: "Computers & Education"
+source: Computers & Education
 doi: 10.1016/j.compedu.2026.105658
 url: https://doi.org/10.1016/j.compedu.2026.105658
 added: 2026-10-20
 proposed_by: Claude
 score: 5
-topics: [visualization, transfer, cognitive-load]
+topics:
+  - transfer
+  - cognitive-load
+  - visualization
 reading_priority: core
-evidence_type: "Quasi-experiment with cross-lagged path analysis"
+evidence_type: Quasi-experiment with cross-lagged path analysis
+decision:
+  at: 2026-10-20 20:51
 ---
+
 ## Why recommended
 
 高中生在 AR 物理环境中学习的对照研究，并指出“表征能力”决定能否从 AR 中获益，直接关系到你的 AR 电场可视化研究设计。
