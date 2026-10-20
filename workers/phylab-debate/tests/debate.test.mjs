@@ -158,9 +158,13 @@ test('after three failed tries with Galileo he reveals and moves on; without him
   assert.equal(out.state.step, 'contradiction');
   assert.ok(out.messages.some((m) => /put it together/.test(m.text)));
   const argue = { move: 'argue', stepDone: false, messages: [{ speaker: 'aristotle', text: 'Well?' }] };
-  const alone = advance(input('faster', { stepTurns: 9, galileo: false }), argue);
-  assert.equal(alone.state.step, 'faster');
+  const alone = advance(input('counter', { stepTurns: 2, galileo: false, view: 'faster' }), argue);
+  assert.equal(alone.state.step, 'counter');
   assert.deepEqual(alone.messages.map((m) => m.speaker), ['aristotle']);
+  // Stuck for REPEAT_LIMIT turns without progress: Galileo comes to guide.
+  const stuck = advance(input('counter', { stepTurns: 5, galileo: false, view: 'faster' }), argue);
+  assert.equal(stuck.joined, 'repeat');
+  assert.ok(stuck.messages.some((m) => m.speaker === 'galileo'));
 });
 
 test('help while Galileo is away calls him back without the AI', () => {

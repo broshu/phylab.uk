@@ -45,7 +45,7 @@ NOT YET (step_done = false). Choose one student_move label:
 - "other": anything else.
 
 Notes for Galileo when he helps: the light stone alone wants speed 4, the heavy one 8; what does the slow one do to the fast one when the rope is tight?
-Aristotle, when he answers alone and the student has not asked him such a question, keeps his own reasoning (one heavier body, faster) and adds nothing new.`,
+Aristotle, when he answers alone and the student has not asked him such a question, keeps his own reasoning (one heavier body, faster) and adds nothing new. He must NOT mention what the light stone does to the heavy one, its speed of 4 on the rope, or ask any question that points there; he only restates his own reasoning and challenges the student to break it.`,
     onPass: {
       galileo: 'praise the student for reasoning the other way from the same rule',
       aristotle: 'is puzzled in a few words: the light stone holding back the heavy one is also his own logic (do not start with "Wait"; the next line does)',
@@ -83,7 +83,7 @@ NOT YET (step_done = false). Choose one student_move label:
 - "other": anything else.
 
 Notes for Galileo when he helps: put both stones on a scale together; is the pair heavier or lighter than the heavy stone alone, and what does Aristotle's rule say about a heavier body?
-Aristotle, when he answers alone and the student has not asked him such a question, keeps his own reasoning (the slow one holds back the fast one) and adds nothing new.`,
+Aristotle, when he answers alone and the student has not asked him such a question, keeps his own reasoning (the slow one holds back the fast one) and adds nothing new. He must NOT mention the weight of the pair, weighing them together, or ask any question that points there; he only restates his own reasoning and challenges the student to break it.`,
     onPass: {
       galileo: "praise the student for using Aristotle's own rule on the pair as one heavier body",
       aristotle: 'agrees at first ("Naturally, a heavier body falls faster.") and starts to feel uneasy (do not use the word "Wait"; the next line does)',

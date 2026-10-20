@@ -630,7 +630,9 @@ function advanceStep(input, result) {
   const helping = wasHere || input.toGalileo;
   const now = { ...state, galileo: helping };
   // In "tie" the label "thought_experiment" is the pass, whatever step_done says.
-  const passedNow = Boolean(result?.stepDone) || (state.step === 'tie' && move === 'thought_experiment');
+  // Reaching a later step (see skipCard) also passes this one.
+  const reachedLater = Boolean(result?.reached && laterSteps(state).includes(result.reached));
+  const passedNow = Boolean(result?.stepDone) || reachedLater || (state.step === 'tie' && move === 'thought_experiment');
 
   if (passedNow || revealDue(now)) {
     // The student may have reached a later step already: jump past it.
@@ -668,8 +670,10 @@ function advanceStep(input, result) {
     };
   }
 
-  // Not yet. Galileo helps only if he is here, was called, or the move needs him.
-  if (helping || GALILEO_MOVES.has(move)) {
+  // Not yet. Galileo helps only if he is here, was called, or the move needs him,
+  // or the student has been stuck in this step for REPEAT_LIMIT turns.
+  const stalled = !helping && !GALILEO_MOVES.has(move) && state.stepTurns + 1 >= REPEAT_LIMIT && state.step !== 'tie';
+  if (helping || GALILEO_MOVES.has(move) || stalled) {
     if (result) {
       // At most one short Aristotle line and one Galileo line, in the model's order.
       let a = 0;
@@ -688,7 +692,7 @@ function advanceStep(input, result) {
       messages,
       state: { ...state, stepTurns: state.stepTurns + 1, helpTurns: state.helpTurns + 1, galileo: true },
       passed,
-      joined: wasHere ? null : input.toGalileo ? 'asked' : move,
+      joined: wasHere ? null : input.toGalileo ? 'asked' : stalled ? 'repeat' : move,
     };
   }
 
@@ -741,7 +745,7 @@ function advanceGuided(input, result) {
     return { messages, state: { ...state, stepTurns: state.stepTurns + 1 }, passed, joined: null };
   }
 
-  const passedNow = Boolean(result?.stepDone);
+  const passedNow = Boolean(result?.stepDone) || Boolean(result?.reached && laterSteps(state).includes(result.reached));
   if (passedNow || revealDue(state)) {
     const target = passedNow && result?.reached && laterSteps(state).includes(result.reached) ? result.reached : state.step;
     passed.push(...(target === state.step ? [state.step] : jumpPath(state, target)));
