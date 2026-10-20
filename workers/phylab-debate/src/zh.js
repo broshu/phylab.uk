@@ -18,6 +18,15 @@ export const ZH = {
   'His rule is: the heavier a body, the faster it falls. Can you say it in your own words, so we all agree on it?': '他的规则是：物体越重，下落越快。你能用自己的话说一遍，让大家对它达成一致吗？',
   "Aristotle's rule is: the heavier a body, the faster it falls. For now, we will pretend this is true.": '亚里士多德的规则是：物体越重，下落越快。我们暂且假设它是对的。',
 
+  // ---- counter: "same speed"
+  'Not so! I hold that a heavier body falls faster. The pair is heavier than my heavy stone, so it should fall faster than 8.':
+    '不对！我认为重的物体下落快。这一对比我的重石头还重，所以应该比 8 更快。',
+  'The same speed? No. A heavier body falls faster, that is my rule, and the pair is heavier, so it beats 8.':
+    '一样快？不。重的物体落得快，这是我的规则；这一对更重，所以要比 8 快。',
+  'Not so! I hold that a heavier body falls faster and a lighter one slower. So the slow stone holds back the fast one, and the pair falls between 4 and 8.':
+    '不对！我认为重的物体下落快，轻的下落慢。所以慢的石头拖住快的石头，这一对的速度在 4 和 8 之间。',
+  'The same speed? No. The light stone is slower by my rule, so it holds the heavy one back, and the pair falls between 4 and 8.':
+    '一样快？不。按我的规则轻石头更慢，它会拖住重石头，所以这一对的速度在 4 和 8 之间。',
   // ---- tie
   'My rule stands, young one: a heavier body falls faster. Break my rule with reasoning alone, if you can.':
     '年轻人，我的规则立得住：重的物体落得更快。有本事就只用推理推翻我的规则。',

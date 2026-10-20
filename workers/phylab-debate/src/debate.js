@@ -712,7 +712,10 @@ function advanceStep(input, result) {
     }
     return { messages, state: { ...state, stepTurns: state.stepTurns + 1, ...patch }, passed, joined: null };
   }
-  messages.push(...own);
+  // "Same speed" in counter: Aristotle holds his position with a fixed line (no hint, no Galileo).
+  const same = state.step === 'counter' && move === 'same_speed' ? stepFor(state).same : null;
+  if (same) messages.push({ speaker: 'aristotle', text: same[state.stepTurns % same.length] });
+  else messages.push(...own);
   return { messages, state: { ...state, stepTurns: state.stepTurns + 1 }, passed, joined: null };
 }
 

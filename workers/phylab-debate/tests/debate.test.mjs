@@ -509,7 +509,7 @@ test('Chinese: every preset line has a Chinese version, and a Chinese chat gets 
     if (S.RETIRED_STEPS.includes(id)) continue;
     msgs(st.opener); lines.push(st.press, st.reveal, ...st.hints); if (st.leave) lines.push(st.leave);
   }
-  for (const st of Object.values(COUNTER)) { msgs(st.opener); lines.push(st.press, st.reveal, st.leave, ...st.hints); }
+  for (const st of Object.values(COUNTER)) { msgs(st.opener); lines.push(st.press, st.reveal, st.leave, ...st.hints, ...st.same); }
   lines.push(...Object.values(CONTRADICTION_OPENER), ...Object.values(S.ENTRANCE), S.ARISTOTLE_ON_HELP, ...S.DEBATE_FALLBACKS, S.RETURN_LINE);
   for (const a of Object.values(R.ARGUMENT_REPLIES)) msgs(a);
   lines.push(R.PISA.galileo.text, R.PISA.aristotle, ...Object.values(R.BEFORE_GALILEO), ...R.DEBATE_TAILS, R.TIE_TAIL);
@@ -521,4 +521,16 @@ test('Chinese: every preset line has a Chinese version, and a Chinese chat gets 
   const n = normalizeInput({ message: '我不知道', state: { step: 'faster', lang: 'zh', galileo: false } });
   assert.equal(n.state.lang, 'zh');
   assert.match(buildPayload(n, 'm').messages[0].content, /simplified Chinese/);
+});
+
+test('counter: "same speed" gets Aristotle holding his rule, not Galileo', () => {
+  for (const view of ['faster', 'slower']) {
+    const n = normalizeInput({ message: 'same speed, 8', state: { condition: 'debate', step: 'counter', view, galileo: false } });
+    const r = advance(n, { move: 'same_speed', stepDone: false, messages: [{ speaker: 'aristotle', text: 'Hint about the light stone.' }] });
+    assert.equal(r.state.step, 'counter');
+    assert.equal(r.joined, null);
+    assert.equal(r.messages.length, 1);
+    assert.equal(r.messages[0].speaker, 'aristotle');
+    assert.match(r.messages[0].text, /heavier body falls faster|slower by my rule/);
+  }
 });

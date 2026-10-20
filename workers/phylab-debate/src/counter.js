@@ -38,7 +38,8 @@ PASS (step_done = true) if the student says, in any words, that the light stone 
 ALSO PASS (step_done = true, student_move = "asked") if the student ASKS Aristotle a question that leads him there (for example "what does the light stone do to the heavy one?", "is the light one slower?", "faster or middle speed?"). Then Aristotle answers honestly with his own rule, so that he himself says the other reasoning: the light stone alone is slow, so on the rope it holds the fast heavy one back, and the pair should fall slower than 8. His answer is the one Aristotle message for this turn; he sounds a little unsure as he says it, and does not ask a new question.
 NOT YET (step_done = false). Choose one student_move label:
 - "concede": the student agrees with Aristotle (yes, faster, 12) and raises no objection.
-- "wrong": "same speed" or "8"; "4"; "the light stone speeds the heavy one up".
+- "same_speed": the pair falls at the same speed, or at 8, or heavy and light fall equally fast (the final answer, but not yet reasoned from Aristotle's rule).
+- "wrong": "4"; "the light stone speeds the heavy one up".
 - "partial": something is wrong with Aristotle's answer, but no reason yet.
 - "argue": argues about something else (air, experiments, books) without answering.
 - "help": asks for help, or says they are stuck or do not know.
@@ -56,6 +57,10 @@ Aristotle, when he answers alone and the student has not asked him such a questi
       'Alone, the light stone wants to fall at 4 and the heavy one at 8. When the rope is tight, what does the slow stone do to the fast one?',
       'Think of a fast runner tied to a slow runner. Does the slow one help the fast one, or hold him back? So is the pair faster or slower than 8?',
       "The light stone acts like a brake, so by Aristotle's own rule the pair should fall slower than 8, between 4 and 8. Can you tell him that?",
+    ],
+    same: [
+      'Not so! I hold that a heavier body falls faster. The pair is heavier than my heavy stone, so it should fall faster than 8.',
+      'The same speed? No. A heavier body falls faster, that is my rule, and the pair is heavier, so it beats 8.',
     ],
     reveal: "But look at it another way: the slow light stone holds back the fast heavy one, so by the same rule the pair should fall slower than 8, between 4 and 8.",
   },
@@ -76,7 +81,8 @@ PASS (step_done = true) if the student says, in any words, that the pair is heav
 ALSO PASS (step_done = true, student_move = "asked") if the student ASKS Aristotle a question that leads him there (for example "is the pair heavier or lighter than the heavy stone?", "what does your rule say about a heavier body?", "faster or middle speed?"). Then Aristotle answers honestly with his own rule, so that he himself says the other reasoning: tied together the stones are one body, heavier than the heavy stone, and by his rule a heavier body falls faster, so the pair should fall faster than 8. His answer is the one Aristotle message for this turn; he sounds a little unsure as he says it, and does not ask a new question.
 NOT YET (step_done = false). Choose one student_move label:
 - "concede": the student agrees with Aristotle (yes, slower, 6) and raises no objection.
-- "wrong": "lighter"; "same speed" or "8"; "it falls slower because it is heavier".
+- "same_speed": the pair falls at the same speed, or at 8, or heavy and light fall equally fast (the final answer, but not yet reasoned from Aristotle's rule).
+- "wrong": "lighter"; "it falls slower because it is heavier".
 - "partial": only "heavier" without the speed, or something is wrong with Aristotle's answer but no reason yet.
 - "argue": argues about something else (air, experiments, books) without answering.
 - "help": asks for help, or says they are stuck or do not know.
@@ -94,6 +100,10 @@ Aristotle, when he answers alone and the student has not asked him such a questi
       'Put both stones on a scale together. Do they weigh more or less than the heavy stone alone?',
       "The pair is heavier than the heavy stone. Now use Aristotle's own rule: a heavier body falls ___?",
       "By Aristotle's own rule, the heavier pair must fall faster than 8, maybe 12. Can you tell him that?",
+    ],
+    same: [
+      'Not so! I hold that a heavier body falls faster and a lighter one slower. So the slow stone holds back the fast one, and the pair falls between 4 and 8.',
+      'The same speed? No. The light stone is slower by my rule, so it holds the heavy one back, and the pair falls between 4 and 8.',
     ],
     reveal: "But look at it another way: together the stones weigh more than the heavy stone alone, so by the same rule the pair must fall faster than 8.",
   },
