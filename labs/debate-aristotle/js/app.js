@@ -297,8 +297,19 @@ function messageNode(m, prev) {
   return li;
 }
 
+// While the opening plays, the chat stays at the top and only scrolls when a
+// new message would start below the visible area (so nothing is pushed away unread).
+let gentleScroll = false;
 function scrollDown() {
-  els.messages.scrollTop = els.messages.scrollHeight;
+  const box = els.messages;
+  if (!gentleScroll) {
+    box.scrollTop = box.scrollHeight;
+    return;
+  }
+  const last = box.lastElementChild;
+  if (!last) return;
+  const top = last.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop;
+  if (top > box.scrollTop + box.clientHeight - 60) box.scrollTop = top - 12;
 }
 
 function append(m) {
@@ -338,7 +349,7 @@ const STEP_CHOICES = {
 };
 
 function renderStarters() {
-  const first = state.lesson.step === 'debate' && !state.log.some((m) => m.speaker === 'student');
+  const first = !busy && state.lesson.step === 'debate' && !state.log.some((m) => m.speaker === 'student');
   const later = (STEP_CHOICES[GROUP] || {})[state.lesson.step];
   const choices = first ? STARTERS : later && !state.lesson.stepTurns && state.log.at(-1)?.speaker !== 'student' ? later : [];
   const show = choices.length > 0;
@@ -557,7 +568,7 @@ els.restart.addEventListener('click', () => {
   state = freshState();
   save();
   setNotice('');
-  renderAll();
+  showOpening();
 });
 
 // Switch teaching mode (for readers of the paper): remember it, then reload so
@@ -618,5 +629,41 @@ document.querySelector('.pinned p').textContent = G.pinned;
 els.nbEmpty.textContent = G.nbEmpty;
 document.documentElement.dataset.group = GROUP;
 
+/**
+ * Show the opening of a new chat from the top. In the guided group Aristotle
+ * speaks first; Galileo's lines follow one by one, about a second apart.
+ */
+async function showOpening() {
+  const fresh = !state.log.some((m) => m.speaker === 'student') && state.log.length === OPENING.length;
+  const firstGalileo = OPENING.findIndex((m) => m.speaker === 'galileo');
+  gentleScroll = fresh;
+  if (!fresh || GROUP !== 'guided' || firstGalileo < 1) {
+    renderAll();
+    requestAnimationFrame(() => { if (fresh) els.messages.scrollTop = 0; gentleScroll = false; });
+    return;
+  }
+  busy = true;
+  state.log = OPENING.slice(0, firstGalileo).map((m) => ({ ...m }));
+  renderAll();
+  requestAnimationFrame(() => { els.messages.scrollTop = 0; });
+  await sleep(reduceMotion ? 0 : 1000);
+  for (const m of OPENING.slice(firstGalileo)) {
+    if (!reduceMotion) {
+      showTyping(m.speaker);
+      await sleep(1000);
+      hideTyping();
+    }
+    state.log.push({ ...m });
+    append(state.log[state.log.length - 1]);
+  }
+  gentleScroll = false;
+  busy = false;
+  save();
+  renderStarters();
+  renderControls();
+  // The last line is Galileo's question: make sure it and the answer buttons are in view.
+  requestAnimationFrame(scrollDown);
+}
+
 state = load();
-renderAll();
+showOpening();
