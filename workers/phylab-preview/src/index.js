@@ -2,10 +2,12 @@
 //   /          the desk: paper screening first, then site preview and settings
 //   /site/     a live copy of phylab.uk read straight from GitHub (any branch)
 //   /api/...   desk actions; every change is a commit in the repository
+//   /api/ask, /api/fulltext   questions about one paper (DeepSeek, full text in KV; see paperchat.js)
 import hubHTML from './hub.html';
 import { TOPICS } from './literature.js';
 import { fetchRaw, listBranches, recentCommits, validBranch } from './github.js';
-import { DEFAULT_PROFILE, addNote, approve, expire, loadDesk, publicDesk, reject, restore, saveProfile, setFeatured } from './store.js';
+import { DEFAULT_PROFILE, addNote, approve, expire, findPaper, loadDesk, publicDesk, reject, restore, saveProfile, setFeatured } from './store.js';
+import { buildSystem, cleanMessages, describe, getFullText, saveUploadedPdf } from './paperchat.js';
 import { REVIEW_DIR } from './reviewfile.js';
 
 const BRANCH_COOKIE = 'pv_branch';
@@ -116,11 +118,25 @@ async function api(request, env, ctx, url, branch) {
     return json({ ...publicDesk(desk), activity, repo: env.GITHUB_REPO || 'broshu/phylab.uk' });
   }
   if (request.method === 'GET' && url.pathname === '/api/branches') return json({ branches: await listBranches(env), current: branch });
+  if (request.method === 'GET' && url.pathname === '/api/fulltext') {
+    const paper = findPaper(await loadDesk(env), id(url.searchParams.get('id')));
+    return json(describe(await getFullText(env, paper)));
+  }
   if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
   if (request.headers.get('Origin') !== url.origin) return json({ error: 'Forbidden' }, 403);
   if (env.WRITE_LIMIT) {
     const { success } = await env.WRITE_LIMIT.limit({ key: request.headers.get('CF-Connecting-IP') || 'anon' });
     if (!success) return json({ error: '操作太频繁，请稍等一分钟' }, 429);
+  }
+  if (url.pathname === '/api/fulltext') {
+    // A PDF uploaded from a card: raw bytes, not JSON.
+    const paper = findPaper(await loadDesk(env), id(url.searchParams.get('id')));
+    try {
+      const record = await saveUploadedPdf(env, paper, new Uint8Array(await request.arrayBuffer()), { force: url.searchParams.get('force') === '1' });
+      return json({ ok: true, ...describe(record) });
+    } catch (error) {
+      return json({ error: error.message, code: error.code }, error.status || 500);
+    }
   }
   const raw = await request.text();
   if (raw.length > 64 * 1024) return json({ error: 'Too large' }, 413);
@@ -148,6 +164,19 @@ async function api(request, env, ctx, url, branch) {
       return json({ ok: true, ...(await setFeatured(env, { id: id(body.id), on: Boolean(body.on) })) });
     case '/api/expire': {
       return json({ ok: true, ...(await expire(env, { remove: ids(body.remove), keep: ids(body.keep) })) });
+    }
+    case '/api/ask': {
+      if (!env.AI) return json({ error: '提问功能还没有接上 DeepSeek' }, 503);
+      if (env.ASK_LIMIT) {
+        const { success } = await env.ASK_LIMIT.limit({ key: request.headers.get('CF-Connecting-IP') || 'anon' });
+        if (!success) return json({ error: '提问太频繁，请稍等一分钟' }, 429);
+      }
+      const messages = cleanMessages(body.messages);
+      const paper = findPaper(await loadDesk(env), id(body.id));
+      const record = await getFullText(env, paper);
+      const stream = await env.AI.chat({ system: buildSystem(paper, record), messages, maxTokens: 1500 });
+      return new Response(stream, { headers: { ...BASE_HEADERS, 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store',
+        'X-Paper-Basis': encodeURIComponent(record ? record.source : '只有摘要') } });
     }
     case '/api/profile':
       return json({ ok: true, ...(await saveProfile(env, { profile: cleanProfile(body.profile) })) });

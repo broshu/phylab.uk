@@ -62,11 +62,13 @@ test('hand-written files are read tolerantly', () => {
 });
 
 test('catalogue entry passes the site check', () => {
-  const entry = catalogEntry({ ...paper, finding: 'B', featured: true }, '2026-10-16');
+  // "Today" is the catalogue's own last update, so newer approvals never break this test.
+  const today = JSON.parse(catalogText).updated_at;
+  const entry = catalogEntry({ ...paper, finding: 'B', featured: true }, today);
   assert.equal(entry.key_finding_en, paper.findings[1].en);
-  const next = JSON.parse(addToCatalog(catalogText, entry, '2026-10-16'));
+  const next = JSON.parse(addToCatalog(catalogText, entry, today));
   assert.deepEqual(validateCatalog(next), []);
-  assert.throws(() => addToCatalog(catalogText, { ...entry, url: 'http://x' }, '2026-10-16'), /HTTPS/);
+  assert.throws(() => addToCatalog(catalogText, { ...entry, url: 'http://x' }, today), /HTTPS/);
 });
 
 test('approve, note, feature, undo and reject are single commits', async () => {
@@ -187,4 +189,44 @@ test('activity comes from commits', async () => {
     assert.equal(c.message, 'Literature review: 3 new candidates');
     assert.equal(c.body, 'From ChatGPT');
   } finally { globalThis.fetch = realFetch; }
+});
+
+test('ask this paper: full text, abstract fallback and wrong-PDF guard', async () => {
+  const { matchesTitle, buildSystem, cleanMessages, saveUploadedPdf, getFullText, describe } = await import('../src/paperchat.js');
+  assert.ok(matchesTitle('AI feedback and independent transfer in high-school mechanics labs\nAda Lovelace…', paper.title));
+  assert.ok(!matchesTitle('Quantum chromodynamics on the lattice', paper.title));
+  assert.throws(() => cleanMessages([{ role: 'assistant', content: 'hi' }]), /问题是空的/);
+  assert.equal(cleanMessages([{ role: 'user', content: ' 有没有做实验？ ' }])[0].content, '有没有做实验？');
+
+  const kv = new Map();
+  const FULLTEXT = { get: async (k, t) => (kv.has(k) ? (t === 'json' ? JSON.parse(kv.get(k)) : kv.get(k)) : null), put: async (k, v) => { kv.set(k, v); }, delete: async k => { kv.delete(k); } };
+  const abstractOnly = buildSystem(paper, null);
+  assert.match(abstractOnly, /只依据摘要/);
+  assert.match(abstractOnly, /We studied two classes\./);
+  await assert.rejects(saveUploadedPdf({ FULLTEXT }, paper, new TextEncoder().encode('hello')), /不是 PDF/);
+  kv.set(`ft:${paper.id}`, JSON.stringify({ source: '上传的 PDF', pages: 12, text: 'Method: 54 students did a pendulum lab.' }));
+  const record = await getFullText({ FULLTEXT }, paper);
+  assert.deepEqual(describe(record), { status: 'full', source: '上传的 PDF', pages: 12, chars: 39 });
+  assert.match(buildSystem(paper, record), /54 students did a pendulum lab/);
+});
+
+test('ask endpoint streams the answer and checks origin', async () => {
+  const gh = fakeGitHub({ [`${PENDING_DIR}/${paper.id}.md`]: serializeReview(paper) });
+  gh.install();
+  let seen;
+  const AI = { chat: async input => { seen = input; return new Response('有，做了单摆实验。').body; } };
+  const kv = new Map([[`ft-miss:${paper.id}`, '1']]);
+  const FULLTEXT = { get: async (k, t) => (kv.has(k) ? (t === 'json' ? JSON.parse(kv.get(k)) : kv.get(k)) : null), put: async (k, v) => { kv.set(k, v); }, delete: async k => { kv.delete(k); } };
+  try {
+    const e = { ...env, AI, FULLTEXT };
+    const req = origin => new Request('https://preview.phylab.uk/api/ask', { method: 'POST', headers: { Origin: origin, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: paper.id, messages: [{ role: 'user', content: '有没有做学生实验？' }] }) });
+    assert.equal((await worker.fetch(req('https://evil.example'), e, {})).status, 403);
+    const res = await worker.fetch(req('https://preview.phylab.uk'), e, {});
+    assert.equal(res.status, 200);
+    assert.equal(await res.text(), '有，做了单摆实验。');
+    assert.equal(decodeURIComponent(res.headers.get('X-Paper-Basis')), '只有摘要');
+    assert.match(seen.system, /只依据摘要/);
+    assert.equal(seen.messages.at(-1).content, '有没有做学生实验？');
+  } finally { gh.restore?.(); }
 });

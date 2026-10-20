@@ -75,6 +75,8 @@ export function takenIds(desk) {
   return new Set([...desk.catalog.papers, ...desk.pending, ...desk.done].map(p => p.id));
 }
 
+export function findPaper(desk, id) { return find(desk, id).paper; }
+
 function find(desk, id, where = ['pending', 'done']) {
   for (const place of where) {
     const paper = desk[place].find(p => p.id === id && !p.broken);

@@ -8,7 +8,15 @@
   "routes": [{ "pattern": "preview.phylab.uk", "custom_domain": true }],
   "rules": [{ "type": "Text", "globs": ["**/*.html"], "fallthrough": true }],
   // Desk actions are public; cap them per visitor IP.
-  "ratelimits": [{ "name": "WRITE_LIMIT", "namespace_id": "4801", "simple": { "limit": 20, "period": 60 } }],
+  "ratelimits": [
+    { "name": "WRITE_LIMIT", "namespace_id": "4801", "simple": { "limit": 20, "period": 60 } },
+    // "Ask this paper" calls DeepSeek, so it gets its own, tighter cap.
+    { "name": "ASK_LIMIT", "namespace_id": "4802", "simple": { "limit": 8, "period": 60 } }
+  ],
+  // Full text of papers, kept privately (most papers are not open access).
+  "kv_namespaces": [{ "binding": "FULLTEXT", "id": "5684f7728b1e4726af816e2a4ab4a04e" }],
+  // DeepSeek through phylab-debate, which holds the API key. Internal only.
+  "services": [{ "binding": "AI", "service": "phylab-debate", "entrypoint": "PaperChat" }],
   "vars": {
     "GITHUB_REPO": "broshu/phylab.uk",
     "GITHUB_BRANCH": "main",

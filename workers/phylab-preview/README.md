@@ -3,6 +3,7 @@
 A public working site next to phylab.uk.
 
 - **`/` — paper screening** (the first section). Candidates proposed by an AI, or added by hand, appear as cards showing the one-line recommendation, a short summary and the full abstract in English with a Chinese translation. Reviewers tick topics, choose a priority and one of two key findings, star a paper for the homepage shelf, write a reason, and press 收录 (approve) or 放弃 (reject). They can also leave a note without deciding. Every action is a commit to this repository. Reviewing is anonymous: no name is asked for or recorded. Approved papers reach phylab.uk about a minute later; any decision can be undone.
+- **问这篇论文 (ask this paper).** Every card has a question box. DeepSeek answers from the paper's full text when it has one, otherwise from the abstract, and says which. Full text comes from an open-access copy in a repository (OpenAlex, Semantic Scholar, arXiv; publisher sites block automated downloads) or from a PDF uploaded on the card. The extracted text is stored privately in Workers KV (`FULLTEXT`), never in this public repository. Questions are limited to 8 per minute per IP. Code: `src/paperchat.js`.
 - **`/site/` — site preview.** A live copy of phylab.uk read straight from GitHub. Pick any branch in the 网站预览 tab to see it before merging; the public site is untouched. HTML pages carry a small badge that leads back to the desk.
 - **筛选标准** — topics, keywords, journals, notes and a score threshold, saved as `literature/review/profile.json` for whoever proposes papers to read.
 
@@ -32,6 +33,9 @@ The site does not search for papers itself. Any AI with GitHub access (Claude, C
 | --- | --- | --- |
 | `GITHUB_TOKEN` | build secret | Fine-grained token for `broshu/phylab.uk` only, **Contents: Read and write**. Reads the repository and makes the commits. |
 | `GITHUB_REPO`, `GITHUB_BRANCH`, `PREVIEW_DEFAULT_BRANCH` | vars in `wrangler.jsonc` | |
+| `FULLTEXT` | KV namespace `phylab-preview-fulltext` | Extracted full text of papers (`ft:<id>`), and a 12-hour "no open copy found" marker (`ft-miss:<id>`). |
+| `AI` | service binding to `phylab-debate`, entrypoint `PaperChat` | DeepSeek for the question box. The API key stays in phylab-debate; nothing to set here. |
+| `ASK_LIMIT` | rate limit | 8 questions per minute per IP. |
 
 The build secret is copied to the runtime secret by `scripts/deploy.sh` on every deploy, as in `phylab-debate`.
 

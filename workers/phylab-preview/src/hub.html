@@ -92,6 +92,23 @@
   .abstract .credit { grid-column: 1 / -1; font-size: 12px; color: var(--site-muted); }
   .abstract.none, .abstract .none { font-size: 13.5px; color: var(--site-muted); margin: 8px 0 0; display: block; }
   @media (max-width: 720px) { .abstract { grid-template-columns: 1fr; } }
+  /* Ask this paper */
+  .ask { margin-top: 14px; border: 1px solid var(--site-border-soft); border-radius: 10px; padding: 12px; }
+  .ask .top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px; }
+  .ask .top b { font-size: 14px; }
+  .ask .basis { font-size: 12.5px; color: var(--site-muted); }
+  .ask .basis.full { color: var(--site-green); }
+  .ask .upload { font-size: 12.5px; color: var(--site-green); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; background: none; border: 0; padding: 0; }
+  .ask .log { display: grid; gap: 8px; margin: 10px 0 0; }
+  .ask .q, .ask .a { font-size: 14px; line-height: 1.6; white-space: pre-wrap; border-radius: 10px; padding: 8px 11px; max-width: 100%; }
+  .ask .q { justify-self: end; background: var(--site-tint-green); }
+  .ask .a { background: var(--site-surface-soft); }
+  .ask .a.err { color: var(--score); }
+  .ask .examples { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .ask .examples button { border: 0; background: var(--site-surface-soft); border-radius: 6px; padding: 3px 9px; font-size: 12.5px; cursor: pointer; color: var(--site-muted); }
+  .ask .examples button:hover { color: var(--ink); }
+  .ask .row2 { display: flex; gap: 6px; margin-top: 10px; align-items: flex-end; }
+  .ask textarea { min-height: 40px; height: 40px; }
   label.field { display: block; margin-top: 10px; }
   label.field span { display: block; font-size: 12.5px; color: var(--site-muted); margin-bottom: 3px; }
   textarea, input[type=text], select { width: 100%; font: inherit; font-size: 14px; color: var(--ink); background: var(--site-bg); border: 1px solid var(--site-border); border-radius: 8px; padding: 7px 10px; }
@@ -251,6 +268,83 @@ function stamp(kind, when, land) {
   return h('div', { class: `stamp ${kind}${land ? ' land' : ''}` }, kind === 'yes' ? '收录' : '不要', when ? h('small', { text: when }) : null);
 }
 
+// Ask this paper: DeepSeek answers from the full text (or the abstract if there is none).
+const ASK_EXAMPLES = ['有没有做学生实验？结果是什么？', '样本、年级和研究设计是什么？', '主要的测量工具是什么？', '对高中物理教学有什么启示？'];
+function askBox(p) {
+  const history = [];
+  const basis = h('span', { class: 'basis', text: '会先找这篇论文的全文' });
+  const file = h('input', { type: 'file', accept: 'application/pdf,.pdf', hidden: true });
+  const upload = h('button', { class: 'upload', type: 'button', hidden: true, on: { click: () => file.click() } }, '上传 PDF');
+  const log = h('div', { class: 'log' });
+  const input = h('textarea', { placeholder: '问这篇论文，例如：有没有做学生实验，结果是什么？', maxlength: 1000, rows: 1 });
+  const send = h('button', { class: 'btn yes', type: 'button' }, '提问');
+  let checked = null;
+
+  function show(info) {
+    const full = info.status === 'full';
+    basis.className = `basis${full ? ' full' : ''}`;
+    basis.textContent = full ? `依据全文：${info.source}${info.pages ? `，${info.pages} 页` : ''}` : '没找到可自动下载的全文，回答只依据摘要。';
+    upload.hidden = false;
+    upload.textContent = full ? '换一个 PDF' : '上传 PDF 全文';
+  }
+  function check() {
+    if (!checked) {
+      basis.textContent = '正在找全文…';
+      checked = api(`/api/fulltext?id=${encodeURIComponent(p.id)}`).then(show).catch(err => { basis.textContent = err.message; checked = null; });
+    }
+    return checked;
+  }
+  async function sendPdf(blob, force) {
+    basis.className = 'basis'; basis.textContent = '正在读取 PDF…';
+    const res = await fetch(`/api/fulltext?id=${encodeURIComponent(p.id)}${force ? '&force=1' : ''}`, { method: 'POST', headers: { 'Content-Type': 'application/pdf' }, body: blob });
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 409 && data.code === 'title_mismatch') {
+      basis.className = 'basis'; basis.textContent = data.error;
+      basis.append(' ', h('button', { class: 'upload', type: 'button', on: { click: () => sendPdf(blob, true) } }, '仍然使用这个 PDF'));
+      upload.hidden = false; return;
+    }
+    if (!res.ok) { basis.className = 'basis'; basis.textContent = data.error || `上传失败（${res.status}）`; upload.hidden = false; return; }
+    checked = Promise.resolve(data); show(data);
+  }
+  file.addEventListener('change', () => { if (file.files[0]) sendPdf(file.files[0], false); file.value = ''; });
+
+  async function ask(question) {
+    question = question.trim();
+    if (!question || send.disabled) return;
+    input.value = ''; send.disabled = true;
+    history.push({ role: 'user', content: question });
+    log.append(h('div', { class: 'q', text: question }));
+    const answer = h('div', { class: 'a', text: '…' });
+    log.append(answer);
+    await check();
+    try {
+      const res = await fetch('/api/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: p.id, messages: history }) });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || `出错了（${res.status}）`);
+      const reader = res.body.getReader(), dec = new TextDecoder();
+      let text = '';
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        text += dec.decode(value, { stream: true });
+        answer.textContent = text;
+      }
+      if (!text.trim()) throw new Error('没有收到回答，请再试一次');
+      history.push({ role: 'assistant', content: text });
+    } catch (err) {
+      history.pop(); answer.className = 'a err'; answer.textContent = err.message;
+    }
+    send.disabled = false;
+  }
+  send.addEventListener('click', () => ask(input.value));
+  input.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); ask(input.value); } });
+  input.addEventListener('focus', check, { once: true });
+  return h('section', { class: 'ask' },
+    h('div', { class: 'top' }, h('b', { text: '问这篇论文' }), basis, upload, file),
+    log,
+    h('div', { class: 'examples' }, ASK_EXAMPLES.map(q => h('button', { type: 'button', on: { click: () => ask(q) } }, q))),
+    h('div', { class: 'row2' }, input, send));
+}
+
 // The full abstract, original English and Chinese translation, always visible.
 function abstractBlock(a) {
   const en = (a?.en || '').trim(), zh = (a?.zh || '').trim();
@@ -325,6 +419,7 @@ function slip(p) {
       p.summary ? h('p', { class: 'brief', text: p.summary }) : null,
       p.why ? h('p', { class: 'brief why', text: `推荐理由：${p.why}` }) : null,
       abstractBlock(p.abstract),
+      askBox(p),
       notes,
       h('div', { class: 'editable' },
         h('div', { class: 'group' }, h('div', { class: 'g', text: '主题' }), h('div', { class: 'chips' },
