@@ -550,3 +550,12 @@ test('"I don\'t know" brings Galileo even if the model labelled it "other"', () 
   const out = advance(normalizeInput({ message: '我不知道', state: { condition: 'debate', step: 'tie', galileo: false } }), { move: 'other', stepDone: false, messages: [{ speaker: 'aristotle', text: '不知道？' }] });
   assert.equal(out.state.galileo, true);
 });
+
+test('paper chat turns DeepSeek events into plain text', async () => {
+  const { deltaText, PaperChat } = await import('../src/paperchat.js');
+  const sse = 'data: {"choices":[{"delta":{"content":"是的，"}}]}\n\ndata: {"choices":[{"delta":{"content":"做了实验。"}}]}\n\ndata: [DONE]\n\n';
+  const out = await new Response(deltaText(new Response(sse).body)).text();
+  assert.equal(out, '是的，做了实验。');
+  const chat = new PaperChat({}, {});
+  await assert.rejects(chat.chat({ system: 's', messages: [{ role: 'user', content: 'q' }] }), /key is not set/);
+});

@@ -86,6 +86,10 @@ SELECT * FROM turns WHERE session = ? ORDER BY id;
 
 `GET /health` reports whether the key is set.
 
+## PaperChat (internal)
+
+`src/paperchat.js` exports `PaperChat`, a `WorkerEntrypoint` that streams a DeepSeek answer for a given system prompt and chat history. It is not reachable from the internet; preview.phylab.uk calls it through a service binding for its "ask this paper" box, so the DeepSeek key stays only here.
+
 ## Settings
 
 - `DEEPSEEK_API_KEY` is kept as a **build** secret (Worker → Settings → Builds → Variables and secrets). The deploy command `npm run deploy` (`scripts/deploy.sh`) copies it to the runtime secret on every deploy.

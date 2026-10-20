@@ -1,5 +1,6 @@
 import { advance, buildPayload, helpTurn, localize, normalizeInput, parseModelReply, wrongLanguage } from './debate.js';
 import { PROMPT_VERSION } from './steps.js';
+export { PaperChat } from './paperchat.js';
 
 const MAX_REQUEST_BYTES = 16 * 1024;
 const MAX_PROVIDER_BYTES = 64 * 1024;
