@@ -52,10 +52,10 @@ export const BEFORE_GALILEO = {
  * demands a proof; that is the only nudge towards reasoning he ever gives.
  */
 export const DEBATE_TAILS = [
-  'You say so, but can you prove it?',
-  'Prove it to me, then.',
-  'Words are easy, young one. Prove it.',
-  'If you are so sure, prove it.',
+  'If you think otherwise, prove it.',
+  'Prove me wrong, then.',
+  'Words are easy, young one. Show me a proof.',
+  'Can you prove that I am wrong?',
 ];
 
 /** "tie" step: each preset reply ends with this challenge. */
