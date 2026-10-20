@@ -4,7 +4,7 @@
   "labs": [
     { "slug": "volleyball-serve", "title": "Volleyball Serve" },
     { "slug": "frame-sequencer", "title": "Frame Sequencer" },
-    { "slug": "debate-aristotle", "title": "Debate Aristotle" },
+    { "slug": "aristotle", "title": "Debate Aristotle" },
     { "slug": "electric-potential-3d", "title": "Electric Potential 3D" },
     { "slug": "oscilloscope-principle", "title": "Oscilloscope Principle" },
     { "slug": "reference-circle", "title": "Reference Circle" },

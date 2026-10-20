@@ -96,21 +96,14 @@ const GROUPS_ZH = {
 
 const GROUPS = L(GROUPS_EN, GROUPS_ZH);
 
-/**
- * Which group this browser is in: ?group=debate|guided sets it (for a teacher
- * handing out two links) or the switch; otherwise debate mode.
- */
+/** Each group has its own address: /labs/aristotle/ (debate) and /labs/galileo/ (guided). */
+const GROUP_PATHS = { debate: '/labs/aristotle/', guided: '/labs/galileo/' };
+
+/** Which group this page is: the address decides; the old ?group= link still works. */
 function chooseGroup() {
   const asked = new URLSearchParams(location.search).get('group');
-  let group = asked in GROUPS ? asked : null;
-  try {
-    if (!group) group = localStorage.getItem(GROUP_STORE);
-    if (!(group in GROUPS)) group = 'debate';
-    localStorage.setItem(GROUP_STORE, group);
-  } catch {
-    if (!(group in GROUPS)) group = 'debate';
-  }
-  return group;
+  if (asked in GROUPS) return asked;
+  return /\/labs\/galileo\b/.test(location.pathname) ? 'guided' : 'debate';
 }
 
 const GROUP = chooseGroup();
@@ -148,6 +141,7 @@ const els = {
 
 let state;
 let busy = false;
+let opening = false; // the opening of a new chat is still playing
 
 function newSession() {
   try { return crypto.randomUUID(); } catch { return `s${Date.now().toString(36)}${Math.random().toString(36).slice(2, 12)}`; }
@@ -577,14 +571,15 @@ document.querySelectorAll('.mode-option[data-group]').forEach((btn) => {
   btn.setAttribute('aria-pressed', String(btn.dataset.group === GROUP));
   btn.addEventListener('click', () => {
     const next = btn.dataset.group;
-    if (next === GROUP || busy) return;
+    if (next === GROUP || (busy && !opening)) return;
     if (state.log.some((m) => m.speaker === 'student') && !confirm(L('Switch teaching mode? This chat will be cleared.', '切换教学模式？当前对话会被清空。'))) return;
     try {
       localStorage.setItem(GROUP_STORE, next);
       localStorage.removeItem(STORE);
     } catch { /* storage is optional */ }
-    const url = new URL(location.href);
-    url.searchParams.set('group', next);
+    const url = new URL(GROUP_PATHS[next], location.href);
+    const lang = new URLSearchParams(location.search).get('lang');
+    if (lang) url.searchParams.set('lang', lang);
     location.href = url.toString();
   });
 });
@@ -595,7 +590,7 @@ document.querySelectorAll('.lang-option').forEach((btn) => {
   btn.setAttribute('aria-pressed', String(btn.dataset.lang === LANG));
   btn.addEventListener('click', () => {
     const next = btn.dataset.lang;
-    if (next === LANG || busy) return;
+    if (next === LANG || (busy && !opening)) return;
     if (state.log.some((m) => m.speaker === 'student') && !confirm(next === 'zh' ? 'Switch to Chinese? This chat will be cleared. / 切换到中文？当前对话会被清空。' : '切换到英文？当前对话会被清空。 / Switch to English? This chat will be cleared.')) return;
     try {
       localStorage.setItem(LANG_STORE, next);
@@ -643,6 +638,7 @@ async function showOpening() {
     return;
   }
   busy = true;
+  opening = true;
   state.log = OPENING.slice(0, firstGalileo).map((m) => ({ ...m }));
   renderAll();
   requestAnimationFrame(() => { els.messages.scrollTop = 0; });
@@ -658,6 +654,7 @@ async function showOpening() {
   }
   gentleScroll = false;
   busy = false;
+  opening = false;
   save();
   renderStarters();
   renderControls();

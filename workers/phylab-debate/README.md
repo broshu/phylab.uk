@@ -1,6 +1,6 @@
 # Debate Aristotle Worker
 
-Backend for the **Debate Aristotle** lab (`/labs/debate-aristotle/`). The student
+Backend for the **Debate Aristotle** lab (`/labs/aristotle/` debate group, `/labs/galileo/` guided group). The student
 argues with Aristotle in a group chat, then works through the tied-stones
 thought experiment. Galileo joins only when the student asks for help, sides
 with Aristotle, or clearly states a wrong idea.
