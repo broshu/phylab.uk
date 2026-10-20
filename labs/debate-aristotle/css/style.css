@@ -142,6 +142,10 @@ h1, h2, p { margin: 0; }
 
 .system { align-self: center; font-size: 12.5px; color: var(--muted); background: var(--card); border: 1px solid var(--soft-line); padding: 4px 12px; border-radius: 999px; animation: rise .25s ease; }
 .system.win { color: var(--site-success); font-weight: 600; }
+.reward { align-self: center; width: min(100%, 420px); text-align: center; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px 14px; animation: rise .3s ease; }
+.reward-title { font-size: 13px; font-weight: 600; color: var(--muted); letter-spacing: .02em; }
+.reward-code { margin: 6px 0 8px; font-size: 30px; font-weight: 700; letter-spacing: .12em; font-variant-numeric: tabular-nums; color: var(--site-success); user-select: all; }
+.reward-note { margin: 0; font-size: 12.5px; line-height: 1.5; color: var(--muted); text-align: left; }
 
 .typing .bubble { display: inline-flex; gap: 4px; padding: 13px 14px; }
 .typing .bubble i { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); animation: blink 1.2s infinite ease-in-out; }

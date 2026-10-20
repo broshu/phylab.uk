@@ -159,7 +159,34 @@ function renderMembers(animate = false, present = galileoIn()) {
   els.memberCount.textContent = present ? '3 members' : '2 members';
 }
 
+/*
+ * Completion code. In class each student's code is their 9-digit student
+ * number × 3 + 6: they hand it in as homework, and the teacher works back
+ * ((code − 6) ÷ 3) to the student number. This public demo has no student
+ * numbers, so it shows the code for a made-up student number.
+ */
+const DEMO_STUDENT_NUMBER = 202612345;
+const completionCode = (studentNumber) => String(studentNumber * 3 + 6);
+
+function rewardNode() {
+  const li = document.createElement('li');
+  li.className = 'reward';
+  const title = document.createElement('div');
+  title.className = 'reward-title';
+  title.textContent = 'Your completion code';
+  const code = document.createElement('div');
+  code.className = 'reward-code';
+  code.textContent = completionCode(DEMO_STUDENT_NUMBER);
+  const note = document.createElement('p');
+  note.className = 'reward-note';
+  note.textContent =
+    'Hand this code to your teacher as proof that you finished. In class, each student gets their own code, made from their 9-digit student number × 3 + 6, so the teacher can work back to who finished. This is the demo version: the code above is for the example student number 202612345.';
+  li.append(title, code, note);
+  return li;
+}
+
 function messageNode(m, prev) {
+  if (m.speaker === 'system' && m.reward) return rewardNode();
   const li = document.createElement('li');
   if (m.speaker === 'system') {
     li.className = m.win ? 'system win' : 'system';
@@ -378,7 +405,13 @@ async function turn(type, message) {
 
     let messages = data.messages || [];
     if (before !== 'done' && state.lesson.step === 'done') {
-      messages = [...messages.slice(0, -2), { speaker: 'system', text: 'You won the debate!', win: true }, ...messages.slice(-2)];
+      const win = GROUP === 'guided' ? 'Lesson complete!' : 'You won the debate!';
+      messages = [
+        ...messages.slice(0, -2),
+        { speaker: 'system', text: win, win: true },
+        ...messages.slice(-2),
+        { speaker: 'system', text: 'Completion code', reward: true },
+      ];
     }
     // Show the notebook change right after the reply that earned it.
     const joinedNow = before === 'debate' && state.lesson.step !== 'debate';
