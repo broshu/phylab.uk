@@ -1,24 +1,30 @@
 ---
 id: lawson-2026-chatgpt-media-comparisons
-status: pending
+status: rejected
 title: "Color me confounded: A critical analysis of media comparisons on ChatGPT in education"
 authors:
-  - "Alyssa P. Lawson"
-  - "Amedee Marchand Martella"
-  - "Joshua Weidlich"
-  - "Miriam Mulders"
-  - "Josef Buchner"
+  - Alyssa P. Lawson
+  - Amedee Marchand Martella
+  - Joshua Weidlich
+  - Miriam Mulders
+  - Josef Buchner
 year: 2026
-source: "Computers & Education"
+source: Computers & Education
 doi: 10.1016/j.compedu.2026.105701
 url: https://doi.org/10.1016/j.compedu.2026.105701
 added: 2026-10-20
 proposed_by: Claude
 score: 5
-topics: [ai, assessment]
+topics:
+  - ai
+  - assessment
 reading_priority: core
-evidence_type: "Critical review of meta-analysed studies"
+evidence_type: Critical review of meta-analysed studies
+decision:
+  at: 2026-10-20 20:53
+  reason: 不是物理教育
 ---
+
 ## Why recommended
 
 指出许多“ChatGPT 提高学习”研究把 AI 与其他教学因素混在一起比较，正是你三组 AI 作业实验和辩论实验在设计上必须避开的问题。
