@@ -8,9 +8,9 @@
  */
 
 import { LEAN_RULE } from './counter.js';
-import { ARGUMENT_LABELS } from './replies.js';
+import { ARGUMENT_LABELS, ARISTOTLE_IDEAS } from './replies.js';
 
-export const PROMPT_VERSION = 'debate-aristotle-v10';
+export const PROMPT_VERSION = 'debate-aristotle-v11';
 
 /** Steps after Galileo first joins, in order. */
 export const STEP_ORDER = [
@@ -58,7 +58,9 @@ ${ARGUMENT_LABELS}
 step_done is always false in this step.
 
 What to write in "messages":
-- For "same_time", "experiment", "air", "vacuum", "book", "formula", "pisa", "concede", "help": write "messages": []. The lesson code adds Aristotle's fixed reply.
+- For "concede" and "help": write "messages": []. The lesson code adds the reply.
+- For "same_time", "experiment", "air", "vacuum", "book", "formula", "pisa": exactly 1 Aristotle message, 1 to 3 short sentences, following the idea below for that label, and ending by asking the student to prove that he is wrong (in varied words, never "you say so").
+${ARISTOTLE_IDEAS}
 - For "thought_experiment": exactly 1 Aristotle message. He is surprised and curious ("Joined together? A strange idea...") but does not answer it yet. No question: the next question is added automatically. ${LEAN_RULE}
 - For "thought_partial": exactly 1 Aristotle message. He takes up what the student said and asks them to say exactly what they would do and with which bodies, and what his rule would say then. He adds nothing the student has not said.
 - For "other": exactly 1 Aristotle message. He answers the student's point directly with one everyday example or one excuse, and ends by asking the student to prove their claim.`;
@@ -82,6 +84,8 @@ export const ENTRANCE = {
     "Wait, don't give up yet! I'm Galileo, and I'm on your side. Aristotle argues well, but I think we can beat him with his own rule.",
   help:
     "Hard to win with examples, isn't it? Every time you find one, Aristotle finds an excuse. I'm Galileo, and I'm on your side. Let's try a different weapon: pure reasoning.",
+  repeat:
+    "You have pushed that point again and again, and Aristotle always finds an excuse. I'm Galileo, and I'm on your side. Examples will not move him. Let's use a weapon he cannot dodge: his own rule.",
   asked:
     "You called? I'm Galileo, and I'm on your side. Examples alone won't beat Aristotle. Let's beat him with pure reasoning instead.",
 };

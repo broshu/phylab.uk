@@ -51,7 +51,7 @@ Steps: `debate` → `premise` → `tie` (debate group only: Aristotle holds his 
     on. Without him there is no automatic reveal.
   - Aristotle leads the final reflection (`method`) and the free questions
     (`done`); @Galileo still works there.
-- Aristotle's preset replies (`src/replies.js`): in the open debate and the `tie` step the model only labels the student's argument (`same_time`, `experiment`, `air`, `vacuum`, `book`, `formula`, `pisa`, …) and the code adds Aristotle's fixed reply plus a challenge; `thought_partial` and `other` are written by the model. `pisa` is an easter egg: once per chat Galileo steps in with the tower drop (animation), then Aristotle answers.
+- Aristotle's replies (`src/replies.js`): in the open debate and the `tie` step the model labels the student's argument (`same_time`, `experiment`, `air`, `vacuum`, `book`, `formula`, `pisa`, …) and writes Aristotle's reply in its own words around that label's fixed idea, reacting to what the student wrote; the fixed wordings are the fallback. When one kind of argument comes back 6 times (`REPEAT_LIMIT`), Galileo steps in to guide. `pisa` is an easter egg: once per chat Galileo steps in with the tower drop (animation), then Aristotle answers.
 - Guided group: after 3 failed tries in one step (`stepTurns`), Galileo explains the idea and moves on.
 - The **@Galileo** button puts a mention in the message box. A message with "@Galileo" and a question is answered by Galileo (he joins if needed); "@Galileo" on its own works as a help button and never calls the model.
 - If DeepSeek fails, replies in Chinese twice, or returns broken JSON, the

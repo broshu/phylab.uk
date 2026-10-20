@@ -13,7 +13,7 @@ import {
   guidedPresence,
 } from './guided.js';
 import { CONTRADICTION_OPENER, COUNTER } from './counter.js';
-import { ARGUMENT_REPLIES, BEFORE_GALILEO, DEBATE_TAILS, PISA, PRESET_MOVES, TIE_TAIL } from './replies.js';
+import { ARGUMENT_REPLIES, ARISTOTLE_IDEAS, BEFORE_GALILEO, DEBATE_TAILS, PISA, PRESET_MOVES, REPEAT_LIMIT, TIE_TAIL } from './replies.js';
 import {
   ALL_STEPS,
   ARISTOTLE_ON_HELP,
@@ -224,7 +224,8 @@ export function buildCard(state, toGalileo = false) {
 }
 
 const TIE_ARISTOTLE = `ARISTOTLE'S LINES IN THIS STEP (when step_done is false and Galileo does not come):
-- For "same_time", "experiment", "air", "vacuum", "book", "formula", "pisa": write "messages": []. The lesson code adds Aristotle's fixed reply.
+- For "same_time", "experiment", "air", "vacuum", "book", "formula", "pisa": one Aristotle message, 1 to 3 short sentences, following the idea below for that label, and ending by challenging the student to break his rule with reasoning alone.
+${ARISTOTLE_IDEAS}
 - For "thought_partial": one Aristotle message that takes up what the student said and asks them to say exactly what they would do, with which bodies, and what his rule would say then. He adds nothing the student has not said.
 - For "other": one Aristotle message that holds his position with an everyday example or excuse. He never suggests any idea.`;
 
@@ -331,7 +332,7 @@ export function hasChinese(messages) {
 /* Deterministic lesson flow                                           */
 /* ------------------------------------------------------------------ */
 
-/** @param {'concede'|'help'|'asked'} reason */
+/** @param {'concede'|'help'|'asked'|'repeat'} reason */
 function galileoJoins(reason) {
   return [
     { speaker: 'system', text: 'Galileo joined the chat' },
@@ -416,8 +417,12 @@ function presetReply(move, state, tail, messages, own) {
   const options = ARGUMENT_REPLIES[/** @type {keyof typeof ARGUMENT_REPLIES} */ (label)];
   if (options) {
     const n = state.used?.[label] || 0;
+    // The model's own words for this idea; the fixed wording only if it wrote none.
     const preset = options[n % options.length];
-    messages.push({ speaker: 'aristotle', ...preset, text: end(preset.text) });
+    const line = own.find((m) => m.speaker === 'aristotle' && m.text);
+    const text = line ? line.text : end(preset.text);
+    const image = n === 0 ? options[0].image : undefined;
+    messages.push({ speaker: 'aristotle', text, ...(image ? { image } : {}) });
     return { used: { ...state.used, [label]: n + 1 } };
   }
   messages.push(...(own.length ? own : [{ speaker: 'aristotle', text: end('My rule stands.') }]));
@@ -468,7 +473,19 @@ function advanceStep(input, result) {
 
     const tail = move === 'thought_experiment' ? '' : DEBATE_TAILS[state.debateTurns % DEBATE_TAILS.length];
     const fallback = { speaker: 'aristotle', text: DEBATE_FALLBACKS[state.debateTurns % DEBATE_FALLBACKS.length] };
-    const patch = presetReply(move, state, tail, messages, result ? only('aristotle').slice(0, 1) : [fallback]);
+    const patch = presetReply(move, state, tail, messages, result ? only('aristotle').slice(0, 1) : ARGUMENT_REPLIES[/** @type {keyof typeof ARGUMENT_REPLIES} */ (move)] ? [] : [fallback]);
+    const label = move === 'pisa' && !patch.pisaSeen ? 'experiment' : move;
+
+    // The same argument has come back REPEAT_LIMIT times: Galileo steps in to guide.
+    if (patch.used && patch.used[label] === REPEAT_LIMIT) {
+      messages.push(...galileoJoins('repeat'));
+      return {
+        messages,
+        state: { ...state, ...patch, step: 'premise', stepTurns: 0, helpTurns: 0, debateTurns, galileo: true },
+        passed,
+        joined: 'repeat',
+      };
+    }
 
     // The student invented the thought experiment (which takes the rule as
     // true): Aristotle follows it straight into the tied stones. He never
@@ -562,7 +579,14 @@ function advanceStep(input, result) {
   const a = only('aristotle').slice(0, 1);
   const own = a.length ? a : [{ speaker: 'aristotle', text: stepFor(state).press }];
   if (state.step === 'tie') {
-    const patch = presetReply(move, state, TIE_TAIL, messages, own);
+    const patch = presetReply(move, state, TIE_TAIL, messages, a);
+    const label = move === 'pisa' && !patch.pisaSeen ? 'experiment' : move;
+    // The same argument has come back REPEAT_LIMIT times: Galileo steps in with a hint.
+    if (patch.used && patch.used[label] === REPEAT_LIMIT) {
+      const hinted = { ...state, ...patch, galileo: true };
+      messages.push(JOINED, { speaker: 'galileo', text: `${ENTRANCE.repeat} ${hintFor(hinted)}` });
+      return { messages, state: { ...hinted, stepTurns: state.stepTurns + 1, helpTurns: state.helpTurns + 1 }, passed, joined: 'repeat' };
+    }
     return { messages, state: { ...state, stepTurns: state.stepTurns + 1, ...patch }, passed, joined: null };
   }
   messages.push(...own);

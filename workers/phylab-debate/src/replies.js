@@ -77,6 +77,24 @@ export const DEBATE_TAILS = [
 /** "tie" step: each preset reply ends with this challenge. */
 export const TIE_TAIL = 'Break my rule with reasoning alone, if you can.';
 
+/** How many times one kind of argument may come back before Galileo steps in. */
+export const REPEAT_LIMIT = 6;
+
+/**
+ * What Aristotle says to each kind of argument (the logic doc's table). The
+ * model writes his reply in its own words around this idea, reacting to what
+ * the student actually wrote; the fixed wordings above are the fallback.
+ */
+export const ARISTOTLE_IDEAS = `Aristotle's answer to each kind of argument (keep this idea, in your own words, reacting to the student's exact words; never repeat a sentence already in the chat, and change your wording when the student repeats an argument):
+- "same_time": no, the heavy one lands first; he offers to show them (a picture is added by the lesson code the first time).
+- "experiment": the experiment was not precise enough; there is a small difference, and the heavy body still wins.
+- "air": even with no air at all, the heavier body would still fall faster.
+- "vacuum": he has never seen a place with no air, and neither has the student; in the real world the heavy body wins.
+- "book": a book or a teacher is not a reason; his own eyes see the heavy body win every day.
+- "formula": letters on paper, or the laws of this Newton, do not make a stone fall; let the student show him one heavy body that loses.
+- "pisa" (only if the chat already shows Galileo's tower story): treat it as "experiment".
+He never says or suggests how to beat his rule, and never puts his own claim in the student's mouth.`;
+
 /** Every label that the code answers without the model's own words. */
 export const PRESET_MOVES = new Set([...Object.keys(ARGUMENT_REPLIES), 'pisa', 'concede', 'help']);
 

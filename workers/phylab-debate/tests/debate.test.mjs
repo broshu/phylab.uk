@@ -426,3 +426,28 @@ test('a repeated argument gets a different wording each time', () => {
   assert.equal(new Set(seen).size, 3);
   assert.equal(state.used.vacuum, 3);
 });
+
+test('the model words Aristotle\'s reply; the picture comes only the first time', () => {
+  const first = advance(input('debate'), { move: 'same_time', stepDone: false, messages: [{ speaker: 'aristotle', text: 'Together? No! The heavy one is first. Prove me wrong.' }] });
+  assert.equal(first.messages[0].text, 'Together? No! The heavy one is first. Prove me wrong.');
+  assert.equal(first.messages[0].image, 'falling');
+  const again = advance(normalizeInput({ message: 'x', state: first.state }), { move: 'same_time', stepDone: false, messages: [{ speaker: 'aristotle', text: 'Still no.' }] });
+  assert.equal(again.messages[0].image, undefined);
+});
+
+test('the same argument six times brings Galileo to guide', () => {
+  let state = input('debate').state;
+  let out;
+  for (let i = 0; i < 6; i++) {
+    out = advance(normalizeInput({ message: 'moon', state }), { move: 'vacuum', stepDone: false, messages: [] });
+    state = out.state;
+  }
+  assert.equal(out.joined, 'repeat');
+  assert.equal(out.state.step, 'premise');
+  assert.ok(out.messages.some((m) => m.speaker === 'galileo'));
+  let tie = { ...input('tie', { galileo: false }).state, used: { air: 5 } };
+  const t = advance(normalizeInput({ message: 'air', state: tie }), { move: 'air', stepDone: false, messages: [] });
+  assert.equal(t.joined, 'repeat');
+  assert.equal(t.state.galileo, true);
+  assert.equal(t.state.step, 'tie');
+});
