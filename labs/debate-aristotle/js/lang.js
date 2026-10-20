@@ -1,11 +1,18 @@
 /**
- * Page language: Chinese when the browser's first language is Chinese
- * (it follows the computer's system language), else English.
- * ?lang=zh or ?lang=en forces one, for testing.
+ * Page language: English or Chinese only.
+ * Order: ?lang=zh|en (testing) > the reader's own choice from the language
+ * switch (remembered) > the browser's first language, which follows the
+ * computer's system language.
  */
+export const LANG_STORE = 'phylab-debate-aristotle-lang';
+
 export const LANG = (() => {
   const asked = new URLSearchParams(location.search).get('lang');
   if (asked === 'zh' || asked === 'en') return asked;
+  try {
+    const chosen = localStorage.getItem(LANG_STORE);
+    if (chosen === 'zh' || chosen === 'en') return chosen;
+  } catch { /* storage is optional */ }
   const first = (navigator.languages && navigator.languages[0]) || navigator.language || '';
   return /^zh/i.test(first) ? 'zh' : 'en';
 })();

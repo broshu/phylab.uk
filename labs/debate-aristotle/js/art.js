@@ -1,4 +1,4 @@
-import { L } from './lang.js?v=20261020d';
+import { L } from './lang.js?v=20261020f';
 
 // Avatars and the small diagrams Galileo sends in the chat.
 // Drawn here as inline SVG so the lab has no image files to load.

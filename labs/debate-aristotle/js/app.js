@@ -1,6 +1,6 @@
 import { AVATARS, PICTURES } from './art.js?v=20261020d';
 import { animationCard, hasAnimation } from './anims.js?v=20261020d';
-import { L, LANG } from './lang.js?v=20261020d';
+import { L, LANG, LANG_STORE } from './lang.js?v=20261020f';
 
 // The chat server on the phylab.uk domain (reachable from mainland China),
 // with the workers.dev address as a fallback.
@@ -550,7 +550,7 @@ els.restart.addEventListener('click', () => {
 
 // Switch teaching mode (for readers of the paper): remember it, then reload so
 // the whole page is built for that mode. A mid-lesson chat asks first.
-document.querySelectorAll('.mode-option').forEach((btn) => {
+document.querySelectorAll('.mode-option[data-group]').forEach((btn) => {
   btn.setAttribute('aria-pressed', String(btn.dataset.group === GROUP));
   btn.addEventListener('click', () => {
     const next = btn.dataset.group;
@@ -562,6 +562,24 @@ document.querySelectorAll('.mode-option').forEach((btn) => {
     } catch { /* storage is optional */ }
     const url = new URL(location.href);
     url.searchParams.set('group', next);
+    location.href = url.toString();
+  });
+});
+
+// Switch language (English / Chinese): remember the choice, then reload so the
+// whole page and the chat are in that language. A mid-lesson chat asks first.
+document.querySelectorAll('.lang-option').forEach((btn) => {
+  btn.setAttribute('aria-pressed', String(btn.dataset.lang === LANG));
+  btn.addEventListener('click', () => {
+    const next = btn.dataset.lang;
+    if (next === LANG || busy) return;
+    if (state.log.some((m) => m.speaker === 'student') && !confirm(next === 'zh' ? 'Switch to Chinese? This chat will be cleared. / 切换到中文？当前对话会被清空。' : '切换到英文？当前对话会被清空。 / Switch to English? This chat will be cleared.')) return;
+    try {
+      localStorage.setItem(LANG_STORE, next);
+      localStorage.removeItem(STORE);
+    } catch { /* storage is optional */ }
+    const url = new URL(location.href);
+    url.searchParams.delete('lang');
     location.href = url.toString();
   });
 });

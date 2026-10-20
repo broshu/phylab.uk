@@ -1,4 +1,4 @@
-import { L } from './lang.js?v=20261020d';
+import { L } from './lang.js?v=20261020f';
 
 // Falling-body animations shown inside chat messages.
 // Each scene draws on a 320 × 240 logical canvas with its own fixed palette
