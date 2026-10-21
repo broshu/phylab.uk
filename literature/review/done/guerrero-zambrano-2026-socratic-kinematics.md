@@ -1,6 +1,6 @@
 ---
 id: guerrero-zambrano-2026-socratic-kinematics
-status: pending
+status: approved
 title: Effects of generative AI-mediated socratic dialogue on preservice physics teachers’ critical thinking in kinematics
 authors:
   - Marcos Guerrero-Zambrano
@@ -17,11 +17,13 @@ proposed_by: ChatGPT
 score: 5
 topics:
   - ai
+  - assessment
   - scaffolding
   - cognitive-load
-  - assessment
 reading_priority: core
 evidence_type: Mixed-methods sequential within-group preexperimental study
+decision:
+  at: 2026-10-21 08:47
 notes:
   - by: ChatGPT
     at: 2026-10-18 13:45

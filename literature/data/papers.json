@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-20",
+  "updated_at": "2026-10-21",
   "papers": [
     {
       "id": "malikova-2026-ai-physics-review",
@@ -849,6 +849,42 @@
       "phd_relevance_en": "Measure representational competence as a pre-test covariate in an AR electric-field study, and test whether AR helps students with weaker representational skills.",
       "reading_recommendation_en": "Read the design, the representational-competence measure and the path model; note how conditions were assigned.",
       "limitations_en": "The abstract does not state the physics topic, the duration or whether groups were randomised, and gives no effect sizes."
+    },
+    {
+      "id": "guerrero-zambrano-2026-socratic-kinematics",
+      "status": "published",
+      "title": "Effects of generative AI-mediated socratic dialogue on preservice physics teachers’ critical thinking in kinematics",
+      "authors": [
+        "Marcos Guerrero-Zambrano",
+        "Bryan Valarezo-Chamba",
+        "Leonor Sanchez-Alvarado",
+        "Erick Lamilla-Rubio"
+      ],
+      "year": 2026,
+      "published_date": "2026-09-25",
+      "source": "Physical Review Physics Education Research",
+      "doi": "10.1103/x7vq-17rq",
+      "url": "https://journals.aps.org/prper/abstract/10.1103/x7vq-17rq",
+      "topics": [
+        "ai",
+        "assessment",
+        "scaffolding",
+        "cognitive-load"
+      ],
+      "evidence_type": "Mixed-methods sequential within-group preexperimental study",
+      "reading_priority": "core",
+      "key_finding_zh": "教师监督下加入生成式 AI 的苏格拉底对话伴随运动学批判性思维评分提高，但固定教学顺序使得改善不能单独归因于 AI。",
+      "phd_relevance_zh": "可借鉴其提问与评分量规设计 AI 辩论活动，并在你的研究中平衡条件顺序，增加无 AI 的个体测评。",
+      "reading_recommendation_zh": "先读对话流程、评分量规和局限，再改编课堂任务。",
+      "limitations_zh": "仅涉及 18 名职前教师、小组作品及固定干预顺序。摘要没有提供延迟独立迁移或真实实验操作能力的证据。",
+      "featured": false,
+      "date_added": "2026-10-21",
+      "verified_at": "2026-10-21",
+      "verification_url": "https://journals.aps.org/prper/abstract/10.1103/x7vq-17rq",
+      "key_finding_en": "Teacher-supervised Socratic dialogue with generative AI coincided with improved critical-thinking rubric scores in kinematics. The fixed sequence prevents attributing the improvement to AI alone.",
+      "phd_relevance_en": "Adapt the questioning and rubric for an AI debate activity, then counterbalance conditions and add an individual assessment without AI.",
+      "reading_recommendation_en": "Read the dialogue protocol, rubric and limitations before adapting the classroom tasks.",
+      "limitations_en": "Only 18 preservice teachers, group products and a fixed intervention order. The abstract provides no evidence of delayed independent transfer or practical laboratory skill."
     }
   ]
 }
