@@ -1,86 +1,33 @@
-# 喷气过弯实验室 · PhyLab
+# Jet Roadster · PhyLab
 
-可独立部署的纯静态 3D 教学网页。Three.js 0.180.0 已随包提供，无第三方 CDN、远程字体、后端、账户、数据采集或运行时网络依赖。
+A playable 3D lab on momentum and circular motion. The player drives a 2000 kg car that carries 90 kg of compressed air: accelerate on a frictionless ice straight, then hold a quarter-circle curve with static friction plus a side jet — or skid off. Static page; Three.js 0.180.0 is bundled in `vendor/`, no CDN, fonts, backend or data collection.
 
-## 站内集成
+## Playing
 
-本实验位于 `/labs/jet-roadster/`。界面接入 `/assets/theme.css`，跟随系统明暗主题；3D场景和受力配色保持稳定。网站卡片由 `labs/labs.json` 和 `scripts/build_index.py` 统一管理。
+- Hold **↑ / W** (or the *Tail jet* button) to fire the tail jet: 20 kN, 40 kg/s.
+- Hold **← / A** (or *Side jet*) for the side jet, which exhausts outward and pushes the car toward O. **Q / E** or the slider set its power (0–20 kN, 2 kg/s per kN).
+- **Space** pause · **R** restart · **V** cycle cameras: *Chase*, *Cockpit* (driver's view with a dashboard: speed, air reserve, flow, jet lamps, grip), *Overview* (drag to orbit), *Top*.
+- Time runs at 0.5× by default (0.25×–1× selectable). The tab pauses when hidden. Best times are kept per fan setting in the browser.
+- **Side-jet interlock** (on by default): holding ← before B arms the jet and it fires the moment the car enters the curve. Turned off, the jet fires anywhere — on the ice it gives a sideways drift that nothing can cancel.
+- **Autopilot**: *Ideal plan* replays the optimal allocation with the same physics as the player; *All air on the straight* shows the skid at B.
 
-本目录内的网页文件可直接由静态服务器提供。若移出此网站，需同时提供网站的 `/assets/theme.css`，或使用独立部署包。
+URL parameters: `?embed=1` hides the header, `fan=0` starts with the fan off, `interlock=0` starts with the interlock off.
 
-## 部署到 phylab.uk
+## Model
 
-把本目录内网页文件原样放入网站的 `/labs/jet-roadster/`。`index.html` 必须与 `app.js`、`scene.js`、`physics.js`、`style.css`、`vendor/` 同级。页面使用相对路径，支持子目录部署。
+m = 2000 kg (constant), g = 10 m/s², u = 500 m/s, μ = 0.1, AB = 45 m, R = 20 m, road 6 m wide. Fan suction adds 2mg to N and uses no air. No drag or rolling resistance; nozzle exit pressure equals ambient, so F = u·Δm/Δt.
 
-从其他页面嵌入同域部署：
+- **Ice** (x < 0): no friction. Tail thrust along the lane; side thrust toward the inner edge. Leaving |z| > 3 m ends the run; reaching B with any sideways velocity means the tyres are already sliding.
+- **Curve**: the tyres roll freely along the lane, so friction acts only across it. While they grip, static friction supplies f = mv²/r − S, allowed only while |f| ≤ μN. Outside the window mv²/r − μN ≤ S ≤ mv²/r + μN the tyres slide: friction becomes kinetic (μN, against the slide), the jets cut and the run is lost (a skidding car cannot be steered back onto the arc). Beyond the road edge the run-off is frictionless.
+- The game uses true circle geometry (π = 3.14159…). Ideal plan with the fan on: v = 11.85 m/s, 47.4 kg + 42.6 kg, 7.04 s. The notes on the page also give the textbook π = 3 answer (v = 12 m/s, 48 + 42 kg, 6.85 s).
+- Integration step 1/600 s; constant-force steps are exact on the ice and exact rolling on the arc. Making a curve skid a loss is what keeps the ideal plan the true optimum: if the car could slide outward and regain grip, faster entries would beat it.
 
-```html
-<iframe
-  src="/labs/jet-roadster/?embed=1&classroom=1"
-  title="喷气过弯实验室：压缩空气分配与向心力"
-  style="display:block;width:100%;height:980px;border:0;border-radius:12px;"
-  allow="fullscreen"
-  allowfullscreen
-  loading="lazy">
-</iframe>
-```
+## Files
 
-手机端可将高度设为 1450px，或让用户点开独立页面。解释区可展开，iframe 内允许滚动。若部署在其他域名，把 `src` 换成其完整公开地址；目标服务必须允许 phylab.uk 嵌入。私有预览网址可能要求登录，不适合作为公开课堂 iframe 来源。
+- `physics.js` — closed-form plans (textbook π = 3 or true π), used for par times and the notes.
+- `sim.js` — real-time model: jets, ice, static/kinetic friction, skid and run-off, autopilots.
+- `scene.js` — Three.js scene in the site palette (light and dark), cameras, exhaust, trail, force arrows.
+- `app.js` — input, HUD, dashboard, results. `style.css` — layout on top of `/assets/theme.css`.
+- Tests: `npm test` (or `node --test tests/physics.test.mjs tests/sim.test.mjs`) — budgets, autopilot reaching C at par with an empty tank, no burn/coast/side-jet strategy beating par, the friction window, ice drift, gas never negative.
 
-若 phylab.uk 或静态服务已有 CSP，须允许本页同源 JS/CSS 与 WebGL，并允许内联 importmap。更严格的策略可用 importmap 内容 SHA-256 的脚本哈希，不必放宽全部脚本。部署主机不应加禁止所需嵌入来源的 `X-Frame-Options: DENY` 或 `frame-ancestors 'none'`。本应用不主动修改现有网站安全策略。
-
-## 本地预览
-
-在仓库根目录运行 `python3 -m http.server 8000`，再打开 `http://localhost:8000/labs/jet-roadster/`。ES modules 应通过 HTTP(S) 打开；直接双击 `index.html` 的 `file://` 模式不受支持。需要启用 WebGL 2 的现代浏览器。资源全部在本地时断网仍可使用正在运行的本地服务器。
-
-## 课堂操作
-
-- 固定 10 m/s 示范装气100 kg，以覆盖真实π、关闭吸附时约90.27 kg的耗气；另外两个场景严格使用90 kg。
-- 默认“90 kg 最优分配”，0.5× 慢动作；点击开始/暂停，空格键亦可。
-- 拖动滑块可前后定位；点击“尾喷结束”“进入弯道”快速定位。
-- 鼠标拖动旋转、滚轮缩放；手机单指旋转、双指缩放；全景、俯视、特写可随时切换。
-- 风扇、π 取值、场景切换会重置实验。受力箭头、透明车身、粒子、轨迹独立开关。
-- 切换浏览器标签会自动暂停，避免课堂讲解时后台继续运行。
-- 电脑端可点击“课堂模式”压缩顶部内容、扩大演示区域；“全屏课堂”展开整个网页，保留场景、进度与播放控制。Esc 退出全屏；顶部可退出课堂模式。
-- 进入页面不自动播放。
-
-支持参数：`?embed=1&classroom=1&scene=demo&fan=0&pi=exact`。`classroom=1` 直接进入适合电脑投屏的布局。
-`scene` 可取 `demo` / `optimal` / `wrong`；`fan=0` 关闭吸附；`pi=exact` 使用真实 π。其他情况下使用默认值。
-
-## 核对后的模型
-
-质量恒定 m=2000 kg，g=10 m/s²，u=500 m/s，尾喷流率 40 kg/s，L=45 m，R=20 m，μ=0.1。忽略喷气减重、空气阻力、滚动阻力；喷口出口压强等于环境压强。除题设喷气外无驱动或制动。风扇电力无限，不耗压缩空气。
-
-尾推 F=20000 N，a=10 m/s²。最早以最大尾喷加速到 v，随后滑行。t加=v/10，x加=v²/20，t直=45/v+v/20，q直=4v。
-
-轮胎不侧滑时为静摩擦，不是动摩擦。静摩擦上限等于题设滑动摩擦力 μN。N=mg+F吸。匀速圆周运动由静摩擦和侧推合力提供向心力；喷气朝外，推力朝内；尾喷关闭。f=min(μN,mv²/R)，F侧=max(0,mv²/R−μN)，q弯=F侧(πR/2v)/u。
-
-| 场景，π=3 | 速度 m/s | 尾喷/滑行/过弯 s | 直道/弯道用气 kg |
-|---|---:|---|---|
-| 10 m/s，吸附 2mg | 10 | 1 / 4 / 3 | 40 / 24 |
-| 10 m/s，关闭吸附 | 10 | 1 / 4 / 3 | 40 / 48 |
-| 90 kg 最优，吸附 2mg | 12 | 1.2 / 3.15 / 2.5 | 48 / 42 |
-| 全部直道 | 22.5 | 2.25 / 0.875 / 无法过弯 | 90 / 0 |
-
-最优方案：q总=10v−360/v=90 → (v−12)(v+3)=0，v=12 m/s。x加=7.2 m，滑行 37.8 m。T=75/v+v/20 在 0<v≤30 的直道可达区间内递减，q总随 v 增加，所以恰好耗尽90 kg是题设限制下的最优解。低于纯静摩擦可过弯的阈值时，侧喷应取0，不得用负值公式。
-
-关闭吸附、真实 π 模式用同一模型重新求根，不硬编码原答案。
-
-### π 的近似与画面
-
-π=3 与标准90°圆弧的真实欧氏几何不可能完全一致。题目模式的弧长、时间、用气与受力遵循 π=3，画面按进度映射为90°，不应由像素路程推导速度或加速度。真实π模式的运动路程与速度一致。车辆外形放大1.35倍，粒子速度缩小以便观察，力箭头1 m对应2500 N；箭头起点有小量偏移以便区分，不表示力矩。
-
-### 失稳场景的适用范围
-
-到 B 时所需向心力为50625 N，吸附2mg时静摩擦上限6000 N，缺口44625 N。无法维持目标圆弧。随后单独采用全滑动质点模型：从B沿切线滑动，防滑带内动摩擦反向速度，a=μN/m；中心到O的距离达到23 m（路宽6 m）后进入无摩擦缓冲区。其速度不再恒定。这是解释“无法按原圆弧前进”的受控示意，不是有转向轮胎的真实汽车侧滑动力学预测。
-
-参考：[NASA 推力方程](https://www.grc.nasa.gov/WWW/k-12/BGP/thrsteq.html)；[OpenStax 向心力与静摩擦](https://openstax.org/books/university-physics-volume-1/pages/6-3-centripetal-force)。车辆为程序生成的 Roadster 风格教学造型，不使用官方模型，不主张 Tesla 实车参数。
-
-## 文件与检验
-
-`physics.js`：独立、可重复采样的运动与耗气模型。
-`scene.js`：Three.js 跑车、路面、粒子、箭头、相机。
-`app.js`：场景状态与界面同步。
-`tests/physics.test.mjs`：运行 `node --test tests/physics.test.mjs`，验证预算、边界连续性、最优性、静摩擦分担、真实π几何及失稳模型。
-
-Three.js 使用 MIT 许可证，见 `vendor/LICENSE-three.txt`。
+The car is a generic, procedurally built roadster shape for teaching. Three.js is MIT-licensed, see `vendor/LICENSE-three.txt`. References: [NASA thrust equation](https://www.grc.nasa.gov/WWW/k-12/BGP/thrsteq.html), [OpenStax centripetal force](https://openstax.org/books/university-physics-volume-1/pages/6-3-centripetal-force).

@@ -1,51 +1,229 @@
-import {plan,sample} from './physics.js';
-const $=id=>document.getElementById(id),all=s=>[...document.querySelectorAll(s)];
-const params=new URLSearchParams(location.search);
-if(params.get('embed')==='1')document.body.classList.add('embed');
-if(params.get('classroom')==='1')document.body.classList.add('classroom');
-let config={scenario:['demo','optimal','wrong'].includes(params.get('scene'))?params.get('scene'):'optimal',fan:params.get('fan')!=='0',exactPi:params.get('pi')==='exact'};
-let p=plan(config),t=0,playing=false,view=null,lastFrame=0,needsUpdate=true;
-const opts={forces:true,transparent:true,jets:true,trail:true};
-const fmt=(n,d=2)=>Number(n.toFixed(d)).toString();
-function force(id,n){$(id).innerHTML=`${(n/1000).toFixed(1)} <small>kN</small>`;}
-function setPlay(value){playing=value;$('playText').textContent=value?'暂停实验':t>=p.duration?'重新播放':t>0?'继续实验':'开始实验';$('playIcon').textContent=value?'Ⅱ':'▶';needsUpdate=true;}
-function configure(){p=plan(config);t=0;setPlay(false);$('gasTotal').textContent=p.initialGas;$('timeline').max=p.duration;$('timeline').value=0;$('timeEnd').textContent=p.duration.toFixed(2);$('piMode').value=config.exactPi?'exact':'3';
-  all('[data-scenario]').forEach(b=>{const selected=b.dataset.scenario===config.scenario;b.classList.toggle('active',selected);b.setAttribute('aria-pressed',selected);const q=plan({...config,scenario:b.dataset.scenario});b.querySelector('.scenario-value').innerHTML=`${fmt(q.straightGas,1)} + ${b.dataset.scenario==='wrong'?0:fmt(q.curveGas,1)}<span> kg</span>`;});
-  all('[data-fan]').forEach(b=>{const selected=(b.dataset.fan==='true')===config.fan;b.classList.toggle('selected',selected);b.setAttribute('aria-pressed',selected);});
-  $('burnMark').innerHTML=`尾喷结束 <span>${p.burn.toFixed(2)} s</span>`;$('curveMark').innerHTML=`${config.scenario==='wrong'?'B 点失稳':'进入弯道'} <span>${p.straightTime.toFixed(2)} s</span>`;$('endMark').innerHTML=config.scenario==='wrong'?'滑出示意结束':`到达 C <span>${p.duration.toFixed(2)} s</span>`;
-  $('timelineCaption').textContent=config.scenario==='wrong'?'实验时间（B 后为滑动示意）':'实验时间';$('straightBudget').textContent=` / ${fmt(p.straightGas)} kg`;$('curveBudget').textContent=` / ${config.scenario==='wrong'?'0':fmt(p.curveGas)} kg`;
-  $('modelStrip').textContent=`${config.exactPi?'真实 π；弯道长 31.416 m，图形路程与计时一致。':'π = 3；弯道计程 30 m，标准 90° 图形按进度映射。'}车辆外形放大 1.35 倍。`;
-  if(config.scenario==='wrong'){$('insightTitle').textContent='直道更快，不代表全程更快。';$('insightBody').textContent=`${p.burn.toFixed(2)} s 用完 90 kg，滑行至 B 时速度 22.5 m/s；所需向心力 50.625 kN，静摩擦上限仅 ${fmt(p.fmax/1000)} kN。`;}
-  else{$('insightTitle').textContent=config.scenario==='optimal'?'不是一路喷气，而是先加速，再滑行。':'相同速度，吸附能节省多少压缩空气？';$('insightBody').textContent=`直道喷气 ${p.burn.toFixed(2)} s → 滑行 ${p.coast.toFixed(2)} s → 匀速过弯 ${p.curveTime.toFixed(2)} s，总用时 ${p.duration.toFixed(2)} s。${config.scenario==='demo'?`示范装气 100 kg，总耗气 ${fmt(p.straightGas+p.curveGas)} kg。`:''}`;}
-  needsUpdate=true;update();
+import {C} from './physics.js';
+import {createRun, step, autopilot, par, laneVelocity, speed, G} from './sim.js';
+
+const $ = id => document.getElementById(id), all = s => [...document.querySelectorAll(s)];
+const params = new URLSearchParams(location.search);
+if (params.get('embed') === '1') document.body.classList.add('embed');
+
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch { /* storage unavailable */ } }
+};
+
+let fanOn = params.get('fan') !== '0';
+let run = createRun({fan: fanOn});
+let pilot = null, pilotKind = null, paused = false, view = null, lastFrame = 0, resultShown = false;
+const held = {tail: new Set(), side: new Set()};
+let sidePower = Number($('power').value) * 1000;
+const opts = {forces: true, xray: false};
+let interlock = params.get('interlock') !== '0';
+
+const kN = n => `${(n / 1000).toFixed(1)} kN`;
+const isHeld = k => held[k].size > 0;
+const bestKey = () => `jet-roadster-best-${fanOn ? 'fan' : 'nofan'}`;
+
+function control() {
+  if (pilot) return pilot;
+  const tail = isHeld('tail') ? 1 : 0, side = isHeld('side');
+  return s => ({tail, side: side && (!interlock || s.x >= 0), sidePower});
 }
-function update(){const s=sample(p,t);$('velocity').textContent=s.v.toFixed(1);$('timeNow').textContent=t.toFixed(2);$('timeline').value=t;$('speedArc').setAttribute('stroke-dasharray',`${Math.min(1,s.v/25)} 1`);
-  $('velocityCaption').textContent=config.scenario==='wrong'?(s.slip?'已失稳 · 不再匀速过弯':'入弯速度 22.5 m/s · 侧喷无余气'):`目标过弯速度 ${fmt(p.v,3)} m/s`;
-  force('tailForce',s.tail);force('sideForce',s.side);force('frictionForce',s.friction);force('requiredForce',s.required);
-  $('frictionLabel').textContent=s.slip?'动摩擦力':'静摩擦力';$('requiredLabel').textContent=s.slip?'B 点所需向心力':'所需向心力';
-  $('gasLeft').textContent=s.gas.toFixed(1);$('gasBar').style.width=`${s.gas/p.initialGas*100}%`;$('gasBar').style.background=s.gas<10?'var(--site-amber)':'var(--site-green)';$('straightUsed').textContent=s.usedStraight.toFixed(1);$('curveUsed').textContent=s.usedCurve.toFixed(1);$('flowRate').textContent=s.finished?'—':`${s.flow.toFixed(1)} kg/s`;$('gasStatus').textContent=s.finished?'演示结束':s.tail?'尾喷':s.side?'侧喷':s.slip?'气量耗尽':'不耗气';
-  const data={burn:['01 / 尾喷加速',`先加速 ${fmt(p.burnDistance)} m，再滑行到 B 点`,'直道光滑：尾喷开启时，a = 10 m/s²'],coast:['02 / 关闭尾喷 · 惯性滑行',`余下 ${fmt(45-p.burnDistance)} m 不喷气，速度保持不变`,'合力为零：F = 0，v 保持不变'],curve:['03 / 侧喷补足向心力',`向外排气，向内受推 · 匀速 ${fmt(p.v,2)} m/s`,`f + F侧 = ${fmt(s.friction/1000)} + ${fmt(s.side/1000)} = ${fmt(s.required/1000)} kN`],slip:['失稳 / 全滑动质点示意','摩擦改为反向速度，汽车沿 B 点切线滑出',`B 点向心力缺口 ${fmt((p.required-p.fmax)/1000,3)} kN；失稳后非匀速`],runoff:['失稳 / 已驶离防滑带','进入无摩擦缓冲区，无法到达目标 C 点','缓冲区忽略摩擦；此段为简化滑出示意']};
-  const current=data[s.phase];$('phaseNumber').textContent=current[0];$('phaseText').textContent=current[1];$('forceNote').textContent=(s.finished&&!s.slip?'抵达前瞬时值：':'')+current[2];$('liveBadge').textContent=s.finished?'终点值':'LIVE';
-  $('stageStatus').textContent=s.finished?(s.slip?'未能通过弯道':'已到达 C'):playing?(s.slip?'失稳示意':'实验运行中'):t>0?'已暂停':'准备就绪';
-  if(s.finished&&!s.slip){$('phaseNumber').textContent='完成 / 抵达 C 点';$('phaseText').textContent=`总用气 ${fmt(s.usedStraight+s.usedCurve)} kg · 剩余 ${fmt(s.gas)} kg`;}
-  view?.update(p,s,opts);needsUpdate=false;
+
+function restart({keepPilot = false} = {}) {
+  run = createRun({fan: fanOn});
+  if (!keepPilot) { pilot = null; pilotKind = null; }
+  paused = false; resultShown = false;
+  $('result').hidden = true; $('hint').hidden = !!pilot;
+  view?.reset();
+  draw(0);
 }
-all('[data-scenario]').forEach(b=>b.addEventListener('click',()=>{config.scenario=b.dataset.scenario;configure();}));
-all('[data-fan]').forEach(b=>b.addEventListener('click',()=>{config.fan=b.dataset.fan==='true';configure();}));
-$('piMode').addEventListener('change',e=>{config.exactPi=e.target.value==='exact';configure();});
-$('playBtn').addEventListener('click',()=>{if(t>=p.duration)t=0;setPlay(!playing);});
-$('resetBtn').addEventListener('click',()=>{t=0;setPlay(false);update();});
-$('timeline').addEventListener('input',e=>{t=Number(e.target.value);if(Math.abs(t-p.duration)<1e-8)t=p.duration;setPlay(false);update();});
-$('burnMark').addEventListener('click',()=>{t=p.burn;setPlay(false);update();});
-$('curveMark').addEventListener('click',()=>{t=p.straightTime;setPlay(false);update();});
-for(const [id,key] of [['showForces','forces'],['transparentCar','transparent'],['showJets','jets'],['showTrail','trail']])$(id).addEventListener('change',e=>{opts[key]=e.target.checked;needsUpdate=true;});
-for(const [id,mode] of [['orbitBtn','orbit'],['topBtn','top'],['followBtn','follow']])$(id).addEventListener('click',()=>{view?.cameraView(mode);all('.view-buttons button').forEach(b=>b.classList.toggle('selected',b.id===id));});
-function classroom(on){document.body.classList.toggle('classroom',on);$('classroomBtn').setAttribute('aria-pressed',on);}
-$('classroomBtn').addEventListener('click',()=>classroom(true));$('exitClassroom').addEventListener('click',()=>classroom(false));
-$('fullBtn').addEventListener('click',async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else {classroom(true);await document.documentElement.requestFullscreen();}}catch{$('stageStatus').textContent='浏览器未允许全屏，已切换课堂布局';}});
-for(const id of ['showWorking','notesBtn'])$(id).addEventListener('click',()=>{$('working').open=true;$('working').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});});
-document.addEventListener('keydown',e=>{if(e.code==='Space'&&!['INPUT','SELECT','BUTTON','A','SUMMARY','TEXTAREA'].includes(e.target.tagName)){e.preventDefault();$('playBtn').click();}});
-document.addEventListener('visibilitychange',()=>{if(document.hidden&&playing)setPlay(false);});
-configure();
-try{const {createScene}=await import('./scene.js');view=createScene($('scene'),$('labels'));update();}catch(error){$('renderError').hidden=false;console.error('3D initialization failed',error);}
-function frame(now){const dt=lastFrame?Math.min((now-lastFrame)/1000,.05):0;lastFrame=now;if(playing){t=Math.min(p.duration,t+dt*Number($('speed').value));needsUpdate=true;if(t>=p.duration)setPlay(false);}if(needsUpdate)update();view?.render();requestAnimationFrame(frame);}requestAnimationFrame(frame);
+
+function startPilot(kind) {
+  restart();
+  pilot = autopilot(kind, fanOn); pilotKind = kind;
+  $('hint').hidden = true;
+  step(run, pilot, 0);
+}
+
+function setPower(newtons) {
+  sidePower = Math.max(0, Math.min(G.sideMax, Math.round(newtons / 100) * 100));
+  $('power').value = (sidePower / 1000).toFixed(1);
+  $('powerValue').textContent = kN(sidePower);
+  $('sideBtnInfo').textContent = `${kN(sidePower)} · ${(sidePower / C.u).toFixed(0)} kg/s`;
+}
+
+// ---------- input ----------
+const KEYS = {ArrowUp: 'tail', KeyW: 'tail', ArrowLeft: 'side', KeyA: 'side'};
+function press(kind, source) {
+  if (pilot || run.status === 'over') return;
+  held[kind].add(source);
+  if (run.status === 'ready') { $('hint').hidden = true; step(run, control(), 0); }
+}
+function release(kind, source) { held[kind].delete(source); }
+document.addEventListener('keydown', e => {
+  if (e.target.closest?.('input,select,textarea')) return;
+  if (KEYS[e.code]) { e.preventDefault(); press(KEYS[e.code], e.code); return; }
+  if (e.repeat) return;
+  if (e.code === 'KeyR') restart();
+  else if (e.code === 'Space') { e.preventDefault(); togglePause(); }
+  else if (e.code === 'KeyQ') setPower(sidePower - 500);
+  else if (e.code === 'KeyE') setPower(sidePower + 500);
+  else if (e.code === 'KeyV') { const order = ['chase', 'cockpit', 'overview', 'top']; setView(order[(order.indexOf(view?.mode ?? 'chase') + 1) % order.length]); }
+});
+document.addEventListener('keyup', e => { if (KEYS[e.code]) release(KEYS[e.code], e.code); });
+window.addEventListener('blur', () => { held.tail.clear(); held.side.clear(); });
+for (const [id, kind] of [['tailBtn', 'tail'], ['sideBtn', 'side']]) {
+  const b = $(id);
+  b.addEventListener('pointerdown', e => { e.preventDefault(); b.setPointerCapture?.(e.pointerId); press(kind, 'p' + e.pointerId); });
+  for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) b.addEventListener(ev, e => release(kind, 'p' + e.pointerId));
+  b.addEventListener('contextmenu', e => e.preventDefault());
+}
+$('power').addEventListener('input', e => setPower(Number(e.target.value) * 1000));
+$('resetBtn').addEventListener('click', () => restart());
+$('againBtn').addEventListener('click', () => restart());
+$('watchBtn').addEventListener('click', () => startPilot('ideal'));
+$('pauseBtn').addEventListener('click', togglePause);
+all('[data-auto]').forEach(b => b.addEventListener('click', () => startPilot(b.dataset.auto)));
+all('[data-fan]').forEach(b => b.addEventListener('click', () => { fanOn = b.dataset.fan === 'true'; syncSetup(); restart(); }));
+$('showForces').addEventListener('change', e => { opts.forces = e.target.checked; });
+$('xray').addEventListener('change', e => { opts.xray = e.target.checked; });
+$('interlock').addEventListener('change', e => { interlock = e.target.checked; restart(); });
+$('interlock').checked = interlock;
+all('[data-view]').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
+$('fullBtn').addEventListener('click', async () => {
+  try { if (document.fullscreenElement) await document.exitFullscreen(); else await $('rig').requestFullscreen(); } catch { /* fullscreen refused */ }
+});
+document.addEventListener('visibilitychange', () => { if (document.hidden && run.status === 'running') { paused = true; syncPause(); } });
+
+function togglePause() { if (run.status !== 'running') return; paused = !paused; syncPause(); }
+function syncPause() { $('pauseBtn').textContent = paused ? '▶' : 'Ⅱ'; $('pauseBtn').setAttribute('aria-label', paused ? 'Resume' : 'Pause'); }
+function setView(mode) {
+  view?.cameraView(mode);
+  all('[data-view]').forEach(b => b.classList.toggle('selected', b.dataset.view === mode));
+  $('viewport').dataset.view = mode;
+}
+function syncSetup() {
+  all('[data-fan]').forEach(b => { const on = (b.dataset.fan === 'true') === fanOn; b.classList.toggle('selected', on); b.setAttribute('aria-pressed', on); });
+  const p = par(fanOn);
+  $('parNote').innerHTML = `The game draws a true circle (<i>π</i> = 3.14159…). Its ideal plan${fanOn ? '' : ' with the fan off'}: reach B at ${p.v.toFixed(2)} m/s using ${p.straightGas.toFixed(1)} kg, then ${p.curveGas.toFixed(1)} kg of side jet at ${kN(p.side)} — ${p.duration.toFixed(2)} s.`;
+  showBest();
+}
+function showBest() {
+  const best = Number(store.get(bestKey()));
+  $('bestReadout').textContent = best ? `${best.toFixed(2)} s` : '—';
+  $('bestReadout').title = `Ideal plan: ${par(fanOn).duration.toFixed(2)} s`;
+}
+
+// ---------- drawing ----------
+function draw(dt) {
+  const lane = laneVelocity(run), v = speed(run);
+  const p = par(fanOn);
+  const status = run.status === 'ready' ? 'Ready' : run.status === 'running'
+    ? (run.offTime !== null ? (run.result === 'off' ? 'Off the road' : 'Skidding!') : paused ? 'Paused' : pilotKind ? `Autopilot · ${pilotKind === 'ideal' ? 'ideal plan' : 'all on the straight'}` : run.region === 'ice' ? 'On the ice' : 'In the curve')
+    : run.result === 'finished' ? 'Reached C' : run.result === 'stalled' ? 'Stopped' : 'Run lost';
+  $('statusText').textContent = status;
+  $('statusChip').dataset.state = run.offTime !== null ? 'danger' : run.result === 'finished' ? 'done' : run.status === 'running' && !paused ? 'live' : 'idle';
+  $('timer').textContent = (run.result === 'finished' ? run.finishTime : run.t).toFixed(2);
+
+  $('speed').textContent = v.toFixed(1); $('dashSpeed').textContent = v.toFixed(1);
+  $('speedArc').setAttribute('stroke-dasharray', `${Math.min(1, v / 25)} 1`);
+  $('gas').textContent = run.gas.toFixed(1); $('dashGas').textContent = run.gas.toFixed(1);
+  const gasPct = `${run.gas / C.gas * 100}%`; $('gasBar').style.width = gasPct; $('dashGasBar').style.width = gasPct;
+  for (const id of ['gasBar', 'dashGasBar']) $(id).classList.toggle('low', run.gas < 15);
+  $('dashFlow').textContent = `${run.flow.toFixed(1)} kg/s`;
+  $('usedStraight').textContent = run.usedStraight.toFixed(1); $('usedCurve').textContent = run.usedCurve.toFixed(1);
+  $('regionTag').textContent = lane.region === 'ice' ? 'Ice' : 'Curve';
+
+  // Grip: share of the friction limit that the curve currently demands.
+  let grip = 0, gripText = '—', note = 'On the ice there is no friction at all.';
+  if (lane.region === 'curve') {
+    const need = run.offTime !== null ? run.fmax : Math.abs(run.required - run.side);
+    grip = need / run.fmax; gripText = run.offTime !== null ? 'sliding' : `${Math.round(grip * 100)}%`;
+    note = run.offTime !== null ? 'Tyres are sliding: friction is kinetic, μN, against the slide.'
+      : run.side > run.required ? 'Side jet stronger than needed: friction now points outward.'
+      : 'Friction supplies what the side jet does not.';
+  } else if (lane.region === 'ice' && v > 0) {
+    const req = C.m * v * v / C.R;
+    note = `At this speed the curve will need ${kN(req)} toward O; friction can give ${kN(run.fmax)}.`;
+  }
+  $('gripText').textContent = gripText; $('gripNote').textContent = note;
+  for (const id of ['gripBar', 'dashGrip']) { $(id).style.width = `${Math.min(1, grip) * 100}%`; $(id).classList.toggle('over', run.offTime !== null); }
+
+  $('fTail').textContent = kN(run.tail); $('fSide').textContent = kN(run.side);
+  $('fFrictionLabel').textContent = run.frictionKind === 'kinetic' ? 'Kinetic friction' : run.frictionKind === 'static' ? 'Static friction' : 'Friction';
+  $('fFriction').textContent = run.frictionKind ? `${kN(Math.abs(run.friction))}${run.friction < 0 ? ' out' : ' in'}` : '0.0 kN';
+  $('fRequired').textContent = lane.region === 'curve' && run.offTime === null ? kN(run.required) : '—';
+  $('fLimit').textContent = kN(run.fmax);
+
+  const tailOn = run.tail > 0, sideOn = run.side > 0;
+  $('lampTail').classList.toggle('on', tailOn); $('lampSide').classList.toggle('on', sideOn); $('lampSkid').classList.toggle('on', run.offTime !== null);
+  const live = run.status === 'running';
+  $('tailBtn').classList.toggle('firing', live && (tailOn || (isHeld('tail') && run.gas > 0)));
+  $('sideBtn').classList.toggle('firing', live && (sideOn || (isHeld('side') && run.gas > 0 && (!interlock || run.x >= 0))));
+  $('sideBtn').classList.toggle('armed', live && isHeld('side') && interlock && run.x < 0);
+  $('lampTail').classList.toggle('on', live && tailOn); $('lampSide').classList.toggle('on', live && sideOn);
+  for (const b of [$('tailBtn'), $('sideBtn'), $('power')]) b.disabled = !!pilot;
+  if (pilot) { $('power').value = (run.side / 1000).toFixed(1); $('powerValue').textContent = kN(run.side); }
+
+  view?.update(run, {...opts, fan: fanOn}, dt);
+  if (run.status === 'over' && !resultShown) showResult(p);
+}
+
+function showResult(p) {
+  resultShown = true; held.tail.clear(); held.side.clear();
+    let title, body, stats = [];
+  if (run.result === 'finished') {
+    const gap = run.finishTime - p.duration;
+    title = pilotKind === 'ideal' ? `Ideal run: ${run.finishTime.toFixed(2)} s` : gap < 0.01 ? `${run.finishTime.toFixed(2)} s — that is the ideal run` : `Reached C in ${run.finishTime.toFixed(2)} s`;
+    body = gap < 0.01 ? 'Every kilogram of air was used where it counts.'
+      : run.gas > 1 ? `You still had ${run.gas.toFixed(1)} kg of air at C. Spend more of it on the straight and enter the curve faster.`
+      : 'Close. Try a shorter, earlier burn and the least side thrust that still holds the curve.';
+    stats = [['Ideal plan', `${p.duration.toFixed(2)} s`], ['Behind ideal', `${Math.max(0, gap).toFixed(2)} s`], ['Air left', `${run.gas.toFixed(1)} kg`]];
+    if (!pilotKind) {
+      const best = Number(store.get(bestKey()));
+      if (!best || run.finishTime < best) { store.set(bestKey(), run.finishTime.toFixed(3)); showBest(); stats.push(['Personal best', 'New!']); }
+    }
+  } else if (run.result === 'skid' && run.offEdge === 'outer') {
+    const curveV = run.lost.speed, need = run.lost.required;
+    title = run.lost.gas <= 0.01 ? 'Out of air in the curve' : 'Skidded off the curve';
+    body = run.lost.gas <= 0.01
+      ? `The tank ran dry, so only friction was left: ${kN(run.fmax)} against the ${kN(need)} the curve needs at ${curveV.toFixed(1)} m/s.`
+      : `At ${curveV.toFixed(1)} m/s the curve needs ${kN(need)} toward O. Friction gives at most ${kN(run.fmax)}, so the side jet had to give at least ${kN(Math.max(0, need - run.fmax))}.`;
+    stats = [['Speed', `${curveV.toFixed(1)} m/s`], ['Needed', kN(need)], ['Air left', `${run.gas.toFixed(1)} kg`]];
+  } else if (run.result === 'skid') {
+    title = 'Pushed in toward O';
+    body = `The side jet gave ${kN(run.lost.side)}, more than the curve needs plus what friction can hold back (${kN(run.lost.required)} + ${kN(run.fmax)}). Turn the side power down.`;
+    stats = [['Speed', `${run.lost.speed.toFixed(1)} m/s`], ['Needed', kN(run.lost.required)], ['Air left', `${run.gas.toFixed(1)} kg`]];
+  } else if (run.result === 'drift') {
+    title = 'Reached B sliding sideways';
+    body = 'The side jet on the ice gave the car a sideways velocity. With no friction, nothing could cancel it, so the tyres were already sliding at B. Save the side jet for the curve.';
+    stats = [['Air left', `${run.gas.toFixed(1)} kg`]];
+  } else if (run.result === 'off') {
+    title = 'Slid off the ice';
+    body = 'Ice has no friction: the sideways push from the side jet keeps the car drifting until it leaves the road.';
+    stats = [['Air left', `${run.gas.toFixed(1)} kg`]];
+  } else {
+    title = 'Stopped before C';
+    body = 'The car ran out of air before it had any speed to coast on.';
+  }
+  $('resultTitle').textContent = title; $('resultBody').textContent = body;
+  $('resultStats').innerHTML = stats.map(([k, val]) => `<div><span>${k}</span><b>${val}</b></div>`).join('');
+  $('watchBtn').hidden = pilotKind === 'ideal';
+  $('result').dataset.kind = run.result === 'finished' ? 'good' : 'bad';
+  $('result').hidden = false;
+  if (pilotKind) { pilot = null; }
+}
+
+// ---------- loop ----------
+setPower(sidePower); syncSetup(); setView('chase');
+try { const {createScene} = await import('./scene.js'); view = createScene($('scene'), $('labels')); setView('chase'); }
+catch (error) { $('renderError').hidden = false; console.error('3D initialisation failed', error); }
+draw(0);
+function frame(now) {
+  const real = lastFrame ? Math.min((now - lastFrame) / 1000, .05) : 0; lastFrame = now;
+  let dt = 0;
+  if (run.status === 'running' && !paused) { dt = real * Number($('timeScale').value); step(run, control(), dt); }
+  draw(dt);
+  view?.render(real);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);

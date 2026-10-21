@@ -1,48 +1,175 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <script>if(location.protocol==='http:'&&/(^|\.)phylab\.uk$/.test(location.hostname))location.replace('https:'+location.href.slice(5));</script>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>喷气过弯实验室 · PhyLab</title>
-  <meta name="description" content="高中物理交互实验：在光滑直道与防滑弯道之间分配90 kg压缩空气。3D汽车、喷气、受力分析与可核对的运动模型。">
-  <meta name="theme-color" content="#f4f1e8" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#14181b" media="(prefers-color-scheme: dark)"><link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <title>Jet Roadster</title>
+  <meta name="description" content="Drive a jet-powered car with 90 kg of compressed air: accelerate on frictionless ice, then hold the curve with friction and a side jet — or skid off. Momentum and circular motion as a playable 3D lab.">
+  <meta name="theme-color" content="#f4f1e8" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#14181b" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/assets/theme.css">
-  <link rel="stylesheet" href="./style.css">
-  <link rel="stylesheet" href="./site-theme.css">
+  <link rel="stylesheet" href="./style.css?v=20261021-2">
   <script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
 </head>
 <body>
-<header class="site-header"><div class="lab-brand"><a class="phylab-wordmark" href="/" aria-label="PhyLab 首页">PhyLab</a><span class="brand-divider">/</span><span class="lab-name">Jet Roadster <small>喷气过弯</small></span></div><div class="header-actions"><button class="quiet-button exit-classroom" id="exitClassroom">退出课堂模式</button><span class="course">高中物理 · 动量与圆周运动</span><a class="home-button" href="/labs/" aria-label="Return to Labs" title="返回 Labs"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9.5 21v-6h5v6"/></svg></a></div></header>
-<main>
-  <section class="intro"><div><div class="eyebrow">JET ROADSTER <span>／ 喷气推进与向心力</span></div><h1>有限的空气，<span>怎样跑得更快？</span></h1><p>驾驶一辆喷气跑车，穿过光滑直道，再稳稳驶过弯道。</p></div><div class="intro-actions"><button class="quiet-button" id="classroomBtn" aria-pressed="false">课堂模式 <span>▣</span></button><button class="quiet-button" id="notesBtn">模型与计算 <span>↗</span></button></div></section>
-  <nav class="scenarios" aria-label="选择实验场景">
-    <button class="scenario" data-scenario="demo" aria-pressed="false"><span class="scenario-number">01</span><span><strong>10 m/s 示范</strong><small>观察加速、滑行与匀速过弯</small></span><span class="scenario-value">40 + 24<span> kg</span></span></button>
-    <button class="scenario active" data-scenario="optimal" aria-pressed="true"><span class="scenario-number">02</span><span><strong>90 kg 最优分配</strong><small>让每一份空气都用在恰当的位置</small></span><span class="scenario-value">48 + 42<span> kg</span></span></button>
-    <button class="scenario" data-scenario="wrong" aria-pressed="false"><span class="scenario-number">03</span><span><strong>全部用在直道</strong><small>更快进入弯道，能更快到达吗？</small></span><span class="scenario-value">90 + 0<span> kg</span></span></button>
-  </nav>
-  <div class="workspace">
-    <section class="experiment" aria-label="3D 动画与播放控制">
-      <div class="viewport" id="viewport">
-        <div id="scene" role="img" aria-label="可旋转缩放的3D跑车及直道弯道模型"></div>
-        <div class="stage-top"><div class="stage-status"><span class="status-dot"></span><span id="stageStatus">准备就绪</span></div><div class="view-buttons" aria-label="观察视角"><button id="orbitBtn" class="selected" title="恢复全景视角">全景</button><button id="topBtn" title="切换俯视图">俯视</button><button id="followBtn" title="切换车辆特写">特写</button><button id="fullBtn" title="全屏课堂（保留播放控制）" aria-label="全屏课堂">⛶</button></div></div>
-        <div class="stage-note"><div id="phaseNumber">01 / 尾喷加速</div><p id="phaseText">先加速 7.2 m，再滑行到 B 点</p></div>
-        <div id="labels" aria-hidden="true"></div>
-        <div class="stage-bottom"><div class="legend"><span><i class="legend-line cyan"></i>喷气推力</span><span><i class="legend-line gold"></i>摩擦力</span><span><i class="legend-line pale dashed"></i>向心方向</span></div><span class="gesture">拖动旋转 · 滚轮缩放</span></div>
-        <div class="render-error" id="renderError" hidden>3D 画面未能载入。请使用启用 WebGL 2 的现代浏览器，通过网页地址打开；下方计算与控制仍可使用。</div>
+<header class="top-bar">
+  <h1>Jet Roadster</h1>
+  <div class="top-bar-right">
+    <div class="readout" aria-live="polite"><span>Best time</span><strong id="bestReadout">—</strong></div>
+    <a class="home-button" href="/labs/" aria-label="Return to Labs" title="Labs"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9.5 21v-6h5v6"/></svg></a>
+  </div>
+</header>
+
+<main class="layout">
+  <section class="panel task-panel">
+    <h2>Task</h2>
+    <p>Your 2000 kg roadster carries <b>90 kg of compressed air</b> and nothing else to push it. The straight A→B (45 m) is frictionless ice; the quarter-circle B→C (radius 20 m) has grip, <i>μ</i> = 0.1. The <b>tail jet</b> gives 20 kN and burns 40 kg/s. The <b>side jet</b> blows outward, so it pushes the car toward the centre O; it burns 2 kg/s for every kN. Get to C as fast as you can without skidding.</p>
+    <p class="controls-note"><b>Controls</b> · hold <kbd>↑</kbd>/<kbd>W</kbd> tail jet · hold <kbd>←</kbd>/<kbd>A</kbd> side jet · <kbd>Q</kbd>/<kbd>E</kbd> side power · <kbd>Space</kbd> pause · <kbd>R</kbd> restart · <kbd>V</kbd> camera</p>
+  </section>
+
+  <div class="game">
+    <div class="stage-col">
+      <div class="rig" id="rig">
+        <div class="viewport" id="viewport">
+          <div id="scene" role="img" aria-label="3D view of the jet roadster on the ice straight and the curve"></div>
+          <div id="labels" aria-hidden="true"></div>
+          <div class="hud-top">
+            <div class="chip" id="statusChip"><span class="dot"></span><span id="statusText">Ready</span></div>
+            <div class="timer" aria-live="off"><span id="timer">0.00</span><small> s</small></div>
+            <div class="views" role="group" aria-label="Camera">
+              <button data-view="chase" class="selected" title="Chase camera (V cycles views)">Chase</button>
+              <button data-view="cockpit" title="Driver's view with dashboard">Cockpit</button>
+              <button data-view="overview" title="Free orbit: drag to rotate, scroll to zoom">Overview</button>
+              <button data-view="top" title="Top view">Top</button>
+              <button id="fullBtn" class="icon" title="Full screen" aria-label="Full screen">⛶</button>
+            </div>
+          </div>
+          <div class="hint" id="hint"><b>Hold ↑</b> to fire the tail jet · <b>Hold ←</b> for the side jet · <b>Q</b>/<b>E</b> side power</div>
+
+          <div class="dashboard" id="dashboard" aria-label="Dashboard">
+            <div class="gauge">
+              <svg viewBox="0 0 120 74" aria-hidden="true"><path class="g-track" d="M10 66 A50 50 0 0 1 110 66"/><path class="g-fill" id="speedArc" d="M10 66 A50 50 0 0 1 110 66" pathLength="1" stroke-dasharray="0 1"/></svg>
+              <div class="g-value"><span id="dashSpeed">0.0</span><small>m/s</small></div>
+              <div class="g-label">Speed</div>
+            </div>
+            <div class="lamps">
+              <span class="lamp" id="lampTail">TAIL</span>
+              <span class="lamp" id="lampSide">SIDE</span>
+              <span class="lamp warn" id="lampSkid">SKID</span>
+            </div>
+            <div class="tank">
+              <div class="tank-head"><span>Air reserve</span><b><span id="dashGas">90.0</span> kg</b></div>
+              <div class="tank-bar"><div id="dashGasBar"></div></div>
+              <div class="tank-head small"><span>Flow</span><b id="dashFlow">0.0 kg/s</b></div>
+              <div class="grip-row"><span>Grip</span><div class="grip-bar"><div id="dashGrip"></div></div></div>
+            </div>
+          </div>
+
+          <div class="result" id="result" hidden>
+            <div class="result-card" role="dialog" aria-labelledby="resultTitle">
+              <h2 id="resultTitle"></h2>
+              <p id="resultBody"></p>
+              <div class="result-stats" id="resultStats"></div>
+              <div class="result-actions"><button class="primary" id="againBtn">Try again <kbd>R</kbd></button><button class="ghost" id="watchBtn">Watch the ideal run</button></div>
+            </div>
+          </div>
+          <div class="render-error" id="renderError" hidden>The 3D view could not start. Please open this page in a recent browser with WebGL 2 enabled; the controls and numbers below still work.</div>
+        </div>
+
+        <div class="controls panel">
+          <button class="jet" id="tailBtn" aria-label="Tail jet (hold)"><span class="jet-key">↑</span><span><b>Tail jet</b><small>20 kN · 40 kg/s</small></span></button>
+          <button class="jet" id="sideBtn" aria-label="Side jet (hold)"><span class="jet-key">←</span><span><b>Side jet</b><small id="sideBtnInfo">8.0 kN · 16 kg/s</small></span></button>
+          <label class="power"><span>Side power <b id="powerValue">8.0 kN</b></span><input id="power" type="range" min="0" max="20" step="0.1" value="8" aria-label="Side jet power in kilonewtons"></label>
+          <div class="control-end">
+            <label class="scale"><span>Speed</span><select id="timeScale" aria-label="Time scale"><option value="0.25">0.25×</option><option value="0.5" selected>0.5×</option><option value="1">1×</option></select></label>
+            <button class="icon-button" id="pauseBtn" title="Pause (Space)" aria-label="Pause">Ⅱ</button>
+            <button class="icon-button" id="resetBtn" title="Restart (R)" aria-label="Restart">↺</button>
+          </div>
+        </div>
       </div>
-      <div class="transport"><div class="progress-header"><span id="timelineCaption">实验时间</span><span><b id="timeNow">0.00</b><span class="muted"> / <span id="timeEnd">6.85</span> s</span></span></div><input id="timeline" type="range" min="0" max="6.85" value="0" step="any" aria-label="实验进度"><div class="milestones"><button id="burnMark">尾喷结束 <span>1.20 s</span></button><button id="curveMark">进入弯道 <span>4.35 s</span></button><span id="endMark">到达 C <span>6.85 s</span></span></div><div class="play-row"><div class="play-buttons"><button id="playBtn" class="primary"><span id="playIcon">▶</span><span id="playText">开始实验</span></button><button id="resetBtn" class="icon-button" title="重置实验" aria-label="重置实验">↺</button></div><div class="speed-control"><span>播放速度</span><select id="speed" aria-label="播放速度"><option value="0.25">0.25× 慢动作</option><option value="0.5" selected>0.5× 慢动作</option><option value="1">1× 实时</option><option value="2">2× 快速</option></select></div></div></div>
-      <div class="model-strip"><span>模型说明</span><p id="modelStrip">π = 3；弯道计程 30 m，标准 90° 图形按进度映射。车辆外形放大 1.35 倍。</p></div>
-    </section>
-    <aside class="dashboard" aria-label="实时数据与实验设置">
-      <section class="readout panel"><div class="panel-heading"><h2>实时状态</h2><span class="live-badge" id="liveBadge">LIVE</span></div><div class="velocity"><span id="velocity">0.0</span><span>m/s</span><svg viewBox="0 0 92 40" aria-hidden="true"><path d="M3 37 A43 40 0 0 1 89 37" fill="none" stroke="var(--site-border-soft)" stroke-width="4"/><path id="speedArc" d="M3 37 A43 40 0 0 1 89 37" fill="none" stroke="var(--site-green)" stroke-width="4" pathLength="1" stroke-dasharray="0 1"/></svg></div><div class="state-caption" id="velocityCaption">目标过弯速度 12.0 m/s</div><div class="stats-grid"><div><span>尾喷推力</span><strong id="tailForce">20.0 <small>kN</small></strong></div><div><span>侧喷推力</span><strong id="sideForce">0.0 <small>kN</small></strong></div><div><span id="frictionLabel">静摩擦力</span><strong id="frictionForce">0.0 <small>kN</small></strong></div><div><span id="requiredLabel">所需向心力</span><strong id="requiredForce">0.0 <small>kN</small></strong></div></div><div class="force-note" id="forceNote">直道光滑：尾喷开启时，a = 10 m/s²</div></section>
-      <section class="gas-panel panel"><div class="panel-heading"><h2>空气储备</h2><span><b id="gasLeft">90.0</b> <small>/ <span id="gasTotal">90</span> kg</small></span></div><div class="tank-track"><div id="gasBar"></div></div><div class="gas-details"><span>当前消耗 <b id="flowRate">40.0 kg/s</b></span><span id="gasStatus">尾喷</span></div><div class="allocation"><div><i class="dot cyan"></i>直道已用 <b id="straightUsed">0.0</b><span id="straightBudget"> / 48 kg</span></div><div><i class="dot gold"></i>弯道已用 <b id="curveUsed">0.0</b><span id="curveBudget"> / 42 kg</span></div></div></section>
-      <section class="settings panel"><div class="panel-heading"><h2>实验设置</h2><span class="muted">切换后重置</span></div><div class="setting-row"><div><strong>风扇吸附</strong><small>用电，不消耗压缩空气</small></div><div class="segmented"><button data-fan="false" aria-pressed="false">关闭</button><button class="selected" data-fan="true" aria-pressed="true">2mg</button></div></div><div class="setting-row pi-row"><label for="piMode">π 的取值</label><select id="piMode"><option value="3">题目近似：3</option><option value="exact">真实 π：3.14159…</option></select></div><div class="switches"><label><input id="showForces" type="checkbox" checked><span>受力箭头</span></label><label><input id="transparentCar" type="checkbox" checked><span>半透明车身</span></label><label><input id="showJets" type="checkbox" checked><span>喷气粒子</span></label><label><input id="showTrail" type="checkbox" checked><span>运动轨迹</span></label></div></section>
+    </div>
+
+    <aside class="side-col">
+      <section class="panel instruments" aria-label="Live readings">
+        <div class="panel-head"><h2>Live readings</h2><span class="tag" id="regionTag">Ice</span></div>
+        <div class="big"><span id="speed">0.0</span><small>m/s</small></div>
+        <div class="meter"><div class="meter-head"><span>Air reserve</span><b><span id="gas">90.0</span> / 90 kg</b></div><div class="bar"><div id="gasBar"></div></div>
+          <div class="split"><span><i class="key thrust"></i>Straight <b id="usedStraight">0.0</b> kg</span><span><i class="key side"></i>Curve <b id="usedCurve">0.0</b> kg</span></div></div>
+        <div class="meter"><div class="meter-head"><span>Grip used</span><b id="gripText">—</b></div><div class="bar grip"><div id="gripBar"></div></div>
+          <p class="hint-text" id="gripNote">On ice there is no friction at all.</p></div>
+        <dl class="forces">
+          <div><dt>Tail thrust</dt><dd class="thrust" id="fTail">0.0 kN</dd></div>
+          <div><dt>Side thrust</dt><dd class="thrust" id="fSide">0.0 kN</dd></div>
+          <div><dt id="fFrictionLabel">Friction</dt><dd class="friction" id="fFriction">0.0 kN</dd></div>
+          <div><dt>Needed <span class="nowrap">toward O</span></dt><dd id="fRequired">—</dd></div>
+          <div><dt>Friction limit <i>μN</i></dt><dd id="fLimit">6.0 kN</dd></div>
+        </dl>
+      </section>
+
+      <section class="panel settings" aria-label="Settings">
+        <div class="panel-head"><h2>Setup</h2><span class="muted">changes restart</span></div>
+        <div class="setting"><div><strong>Fan suction</strong><small>Electric fan adds 2<i>mg</i> of downforce; uses no air</small></div>
+          <div class="segmented" role="group" aria-label="Fan suction"><button data-fan="false">Off</button><button data-fan="true" class="selected">2<i>mg</i></button></div></div>
+        <div class="autopilots"><span>Autopilot</span><button class="ghost" data-auto="ideal">Ideal plan</button><button class="ghost" data-auto="straight">All air on the straight</button></div>
+        <div class="setting"><div><strong>Side-jet interlock</strong><small>Hold ← early: the side jet waits until the car reaches B. Off: it fires anywhere, even on the ice.</small></div><label class="toggle"><input id="interlock" type="checkbox" checked aria-label="Side-jet interlock"><span></span></label></div>
+        <div class="switches"><label><input id="showForces" type="checkbox" checked><span>Force arrows</span></label><label><input id="xray" type="checkbox"><span>See-through body</span></label></div>
+      </section>
     </aside>
   </div>
-  <section class="insight" aria-live="polite"><span class="insight-icon">↗</span><div><h2 id="insightTitle">不是一路喷气，而是先加速，再滑行。</h2><p id="insightBody">直道喷气 1.20 s → 滑行 3.15 s → 匀速过弯 2.50 s，总用时 6.85 s。</p></div><button id="showWorking">查看推导 <span>＋</span></button></section>
-  <details class="working" id="working"><summary>物理模型、计算核对与课堂提示<span>＋</span></summary><div class="working-content"><div class="calculation-grid"><article><div class="eyebrow">01 / 推进与滑行</div><h3>45 m 直道，不是全程加速</h3><p class="formula">F = uṁ = 20 000 N<br>a = F/m = 10 m/s²</p><p>先以最大尾喷加速到 v，再关闭尾喷滑行。加速时间 v/10，加速距离 v²/20；直道总时间：</p><p class="formula">t<sub>AB</sub> = 45/v + v/20</p><p>直道用气 q<sub>AB</sub> = 4v kg。直道可达到的速度不超过 30 m/s。</p></article><article><div class="eyebrow">02 / 匀速过弯</div><h3>摩擦与侧推一起指向圆心</h3><p class="formula">N = mg + F<sub>吸</sub><br>f ≤ μN<br>F<sub>侧</sub> = max(0, mv²/R − μN)</p><p>车轮不侧滑时是<strong>静摩擦力</strong>，并非动摩擦力；只有需要时才取上限。侧喷向弯道外侧排气，反作用推力向内，无切向推力。</p><p class="formula">t<sub>BC</sub> = (πR/2)/v<br>q<sub>BC</sub> = F<sub>侧</sub>t<sub>BC</sub>/u</p></article><article><div class="eyebrow">03 / 最优分配</div><h3>90 kg 恰好足够通过弯道</h3><p>吸附 2mg、π = 3 时，f<sub>max</sub> = 6 000 N。最优解在需要侧喷的速度区间：</p><p class="formula">q = 10v − 360/v = 90<br>(v − 12)(v + 3) = 0<br>v = 12 m/s</p><p>两段用气 48 kg 与 42 kg。总时间 T = 75/v + v/20，在可行区间 0 &lt; v ≤ 30 内随 v 增大而减小；总用气随 v 增大而增加，因此边界解最优。</p></article></div><div class="assumptions"><h3>读图前，请明确这些理想化条件</h3><ol><li>车辆总质量恒为 2 000 kg，忽略喷气减重、空气阻力和滚动阻力；水平路面，喷气出口压强与环境压强相同，故用 F = uṁ。无电机额外驱动、无制动、侧喷只向内且只在弯道开启，转向瞬时衔接。</li><li>车辆视为质点，车身与喷气粒子只作示意；不模拟轮胎负载、车身侧倾、风扇能耗、气罐压力下降。前轴朝向与轮胎动画不用于定量测量。以上是题设模型，不代表 Tesla 产品真实性能。</li><li><strong>π = 3 不可能与真实的 90° 欧氏圆弧几何完全一致。</strong>默认按题目取弧长 30 m，时间、气量和受力用题目公式；画面按弯道进度映射到标准 90° 圆弧，所以不可由屏幕位移反算速度或加速度。切换“真实 π”后，图形路程与计时一致，90 kg 最优速度及分配会重新计算。</li><li>错误场景在 B 点已无法沿目标圆弧运动。随后使用独立的<strong>全滑动质点示意模型</strong>：从 B 沿切线滑出，防滑带内动摩擦与速度反向；驶离 6 m 宽防滑带后进入无摩擦区域。此时速度不恒定，静摩擦过弯模型不再适用；这不是实际车辆失控轨迹预测。</li><li>向心力是指向圆心的<strong>合力</strong>，不是摩擦和喷气之外的第三个力。白色虚线仅表示所需向心方向；青色与金色实箭头分别表示喷气推力和摩擦力，力箭头按统一比例显示。</li></ol><p class="source-links">原理参考：<a href="https://www.grc.nasa.gov/WWW/k-12/BGP/thrsteq.html" target="_blank" rel="noreferrer">NASA · 推力方程 ↗</a><a href="https://openstax.org/books/university-physics-volume-1/pages/6-3-centripetal-force" target="_blank" rel="noreferrer">OpenStax · 向心力与静摩擦 ↗</a></p></div><div class="reference-table"><h3>课堂核对表（π = 3）</h3><table><thead><tr><th>设置</th><th>入弯速度</th><th>直道用气</th><th>弯道用气</th><th>全程时间</th></tr></thead><tbody><tr><td>10 m/s，吸附 2mg</td><td>10 m/s</td><td>40 kg</td><td>24 kg</td><td>8 s</td></tr><tr><td>10 m/s，关闭吸附</td><td>10 m/s</td><td>40 kg</td><td>48 kg</td><td>8 s</td></tr><tr><td>90 kg 最优，吸附 2mg</td><td>12 m/s</td><td>48 kg</td><td>42 kg</td><td>6.85 s</td></tr><tr><td>全部直道喷气</td><td>22.5 m/s</td><td>90 kg</td><td>无气可用</td><td>无法完成目标弯道</td></tr></tbody></table></div></div></details>
-  <footer><span>Interactive physics demonstration · <a href="/labs/">PhyLab Labs</a></span><span>m = 2 000 kg · u = 500 m/s · μ = 0.1 · g = 10 m/s²</span></footer>
+
+  <details class="panel notes" id="notes">
+    <summary>Physics model and the ideal plan <span>＋</span></summary>
+    <div class="notes-body">
+      <div class="note-grid">
+        <article>
+          <h3>1 · Thrust on the ice</h3>
+          <p>Air leaves the nozzle at <i>u</i> = 500 m/s. The thrust is the momentum carried away per second:</p>
+          <p class="formula"><math display="block"><mi>F</mi><mo>=</mo><mi>u</mi><mfrac><mrow><mi mathvariant="normal">Δ</mi><mi>m</mi></mrow><mrow><mi mathvariant="normal">Δ</mi><mi>t</mi></mrow></mfrac><mo>=</mo><mn>500</mn><mo>×</mo><mn>40</mn><mo>=</mo><mn>20</mn><mtext>&#x2009;kN</mtext><mo>,</mo><mspace width="1em"/><mi>a</mi><mo>=</mo><mfrac><mi>F</mi><mi>m</mi></mfrac><mo>=</mo><mn>10</mn><mtext>&#x2009;m/s</mtext><msup><mrow/><mn>2</mn></msup></math></p>
+          <p>Ice has no friction, so once the jet stops the car keeps its speed. The fastest straight is: burn first, then coast. Reaching speed <i>v</i> costs</p>
+          <p class="formula"><math display="block"><msub><mi>q</mi><mtext>AB</mtext></msub><mo>=</mo><mfrac><mrow><mi>m</mi><mi>v</mi></mrow><mi>u</mi></mfrac><mo>=</mo><mn>4</mn><mi>v</mi><mspace width="1em"/><mo>(</mo><mtext>kg</mtext><mo>)</mo></math></p>
+          <p>A side jet on the ice gives a sideways velocity that nothing can remove. You either slide off the ice or reach B already skidding.</p>
+        </article>
+        <article>
+          <h3>2 · Holding the curve</h3>
+          <p>To stay on the arc the car needs a net force toward O. Friction can supply up to <i>μN</i>, with <i>N</i> = <i>mg</i> + <i>F</i><sub>fan</sub>; the side jet supplies <i>S</i>:</p>
+          <p class="formula"><math display="block"><mfrac><mrow><mi>m</mi><msup><mi>v</mi><mn>2</mn></msup></mrow><mi>R</mi></mfrac><mo>=</mo><mi>f</mi><mo>+</mo><mi>S</mi><mo>,</mo><mspace width="1em"/><mrow><mo>|</mo><mi>f</mi><mo>|</mo></mrow><mo>≤</mo><mi>μ</mi><mi>N</mi></math></p>
+          <p>While the tyres roll this is <b>static</b> friction, and it takes whatever value is needed. So the side thrust must stay inside a window:</p>
+          <p class="formula"><math display="block"><mfrac><mrow><mi>m</mi><msup><mi>v</mi><mn>2</mn></msup></mrow><mi>R</mi></mfrac><mo>−</mo><mi>μ</mi><mi>N</mi><mo>≤</mo><mi>S</mi><mo>≤</mo><mfrac><mrow><mi>m</mi><msup><mi>v</mi><mn>2</mn></msup></mrow><mi>R</mi></mfrac><mo>+</mo><mi>μ</mi><mi>N</mi></math></p>
+          <p>Too little and the car slides outward; too much and it is pushed in toward O. Either way the tyres slide, friction becomes kinetic (<i>μN</i>, against the sliding), and the car can no longer be steered round the arc.</p>
+        </article>
+        <article>
+          <h3>3 · The ideal plan</h3>
+          <p>Use the least side thrust, <i>S</i> = <i>mv</i><sup>2</sup>/<i>R</i> − <i>μN</i>, for the time <i>t</i> = <i>πR</i>/(2<i>v</i>). The air left after the straight must last the curve:</p>
+          <p class="formula"><math display="block"><mn>4</mn><mi>v</mi><mo>+</mo><mfrac><mrow><mo>(</mo><mfrac><mrow><mi>m</mi><msup><mi>v</mi><mn>2</mn></msup></mrow><mi>R</mi></mfrac><mo>−</mo><mi>μ</mi><mi>N</mi><mo>)</mo></mrow><mi>u</mi></mfrac><mo>·</mo><mfrac><mrow><mi>π</mi><mi>R</mi></mrow><mrow><mn>2</mn><mi>v</mi></mrow></mfrac><mo>=</mo><mn>90</mn></math></p>
+          <p>With the fan on and the textbook value <i>π</i> = 3 this gives <math><mn>10</mn><mi>v</mi><mo>−</mo><mfrac><mn>360</mn><mi>v</mi></mfrac><mo>=</mo><mn>90</mn></math>, so <i>v</i> = 12 m/s: 48 kg on the straight and 42 kg in the curve, 6.85 s in total. Entering any faster leaves too little air for the curve.</p>
+          <p id="parNote">The game draws a true circle (<i>π</i> = 3.14159…), so its ideal plan is slightly slower.</p>
+        </article>
+      </div>
+      <div class="assumptions">
+        <h3>Model assumptions</h3>
+        <ul>
+          <li>Mass stays 2000 kg (the 90 kg of air lost is ignored); no air drag or rolling resistance; nozzle exit pressure equals the outside pressure, so <i>F</i> = <i>u</i>·Δ<i>m</i>/Δ<i>t</i>.</li>
+          <li>The car is treated as a point. The tail jet pushes along the lane; the side jet pushes straight toward O on the curve (toward the inner edge on the ice). Tyres roll freely along the lane, so friction acts only across it.</li>
+          <li>Skidding means the tyres slide across the lane: friction is then kinetic, <i>μN</i>, opposite the sliding, and the run is lost. Beyond the road edge the run-off area is treated as frictionless. This is a classroom illustration, not a prediction of how a real car spins.</li>
+          <li>The centripetal force is the net force toward O, not an extra force. The dashed line shows its direction; blue arrows are jet thrust, amber arrows friction, all at 1 m per 2.5 kN. The car is drawn 1.35× larger and the air jets are slowed down so they can be seen.</li>
+        </ul>
+        <p class="sources">Background: <a href="https://www.grc.nasa.gov/WWW/k-12/BGP/thrsteq.html" target="_blank" rel="noreferrer">NASA · thrust equation ↗</a> <a href="https://openstax.org/books/university-physics-volume-1/pages/6-3-centripetal-force" target="_blank" rel="noreferrer">OpenStax · centripetal force and static friction ↗</a></p>
+      </div>
+      <table class="reference">
+        <caption>Textbook check (<i>π</i> = 3)</caption>
+        <thead><tr><th>Plan</th><th>Speed at B</th><th>Air on straight</th><th>Air in curve</th><th>Time</th></tr></thead>
+        <tbody>
+          <tr><td>10 m/s, fan on</td><td>10 m/s</td><td>40 kg</td><td>24 kg</td><td>8 s</td></tr>
+          <tr><td>10 m/s, fan off</td><td>10 m/s</td><td>40 kg</td><td>48 kg</td><td>8 s</td></tr>
+          <tr><td>Ideal, fan on</td><td>12 m/s</td><td>48 kg</td><td>42 kg</td><td>6.85 s</td></tr>
+          <tr><td>All air on the straight</td><td>22.5 m/s</td><td>90 kg</td><td>none left</td><td>skids at B</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+  <footer><span>Interactive physics · <a href="/labs/">PhyLab Labs</a></span><span><i>m</i> = 2000 kg · <i>u</i> = 500 m/s · <i>μ</i> = 0.1 · <i>g</i> = 10 m/s²</span></footer>
 </main>
-<noscript>此实验需要启用 JavaScript 才能显示动画与交互数据。</noscript>
-<script type="module" src="./app.js"></script>
-</body></html>
+<noscript>This lab needs JavaScript.</noscript>
+<script type="module" src="./app.js?v=20261021-2"></script>
+</body>
+</html>
