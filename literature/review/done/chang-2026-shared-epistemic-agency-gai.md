@@ -1,23 +1,29 @@
 ---
 id: chang-2026-shared-epistemic-agency-gai
-status: pending
-title: "Investigating Secondary School Students’ Shared Epistemic Agency with GAI in Online Scientific Explanation Writing"
+status: approved
+title: Investigating Secondary School Students’ Shared Epistemic Agency with GAI in Online Scientific Explanation Writing
 authors:
-  - "Hsin-Yi Chang"
-  - "Bo-Ren Mau"
-  - "Jyh-Chong Liang"
-  - "Chin-Chung Tsai"
+  - Hsin-Yi Chang
+  - Bo-Ren Mau
+  - Jyh-Chong Liang
+  - Chin-Chung Tsai
 year: 2026
-source: "Computers & Education"
+source: Computers & Education
 doi: 10.1016/j.compedu.2026.105769
 url: https://doi.org/10.1016/j.compedu.2026.105769
 added: 2026-10-20
 proposed_by: Claude
 score: 4
-topics: [ai, scaffolding, icap]
+topics:
+  - ai
+  - icap
+  - scaffolding
 reading_priority: read
-evidence_type: "Mixed-methods analysis of student-AI conversation logs"
+evidence_type: Mixed-methods analysis of student-AI conversation logs
+decision:
+  at: 2026-10-21 08:49
 ---
+
 ## Why recommended
 
 研究中学生如何在有支架的生成式 AI 帮助下仍保持自己的“认知主动权”，可为你设计“不替学生思考”的 AI 提示词提供框架。

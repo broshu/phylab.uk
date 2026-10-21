@@ -885,6 +885,41 @@
       "phd_relevance_en": "Adapt the questioning and rubric for an AI debate activity, then counterbalance conditions and add an individual assessment without AI.",
       "reading_recommendation_en": "Read the dialogue protocol, rubric and limitations before adapting the classroom tasks.",
       "limitations_en": "Only 18 preservice teachers, group products and a fixed intervention order. The abstract provides no evidence of delayed independent transfer or practical laboratory skill."
+    },
+    {
+      "id": "chang-2026-shared-epistemic-agency-gai",
+      "status": "published",
+      "title": "Investigating Secondary School Students’ Shared Epistemic Agency with GAI in Online Scientific Explanation Writing",
+      "authors": [
+        "Hsin-Yi Chang",
+        "Bo-Ren Mau",
+        "Jyh-Chong Liang",
+        "Chin-Chung Tsai"
+      ],
+      "year": 2026,
+      "published_date": null,
+      "source": "Computers & Education",
+      "doi": "10.1016/j.compedu.2026.105769",
+      "url": "https://doi.org/10.1016/j.compedu.2026.105769",
+      "topics": [
+        "ai",
+        "icap",
+        "scaffolding"
+      ],
+      "evidence_type": "Mixed-methods analysis of student-AI conversation logs",
+      "reading_priority": "read",
+      "key_finding_zh": "七年级学生在设定好提示的生成式 AI 帮助下写科学解释，表现出七类共享认知能动性，超过 80% 至少表现一次；表现频率与先前语言水平有关。",
+      "phd_relevance_zh": "可用这些能动性类别检验你的定制 AI tutor 是否给学生留出推理空间，而不是直接给答案。",
+      "reading_recommendation_zh": "精读 GAI 提示设计与七类能动性划分，聚类分析可略读。",
+      "limitations_zh": "对象为单一情境中的七年级生物与英语写作；结果为相关性，未与对照组比较学习收益。",
+      "featured": false,
+      "date_added": "2026-10-21",
+      "verified_at": "2026-10-21",
+      "verification_url": "https://doi.org/10.1016/j.compedu.2026.105769",
+      "key_finding_en": "Seventh graders writing scientific explanations with a prompted generative AI showed seven kinds of shared epistemic agency, and over 80% showed it at least once. How often they did so was linked to prior language proficiency.",
+      "phd_relevance_en": "Use the agency categories to check whether your custom AI tutor leaves room for student reasoning rather than supplying answers.",
+      "reading_recommendation_en": "Read the GAI prompt design and the seven agency categories; skim the cluster analysis.",
+      "limitations_en": "Biology and English-language writing with seventh graders in one context. The findings are correlational and do not test learning gains against a control group."
     }
   ]
 }
