@@ -1,1 +1,9 @@
-{"name":"phylab-jet-roadster","private":true,"type":"module","scripts":{"test":"node --test tests/physics.test.mjs tests/sim.test.mjs"}}
+{
+  "name": "phylab-jet-roadster",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "bump": "node tools/bump-version.mjs"
+  }
+}

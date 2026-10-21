@@ -6,18 +6,10 @@
 // friction acts only across it: static while the tyres grip, kinetic (μN) while they slide.
 // Results: finished, stalled, off (left the ice), drift (reached B sliding sideways),
 // skid (static friction plus side thrust could not hold the arc; the car is then uncontrolled).
-import {C, plan} from './physics.js?v=20261021-3';
+import {C, TAIL, frictionLimit} from './constants.js?v=20261021-4';
+import {plan} from './physics.js?v=20261021-4';
 
-export const G = Object.freeze({
-  tail: C.m * C.a,          // 20 kN at 40 kg/s
-  sideMax: 20000,           // N
-  innerR: C.R - C.roadHalfWidth,
-  outerR: C.R + C.roadHalfWidth,
-  runoff: 1.4,              // s of frictionless slide shown after leaving the road
-  h: 1 / 600                // integration step, s
-});
-
-export function frictionLimit(fan) { return C.mu * C.m * C.g * (fan ? 3 : 1); }
+const INNER_R = C.R - C.roadHalfWidth, OUTER_R = C.R + C.roadHalfWidth;
 
 export function createRun({fan = true} = {}) {
   return {
@@ -46,8 +38,8 @@ function substep(s, control, h) {
   const input = typeof control === 'function' ? control(s, h) : control;
   const before = laneVelocity(s);
   const crashed = s.offTime !== null;
-  let tail = crashed ? 0 : Math.max(0, Math.min(1, Number(input.tail) || 0)) * G.tail;
-  let side = crashed || !input.side ? 0 : Math.max(0, Math.min(G.sideMax, input.sidePower ?? 0));
+  let tail = crashed ? 0 : Math.max(0, Math.min(1, Number(input.tail) || 0)) * TAIL;
+  let side = crashed || !input.side ? 0 : Math.max(0, Math.min(C.sideMax, input.sidePower ?? 0));
   let flow = (tail + side) / C.u;
   if (flow * h > s.gas) { const k = flow > 0 ? s.gas / (flow * h) : 0; tail *= k; side *= k; flow *= k; }
   s.gas = Math.max(0, s.gas - flow * h);
@@ -60,7 +52,7 @@ function substep(s, control, h) {
     s.x += (s.vx + ax * h / 2) * h; s.z += (s.vz + az * h / 2) * h;   // exact for constant force
     s.vx += ax * h; s.vz += az * h;
     s.grip = Math.abs(s.vz) < 1e-9;
-  } else if (crashed && (before.r > G.outerR || before.r < G.innerR)) {
+  } else if (crashed && (before.r > OUTER_R || before.r < INNER_R)) {
     s.x += s.vx * h; s.z += s.vz * h;        // frictionless run-off beyond the grip band
   } else {
     const {r, theta, vt, vout} = before, fmax = s.fmax;
@@ -91,9 +83,9 @@ function substep(s, control, h) {
   const now = frame(s);
   s.theta = now.theta; s.r = now.r ?? C.R;
   if (s.offTime !== null) {
-    const elapsed = s.t - s.offTime, onRoad = now.region === 'ice' ? Math.abs(s.z) <= C.roadHalfWidth : now.r <= G.outerR && now.r >= G.innerR;
+    const elapsed = s.t - s.offTime, onRoad = now.region === 'ice' ? Math.abs(s.z) <= C.roadHalfWidth : now.r <= OUTER_R && now.r >= INNER_R;
     if (!s.leftRoad && !onRoad) s.leftRoad = s.t;
-    if ((s.leftRoad && s.t - s.leftRoad >= G.runoff) || elapsed >= 4 || speed(s) < 0.05) s.status = 'over';
+    if ((s.leftRoad && s.t - s.leftRoad >= C.runoff) || elapsed >= 4 || speed(s) < 0.05) s.status = 'over';
     return;
   }
   if (now.region === 'ice') {
@@ -121,7 +113,7 @@ export function step(s, control, dt) {
   if (s.status !== 'running') return s;
   let left = dt;
   while (left > 1e-12 && s.status === 'running') {
-    const h = Math.min(G.h, left);
+    const h = Math.min(C.h, left);
     substep(s, control, h);
     left -= h;
   }
@@ -136,7 +128,7 @@ export function autopilot(kind, fan = true) {
     const lane = laneVelocity(s);
     if (lane.region === 'ice') {
       const short = p.v - lane.vt;
-      return {tail: short <= 0 ? 0 : Math.min(1, short * C.m / (G.tail * h)), side: false, sidePower: 0};
+      return {tail: short <= 0 ? 0 : Math.min(1, short * C.m / (TAIL * h)), side: false, sidePower: 0};
     }
     const need = Math.max(0, C.m * lane.vt * lane.vt / lane.r - s.fmax);
     return {tail: 0, side: need > 0, sidePower: need};
@@ -145,3 +137,12 @@ export function autopilot(kind, fan = true) {
 
 /** Reference plan on the lane centre, with true circle geometry (the game always uses it). */
 export function par(fan = true) { return plan({fan, exactPi: true}); }
+
+/** Direction the car body should face: along the lane while it rolls, swinging toward its
+ *  velocity (nose turned in) once it slides. Radians, 0 = +x, π/2 = −z. */
+export function heading(s) {
+  const lane = laneVelocity(s), laneYaw = Math.atan2(-lane.tz, lane.tx);
+  if (s.offTime === null) return laneYaw;
+  const v = speed(s), velYaw = v > .3 ? Math.atan2(-s.vz, s.vx) : laneYaw;
+  return velYaw + (s.offEdge === 'outer' ? .55 : -.55) * Math.min(1, (s.t - s.offTime) * 1.5);
+}

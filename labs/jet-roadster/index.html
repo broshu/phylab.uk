@@ -4,14 +4,14 @@
   <script>if(location.protocol==='http:'&&/(^|\.)phylab\.uk$/.test(location.hostname))location.replace('https:'+location.href.slice(5));</script>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Jet Roadster</title>
-  <meta name="description" content="Drive a jet-powered car with 90 kg of compressed air: accelerate on frictionless ice, then hold the curve with friction and a side jet — or skid off. Momentum and circular motion as a playable 3D lab.">
+  <meta name="description" content="Drive a jet-powered car: a 90 kg compressed-air challenge on ice and a curve, plus a free-drive field with steering, brakes and side jets. Momentum, friction and circular motion as a playable 3D lab.">
   <meta name="theme-color" content="#f4f1e8" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#14181b" media="(prefers-color-scheme: dark)">
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/assets/theme.css">
-  <link rel="stylesheet" href="./style.css?v=20261021-3">
+  <link rel="stylesheet" href="./style.css?v=20261021-4">
   <script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
 </head>
-<body>
+<body data-mode="challenge">
 <header class="top-bar">
   <h1>Jet Roadster</h1>
   <div class="top-bar-right">
@@ -22,16 +22,25 @@
 
 <main class="layout">
   <section class="panel task-panel">
-    <h2>Task</h2>
-    <p>Your 2000 kg roadster carries <b>90 kg of compressed air</b> and nothing else to push it. The straight A→B (45 m) is frictionless ice; the quarter-circle B→C (radius 20 m) has grip, <i>μ</i> = 0.1. The <b>tail jet</b> gives 20 kN and burns 40 kg/s. The <b>side jet</b> blows outward, so it pushes the car toward the centre O; it burns 2 kg/s for every kN. Get to C as fast as you can without skidding.</p>
-    <p class="controls-note"><b>Controls</b> · hold <kbd>↑</kbd>/<kbd>W</kbd> tail jet · hold <kbd>←</kbd>/<kbd>A</kbd> side jet · <kbd>Q</kbd>/<kbd>E</kbd> side power · <kbd>Space</kbd> pause · <kbd>R</kbd> restart · <kbd>V</kbd> camera</p>
+    <div class="mode-tabs" role="tablist" aria-label="Mode">
+      <button role="tab" data-mode="challenge" class="selected" aria-selected="true">Challenge</button>
+      <button role="tab" data-mode="free" aria-selected="false">Free drive</button>
+    </div>
+    <div class="only-challenge">
+      <p>Your 2000 kg roadster carries <b>90 kg of compressed air</b> and nothing else to push it. The straight A→B (45 m) is frictionless ice; the quarter-circle B→C (radius 20 m) has grip, <i>μ</i> = 0.1. The <b>tail jet</b> gives 20 kN and burns 40 kg/s. The <b>side jet</b> blows outward, so it pushes the car toward the centre O; it burns 2 kg/s for every kN. Get to C as fast as you can without skidding.</p>
+      <p class="controls-note"><b>Controls</b> · hold <kbd>↑</kbd> tail jet · hold <kbd>←</kbd> or <kbd>Q</kbd> side jet · <kbd>[</kbd> <kbd>]</kbd> side power · <kbd>Space</kbd> pause · <kbd>R</kbd> restart · <kbd>V</kbd> camera</p>
+    </div>
+    <div class="only-free">
+      <p>Drive the same car anywhere on the field. Now it has <b>steering</b> and <b>brakes</b>, which both work by friction: the tyres can push the car with at most <i>μN</i> in any direction. Find out what happens on the <b>ice</b> (the straight and the round rink), try the 20 m circle, the slalom, and the side jets on both surfaces.</p>
+      <p class="controls-note"><b>Controls</b> · <kbd>↑</kbd> tail jet · <kbd>↓</kbd> brake · <kbd>←</kbd> <kbd>→</kbd> steer · <kbd>Q</kbd> <kbd>E</kbd> side jets · <kbd>[</kbd> <kbd>]</kbd> side power · <kbd>R</kbd> back to start · <kbd>V</kbd> camera</p>
+    </div>
   </section>
 
   <div class="game">
     <div class="stage-col">
       <div class="rig" id="rig">
         <div class="viewport" id="viewport">
-          <div id="scene" role="img" aria-label="3D view of the jet roadster on the ice straight and the curve"></div>
+          <div id="scene" role="img" aria-label="3D view of the jet roadster"></div>
           <div id="labels" aria-hidden="true"></div>
           <div class="hud-top">
             <div class="chip" id="statusChip"><span class="dot"></span><span id="statusText">Ready</span></div>
@@ -44,7 +53,7 @@
               <button id="fullBtn" class="icon" title="Full screen" aria-label="Full screen">⛶</button>
             </div>
           </div>
-          <div class="hint" id="hint"><b>Hold ↑</b> to fire the tail jet · <b>Hold ←</b> for the side jet · <b>Q</b>/<b>E</b> side power</div>
+          <div class="hint" id="hint"><span class="only-challenge"><b>Hold ↑</b> to fire the tail jet · <b>Hold ←</b> for the side jet</span><span class="only-free"><b>↑</b> jet · <b>↓</b> brake · <b>← →</b> steer · <b>Q E</b> side jets</span></div>
 
           <div class="dashboard" id="dashboard" aria-label="Dashboard">
             <div class="gauge">
@@ -52,13 +61,15 @@
               <div class="g-value"><span id="dashSpeed">0.0</span><small>m/s</small></div>
               <div class="g-label">Speed</div>
             </div>
+            <div class="wheel only-free" aria-hidden="true"><svg id="wheelIcon" viewBox="0 0 64 64"><circle cx="32" cy="32" r="27" fill="none" stroke="currentColor" stroke-width="6"/><circle cx="32" cy="32" r="7" fill="currentColor"/><path d="M5 32h20M39 32h20M32 39v20" stroke="currentColor" stroke-width="6" stroke-linecap="round"/><path d="M32 5v6" stroke="var(--site-danger)" stroke-width="5" stroke-linecap="round"/></svg></div>
             <div class="lamps">
               <span class="lamp" id="lampTail">TAIL</span>
               <span class="lamp" id="lampSide">SIDE</span>
+              <span class="lamp brake only-free" id="lampBrake">BRAKE</span>
               <span class="lamp warn" id="lampSkid">SKID</span>
             </div>
             <div class="tank">
-              <div class="tank-head"><span>Air reserve</span><b><span id="dashGas">90.0</span> kg</b></div>
+              <div class="tank-head"><span>Air reserve</span><b><span id="dashGas">90.0</span><span id="dashGasUnit"> kg</span></b></div>
               <div class="tank-bar"><div id="dashGasBar"></div></div>
               <div class="tank-head small"><span>Flow</span><b id="dashFlow">0.0 kg/s</b></div>
               <div class="grip-row"><span>Grip</span><div class="grip-bar"><div id="dashGrip"></div></div></div>
@@ -77,8 +88,24 @@
         </div>
 
         <div class="controls panel">
-          <button class="jet" id="tailBtn" aria-label="Tail jet (hold)"><span class="jet-key">↑</span><span><b>Tail jet</b><small>20 kN · 40 kg/s</small></span></button>
-          <button class="jet" id="sideBtn" aria-label="Side jet (hold)"><span class="jet-key">←</span><span><b>Side jet</b><small id="sideBtnInfo">8.0 kN · 16 kg/s</small></span></button>
+          <div class="pad only-challenge">
+            <button class="jet" data-action="tail" aria-label="Tail jet (hold)"><span class="jet-key">↑</span><span><b>Tail jet</b><small>20 kN · 40 kg/s</small></span></button>
+            <button class="jet" data-action="sideL" aria-label="Side jet toward O (hold)"><span class="jet-key">←</span><span><b>Side jet</b><small class="side-info">8.0 kN · 16 kg/s</small></span></button>
+          </div>
+          <div class="pad drive only-free">
+            <div class="cluster">
+              <button class="key" data-action="left" aria-label="Steer left (hold)">←<small>Steer</small></button>
+              <button class="key" data-action="right" aria-label="Steer right (hold)">→<small>Steer</small></button>
+            </div>
+            <div class="cluster">
+              <button class="key side" data-action="sideL" aria-label="Side jet, push left (hold)">◀<small>Q · jet</small></button>
+              <button class="key side" data-action="sideR" aria-label="Side jet, push right (hold)">▶<small>E · jet</small></button>
+            </div>
+            <div class="cluster">
+              <button class="key" data-action="brake" aria-label="Brake (hold)">↓<small>Brake</small></button>
+              <button class="key go" data-action="tail" aria-label="Tail jet (hold)">↑<small>Jet</small></button>
+            </div>
+          </div>
           <label class="power"><span>Side power <b id="powerValue">8.0 kN</b></span><input id="power" type="range" min="0" max="20" step="0.1" value="8" aria-label="Side jet power in kilonewtons"></label>
           <div class="control-end">
             <label class="scale"><span>Speed</span><select id="timeScale" aria-label="Time scale"><option value="0.25">0.25×</option><option value="0.5" selected>0.5×</option><option value="1">1×</option></select></label>
@@ -93,15 +120,16 @@
       <section class="panel instruments" aria-label="Live readings">
         <div class="panel-head"><h2>Live readings</h2><span class="tag" id="regionTag">Ice</span></div>
         <div class="big"><span id="speed">0.0</span><small>m/s</small></div>
-        <div class="meter"><div class="meter-head"><span>Air reserve</span><b><span id="gas">90.0</span> / 90 kg</b></div><div class="bar"><div id="gasBar"></div></div>
-          <div class="split"><span><i class="key thrust"></i>Straight <b id="usedStraight">0.0</b> kg</span><span><i class="key side"></i>Curve <b id="usedCurve">0.0</b> kg</span></div></div>
+        <div class="meter"><div class="meter-head"><span>Air reserve</span><b><span id="gas">90.0</span><span id="gasMax"> / 90 kg</span></b></div><div class="bar"><div id="gasBar"></div></div>
+          <div class="split only-challenge"><span><i class="key-dot thrust"></i>Straight <b id="usedStraight">0.0</b> kg</span><span><i class="key-dot side"></i>Curve <b id="usedCurve">0.0</b> kg</span></div></div>
         <div class="meter"><div class="meter-head"><span>Grip used</span><b id="gripText">—</b></div><div class="bar grip"><div id="gripBar"></div></div>
           <p class="hint-text" id="gripNote">On ice there is no friction at all.</p></div>
         <dl class="forces">
           <div><dt>Tail thrust</dt><dd class="thrust" id="fTail">0.0 kN</dd></div>
           <div><dt>Side thrust</dt><dd class="thrust" id="fSide">0.0 kN</dd></div>
           <div><dt id="fFrictionLabel">Friction</dt><dd class="friction" id="fFriction">0.0 kN</dd></div>
-          <div><dt>Needed <span class="nowrap">toward O</span></dt><dd id="fRequired">—</dd></div>
+          <div class="only-free"><dt>Turning radius</dt><dd id="fRadius">straight</dd></div>
+          <div><dt>Needed <span class="nowrap only-challenge">toward O</span><span class="nowrap only-free">toward centre</span></dt><dd id="fRequired">—</dd></div>
           <div><dt>Friction limit <i>μN</i></dt><dd id="fLimit">6.0 kN</dd></div>
         </dl>
       </section>
@@ -110,15 +138,16 @@
         <div class="panel-head"><h2>Setup</h2><span class="muted">changes restart</span></div>
         <div class="setting"><div><strong>Fan suction</strong><small>Electric fan adds 2<i>mg</i> of downforce; uses no air</small></div>
           <div class="segmented" role="group" aria-label="Fan suction"><button data-fan="false">Off</button><button data-fan="true" class="selected">2<i>mg</i></button></div></div>
-        <div class="autopilots"><span>Autopilot</span><button class="ghost" data-auto="ideal">Ideal plan</button><button class="ghost" data-auto="straight">All air on the straight</button></div>
-        <div class="setting"><div><strong>Side-jet interlock</strong><small>Hold ← early: the side jet waits until the car reaches B. Off: it fires anywhere, even on the ice.</small></div><label class="toggle"><input id="interlock" type="checkbox" checked aria-label="Side-jet interlock"><span></span></label></div>
+        <div class="autopilots only-challenge"><span>Autopilot</span><button class="ghost" data-auto="ideal">Ideal plan</button><button class="ghost" data-auto="straight">All air on the straight</button></div>
+        <div class="setting only-challenge"><div><strong>Side-jet interlock</strong><small>Hold ← early: the side jet waits until the car reaches B. Off: it fires anywhere, even on the ice.</small></div><label class="toggle"><input id="interlock" type="checkbox" checked aria-label="Side-jet interlock"><span></span></label></div>
+        <div class="setting only-free"><div><strong>Limited air</strong><small>Off: the tank never empties. On: 90 kg, as in the challenge.</small></div><label class="toggle"><input id="limitedAir" type="checkbox" aria-label="Limited air"><span></span></label></div>
         <div class="switches"><label><input id="showForces" type="checkbox" checked><span>Force arrows</span></label><label><input id="xray" type="checkbox"><span>See-through body</span></label></div>
       </section>
     </aside>
   </div>
 
   <details class="panel notes" id="notes">
-    <summary>Physics model and the ideal plan <span>＋</span></summary>
+    <summary>Physics model, the ideal plan and free drive <span>＋</span></summary>
     <div class="notes-body">
       <div class="note-grid">
         <article>
@@ -143,6 +172,13 @@
           <p class="formula"><math display="block"><mn>4</mn><mi>v</mi><mo>+</mo><mfrac><mrow><mo>(</mo><mfrac><mrow><mi>m</mi><msup><mi>v</mi><mn>2</mn></msup></mrow><mi>R</mi></mfrac><mo>−</mo><mi>μ</mi><mi>N</mi><mo>)</mo></mrow><mi>u</mi></mfrac><mo>·</mo><mfrac><mrow><mi>π</mi><mi>R</mi></mrow><mrow><mn>2</mn><mi>v</mi></mrow></mfrac><mo>=</mo><mn>90</mn></math></p>
           <p>With the fan on and the textbook value <i>π</i> = 3 this gives <math><mn>10</mn><mi>v</mi><mo>−</mo><mfrac><mn>360</mn><mi>v</mi></mfrac><mo>=</mo><mn>90</mn></math>, so <i>v</i> = 12 m/s: 48 kg on the straight and 42 kg in the curve, 6.85 s in total. Entering any faster leaves too little air for the curve.</p>
           <p id="parNote">The game draws a true circle (<i>π</i> = 3.14159…), so its ideal plan is slightly slower.</p>
+        </article>
+        <article>
+          <h3>4 · Free drive: steering is friction</h3>
+          <p>The tyres can push the car in any horizontal direction, but never harder than <i>μN</i> in total (the friction circle). Turning the wheels by an angle <i>δ</i> asks the car to follow a circle of radius</p>
+          <p class="formula"><math display="block"><mi>r</mi><mo>=</mo><mfrac><mi>L</mi><mrow><mi>tan</mi><mo>&#x2061;</mo><mi>δ</mi></mrow></mfrac><mo>,</mo><mspace width="1em"/><mfrac><mrow><mi>m</mi><msup><mi>v</mi><mn>2</mn></msup></mrow><mi>r</mi></mfrac><mo>≤</mo><mi>μ</mi><mi>N</mi></math></p>
+          <p>with wheelbase <i>L</i> = 4 m. Within the limit the friction is static and the car rolls round the circle. Beyond it the tyres slide, friction becomes kinetic (<i>μN</i> against the slide) and the car runs wide. Brakes use friction too: they take 70 % of <i>μN</i>, so braking hard in a turn leaves little for steering.</p>
+          <p>On ice <i>μ</i> = 0: steering and brakes have nothing to push against. Only the jets can change the velocity, and the car keeps sliding in a straight line whichever way it points.</p>
         </article>
       </div>
       <div class="assumptions">
@@ -170,6 +206,6 @@
   <footer><span>Interactive physics · <a href="/labs/">PhyLab Labs</a></span><span><i>m</i> = 2000 kg · <i>u</i> = 500 m/s · <i>μ</i> = 0.1 · <i>g</i> = 10 m/s²</span></footer>
 </main>
 <noscript>This lab needs JavaScript.</noscript>
-<script type="module" src="./app.js?v=20261021-3"></script>
+<script type="module" src="./app.js?v=20261021-4"></script>
 </body>
 </html>

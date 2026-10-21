@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createRun,step,autopilot,par,laneVelocity,speed,G} from '../sim.js';
+import {createRun,step,autopilot,par,laneVelocity,speed} from '../sim.js?v=20261021-4';
+import {TAIL} from '../constants.js?v=20261021-4';
+const G={tail:TAIL};
 const run=(ctl,fan=true,dt=1/60)=>{const s=createRun({fan});let n=0;while(s.status!=='over'&&n++<100000)step(s,ctl,dt);return s;};
 const near=(a,b,e)=>assert.ok(Math.abs(a-b)<e,`${a} != ${b}`);
 
