@@ -2,6 +2,7 @@
   "_note": "Display order for labs (top = shown first on the home page and labs page). After editing, run: python3 scripts/build_index.py",
   "home_count": 8,
   "labs": [
+    { "slug": "jet-roadster", "title": "Jet Roadster" },
     { "slug": "volleyball-serve", "title": "Volleyball Serve" },
     { "slug": "frame-sequencer", "title": "Frame Sequencer" },
     { "slug": "aristotle", "title": "Debate Aristotle" },
