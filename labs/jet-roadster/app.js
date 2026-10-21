@@ -1,5 +1,5 @@
-import {C} from './physics.js';
-import {createRun, step, autopilot, par, laneVelocity, speed, G} from './sim.js';
+import {C} from './physics.js?v=20261021-3';
+import {createRun, step, autopilot, par, laneVelocity, speed, G} from './sim.js?v=20261021-3';
 
 const $ = id => document.getElementById(id), all = s => [...document.querySelectorAll(s)];
 const params = new URLSearchParams(location.search);
@@ -215,7 +215,7 @@ function showResult(p) {
 
 // ---------- loop ----------
 setPower(sidePower); syncSetup(); setView('chase');
-try { const {createScene} = await import('./scene.js'); view = createScene($('scene'), $('labels')); setView('chase'); }
+try { const {createScene} = await import('./scene.js?v=20261021-3'); view = createScene($('scene'), $('labels')); setView('chase'); }
 catch (error) { $('renderError').hidden = false; console.error('3D initialisation failed', error); }
 draw(0);
 function frame(now) {

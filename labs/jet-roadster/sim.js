@@ -6,7 +6,7 @@
 // friction acts only across it: static while the tyres grip, kinetic (μN) while they slide.
 // Results: finished, stalled, off (left the ice), drift (reached B sliding sideways),
 // skid (static friction plus side thrust could not hold the arc; the car is then uncontrolled).
-import {C, plan} from './physics.js';
+import {C, plan} from './physics.js?v=20261021-3';
 
 export const G = Object.freeze({
   tail: C.m * C.a,          // 20 kN at 40 kg/s

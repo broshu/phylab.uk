@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import {OrbitControls} from './vendor/OrbitControls.js';
-import {C} from './physics.js';
-import {laneVelocity, speed} from './sim.js';
+import {C} from './physics.js?v=20261021-3';
+import {laneVelocity, speed} from './sim.js?v=20261021-3';
 
 // Scene colours follow the site palette (light paper / dark slate). Physics colours keep
 // one meaning in both: blue = jet thrust, amber = friction, ink dashes = toward O.
@@ -155,13 +155,15 @@ export function createScene(container, labelLayer) {
     else if (mode === 'overview') { controls.target.set(-11, 0, -5); camera.position.copy(controls.target).add(new THREE.Vector3(-.15, .65, 1).normalize().multiplyScalar(Math.max(62, 108 / aspect))); }
     else { snapFollow(); }
     controls.update();
-    car.visible = mode !== 'cockpit';
+    // Cockpit: keep the bonnet and wings in view; hide what would sit around the driver's eyes.
+    const inside = mode === 'cockpit';
+    cabin.visible = !inside; wheels.forEach(w => w.visible = !inside);
     for (const d of dims) d.visible = mode === 'overview' || mode === 'top';
   }
   function forward() { return new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw)); }
   function followGoals() {
     const f = forward();
-    if (mode === 'cockpit') { camGoal.copy(carPos).addScaledVector(f, .4).setY(1.5); lookGoal.copy(carPos).addScaledVector(f, 25).setY(.6); }
+    if (mode === 'cockpit') { camGoal.copy(carPos).addScaledVector(f, -.6).setY(2.05); lookGoal.copy(carPos).addScaledVector(f, 25).setY(-.4); }
     else { camGoal.copy(carPos).addScaledVector(f, -17).setY(8.5); lookGoal.copy(carPos).addScaledVector(f, 9).setY(0); }
   }
   function snapFollow() { followGoals(); camera.position.copy(camGoal); look.copy(lookGoal); camera.lookAt(look); }
@@ -220,7 +222,7 @@ export function createScene(container, labelLayer) {
     if (run.t === 0) yaw = 0;
     car.position.copy(carPos); car.rotation.y = yaw;
     rolled += v * dt; wheels.forEach(w => w.rotation.z = -rolled / (.44 * 1.35));
-    fan.visible = opts.fan; fan.rotation.y += opts.fan ? dt * 40 : 0;
+    fan.visible = opts.fan && mode !== 'cockpit'; fan.rotation.y += opts.fan ? dt * 40 : 0;
     paint.transparent = opts.xray; paint.opacity = opts.xray ? .38 : 1; paint.depthWrite = !opts.xray; paint.needsUpdate = true; tanks.visible = opts.xray;
     body.visible = true;
 
