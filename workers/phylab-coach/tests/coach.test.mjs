@@ -246,8 +246,8 @@ test('time questions get a useful calculation even in preset fallback', () => {
 
 test('provider payload has a bounded non-thinking recovery mode', () => {
   const input = normalizeCoachInput({ question: '时间怎么计算？', context: { verdict: 'in', speed: 21 } });
-  const primary = buildProviderPayload(input, 'deepseek-v4-flash', true);
-  const recovery = buildProviderPayload(input, 'deepseek-v4-flash', false);
+  const primary = buildProviderPayload(input, 'deepseek-flash', true);
+  const recovery = buildProviderPayload(input, 'deepseek-flash', false);
 
   assert.deepEqual(primary.thinking, { type: 'enabled' });
   assert.equal(primary.reasoning_effort, 'low');
@@ -262,7 +262,7 @@ test('provider payload has a bounded non-thinking recovery mode', () => {
   });
   const languageRecovery = buildProviderPayload(
     englishInput,
-    'deepseek-v4-flash',
+    'deepseek-flash',
     false,
     [],
     true,

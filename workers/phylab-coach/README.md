@@ -105,7 +105,7 @@ npx wrangler d1 migrations apply phylab-coach-conversations --remote
 For local development, copy `.dev.vars.example` to `.dev.vars` and fill it in.
 The real `.dev.vars` file is ignored by Git.
 
-The default provider is `deepseek-v4-flash` at `https://api.deepseek.com`.
+The default provider is `deepseek-flash` at `https://api.deepseek.com`.
 Change `AI_MODEL` only after checking the current DeepSeek API documentation.
 
 ## Verify locally

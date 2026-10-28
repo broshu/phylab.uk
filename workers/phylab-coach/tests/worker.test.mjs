@@ -142,7 +142,7 @@ const database = /** @type {D1Database} */ (
 /** @type {Env} */
 const env = {
   AI_BASE_URL: 'https://api.deepseek.com',
-  AI_MODEL: 'deepseek-v4-flash',
+  AI_MODEL: 'deepseek-flash',
   ALLOWED_ORIGINS: 'https://phylab.uk,https://www.phylab.uk',
   DEEPSEEK_API_KEY: '',
   COACH_TEST_TOKEN: '',

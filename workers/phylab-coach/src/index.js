@@ -44,7 +44,7 @@ function normalizeAdminPath(value) {
 /** @param {Env} env */
 function config(env) {
   return {
-    model: env.AI_MODEL || 'deepseek-v4-flash',
+    model: env.AI_MODEL || 'deepseek-flash',
     baseUrl: (env.AI_BASE_URL || 'https://api.deepseek.com').replace(/\/$/, ''),
     allowedOrigins: new Set(
       (env.ALLOWED_ORIGINS || '')
