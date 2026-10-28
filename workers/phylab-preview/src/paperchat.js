@@ -8,8 +8,7 @@
 //   2. a PDF a reviewer uploads on the card.
 // Without either, answers are based on the abstract and say so.
 //
-// DeepSeek is reached through phylab-debate's PaperChat entrypoint (binding AI), which
-// holds the API key.
+// DeepSeek is called from deepseek.js with this Worker's own DEEPSEEK_API_KEY.
 import { extractText, getDocumentProxy } from 'unpdf';
 
 const MAX_PDF_BYTES = 40 * 1024 * 1024;

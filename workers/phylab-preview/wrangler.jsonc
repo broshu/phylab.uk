@@ -15,8 +15,7 @@
   ],
   // Full text of papers, kept privately (most papers are not open access).
   "kv_namespaces": [{ "binding": "FULLTEXT", "id": "5684f7728b1e4726af816e2a4ab4a04e" }],
-  // DeepSeek through phylab-debate, which holds the API key. Internal only.
-  "services": [{ "binding": "AI", "service": "phylab-debate", "entrypoint": "PaperChat" }],
+  // DEEPSEEK_API_KEY (a key used only by preview.phylab.uk) is a build secret; see README.
   "vars": {
     "GITHUB_REPO": "broshu/phylab.uk",
     "GITHUB_BRANCH": "main",

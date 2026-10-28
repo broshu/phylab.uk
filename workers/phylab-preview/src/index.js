@@ -8,6 +8,7 @@ import { TOPICS } from './literature.js';
 import { fetchRaw, listBranches, recentCommits, validBranch } from './github.js';
 import { DEFAULT_PROFILE, addNote, approve, expire, findPaper, loadDesk, publicDesk, reject, restore, saveProfile, setFeatured } from './store.js';
 import { buildSystem, cleanMessages, describe, getFullText, saveUploadedPdf } from './paperchat.js';
+import { askDeepSeek } from './deepseek.js';
 import { REVIEW_DIR } from './reviewfile.js';
 
 const BRANCH_COOKIE = 'pv_branch';
@@ -166,7 +167,7 @@ async function api(request, env, ctx, url, branch) {
       return json({ ok: true, ...(await expire(env, { remove: ids(body.remove), keep: ids(body.keep) })) });
     }
     case '/api/ask': {
-      if (!env.AI) return json({ error: '提问功能还没有接上 DeepSeek' }, 503);
+      if (!env.DEEPSEEK_API_KEY) return json({ error: '提问功能还没有接上 DeepSeek' }, 503);
       if (env.ASK_LIMIT) {
         const { success } = await env.ASK_LIMIT.limit({ key: request.headers.get('CF-Connecting-IP') || 'anon' });
         if (!success) return json({ error: '提问太频繁，请稍等一分钟' }, 429);
@@ -174,7 +175,7 @@ async function api(request, env, ctx, url, branch) {
       const messages = cleanMessages(body.messages);
       const paper = findPaper(await loadDesk(env), id(body.id));
       const record = await getFullText(env, paper);
-      const stream = await env.AI.chat({ system: buildSystem(paper, record), messages, maxTokens: 1500 });
+      const stream = await askDeepSeek(env, { system: buildSystem(paper, record), messages, maxTokens: 1500 });
       return new Response(stream, { headers: { ...BASE_HEADERS, 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store',
         'X-Paper-Basis': encodeURIComponent(record ? record.source : '只有摘要') } });
     }

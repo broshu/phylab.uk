@@ -34,10 +34,10 @@ The site does not search for papers itself. Any AI with GitHub access (Claude, C
 | `GITHUB_TOKEN` | build secret | Fine-grained token for `broshu/phylab.uk` only, **Contents: Read and write**. Reads the repository and makes the commits. |
 | `GITHUB_REPO`, `GITHUB_BRANCH`, `PREVIEW_DEFAULT_BRANCH` | vars in `wrangler.jsonc` | |
 | `FULLTEXT` | KV namespace `phylab-preview-fulltext` | Extracted full text of papers (`ft:<id>`), and a 12-hour "no open copy found" marker (`ft-miss:<id>`). |
-| `AI` | service binding to `phylab-debate`, entrypoint `PaperChat` | DeepSeek for the question box. The API key stays in phylab-debate; nothing to set here. |
+| `DEEPSEEK_API_KEY` | build secret | DeepSeek key for the question box. Create a key named `preview.phylab.uk-ask-paper` and use it only here; it is not shared with any other Worker. Code: `src/deepseek.js`. |
 | `ASK_LIMIT` | rate limit | 8 questions per minute per IP. |
 
-The build secret is copied to the runtime secret by `scripts/deploy.sh` on every deploy, as in `phylab-debate`.
+Build secrets are copied to runtime secrets by `scripts/deploy.sh` on every deploy, as in `phylab-debate`.
 
 ## Deploy (Workers Builds)
 
@@ -46,7 +46,7 @@ Cloudflare dashboard → Workers & Pages → Create → Import a repository → 
 - Root directory: `workers/phylab-preview`
 - Deploy command: `npm run deploy`
 - Build watch paths: `workers/phylab-preview/*`, `literature/core.mjs` (otherwise every decision and every new paper triggers a rebuild)
-- Build variables and secrets: `GITHUB_TOKEN`
+- Build variables and secrets: `GITHUB_TOKEN`, `DEEPSEEK_API_KEY`
 
 `preview.phylab.uk` is a custom-domain route in `wrangler.jsonc`, so the deploy creates its DNS record.
 

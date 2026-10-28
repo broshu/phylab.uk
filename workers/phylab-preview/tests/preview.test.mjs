@@ -216,11 +216,19 @@ test('ask endpoint streams the answer and checks origin', async () => {
   const gh = fakeGitHub({ [`${PENDING_DIR}/${paper.id}.md`]: serializeReview(paper) });
   gh.install();
   let seen;
-  const AI = { chat: async input => { seen = input; return new Response('有，做了单摆实验。').body; } };
   const kv = new Map([[`ft-miss:${paper.id}`, '1']]);
   const FULLTEXT = { get: async (k, t) => (kv.has(k) ? (t === 'json' ? JSON.parse(kv.get(k)) : kv.get(k)) : null), put: async (k, v) => { kv.set(k, v); }, delete: async k => { kv.delete(k); } };
   try {
-    const e = { ...env, AI, FULLTEXT };
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = async (url, init) => {
+      if (String(url).startsWith('https://api.deepseek.com/')) {
+        seen = JSON.parse(init.body);
+        assert.equal(init.headers.Authorization, 'Bearer test-key');
+        return new Response('data: {"choices":[{"delta":{"content":"有，做了单摆实验。"}}]}\n\ndata: [DONE]\n\n');
+      }
+      return realFetch(url, init);
+    };
+    const e = { ...env, DEEPSEEK_API_KEY: 'test-key', FULLTEXT };
     const req = origin => new Request('https://preview.phylab.uk/api/ask', { method: 'POST', headers: { Origin: origin, 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: paper.id, messages: [{ role: 'user', content: '有没有做学生实验？' }] }) });
     assert.equal((await worker.fetch(req('https://evil.example'), e, {})).status, 403);
@@ -228,8 +236,10 @@ test('ask endpoint streams the answer and checks origin', async () => {
     assert.equal(res.status, 200);
     assert.equal(await res.text(), '有，做了单摆实验。');
     assert.equal(decodeURIComponent(res.headers.get('X-Paper-Basis')), '只有摘要');
-    assert.match(seen.system, /只依据摘要/);
+    assert.match(seen.messages[0].content, /只依据摘要/);
     assert.equal(seen.messages.at(-1).content, '有没有做学生实验？');
+    delete e.DEEPSEEK_API_KEY;
+    assert.equal((await worker.fetch(req('https://preview.phylab.uk'), e, {})).status, 503);
   } finally { gh.restore?.(); }
 });
 
