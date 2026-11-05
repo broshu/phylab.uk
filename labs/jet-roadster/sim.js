@@ -6,8 +6,8 @@
 // friction acts only across it: static while the tyres grip, kinetic (μN) while they slide.
 // Results: finished, stalled, off (left the ice), drift (reached B sliding sideways),
 // skid (static friction plus side thrust could not hold the arc; the car is then uncontrolled).
-import {C, TAIL, frictionLimit} from './constants.js?v=20261021-4';
-import {plan} from './physics.js?v=20261021-4';
+import {C, TAIL, frictionLimit} from './constants.js?v=20261030-2';
+import {plan} from './physics.js?v=20261030-2';
 
 const INNER_R = C.R - C.roadHalfWidth, OUTER_R = C.R + C.roadHalfWidth;
 
@@ -127,7 +127,7 @@ export function autopilot(kind, fan = true) {
   return (s, h) => {
     const lane = laneVelocity(s);
     if (lane.region === 'ice') {
-      const short = p.v - lane.vt;
+      const short = p.v - 1e-3 - lane.vt; // a hair under the plan, so step rounding never leaves the curve short of air
       return {tail: short <= 0 ? 0 : Math.min(1, short * C.m / (TAIL * h)), side: false, sidePower: 0};
     }
     const need = Math.max(0, C.m * lane.vt * lane.vt / lane.r - s.fmax);

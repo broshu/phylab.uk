@@ -1,6 +1,6 @@
 // Closed-form textbook solution. Used for par times, the notes and tests; the game itself
 // is advanced by sim.js (challenge) and drive.js (free drive).
-import {C, frictionLimit} from './constants.js?v=20261021-4';
+import {C, frictionLimit} from './constants.js?v=20261030-2';
 
 /**
  * Burn at full tail thrust to speed v, coast to B, then hold the arc with the least side thrust.

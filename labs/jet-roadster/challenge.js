@@ -1,6 +1,6 @@
 // Challenge mode: A→B on ice, then the quarter circle to C. Wraps sim.js for the page.
-import {C} from './constants.js?v=20261021-4';
-import {createRun, step, autopilot, par, laneVelocity, speed, heading} from './sim.js?v=20261021-4';
+import {C} from './constants.js?v=20261030-2';
+import {createRun, step, autopilot, par, laneVelocity, speed, heading} from './sim.js?v=20261030-2';
 
 const kN = n => `${(n / 1000).toFixed(1)} kN`;
 
@@ -53,7 +53,7 @@ export function createChallenge({fan = true, interlock = true} = {}) {
       const armed = live && input.sideL && settings.interlock && run.x < 0 && !pilot;
       return {
         status, state: lost ? 'danger' : run.result === 'finished' ? 'done' : live && !paused ? 'live' : 'idle',
-        timer: run.result === 'finished' ? run.finishTime : run.t, speed: v, gas: run.gas, flow: run.flow,
+        timer: run.result === 'finished' ? run.finishTime : (run.offTime ?? run.t), speed: v, gas: run.gas, flow: run.flow,
         split: {straight: run.usedStraight, curve: run.usedCurve}, region: lane.region === 'ice' ? 'Ice' : 'Curve',
         grip, gripText, gripNote: note, sliding: lost,
         forces: {tail: run.tail, side: run.side, friction: run.frictionKind ? Math.abs(run.friction) : 0, frictionKind: run.frictionKind,

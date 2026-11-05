@@ -9,7 +9,7 @@ Static page; Three.js 0.180.0 is bundled in `vendor/`. No CDN, fonts, backend or
 
 ## Playing
 
-Challenge: hold **↑ / W** for the tail jet (20 kN, 40 kg/s); hold **← / A / Q** for the side jet, which pushes toward O. **[ / ]** or the slider set side power (0–20 kN, 2 kg/s per kN). The side-jet interlock (on by default) arms the jet early and opens it at B. Autopilot: *Ideal plan* and *All air on the straight*.
+Challenge: hold **↑ / W** for the tail jet (80 kN, 160 kg/s); hold **← / A / Q** for the side jet, which pushes toward O. **[ / ]** or the slider set side power (0–20 kN, 2 kg/s per kN). The side-jet interlock (on by default) arms the jet early and opens it at B. Autopilot: *Ideal plan* and *All air on the straight*.
 
 Free drive: **↑** tail jet · **↓** brake · **← →** steer · **Q / E** side jets pushing left / right · **R** back to start. Air is unlimited unless *Limited air* is on.
 
@@ -19,7 +19,7 @@ Both: **Space** pause · **V** cycle cameras (*Chase*, *Cockpit* with dashboard,
 
 All numbers live in `constants.js`. m = 2000 kg (constant), g = 10 m/s², u = 500 m/s, μ = 0.1, AB = 45 m, R = 20 m, road 6 m wide. The fan adds 2mg to N and uses no air. No drag or rolling resistance; F = u·Δm/Δt.
 
-**Challenge** (`sim.js`). Ice for x < 0: no friction. On the curve the tyres roll along the lane and friction acts only across it: static, f = mv²/r − S, while |f| ≤ μN. Outside mv²/r − μN ≤ S ≤ mv²/r + μN the tyres slide, friction becomes kinetic and the run is lost. A side jet on the ice leaves a sideways drift. The game uses true circle geometry: ideal plan with the fan on is 11.85 m/s, 47.4 + 42.6 kg, 7.04 s; the notes also give the textbook π = 3 answer (12 m/s, 48 + 42 kg, 6.85 s). Making a curve skid a loss keeps the ideal plan the true optimum.
+**Challenge** (`sim.js`). Ice for x < 0: no friction. On the curve the tyres roll along the lane and friction acts only across it: static, f = mv²/r − S, while |f| ≤ μN. Outside mv²/r − μN ≤ S ≤ mv²/r + μN the tyres slide, friction becomes kinetic and the run is lost. A side jet on the ice leaves a sideways drift. The game uses true circle geometry: ideal plan with the fan on is 11.85 m/s, 47.4 + 42.6 kg, 6.60 s; the notes also give the textbook π = 3 answer (12 m/s, 48 + 42 kg, 6.4 s). Making a curve skid a loss keeps the ideal plan the true optimum.
 
 **Free drive** (`drive.js`). Point mass with a heading. The tyres can push in any horizontal direction, at most μN in total (friction circle). Each step asks for the force that keeps the car rolling where its wheels point, turning about radius r = L / tan δ (wheelbase L = 4 m, δ ≤ 0.5 rad, steering moves at 1.8 rad/s). If that force is within μN, friction is static and the car rolls without slipping; otherwise friction is μN against the slide. Brakes ask for 70 % of μN. On ice μ = 0. The field is fenced; cones are markers that topple but do not push back.
 

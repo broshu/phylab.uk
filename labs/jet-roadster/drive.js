@@ -4,7 +4,7 @@
 // where its wheels point: no sideways slip, and it turns about a centre a distance
 // wheelbase / tan(steer) to the side. When the demand is larger, the tyres slide and friction
 // is kinetic: μN against the sliding. On ice μ = 0, so steering and brakes do nothing.
-import {C, TAIL, WORLD, frictionLimit} from './constants.js?v=20261021-4';
+import {C, TAIL, WORLD, frictionLimit} from './constants.js?v=20261030-2';
 
 export function surfaceAt(x, z) {
   const onStraight = x >= -C.L && x <= 0 && Math.abs(z) <= C.roadHalfWidth;

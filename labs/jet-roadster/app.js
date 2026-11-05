@@ -1,8 +1,8 @@
 // Page shell: mode switching, input, the frame loop and the HUD. Each mode (challenge.js,
 // free.js) owns its own model and returns a plain readout and view model every frame.
-import {C} from './constants.js?v=20261021-4';
-import {createChallenge} from './challenge.js?v=20261021-4';
-import {createFree} from './free.js?v=20261021-4';
+import {C} from './constants.js?v=20261030-2';
+import {createChallenge} from './challenge.js?v=20261030-2';
+import {createFree} from './free.js?v=20261030-2';
 
 const $ = id => document.getElementById(id), all = s => [...document.querySelectorAll(s)];
 const params = new URLSearchParams(location.search);
@@ -164,7 +164,7 @@ function showResult(r) {
 
 // ---------- loop ----------
 setPower(sidePower); syncSetup();
-try { const {createScene} = await import('./scene.js?v=20261021-4'); view = createScene($('scene'), $('labels')); }
+try { const {createScene} = await import('./scene.js?v=20261030-2'); view = createScene($('scene'), $('labels')); }
 catch (error) { $('renderError').hidden = false; console.error('3D initialisation failed', error); }
 setMode(mode); setView('chase');
 function frame(now) {

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import {OrbitControls} from './vendor/OrbitControls.js';
-import {C, WORLD} from './constants.js?v=20261021-4';
+import {C, WORLD} from './constants.js?v=20261030-2';
 
 // Scene colours follow the site palette (light paper / dark slate). Physics colours keep
 // one meaning in both: blue = jet thrust, amber = friction, ink dashes = toward the centre.
@@ -277,7 +277,7 @@ export function createScene(container, labelLayer) {
     // Forces (hidden in the cockpit, where they would sit overhead).
     const f = fwd(), l = lft(), show = opts.forces && mode !== 'cockpit', top = carPos.clone().setY(2.3), scale = 1 / 2500;
     tailArrow.visible = tailLabel.show = show && vm.tail > 0;
-    if (tailArrow.visible) { const o = top.clone().addScaledVector(f, 1.2); tailArrow.position.copy(o); tailArrow.setDirection(f); tailArrow.setLength(vm.tail * scale, .8, .45); tailLabel.position.copy(o).addScaledVector(f, vm.tail * scale + 1).setY(3.1); tailLabel.el.textContent = `Tail thrust ${(vm.tail / 1000).toFixed(1)} kN`; }
+    if (tailArrow.visible) { const o = top.clone().addScaledVector(f, 1.2); tailArrow.position.copy(o); tailArrow.setDirection(f); tailArrow.setLength(vm.tail * scale / 4, .8, .45); tailLabel.position.copy(o).addScaledVector(f, vm.tail * scale / 4 + 1).setY(3.1); tailLabel.el.textContent = `Tail thrust ${(vm.tail / 1000).toFixed(1)} kN`; }
     const side = (vm.sideL || 0) - (vm.sideR || 0), sdir = l.clone().multiplyScalar(Math.sign(side) || 1);
     sideArrow.visible = sideLabel.show = show && Math.abs(side) > 0;
     if (sideArrow.visible) { const o = top.clone().addScaledVector(f, -1.6), len = Math.max(.9, Math.abs(side) * scale); sideArrow.position.copy(o); sideArrow.setDirection(sdir); sideArrow.setLength(len, Math.min(.8, .25 + Math.abs(side) / 20000), .4); sideLabel.position.copy(o).addScaledVector(sdir, len + 1.1).setY(4.4); sideLabel.el.textContent = `Side thrust ${(Math.abs(side) / 1000).toFixed(1)} kN`; }
@@ -293,7 +293,7 @@ export function createScene(container, labelLayer) {
     // Exhaust particles.
     const vCar = new THREE.Vector3(vm.vx, 0, vm.vz);
     if (dt > 0) {
-      if (vm.tail > 0) emit('tail', dt, 180 * vm.tail / 20000, f, l, vCar);
+      if (vm.tail > 0) emit('tail', dt, 180 * vm.tail / 80000, f, l, vCar);
       if (vm.sideL > 0) emit('sideL', dt, 40 + 140 * vm.sideL / 20000, f, l, vCar);
       if (vm.sideR > 0) emit('sideR', dt, 40 + 140 * vm.sideR / 20000, f, l, vCar);
       for (const p of parts) { if (p.age > p.life) continue; p.age += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt; p.vx *= 1 - 1.4 * dt; p.vz *= 1 - 1.4 * dt; }

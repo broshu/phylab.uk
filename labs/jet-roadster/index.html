@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#f4f1e8" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#14181b" media="(prefers-color-scheme: dark)">
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/assets/theme.css">
-  <link rel="stylesheet" href="./style.css?v=20261021-4">
+  <link rel="stylesheet" href="./style.css?v=20261030-2">
   <script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
 </head>
 <body data-mode="challenge">
@@ -27,7 +27,7 @@
       <button role="tab" data-mode="free" aria-selected="false">Free drive</button>
     </div>
     <div class="only-challenge">
-      <p>Your 2000 kg roadster carries <b>90 kg of compressed air</b> and nothing else to push it. The straight A→B (45 m) is frictionless ice; the quarter-circle B→C (radius 20 m) has grip, <i>μ</i> = 0.1. The <b>tail jet</b> gives 20 kN and burns 40 kg/s. The <b>side jet</b> blows outward, so it pushes the car toward the centre O; it burns 2 kg/s for every kN. Get to C as fast as you can without skidding.</p>
+      <p>Your 2000 kg roadster carries <b>90 kg of compressed air</b> and nothing else to push it. The straight A→B (45 m) is frictionless ice; the quarter-circle B→C (radius 20 m) has grip, <i>μ</i> = 0.1. The <b>tail jet</b> gives 80 kN and burns 160 kg/s. The <b>side jet</b> blows outward, so it pushes the car toward the centre O; it burns 2 kg/s for every kN. Get to C as fast as you can without skidding.</p>
       <p class="controls-note"><b>Controls</b> · hold <kbd>↑</kbd> tail jet · hold <kbd>←</kbd> or <kbd>Q</kbd> side jet · <kbd>[</kbd> <kbd>]</kbd> side power · <kbd>Space</kbd> pause · <kbd>R</kbd> restart · <kbd>V</kbd> camera</p>
     </div>
     <div class="only-free">
@@ -89,7 +89,7 @@
 
         <div class="controls panel">
           <div class="pad only-challenge">
-            <button class="jet" data-action="tail" aria-label="Tail jet (hold)"><span class="jet-key">↑</span><span><b>Tail jet</b><small>20 kN · 40 kg/s</small></span></button>
+            <button class="jet" data-action="tail" aria-label="Tail jet (hold)"><span class="jet-key">↑</span><span><b>Tail jet</b><small>80 kN · 160 kg/s</small></span></button>
             <button class="jet" data-action="sideL" aria-label="Side jet toward O (hold)"><span class="jet-key">←</span><span><b>Side jet</b><small class="side-info">8.0 kN · 16 kg/s</small></span></button>
           </div>
           <div class="pad drive only-free">
@@ -153,7 +153,7 @@
         <article>
           <h3>1 · Thrust on the ice</h3>
           <p>Air leaves the nozzle at <i>u</i> = 500 m/s. The thrust is the momentum carried away per second:</p>
-          <p class="formula"><math display="block"><mi>F</mi><mo>=</mo><mi>u</mi><mfrac><mrow><mi mathvariant="normal">Δ</mi><mi>m</mi></mrow><mrow><mi mathvariant="normal">Δ</mi><mi>t</mi></mrow></mfrac><mo>=</mo><mn>500</mn><mo>×</mo><mn>40</mn><mo>=</mo><mn>20</mn><mtext>&#x2009;kN</mtext><mo>,</mo><mspace width="1em"/><mi>a</mi><mo>=</mo><mfrac><mi>F</mi><mi>m</mi></mfrac><mo>=</mo><mn>10</mn><mtext>&#x2009;m/s</mtext><msup><mrow/><mn>2</mn></msup></math></p>
+          <p class="formula"><math display="block"><mi>F</mi><mo>=</mo><mi>u</mi><mfrac><mrow><mi mathvariant="normal">Δ</mi><mi>m</mi></mrow><mrow><mi mathvariant="normal">Δ</mi><mi>t</mi></mrow></mfrac><mo>=</mo><mn>500</mn><mo>×</mo><mn>160</mn><mo>=</mo><mn>80</mn><mtext>&#x2009;kN</mtext><mo>,</mo><mspace width="1em"/><mi>a</mi><mo>=</mo><mfrac><mi>F</mi><mi>m</mi></mfrac><mo>=</mo><mn>40</mn><mtext>&#x2009;m/s</mtext><msup><mrow/><mn>2</mn></msup></math></p>
           <p>Ice has no friction, so once the jet stops the car keeps its speed. The fastest straight is: burn first, then coast. Reaching speed <i>v</i> costs</p>
           <p class="formula"><math display="block"><msub><mi>q</mi><mtext>AB</mtext></msub><mo>=</mo><mfrac><mrow><mi>m</mi><mi>v</mi></mrow><mi>u</mi></mfrac><mo>=</mo><mn>4</mn><mi>v</mi><mspace width="1em"/><mo>(</mo><mtext>kg</mtext><mo>)</mo></math></p>
           <p>A side jet on the ice gives a sideways velocity that nothing can remove. You either slide off the ice or reach B already skidding.</p>
@@ -170,7 +170,7 @@
           <h3>3 · The ideal plan</h3>
           <p>Use the least side thrust, <i>S</i> = <i>mv</i><sup>2</sup>/<i>R</i> − <i>μN</i>, for the time <i>t</i> = <i>πR</i>/(2<i>v</i>). The air left after the straight must last the curve:</p>
           <p class="formula"><math display="block"><mn>4</mn><mi>v</mi><mo>+</mo><mfrac><mrow><mo>(</mo><mfrac><mrow><mi>m</mi><msup><mi>v</mi><mn>2</mn></msup></mrow><mi>R</mi></mfrac><mo>−</mo><mi>μ</mi><mi>N</mi><mo>)</mo></mrow><mi>u</mi></mfrac><mo>·</mo><mfrac><mrow><mi>π</mi><mi>R</mi></mrow><mrow><mn>2</mn><mi>v</mi></mrow></mfrac><mo>=</mo><mn>90</mn></math></p>
-          <p>With the fan on and the textbook value <i>π</i> = 3 this gives <math><mn>10</mn><mi>v</mi><mo>−</mo><mfrac><mn>360</mn><mi>v</mi></mfrac><mo>=</mo><mn>90</mn></math>, so <i>v</i> = 12 m/s: 48 kg on the straight and 42 kg in the curve, 6.85 s in total. Entering any faster leaves too little air for the curve.</p>
+          <p>With the fan on and the textbook value <i>π</i> = 3 this gives <math><mn>10</mn><mi>v</mi><mo>−</mo><mfrac><mn>360</mn><mi>v</mi></mfrac><mo>=</mo><mn>90</mn></math>, so <i>v</i> = 12 m/s: 48 kg on the straight and 42 kg in the curve, 6.4 s in total. Entering any faster leaves too little air for the curve.</p>
           <p id="parNote">The game draws a true circle (<i>π</i> = 3.14159…), so its ideal plan is slightly slower.</p>
         </article>
         <article>
@@ -187,7 +187,7 @@
           <li>Mass stays 2000 kg (the 90 kg of air lost is ignored); no air drag or rolling resistance; nozzle exit pressure equals the outside pressure, so <i>F</i> = <i>u</i>·Δ<i>m</i>/Δ<i>t</i>.</li>
           <li>The car is treated as a point. The tail jet pushes along the lane; the side jet pushes straight toward O on the curve (toward the inner edge on the ice). Tyres roll freely along the lane, so friction acts only across it.</li>
           <li>Skidding means the tyres slide across the lane: friction is then kinetic, <i>μN</i>, opposite the sliding, and the run is lost. Beyond the road edge the run-off area is treated as frictionless. This is a classroom illustration, not a prediction of how a real car spins.</li>
-          <li>The centripetal force is the net force toward O, not an extra force. The dashed line shows its direction; blue arrows are jet thrust, amber arrows friction, all at 1 m per 2.5 kN. The car is drawn 1.35× larger and the air jets are slowed down so they can be seen.</li>
+          <li>The centripetal force is the net force toward O, not an extra force. The dashed line shows its direction; blue arrows are jet thrust, amber arrows friction, at 1 m per 2.5 kN (the tail-jet arrow at 1 m per 10 kN, so it fits on screen). The car is drawn 1.35× larger and the air jets are slowed down so they can be seen.</li>
         </ul>
         <p class="sources">Background: <a href="https://www.grc.nasa.gov/WWW/k-12/BGP/thrsteq.html" target="_blank" rel="noreferrer">NASA · thrust equation ↗</a> <a href="https://openstax.org/books/university-physics-volume-1/pages/6-3-centripetal-force" target="_blank" rel="noreferrer">OpenStax · centripetal force and static friction ↗</a></p>
       </div>
@@ -195,9 +195,9 @@
         <caption>Textbook check (<i>π</i> = 3)</caption>
         <thead><tr><th>Plan</th><th>Speed at B</th><th>Air on straight</th><th>Air in curve</th><th>Time</th></tr></thead>
         <tbody>
-          <tr><td>10 m/s, fan on</td><td>10 m/s</td><td>40 kg</td><td>24 kg</td><td>8 s</td></tr>
-          <tr><td>10 m/s, fan off</td><td>10 m/s</td><td>40 kg</td><td>48 kg</td><td>8 s</td></tr>
-          <tr><td>Ideal, fan on</td><td>12 m/s</td><td>48 kg</td><td>42 kg</td><td>6.85 s</td></tr>
+          <tr><td>10 m/s, fan on</td><td>10 m/s</td><td>40 kg</td><td>24 kg</td><td>7.625 s</td></tr>
+          <tr><td>10 m/s, fan off</td><td>10 m/s</td><td>40 kg</td><td>48 kg</td><td>7.625 s</td></tr>
+          <tr><td>Ideal, fan on</td><td>12 m/s</td><td>48 kg</td><td>42 kg</td><td>6.4 s</td></tr>
           <tr><td>All air on the straight</td><td>22.5 m/s</td><td>90 kg</td><td>none left</td><td>skids at B</td></tr>
         </tbody>
       </table>
@@ -206,6 +206,6 @@
   <footer><span>Interactive physics · <a href="/labs/">PhyLab Labs</a></span><span><i>m</i> = 2000 kg · <i>u</i> = 500 m/s · <i>μ</i> = 0.1 · <i>g</i> = 10 m/s²</span></footer>
 </main>
 <noscript>This lab needs JavaScript.</noscript>
-<script type="module" src="./app.js?v=20261021-4"></script>
+<script type="module" src="./app.js?v=20261030-2"></script>
 </body>
 </html>

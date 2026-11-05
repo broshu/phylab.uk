@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createCar, drive, speed, surfaceAt, turnRadius, forward} from '../drive.js?v=20261021-4';
-import {C, WORLD} from '../constants.js?v=20261021-4';
+import {createCar, drive, speed, surfaceAt, turnRadius, forward} from '../drive.js?v=20261030-2';
+import {C, WORLD} from '../constants.js?v=20261030-2';
 const near = (a, b, e) => assert.ok(Math.abs(a - b) < e, `${a} != ${b}`);
 const at = (s, x, z, yaw = 0) => Object.assign(s, {x, z, yaw});
 const roll = (s, v) => { const f = forward(s.yaw); s.vx = v * f.x; s.vz = v * f.z; return s; };
@@ -10,9 +10,9 @@ test('surfaces: the straight and the rink are ice, the rest has μ = 0.1', () =>
   assert.equal(surfaceAt(-20, 0).mu, 0); assert.equal(surfaceAt(WORLD.icePad.x, WORLD.icePad.z).mu, 0);
   assert.equal(surfaceAt(10, -5).mu, C.mu); assert.equal(surfaceAt(-20, 5).mu, C.mu);
 });
-test('tail jet: a = 10 m/s² and 40 kg/s, from rest on the ice', () => {
-  const s = at(createCar({unlimited: false}), -45, 0); drive(s, {tail: 1}, 1);
-  near(speed(s), 10, 1e-9); near(s.x, -45 + 5, 1e-6); near(s.gas, 50, 1e-9);
+test('tail jet: a = 40 m/s² and 160 kg/s, from rest on the ice', () => {
+  const s = at(createCar({unlimited: false}), -45, 0); drive(s, {tail: 1}, 0.25);
+  near(speed(s), 10, 1e-9); near(s.x, -45 + 1.25, 1e-6); near(s.gas, 50, 1e-9);
 });
 test('on ice, steering and brakes do nothing', () => {
   const s = roll(at(createCar(), -40, 0), 10); drive(s, {steer: 1, brake: true}, 2);

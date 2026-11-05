@@ -4,8 +4,8 @@ export const C = Object.freeze({
   m: 2000,            // kg, held constant (air mass lost is ignored)
   g: 10,              // m/s²
   u: 500,             // m/s, exhaust speed
-  flow: 40,           // kg/s, tail jet
-  a: 10,              // m/s², tail jet acceleration = u·flow/m
+  flow: 160,          // kg/s, tail jet
+  a: 40,              // m/s², tail jet acceleration = u·flow/m
   gas: 90,            // kg of compressed air
   mu: 0.1,            // friction coefficient on every surface that is not ice
   fanFactor: 3,       // N = 3mg with the fan on (suction adds 2mg)
@@ -27,7 +27,7 @@ export const C = Object.freeze({
   h: 1 / 600          // s, integration step for both models
 });
 
-export const TAIL = C.m * C.a;   // 20 kN
+export const TAIL = C.m * C.a;   // 80 kN
 
 /** Largest friction force the tyres can give, μN. */
 export function frictionLimit(fan, mu = C.mu) { return mu * C.m * C.g * (fan ? C.fanFactor : 1); }

@@ -1,6 +1,6 @@
 // Free-drive mode: steer the jet car anywhere in the world. Wraps drive.js for the page.
-import {C} from './constants.js?v=20261021-4';
-import {createCar, drive, speed, turnRadius, left} from './drive.js?v=20261021-4';
+import {C} from './constants.js?v=20261030-2';
+import {createCar, drive, speed, turnRadius, left} from './drive.js?v=20261030-2';
 
 const kN = n => `${(n / 1000).toFixed(1)} kN`;
 
