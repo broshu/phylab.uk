@@ -2,6 +2,21 @@
   "_note": "Display order for labs (top = shown first on the home page and labs page). After editing, run: python3 scripts/build_index.py",
   "home_count": 8,
   "labs": [
+    { "slug": "jet-roadster", "title": "Jet Roadster" },
+    { "slug": "volleyball-serve", "title": "Volleyball Serve" },
+    { "slug": "frame-sequencer", "title": "Frame Sequencer" },
+    { "slug": "aristotle", "title": "Debate Aristotle" },
+    { "slug": "electric-potential-3d", "title": "Electric Potential 3D" },
+    { "slug": "oscilloscope-principle", "title": "Oscilloscope Principle" },
+    { "slug": "reference-circle", "title": "Reference Circle" },
+    { "slug": "shm-phase-offset", "title": "SHM Phase and Offset" },
+    { "slug": "microscopic-current", "title": "Microscopic Current" },
+    { "slug": "electric-field-lines", "title": "Electric Field Lines" },
+    { "slug": "vernier-caliper", "title": "Vernier Caliper" },
+    { "slug": "particle-between-plates", "title": "Particle Between Plates" },
+    { "slug": "alternating-field-release", "title": "Alternating Field Release" },
+    { "slug": "collision-deformation", "title": "Deformation in Collisions" },
+    { "slug": "ar-electric-field", "title": "AR Electric Field", "badge": "Beta" },
     {
       "slug": "mechanics-applications",
       "title": "Mechanics: Applications and Special Cases",
@@ -27,21 +42,6 @@
       ]
     },
     { "slug": "force-sudden-change", "title": "Can a Force Change Suddenly?" },
-    { "slug": "hall-effect", "title": "Hall Effect" },
-    { "slug": "jet-roadster", "title": "Jet Roadster" },
-    { "slug": "volleyball-serve", "title": "Volleyball Serve" },
-    { "slug": "frame-sequencer", "title": "Frame Sequencer" },
-    { "slug": "aristotle", "title": "Debate Aristotle" },
-    { "slug": "electric-potential-3d", "title": "Electric Potential 3D" },
-    { "slug": "oscilloscope-principle", "title": "Oscilloscope Principle" },
-    { "slug": "reference-circle", "title": "Reference Circle" },
-    { "slug": "shm-phase-offset", "title": "SHM Phase and Offset" },
-    { "slug": "microscopic-current", "title": "Microscopic Current" },
-    { "slug": "electric-field-lines", "title": "Electric Field Lines" },
-    { "slug": "vernier-caliper", "title": "Vernier Caliper" },
-    { "slug": "particle-between-plates", "title": "Particle Between Plates" },
-    { "slug": "alternating-field-release", "title": "Alternating Field Release" },
-    { "slug": "collision-deformation", "title": "Deformation in Collisions" },
-    { "slug": "ar-electric-field", "title": "AR Electric Field", "badge": "Beta" }
+    { "slug": "hall-effect", "title": "Hall Effect" }
   ]
 }
