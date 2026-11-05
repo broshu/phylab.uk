@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <script>if(location.protocol==='http:'&&/(^|\.)phylab\.uk$/.test(location.hostname))location.replace('https:'+location.href.slice(5));</script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Block and Movable Curved Surface</title>
+  <link rel="stylesheet" href="/assets/theme.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div><p class="eyebrow">Mechanics · Momentum & Energy</p><h1>Block and Movable Curved Surface</h1><p class="lede">A block enters a finite curved surface from the left. Change the masses and the initial speed and watch the whole motion: sliding up, flying out, leaving the entrance and landing on the ground.</p></div>
+    <a class="home-button" href="/labs/" aria-label="Return to Labs" title="Labs"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9.5 21v-6h5v6"/></svg></a>
+  </header>
+  <main class="app">
+    <section class="panel controls-panel" aria-label="Controls">
+      <div class="block-heading"><h2>Initial conditions</h2><span class="pill">Frictionless</span></div>
+      <div class="parameter"><label for="massSmall">Block mass <i>m</i></label><div class="number-wrap"><input id="massSmall" type="number" min="0.2" max="10" step="0.1" value="1"><span>kg</span></div><input id="massSmallRange" aria-label="Block mass slider" type="range" min="0.2" max="10" step="0.1" value="1"></div>
+      <div class="parameter"><label for="massRamp">Base mass <i>M</i></label><div class="number-wrap"><input id="massRamp" type="number" min="0.2" max="20" step="0.1" value="3"><span>kg</span></div><input id="massRampRange" aria-label="Base mass slider" type="range" min="0.2" max="20" step="0.1" value="3"></div>
+      <div class="parameter"><label for="speed">Initial speed <i>v</i><sub>0</sub> →</label><div class="number-wrap"><input id="speed" type="number" min="0.5" max="10" step="0.1" value="5"><span>m/s</span></div><input id="speedRange" aria-label="Initial speed slider" type="range" min="0.5" max="10" step="0.1" value="5"></div>
+      <p class="hint">Changing a parameter returns to the start. The base starts at rest.</p>
+      <div class="divider"></div>
+      <button id="play" class="primary-button">Play</button>
+      <label class="playback">Playback speed<select id="rate"><option value="0.25">0.25 ×</option><option value="0.5" selected>0.5 ×</option><option value="1">1 ×</option><option value="2">2 ×</option></select></label>
+      <label class="check-row"><input type="checkbox" id="vectors" checked>Show velocity arrows (ground frame)</label>
+      <label class="check-row"><input type="checkbox" id="trail" checked>Show block path (ground frame)</label>
+      <p class="hint">Space: play or pause. When the run has finished, click the same button to replay.</p>
+      <div class="prediction"><span>Predicted maximum rise</span><strong id="heightPrediction">—</strong><span>h<sub>max</sub> = Mv<sub>0</sub>² / [2g(m + M)]</span><span id="flightPrediction">—</span></div>
+    </section>
+    <section class="panel stage-panel">
+      <div class="stage-header"><div><h2>Motion</h2><p>Ground frame · positive to the right · arc radius 1.50 m · entrance 0.40 m above the ground</p></div><span id="phase" class="pill" role="status">Ready</span></div>
+      <canvas id="motion" aria-label="The block enters a finite circular-arc surface moving to the right. If it is fast enough it flies out of the top, falls back onto the surface, leaves through the entrance and finally lands on the ground. Live values are shown below.">Your browser needs Canvas support to show the animation.</canvas>
+      <div class="timeline"><span id="timeLabel">0.00 s</span><input id="timeline" type="range" min="0" max="1000" value="0" step="1" aria-label="Time axis"><span id="durationLabel">—</span></div>
+      <p class="narrative" id="narrative">Click “Play”, or drag the time axis to look at any moment.</p>
+      <div class="readouts"><div><span>Block horizontal speed v<sub>x</sub></span><strong id="vx">—</strong></div><div><span>Base speed V</span><strong id="V">—</strong></div><div><span>Height above ground y</span><strong id="height">—</strong></div><div><span>Base displacement X</span><strong id="displacement">—</strong></div></div>
+    </section>
+    <section class="panel graphs-panel">
+      <div class="graph-card"><div class="stage-header"><div><h2>Horizontal velocity</h2><p><span class="key orange">Block v<sub>x</sub></span><span class="key blue">Base V</span><span class="key muted">Highest point</span></p></div><span class="unit">m/s</span></div><canvas id="velocity" aria-label="Horizontal velocity of the block and the base against time"></canvas></div>
+      <div class="graph-card"><div class="stage-header"><div><h2>Where the energy goes</h2><p>Total mechanical energy of the system <strong id="totalEnergy">—</strong></p></div></div><div class="energy-content"><div class="energy-bar" aria-label="Energy shares of the system"><span id="kmBar"></span><span id="kMBar"></span><span id="peBar"></span></div><div class="energy-row"><span class="key orange">Block kinetic energy</span><strong id="km">—</strong></div><div class="energy-row"><span class="key blue">Base kinetic energy</span><strong id="kM">—</strong></div><div class="energy-row"><span class="key green">Gravitational potential energy</span><strong id="pe">—</strong></div><p class="conservation" id="momentum">—</p></div></div>
+    </section>
+    <section class="panel explanation-panel"><h2>The physics</h2><div class="concept-grid">
+      <div><h3>1. Horizontal momentum is conserved</h3><p class="formula">mv<sub>x</sub> + MV = mv<sub>0</sub></p><p>The ground is smooth, so there is no horizontal external force on the system. As the block climbs, it passes some of its horizontal momentum to the base.</p></div>
+      <div><h3>2. At the highest point the relative velocity is zero</h3><p class="formula">v<sub>x</sub> = V = mv<sub>0</sub> / (m + M)</p><p>The highest point may be on the surface or in the air. In both cases the block is momentarily at rest relative to the base, but still moves to the right relative to the ground, so it still has horizontal kinetic energy.</p></div>
+      <div><h3>3. After leaving the entrance</h3><p class="formula">v<sub>x</sub> = (m − M)v<sub>0</sub> / (m + M)</p><p>When the block leaves the entrance its vertical velocity is zero. From then on only gravity acts and it moves as a horizontal projectile; if its horizontal velocity is exactly zero it falls straight down. The run ends when the height above the ground reaches 0.</p></div>
+    </div><div class="flight-note"><strong>When does the block fly out?</strong><p>The arc radius is R = 1.50 m and the arc length is πR/2 ≈ 2.36 m; the size is fixed. The block leaves through the top only if v<sub>0</sub> &gt; √[2gR(m + M)/M]. At exactly the critical value the block just reaches the top and returns. The tangent at the top is vertical, so when the block flies out it has the same horizontal velocity as the base, and it falls back into the surface.</p></div><p class="model-note">Model assumptions: the block is a point mass with no rotation; the ground and the curved surface are both smooth, and g = 9.8 m/s². The surface is a fixed quarter circle whose tangent is horizontal at the entrance and vertical at the exit. During flight only gravity acts and the base moves at constant velocity; when the block comes back to the top it is tangent to the surface and slides on smoothly, with no collision energy loss. The entrance is 0.40 m above the ground, and after leaving the entrance the block keeps moving until it first touches the ground. The final frame shows the instant of touchdown; collision and bounce are not simulated. Gravitational potential energy is zero at the ground, y is the height above the ground, and the predicted rise h is measured from the entrance. The picture is scaled to fit the whole motion of each run, while the physical sizes do not change.</p></section>
+  </main>
+  <script src="js/physics.js"></script><script src="js/main.js"></script>
+</body>
+</html>

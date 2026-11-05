@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <script>if(location.protocol==='http:'&&/(^|\.)phylab\.uk$/.test(location.hostname))location.replace('https:'+location.href.slice(5));</script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Symmetry of Vertical Projection</title>
+  <link rel="stylesheet" href="/assets/theme.css">
+  <link rel="stylesheet" href="css/style.css?v=20260928b">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">Kinematics · Vertical projection</p>
+      <h1>Symmetry of Vertical Projection</h1>
+      <p class="lede">An object is thrown straight up from the ground with initial speed <i>v</i><sub>0</sub>. Take any stretch AB: does the object take the same time to rise through AB as to fall through BA? At the same point, is the speed the same going up and coming down?</p>
+    </div>
+    <a class="home-button" href="/labs/" aria-label="Return to Labs" title="Labs"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9.5 21v-6h5v6"/></svg></a>
+  </header>
+
+  <main class="app">
+    <section class="panel controls-panel" aria-label="Controls">
+      <div class="block-heading"><h2>Throwing conditions</h2><button id="reset" class="pill pill-button" type="button">Restore defaults</button></div>
+      <div class="parameter"><label for="v0">Initial speed <i>v</i><sub>0</sub> ↑</label><div class="number-wrap"><input id="v0" type="number" min="5" max="40" step="1" value="20"><span>m/s</span></div><input id="v0Range" aria-label="Initial speed slider" type="range" min="5" max="40" step="1" value="20"></div>
+      <div class="parameter"><label for="g">Gravitational acceleration <i>g</i></label><div class="number-wrap"><select id="g"><option value="10" selected>10</option><option value="9.8">9.8</option></select><span>m/s²</span></div></div>
+      <div class="facts"><span>Maximum height <i>H</i> = <b id="factH">—</b></span><span>Time to rise <i>t</i><sub>up</sub> = <b id="factTop">—</b></span><span>Total time <i>T</i> = <b id="factT">—</b></span></div>
+
+      <div class="divider"></div>
+
+      <div class="block-heading"><h2>Choose a stretch AB</h2><span class="pill">Drag in the picture</span></div>
+      <div class="parameter"><label for="yA"><span class="dot a"></span>Height of A above the ground</label><div class="number-wrap"><input id="yA" type="number" step="0.05" value="8.75"><span>m</span></div><input id="yARange" aria-label="Height of A slider" type="range" step="0.05" value="8.75"></div>
+      <div class="parameter"><label for="yB"><span class="dot b"></span>Height of B above the ground</label><div class="number-wrap"><input id="yB" type="number" step="0.05" value="18.75"><span>m</span></div><input id="yBRange" aria-label="Height of B slider" type="range" step="0.05" value="18.75"></div>
+      <p class="hint">A is always below B. When the initial speed changes, A and B scale in proportion to the maximum height.</p>
+
+      <div class="divider"></div>
+
+      <label class="check-row"><input type="checkbox" id="revealAll">Show the full analysis now (do not wait for the animation)</label>
+      <p class="hint">Space: play or pause. Predict first, then play.</p>
+    </section>
+    <section class="panel stage-panel">
+      <div class="stage-header">
+        <div><h2>Motion</h2><p>Ground frame · positive upward · rising path on the left, falling path on the right</p></div>
+        <span id="phase" class="pill" role="status">Ready</span>
+      </div>
+      <canvas id="motion" aria-label="A ball is thrown straight up. The stretch AB is marked with a coloured band, and the velocity arrows at A and B on the way up and on the way down are drawn on the left and right.">Your browser needs Canvas support to show the animation.</canvas>
+      <div class="transport">
+        <button id="play" class="primary-button" type="button">▶ Throw</button>
+        <label class="playback">Speed<select id="rate"><option value="0.25">0.25 ×</option><option value="0.5" selected>0.5 ×</option><option value="1">1 ×</option></select></label>
+      </div>
+      <div class="timeline"><span id="timeLabel">0.00 s</span><input id="timeline" type="range" min="0" max="1000" value="0" step="1" aria-label="Time axis"><span id="durationLabel">—</span></div>
+      <p class="narrative" id="narrative">Click “Throw”.</p>
+
+      <table class="compare" aria-label="Rise and fall compared">
+        <thead><tr><th></th><th class="up">Rising (A → B)</th><th class="down">Falling (B → A)</th><th></th></tr></thead>
+        <tbody>
+          <tr><th>Time to pass AB</th><td class="up" id="cDtUp">—</td><td class="down" id="cDtDown">—</td><td id="eqDt"></td></tr>
+          <tr><th>Speed at A</th><td class="up" id="cVAup">—</td><td class="down" id="cVAdown">—</td><td id="eqVA"></td></tr>
+          <tr><th>Speed at B</th><td class="up" id="cVBup">—</td><td class="down" id="cVBdown">—</td><td id="eqVB"></td></tr>
+        </tbody>
+      </table>
+    </section>
+    <section class="panel graphs-panel">
+      <div class="graph-card">
+        <div class="stage-header"><div><h2><i>v</i>–<i>t</i> graph</h2><p><span class="key orange">Rising through AB</span><span class="key blue">Falling through BA</span><span class="key line">Axis of symmetry t = v<sub>0</sub>/g</span></p></div><span class="unit">m/s</span></div>
+        <canvas id="vt" aria-label="Velocity against time is a straight line; the time intervals for rising through AB and falling through BA are symmetric about the moment of the highest point"></canvas>
+      </div>
+      <div class="graph-card">
+        <div class="stage-header"><div><h2><i>y</i>–<i>t</i> graph</h2><p>The horizontal lines through A and B each cross the parabola twice</p></div><span class="unit">m</span></div>
+        <canvas id="yt" aria-label="Height against time is a parabola; its intersections with the lines at the heights of A and B are symmetric about the highest point"></canvas>
+      </div>
+    </section>
+    <section class="panel explain-panel">
+      <div class="stage-header"><div><h2>Why is it symmetric?</h2><p>The numbers in the formulas update with the current parameters</p></div></div>
+      <div class="cards">
+        <article class="card">
+          <h3>1. Speed symmetry: equal speed at the same point</h3>
+          <p>From <span class="f">v² − v<sub>0</sub>² = −2g y</span></p>
+          <p class="eq">|v| = √(v<sub>0</sub>² − 2g y)</p>
+          <p>The speed depends only on the height y, not on whether the object is rising or falling; only the direction is opposite.</p>
+          <p class="num" id="expV"></p>
+        </article>
+        <article class="card">
+          <h3>2. Time symmetry: equal time through the same stretch</h3>
+          <p>Rising A→B: <span class="f">v<sub>B</sub> = v<sub>A</sub> − gΔt<sub>up</sub></span><br>Falling B→A: <span class="f">v<sub>A</sub> = v<sub>B</sub> + gΔt<sub>down</sub></span></p>
+          <p class="eq">Δt<sub>up</sub> = Δt<sub>down</sub> = (v<sub>A</sub> − v<sub>B</sub>) / g</p>
+          <p>Think in reverse: the fall is the rise played backwards, and the acceleration is g in both.</p>
+          <p class="num" id="expT"></p>
+        </article>
+        <article class="card">
+          <h3>3. Symmetry in the v–t graph</h3>
+          <p>The graph is a straight line of slope −g, <b>point-symmetric</b> about (v<sub>0</sub>/g, 0).</p>
+          <p>The orange and blue shaded blocks: equal <b>widths</b> mean equal times; equal <b>areas</b> (one positive, one negative) mean the displacement has size AB in both; equal heights at the ends mean equal speeds.</p>
+          <p class="num" id="expG"></p>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/physics.js?v=20260928b"></script>
+  <script src="js/main.js?v=20260928b"></script>
+</body>
+</html>

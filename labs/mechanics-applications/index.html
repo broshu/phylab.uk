@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+    <script>if(location.protocol==='http:'&&/(^|\.)phylab\.uk$/.test(location.hostname))location.replace('https:'+location.href.slice(5));</script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mechanics: Applications and Special Cases — PhyLab</title>
+<meta name="description" content="Interactive, browser-based physics demonstrations." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/theme.css">
+<style>
+
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: "Inter", sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 48px 24px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body::before {
+    content: "";
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(circle at 20% 15%, var(--site-tint-green), transparent 45%),
+      radial-gradient(circle at 85% 80%, var(--site-tint-accent), transparent 50%);
+    pointer-events: none; z-index: 0;
+  }
+
+  .wrap { position: relative; z-index: 1; width: 100%; max-width: 1332px; }
+
+  .page-actions { position: absolute; top: 0; right: 0; display: flex; justify-content: flex-end; }
+  .home-button {
+    display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px;
+    padding: 0; border: 1px solid var(--line); border-radius: 50%;
+    background: var(--card); color: var(--green); text-decoration: none;
+    font-size: .84rem; font-weight: 500; box-shadow: var(--shadow);
+    transition: transform .2s ease, border-color .2s ease, color .2s ease;
+  }
+  .home-button:hover, .home-button:focus-visible {
+    border-color: var(--accent); color: var(--green-2); transform: translateY(-2px); outline: none;
+  }
+  .home-button svg { display: block; }
+
+  .page-title {
+    font-family: "Cormorant Garamond", serif;
+    font-size: clamp(2.2rem, 5vw, 3.4rem);
+    font-weight: 600; color: var(--ink);
+    text-align: center; letter-spacing: .5px;
+    margin-bottom: 40px;
+  }
+
+  .blocks {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+
+  .block {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    padding: 20px 20px 16px;
+    text-decoration: none;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    color: var(--ink);
+    overflow: hidden;
+    transition: transform .3s ease, box-shadow .3s ease, border-color .3s;
+  }
+  .block:hover {
+    transform: translateY(-5px);
+    border-color: var(--accent);
+    box-shadow: var(--site-shadow-hover);
+  }
+
+  .block h2 {
+    font-family: "Cormorant Garamond", serif;
+    font-size: 1.6rem; font-weight: 600; color: var(--green);
+    letter-spacing: .5px; line-height: 1.1; text-align: center;
+  }
+
+  .block img {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    object-fit: cover;
+    object-position: top;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--site-figure-bg);
+  }
+
+  .badge {
+    position: absolute;
+    top: 12px; right: 12px;
+    z-index: 2;
+    padding: 3px 10px;
+    font-size: .72rem;
+    font-weight: 500;
+    letter-spacing: .6px;
+    text-transform: uppercase;
+    color: var(--site-on-accent);
+    background: var(--accent);
+    border-radius: 999px;
+    box-shadow: var(--site-shadow);
+  }
+
+  .block.group h2 { padding-top: 22px; }
+
+  @media (max-width: 1000px) {
+    .blocks { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (max-width: 640px) {
+    .blocks { grid-template-columns: 1fr; gap: 18px; }
+  }
+</style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="page-actions"><a class="home-button" href="/labs/" aria-label="Return to Labs" title="Labs"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9.5 21v-6h5v6"/></svg></a></div>
+    <h1 class="page-title">Mechanics: Applications and Special Cases</h1>
+    <div class="blocks">
+      <!-- BEGIN:labs -->
+      <a class="block" href="/labs/vertical-throw-symmetry/">
+        <h2>Symmetry of Vertical Projection</h2>
+        <img src="/labs/vertical-throw-symmetry/screenshot.png" alt="Symmetry of Vertical Projection preview" loading="lazy">
+      </a>
+      <a class="block" href="/labs/movable-ramp/">
+        <h2>Block and Movable Curved Surface</h2>
+        <img src="/labs/movable-ramp/screenshot.png" alt="Block and Movable Curved Surface preview" loading="lazy">
+      </a>
+      <!-- END:labs -->
+    </div>
+  </main>
+</body>
+</html>
+

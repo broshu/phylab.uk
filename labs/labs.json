@@ -2,6 +2,15 @@
   "_note": "Display order for labs (top = shown first on the home page and labs page). After editing, run: python3 scripts/build_index.py",
   "home_count": 8,
   "labs": [
+    {
+      "slug": "mechanics-applications",
+      "title": "Mechanics: Applications and Special Cases",
+      "cover": "movable-ramp",
+      "labs": [
+        { "slug": "vertical-throw-symmetry", "title": "Symmetry of Vertical Projection" },
+        { "slug": "movable-ramp", "title": "Block and Movable Curved Surface" }
+      ]
+    },
     { "slug": "magnetic-field-lab-3d", "title": "3D Magnetic Field Lab" },
     { "slug": "charged-particle-circular-motion", "title": "Charged Particle in a Magnetic Field" },
     { "slug": "velocity-selector", "title": "Velocity Selector" },
