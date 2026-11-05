@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>if(location.protocol==='http:'&&/(^|\.)phylab\.uk$/.test(location.hostname))location.replace('https:'+location.href.slice(5));</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mass Spectrometer</title>
+    <link rel="stylesheet" href="/assets/theme.css">
+    <link rel="stylesheet" href="css/style.css?v=20261029">
+</head>
+<body>
+<div class="app">
+    <header class="top-bar">
+        <div>
+            <h1>Mass Spectrometer</h1>
+            <p class="sub">Accelerating field · velocity selector · deflecting magnetic field</p>
+        </div>
+        <div class="top-actions">
+            <button id="explainBtn" class="ghost-button" type="button">How it works</button>
+            <a class="home-button" href="/labs/" aria-label="Return to Labs" title="Labs"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9.5 21v-6h5v6"/></svg></a>
+        </div>
+    </header>
+
+    <main class="layout" style="--side: 440px">
+        <section class="panel stage-panel">
+            <div class="section-title">
+                <h2>Three hydrogen isotopes in a mass spectrometer</h2>
+                <div class="legend" id="legend">
+                    <span><i class="swatch orange"></i><em>Protium <sup>1</sup>H</em></span>
+                    <span><i class="swatch blue"></i><em>Deuterium <sup>2</sup>H</em></span>
+                    <span><i class="swatch pink"></i><em>Tritium <sup>3</sup>H</em></span>
+                </div>
+            </div>
+            <div class="figure">
+                <svg id="canvas" viewBox="0 0 920 660" role="img" aria-label="Mass spectrometer: ions pass through an accelerating field and a velocity selector, enter the deflecting magnetic field, move in a semicircle and land on a photographic plate">
+                    <defs>
+                        <marker id="arrowDown" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 5 10 L 10 0 z" fill="#B07A00"/></marker>
+                        <marker id="arrowRight" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#B07A00"/></marker>
+                        <marker id="mArrowL" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 10 0 L 0 5 L 10 10 z" fill="#555"/></marker>
+                        <marker id="mArrowR" viewBox="0 0 10 10" refX="1" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#555"/></marker>
+                    </defs>
+
+                    <!-- 4. Deflecting field -->
+                    <circle cx="350" cy="410" r="230" fill="rgba(0,158,115,0.06)" stroke="#009E73" stroke-width="1.5" stroke-dasharray="6,4"/>
+                    <g id="bdots" opacity="0.7"></g>
+                    <circle cx="615" cy="520" r="13" fill="#009E73"/>
+                    <text x="615" y="525" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">4</text>
+                    <text class="mk" x="640" y="516" fill="#007a58" font-size="15" font-weight="600">Deflecting field *B*_0</text>
+                    <text x="640" y="536" fill="#555" font-size="13">Uniform field, out of the page</text>
+
+                    <line x1="450" y1="14" x2="450" y2="481" stroke="#999" stroke-width="1" stroke-dasharray="2,4"/>
+
+                    <!-- 1. Chamber A -->
+                    <rect x="370" y="28" width="160" height="50" fill="#ffffff" stroke="#D55E00" stroke-width="2" rx="4"/>
+                    <text x="450" y="50" text-anchor="middle" fill="#D55E00" font-size="15" font-weight="700">Chamber A</text>
+                    <text x="450" y="69" text-anchor="middle" fill="#555" font-size="12">Makes positive ions</text>
+                    <line x1="440" y1="78" x2="460" y2="78" stroke="#222" stroke-width="2.5"/>
+                    <text class="mk" x="468" y="83" fill="#333" font-size="14" font-weight="600">*S*_1</text>
+                    <circle cx="345" cy="53" r="13" fill="#D55E00"/>
+                    <text x="345" y="58" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">1</text>
+                    <text x="328" y="58" text-anchor="end" fill="#D55E00" font-size="14" font-weight="600">Ion source</text>
+
+                    <!-- 2. Accelerating field -->
+                    <rect x="370" y="95" width="160" height="9" fill="#D55E00" opacity="0.85"/>
+                    <text x="540" y="103" fill="#D55E00" font-size="14" font-weight="700">M（+）</text>
+                    <rect x="370" y="150" width="160" height="9" fill="#0072B2" opacity="0.85"/>
+                    <text x="540" y="160" fill="#0072B2" font-size="14" font-weight="700">N（−）</text>
+                    <line x1="405" y1="108" x2="405" y2="146" stroke="#B07A00" stroke-width="1.6" marker-end="url(#arrowDown)"/>
+                    <line x1="495" y1="108" x2="495" y2="146" stroke="#B07A00" stroke-width="1.6" marker-end="url(#arrowDown)"/>
+                    <line x1="440" y1="159" x2="460" y2="159" stroke="#222" stroke-width="2.5"/>
+                    <text class="mk" x="468" y="180" fill="#333" font-size="14" font-weight="600">*S*_2</text>
+                    <circle cx="300" cy="120" r="13" fill="#B07A00"/>
+                    <text x="300" y="125" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">2</text>
+                    <text class="mk" x="283" y="115" text-anchor="end" fill="#8a5f00" font-size="14" font-weight="600">Accelerating field *U*</text>
+                    <text x="283" y="134" text-anchor="end" fill="#555" font-size="12">Field points down</text>
+
+                    <!-- 3. Velocity selector -->
+                    <rect x="385" y="190" width="9" height="90" fill="#D55E00" opacity="0.85"/>
+                    <text class="mk" x="377" y="205" text-anchor="end" fill="#D55E00" font-size="14" font-weight="700">*P*_1（+）</text>
+                    <rect x="517" y="190" width="9" height="90" fill="#0072B2" opacity="0.85"/>
+                    <text class="mk" x="534" y="205" fill="#0072B2" font-size="14" font-weight="700">*P*_2（−）</text>
+                    <line x1="404" y1="212" x2="506" y2="212" stroke="#B07A00" stroke-width="1.6" marker-end="url(#arrowRight)"/>
+                    <line x1="404" y1="240" x2="506" y2="240" stroke="#B07A00" stroke-width="1.6" marker-end="url(#arrowRight)"/>
+                    <line x1="404" y1="268" x2="506" y2="268" stroke="#B07A00" stroke-width="1.6" marker-end="url(#arrowRight)"/>
+                    <g id="seldots" opacity="0.7"></g>
+                    <circle cx="350" cy="240" r="13" fill="#009E73"/>
+                    <text x="350" y="245" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">3</text>
+                    <text x="333" y="235" text-anchor="end" fill="#007a58" font-size="14" font-weight="600">Velocity selector</text>
+                    <text x="333" y="254" text-anchor="end" fill="#555" font-size="12">Electric force = Lorentz force</text>
+                    <text class="mk" id="selE" x="555" y="228" fill="#8a5f00" font-size="13" font-weight="600">*E* = -- (to the right)</text>
+                    <text class="mk" id="selB1" x="555" y="246" fill="#007a58" font-size="13" font-weight="600">*B*_1 = 0.50 T (out of the page)</text>
+                    <text class="mk" id="selV" x="555" y="264" fill="#222" font-size="13" font-weight="600">*v* = *E*/*B*_1 = --</text>
+                    <text class="mk" id="selTune" x="555" y="282" fill="#555" font-size="12">Tuned automatically to *U*</text>
+
+                    <line x1="440" y1="292" x2="460" y2="292" stroke="#222" stroke-width="2.5"/>
+                    <text class="mk" x="468" y="297" fill="#333" font-size="14" font-weight="600">*S*_3</text>
+
+                    <!-- 5. Plate -->
+                    <rect x="180" y="286" width="258" height="12" fill="#009E73" opacity="0.3" rx="2"/>
+                    <rect x="180" y="286" width="258" height="3.5" fill="#009E73"/>
+                    <circle cx="150" cy="292" r="13" fill="#009E73"/>
+                    <text x="150" y="297" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">5</text>
+                    <text x="150" y="325" text-anchor="middle" fill="#555" font-size="13">Photographic plate D</text>
+
+                    <g id="particles"></g>
+                    <g id="hits"></g>
+                    <g id="dims"></g>
+                </svg>
+            </div>
+        </section>
+
+        <aside class="side">
+            <div class="card">
+                <h3>Parameters</h3>
+                <div class="group-label">Accelerating voltage <span class="tex" data-f="U"></span>: <b id="valU">1000 V</b></div>
+                <div class="chip-grid" id="grpU">
+                    <button class="chip" type="button" data-v="500">500</button>
+                    <button class="chip on" type="button" data-v="1000">1000</button>
+                    <button class="chip" type="button" data-v="2000">2000</button>
+                    <button class="chip" type="button" data-v="3000">3000</button>
+                </div>
+                <div class="group-label">Deflecting field <span class="tex" data-f="B0"></span>: <b id="valB2">1.0 T</b></div>
+                <div class="chip-grid" id="grpB">
+                    <button class="chip" type="button" data-v="0.5">0.5</button>
+                    <button class="chip on" type="button" data-v="1.0">1.0</button>
+                    <button class="chip" type="button" data-v="1.5">1.5</button>
+                    <button class="chip" type="button" data-v="2.0">2.0</button>
+                </div>
+                <div class="group-label">Choose isotopes</div>
+                <div class="iso-list" id="isoList"></div>
+                <div class="button-row" style="margin-top:12px">
+                    <button class="primary-button" id="btnPause" type="button">Pause</button>
+                    <button class="ghost-button" id="btnReset" type="button">Clear landing points</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Current readings</h3>
+                <div class="stat-list">
+                    <div class="stat-row"><span class="lb">Selected speed <span class="tex" data-f="v0eq"></span></span><b id="infoV">--</b></div>
+                    <div class="stat-row"><span class="lb">Deflection radius <span class="tex" data-f="rS"></span></span><b id="infoR">--</b></div>
+                    <div class="stat-row"><span class="lb">Landing distance <span class="tex" data-f="X2r"></span></span><b id="infoX">--</b></div>
+                </div>
+                <p class="note" style="margin-top:8px">Readings are for the lightest selected isotope. They use <i class="v">q</i> = 1 and <i class="v">m</i> as relative mass, so the numbers are only for comparison.<span id="scaleNote" style="display:none"> The paths in the picture are scaled down.</span></p>
+            </div>
+
+            <div class="card">
+                <h3>Key formulas</h3>
+                <div class="stat-list">
+                    <div class="stat-row"><span class="lb">② Accelerating field</span><span class="tex" data-f="accel"></span></div>
+                    <div class="stat-row"><span class="lb">③ Velocity selector</span><span class="tex" data-f="select"></span></div>
+                    <div class="stat-row"><span class="lb">④ Deflecting field</span><span class="tex" data-f="radius"></span></div>
+                    <div class="stat-row"><span class="lb">⑤ Landing distance</span><span class="tex" data-f="X"></span></div>
+                    <div class="stat-row"><span class="lb">Mass from the landing point</span><span class="tex" data-f="m"></span></div>
+                </div>
+            </div>
+        </aside>
+    </main>
+</div>
+
+<dialog class="explain" id="explain">
+    <div class="explain-head">
+        <h2>Mass Spectrometer: how it works</h2>
+        <button class="ghost-button" id="explainClose" type="button">Close</button>
+    </div>
+    <div class="explain-body">
+        <div class="explain-grid">
+            <div class="dcard">
+                <h4 style="color:var(--orange)">① Chamber A: ionisation</h4>
+                <p>The gas in chamber A is ionised, producing <span class="key">positive ions</span> that drift through the small hole <i class="v">S</i><sub>1</sub> into the accelerating field.</p>
+                <div class="fm tex" data-f="s1"></div>
+                <p>The initial speed is tiny, so all the kinetic energy comes from the work done by the electric force. This is the starting point of the next step.</p>
+            </div>
+            <div class="dcard">
+                <h4 style="color:var(--amber)">② Accelerating field: work–energy theorem</h4>
+                <p>The voltage between plates M (+) and N (−) is <i class="v">U</i>, and the electric force does positive work:</p>
+                <div class="fm tex" data-f="s2a"></div>
+                <div class="fm tex" data-f="s2b"></div>
+                <p>The larger <i class="v">U</i> is, the larger <i class="v">v</i> is; for the same voltage, the larger the mass, the <span class="key">smaller</span> the speed.</p>
+            </div>
+            <div class="dcard">
+                <h4 style="color:var(--teal)">③ Velocity selector: two forces balance</h4>
+                <p>The electric field <i class="v">E</i> points right, the magnetic field <i class="v">B</i><sub>1</sub> points out of the page, and the ions travel vertically downward. They go straight through only when the electric force equals the Lorentz force:</p>
+                <div class="fm tex" data-f="s3a"></div>
+                <div class="fm tex" data-f="s3b"></div>
+                <p>If the speed is too large the Lorentz force wins and the ion deflects left; if it is too small the electric force wins and it deflects right. In the demonstration <i class="v">E</i> is tuned automatically with <i class="v">U</i> so the beam always passes.</p>
+            </div>
+            <div class="dcard">
+                <h4 style="color:var(--blue)">④ Deflecting field: circular motion</h4>
+                <p>The ions enter <i class="v">B</i><sub>0</sub> from <i class="v">S</i><sub>3</sub> with the <span class="key">same speed</span> <i class="v">v</i><sub>0</sub>, and the Lorentz force alone provides the centripetal force:</p>
+                <div class="fm tex" data-f="s4a"></div>
+                <div class="fm tex" data-f="s4b"></div>
+                <p>Since <i class="v">v</i><sub>0</sub> is the same, <i class="v">r</i> ∝ <i class="v">m</i>: the larger the mass, the larger the radius.</p>
+            </div>
+            <div class="dcard">
+                <h4 style="color:var(--pink)">⑤ Photographic plate: landing point</h4>
+                <p>The ion turns through <span class="key">half a circle</span> and lands on the plate, on the same horizontal line as <i class="v">S</i><sub>3</sub>:</p>
+                <div class="fm tex" data-f="s5"></div>
+                <div class="fm tex" data-f="s5m"></div>
+                <p><i class="v">X</i> is the diameter of the semicircle; the mass can be worked out from the landing point.</p>
+            </div>
+        </div>
+        <div class="explain-grid">
+            <div class="dcard">
+                <h4>Conclusion: why add a velocity selector?</h4>
+                <p>① The selector makes every ion enter <i class="v">B</i><sub>0</sub> with the same speed, so <i class="v">X</i> ∝ <i class="v">m</i>.</p>
+                <p>② The landing points of the three hydrogen isotopes are in the ratio</p>
+                <div class="fm tex" data-f="ratio"></div>
+                <p>Equal mass differences give equally spaced lines, which makes the mass easy to read (without the selector <i class="v">X</i> ∝ √<i class="v">m</i>).</p>
+                <p>③ Measuring <i class="v">X</i> gives the mass. This is how a mass spectrometer determines isotope masses; typical uses include separating the isotopes of hydrogen and discovering the isotopes of neon.</p>
+            </div>
+            <div class="dcard">
+                <h4>Live data (updates with the parameters; grey rows are not selected)</h4>
+                <table class="dtable">
+                    <thead><tr><th>Isotope</th><th><span class="tex" data-f="mS"></span>（u）</th><th><span class="tex" data-f="v0eq"></span></th><th><span class="tex" data-f="th"></span></th><th><span class="tex" data-f="X2r"></span></th></tr></thead>
+                    <tbody id="deriveBody"></tbody>
+                </table>
+                <p class="note">Increasing the accelerating voltage <i class="v">U</i> increases <i class="v">E</i> and <i class="v">v</i><sub>0</sub>, and increases <i class="v">r</i> and <i class="v">X</i>; increasing <i class="v">B</i><sub>0</sub> decreases <i class="v">r</i> and <i class="v">X</i>. All three ions have the same <i class="v">v</i><sub>0</sub>, so <i class="v">X</i> ∝ <i class="v">m</i> and the lines are equally spaced. Values in the table are relative.</p>
+            </div>
+        </div>
+    </div>
+</dialog>
+
+<script src="js/formulas.js?v=20261029"></script>
+<script src="js/typeset.js?v=20261029"></script>
+<script src="js/main.js?v=20261029"></script>
+</body>
+</html>

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>if(location.protocol==='http:'&&/(^|\.)phylab\.uk$/.test(location.hostname))location.replace('https:'+location.href.slice(5));</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MHD Generator</title>
+    <link rel="stylesheet" href="/assets/theme.css">
+    <link rel="stylesheet" href="css/style.css?v=20261029">
+</head>
+<body>
+<div class="app">
+    <header class="top-bar">
+        <div>
+            <h1>MHD Generator</h1>
+            <p class="sub">Plasma flowing through a magnetic field produces an emf between the plates: <i class="v">E</i> = <i class="v">BLv</i></p>
+        </div>
+        <div class="top-actions">
+            <button id="explainBtn" class="ghost-button" type="button">How it works</button>
+            <a class="home-button" href="/labs/" aria-label="Return to Labs" title="Labs"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9.5 21v-6h5v6"/></svg></a>
+        </div>
+    </header>
+
+    <main class="layout half">
+        <section class="panel stage-panel">
+            <div class="section-title">
+                <h2 id="stageTitle">Deflection: ions are pushed toward the two plates by the magnetic field</h2>
+                <div class="legend">
+                    <span><i class="swatch orange"></i>Positive ion</span>
+                    <span><i class="swatch blue"></i>Negative ion</span>
+                    <span><i class="swatch amber"></i>Lorentz force</span>
+                </div>
+            </div>
+            <div class="figure">
+                <canvas id="mainCanvas" width="780" height="540" role="img" aria-label="MHD generator: plasma enters the magnetic field from the left, positive ions are pushed to the top plate and negative ions to the bottom plate, and a load resistor is connected across the plates"></canvas>
+            </div>
+        </section>
+
+        <aside class="side">
+            <div class="card">
+                <h3>Demonstration and parameters</h3>
+                <div class="group-label">Mode</div>
+                <div class="chip-grid" id="grpMode">
+                    <button class="chip on" type="button" data-v="deflection">Deflection</button>
+                    <button class="chip" type="button" data-v="steady">Steady state</button>
+                </div>
+                <div class="sliders">
+                    <label class="slider-row"><span>Flow speed <span class="tex" data-f="vs"></span></span><output id="valSpeed">5.0 m/s</output><input id="sliderSpeed" type="range" min="1" max="10" step="0.1" value="5"></label>
+                    <label class="slider-row"><span>Magnetic field <span class="tex" data-f="Bs"></span></span><output id="valB">1.00 T</output><input id="sliderB" type="range" min="0.1" max="2" step="0.01" value="1"></label>
+                    <label class="slider-row"><span>Internal resistance <span class="tex" data-f="rs"></span></span><output id="valRin">0.50 Ω</output><input id="sliderRin" type="range" min="0.1" max="5" step="0.1" value="0.5"></label>
+                    <label class="slider-row"><span>Load <span class="tex" data-f="Rs"></span></span><output id="valRload">3.0 Ω</output><input id="sliderRload" type="range" min="0.2" max="10" step="0.1" value="3"></label>
+                </div>
+                <div class="button-row" style="margin-top:12px">
+                    <button class="primary-button" id="btnSwitch" type="button" aria-pressed="true">Circuit closed</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Live readings</h3>
+                <div class="stat-list">
+                    <div class="stat-row"><span class="lb">Plate separation <span class="tex" data-f="Ls"></span></span><b>0.10 m</b></div>
+                    <div class="stat-row"><span class="lb">Emf <span class="tex" data-f="emf"></span></span><b id="dataEMF">0.500 V</b></div>
+                    <div class="stat-row"><span class="lb">Current <span class="tex" data-f="cur"></span></span><b id="dataCurrent">0.143 A</b></div>
+                    <div class="stat-row"><span class="lb">Output voltage <span class="tex" data-f="uout"></span></span><b id="dataVout">0.429 V</b></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>How to read it</h3>
+                <p class="note"><b>Deflection</b>: when the particles first enter, the Lorentz force pushes positive ions up and negative ions down, and charge starts to build up on the plates.<br><b>Steady state</b>: the electric force between the plates balances the Lorentz force, the particles stop deflecting, and the plate voltage settles.<br>The magnetic field points into the page and the velocity points right, so a positive charge feels an upward force.</p>
+            </div>
+        </aside>
+    </main>
+</div>
+
+<dialog class="explain" id="explain">
+    <div class="explain-head">
+        <h2>MHD Generator: how it works</h2>
+        <button class="ghost-button" id="explainClose" type="button">Close</button>
+    </div>
+    <div class="explain-body">
+        <div class="explain-grid">
+            <div class="dcard">
+                <h4 style="color:var(--orange)">① Deflection: charge separation</h4>
+                <p>A hot plasma (containing many positive and negative ions) enters the magnetic field with speed <i class="v">v</i>. The field points into the page, so the Lorentz force pushes positive ions to the top plate and negative ions to the bottom plate.</p>
+                <p>The positive and negative charge collected on the plates sets up an electric field <i class="v">E</i><sub>0</sub> between them.</p>
+            </div>
+            <div class="dcard">
+                <h4 style="color:var(--teal)">② Steady state: two forces balance</h4>
+                <p>When the electric force equals the Lorentz force, ions that enter later are no longer deflected:</p>
+                <div class="fm tex" data-f="d1"></div>
+                <div class="fm tex" data-f="d2"></div>
+            </div>
+            <div class="dcard">
+                <h4 style="color:var(--blue)">③ Emf</h4>
+                <p>With plate separation <i class="v">L</i>, the voltage between the plates is the emf of the generator:</p>
+                <div class="fm tex" data-f="d3"></div>
+                <p>The emf is proportional to the flow speed, the magnetic field and the plate separation.</p>
+            </div>
+            <div class="dcard">
+                <h4 style="color:var(--amber)">④ Connecting a load</h4>
+                <p>Let the internal resistance of the plasma between the plates be <i class="v">r</i> and the load resistance be <i class="v">R</i>:</p>
+                <div class="fm tex" data-f="d4a"></div>
+                <div class="fm tex" data-f="d4b"></div>
+                <p>With the circuit open the output voltage equals the emf; once a load is connected the output voltage is smaller than the emf.</p>
+            </div>
+            <div class="dcard">
+                <h4 style="color:var(--pink)">⑤ Output power</h4>
+                <p>As <i class="v">R</i> increases, the output voltage <i class="v">U</i> rises toward <i class="v">E</i>, but the current falls.</p>
+                <p>When <i class="v">R</i> = <i class="v">r</i> the load receives the maximum power:</p>
+                <div class="fm tex" data-f="d5"></div>
+            </div>
+        </div>
+    </div>
+</dialog>
+
+<script src="js/formulas.js?v=20261029"></script>
+<script src="js/typeset.js?v=20261029"></script>
+<script src="js/main.js?v=20261029"></script>
+</body>
+</html>

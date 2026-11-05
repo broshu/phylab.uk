@@ -39,6 +39,18 @@ def lab_page_card(lab):
             f'      </a>\n')
 
 
+def lab_group_card(group):
+    """Card on the Labs page that opens a sub-list page for a group of labs."""
+    t = esc(group["title"])
+    n = len(group["labs"])
+    cover = group.get("cover") or group["labs"][0]["slug"]
+    return (f'      <a class="block group" href="/labs/{group["slug"]}/">\n'
+            f'        <span class="badge">{n} labs</span>\n'
+            f'        <h2>{t}</h2>\n'
+            f'        <img src="{cover}/screenshot.png" alt="{t} preview" loading="lazy">\n'
+            f'      </a>\n')
+
+
 def lab_home_card(lab):
     badge = f'<span class="badge">{esc(lab["badge"])}</span>' if lab.get("badge") else ""
     cls = "tile rel" if badge else "tile"
@@ -64,6 +76,17 @@ def lesson_home_card(lesson):
             f'<div class="t"><h3>{esc(lesson["title"])}</h3></div></a>\n')
 
 
+def group_page(labs_page, group):
+    """Build a group's sub-list page from the generated Labs page."""
+    t = esc(group["title"])
+    cards = "".join(lab_page_card(x).replace(f'src="{x["slug"]}/', f'src="/labs/{x["slug"]}/') for x in group["labs"])
+    page = splice(labs_page, "labs", cards, "labs/index.html")
+    page = page.replace("<title>Labs — PhyLab</title>", f"<title>{t} — PhyLab</title>", 1)
+    page = page.replace('<h1 class="page-title">Labs</h1>', f'<h1 class="page-title">{t}</h1>', 1)
+    page = page.replace('href="/" aria-label="Return to home page" title="Home"', 'href="/labs/" aria-label="Return to Labs" title="Labs"', 1)
+    return page
+
+
 # ---- splice generated cards between <!-- BEGIN:name --> / <!-- END:name --> ----
 def splice(src, name, body, rel):
     pat = re.compile(r"(<!-- BEGIN:%s -->\n)(.*?)([ \t]*<!-- END:%s -->)" % (name, name), re.S)
@@ -76,16 +99,20 @@ def main(check):
     labs = load("labs/labs.json")
     lessons = load("lessons/lessons.json")
     L, S = labs["labs"], lessons["lessons"]
-    check_files(L, "labs", lambda i: f'{i["slug"]}/index.html')
-    check_files(L, "labs", lambda i: f'{i["slug"]}/screenshot.png')
+    # An entry with a "labs" list is a group: a card that opens its own sub-list page.
+    groups = [i for i in L if "labs" in i]
+    flat = [i for i in L if "labs" not in i]
+    every = flat + [x for g in groups for x in g["labs"]]
+    check_files(every, "labs", lambda i: f'{i["slug"]}/index.html')
+    check_files(every, "labs", lambda i: f'{i["slug"]}/screenshot.png')
     check_files(S, "lessons", lambda i: i["file"])
     check_files(S, "lessons", lambda i: f'thumbs/{i["slug"]}.jpg')
 
     jobs = {
-        "labs/index.html": [("labs", "".join(map(lab_page_card, L)))],
+        "labs/index.html": [("labs", "".join(lab_group_card(i) if "labs" in i else lab_page_card(i) for i in L))],
         "lessons/index.html": [("lessons", "".join(map(lesson_page_card, S)))],
         "index.html": [
-            ("labs", "".join(map(lab_home_card, L[: labs["home_count"]]))),
+            ("labs", "".join(map(lab_home_card, flat[: labs["home_count"]]))),
             ("lessons", "".join(map(lesson_home_card, S[: lessons["home_count"]]))),
         ],
     }
@@ -98,13 +125,27 @@ def main(check):
         for name, body in parts:
             new = splice(new, name, body, rel)
         if rel == "index.html":
-            new = re.sub(r'(href="/labs/">All )\d+( labs)', rf"\g<1>{len(L)}\g<2>", new)
+            new = re.sub(r'(href="/labs/">All )\d+( labs)', rf"\g<1>{len(every)}\g<2>", new)
             new = re.sub(r'(href="/lessons/">All )\d+( lessons)', rf"\g<1>{len(S)}\g<2>", new)
+        if rel == "labs/index.html":
+            labs_page = new
         if new != old:
             stale.append(rel)
             if not check:
                 with open(path, "w", encoding="utf-8") as f:
                     f.write(new)
+    # Group pages: the Labs page template with the group's own title and cards.
+    for g in groups:
+        rel = f'labs/{g["slug"]}/index.html'
+        page = group_page(labs_page, g)
+        path = os.path.join(ROOT, rel)
+        old = open(path, encoding="utf-8").read() if os.path.exists(path) else None
+        if page != old:
+            stale.append(rel)
+            if not check:
+                os.makedirs(os.path.dirname(path), exist_ok=True)
+                with open(path, "w", encoding="utf-8") as f:
+                    f.write(page)
     if check:
         if stale:
             raise SystemExit("Out of date (run python3 scripts/build_index.py): " + ", ".join(stale))

@@ -2,6 +2,21 @@
   "_note": "Display order for labs (top = shown first on the home page and labs page). After editing, run: python3 scripts/build_index.py",
   "home_count": 8,
   "labs": [
+    { "slug": "magnetic-field-lab-3d", "title": "3D Magnetic Field Lab" },
+    { "slug": "charged-particle-circular-motion", "title": "Charged Particle in a Magnetic Field" },
+    { "slug": "velocity-selector", "title": "Velocity Selector" },
+    { "slug": "mass-spectrometer", "title": "Mass Spectrometer" },
+    { "slug": "cyclotron", "title": "Cyclotron" },
+    {
+      "slug": "electromagnetism-applications",
+      "title": "Electromagnetism: Applications and Special Cases",
+      "cover": "combined-fields",
+      "labs": [
+        { "slug": "mhd-generator", "title": "MHD Generator" },
+        { "slug": "combined-fields", "title": "Combined Fields" },
+        { "slug": "dynamic-circle", "title": "Dynamic Circles" }
+      ]
+    },
     { "slug": "force-sudden-change", "title": "Can a Force Change Suddenly?" },
     { "slug": "hall-effect", "title": "Hall Effect" },
     { "slug": "jet-roadster", "title": "Jet Roadster" },
