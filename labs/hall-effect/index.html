@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>if(location.protocol==='http:'&&/(^|\.)phylab\.uk$/.test(location.hostname))location.replace('https:'+location.href.slice(5));</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hall Effect</title>
+    <link rel="stylesheet" href="/assets/theme.css">
+    <link rel="stylesheet" href="css/style.css?v=20261030b">
+</head>
+<body>
+<div class="app">
+    <header class="top-bar">
+        <div>
+            <h1>Hall Effect</h1>
+            <p class="sub">A current-carrying slab in a magnetic field develops a Hall voltage between M and N <span class="tex" data-f="d5"></span></p>
+        </div>
+        <div class="top-actions">
+            <button id="explainBtn" class="ghost-button" type="button">How it works</button>
+            <a class="home-button" href="/labs/" aria-label="Return to Labs" title="Labs"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9.5 21v-6h5v6"/></svg></a>
+        </div>
+    </header>
+
+    <main class="layout half">
+        <section class="panel stage-panel">
+            <div class="section-title">
+                <h2 id="stageTitle">Deflection: the Lorentz force pushes the charge carriers to one side</h2>
+                <div class="legend">
+                    <span><i class="swatch orange"></i>Charge carrier (positive)</span>
+                    <span><i class="swatch blue"></i>Charge carrier (negative)</span>
+                    <span><i class="swatch amber"></i>Force</span>
+                </div>
+            </div>
+            <div class="figure">
+                <canvas id="mainCanvas" width="780" height="540" role="img" aria-label="Hall effect: current enters a thin slab through contacts E and F, the magnetic field is perpendicular to the slab, carriers drift to the top or bottom edge, and a voltmeter is connected across M and N"></canvas>
+            </div>
+        </section>
+
+        <aside class="side">
+            <div class="card">
+                <h3>Demonstration and parameters</h3>
+                <div class="group-label">Mode</div>
+                <div class="chip-grid" id="grpMode">
+                    <button class="chip on" type="button" data-v="deflection">Deflection</button>
+                    <button class="chip" type="button" data-v="steady">Steady state</button>
+                </div>
+                <div class="group-label">Carrier type</div>
+                <div class="chip-grid" id="grpCarrier">
+                    <button class="chip on" type="button" data-v="pos">Positive (holes)</button>
+                    <button class="chip" type="button" data-v="neg">Negative (free electrons)</button>
+                </div>
+                <div class="group-label">Magnetic field direction</div>
+                <div class="chip-grid" id="grpB">
+                    <button class="chip on" type="button" data-v="in">Into the page</button>
+                    <button class="chip" type="button" data-v="out">Out of the page</button>
+                </div>
+                <div class="button-row" style="margin-top:12px">
+                    <button class="primary-button" id="btnReplay" type="button">Replay the deflection</button>
+                </div>
+                <div class="sliders">
+                    <label class="slider-row"><span>Current <span class="tex" data-f="Is"></span></span><output id="valI">10.0 mA</output><input id="sliderI" type="range" min="1" max="20" step="0.5" value="10"></label>
+                    <label class="slider-row"><span>Magnetic field <span class="tex" data-f="Bs"></span></span><output id="valB">0.50 T</output><input id="sliderB" type="range" min="0.05" max="1" step="0.01" value="0.5"></label>
+                    <label class="slider-row"><span>Slab thickness <span class="tex" data-f="ds"></span></span><output id="valD">0.50 mm</output><input id="sliderD" type="range" min="0.2" max="2" step="0.05" value="0.5"></label>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Live readings</h3>
+                <div class="stat-list">
+                    <div class="stat-row"><span class="lb">M–N distance <span class="tex" data-f="bs"></span></span><b>5.0 mm</b></div>
+                    <div class="stat-row"><span class="lb">Carrier density <span class="tex" data-f="ns"></span></span><b>1.0×10<sup>22</sup> m<sup>−3</sup></b></div>
+                    <div class="stat-row"><span class="lb">Drift speed <span class="tex" data-f="vs"></span></span><b id="dataV">2.50 m/s</b></div>
+                    <div class="stat-row"><span class="lb">Steady Hall voltage <span class="tex" data-f="UH"></span></span><b id="dataUH">6.25 mV</b></div>
+                    <div class="stat-row"><span class="lb">Voltmeter reading <span class="tex" data-f="UMN"></span></span><b id="dataUMN">0.00 mV</b></div>
+                    <div class="stat-row"><span class="lb">Higher-potential end</span><b id="dataHigh">—</b></div>
+                </div>
+            </div>
+
+            <div class="card" style="grid-column:1 / -1">
+                <h3>How to read it</h3>
+                <p class="note"><b>Deflection</b>: the carriers drift along the current, and the Lorentz force pushes them to the same side of the slab. Charge builds up on the two edges, and the voltage between <i class="v">M</i> and <i class="v">N</i> grows.<br><b>Steady state</b>: the electric force balances the Lorentz force, the carriers stop deflecting, and the voltage settles.<br>For the same current direction, positive and negative carriers are pushed to the same side, but the potentials are opposite. This is how the sign of the Hall voltage reveals the sign of the carriers. Reversing the magnetic field reverses the voltage.</p>
+            </div>
+        </aside>
+    </main>
+</div>
+
+<dialog class="explain" id="explain">
+    <div class="explain-head">
+        <h2>Hall Effect: how it works</h2>
+        <button class="ghost-button" id="explainClose" type="button">Close</button>
+    </div>
+    <div class="explain-body">
+        <div class="explain-grid">
+            <div class="dcard">
+                <h4 style="color:var(--orange)">① Deflection: charge builds up</h4>
+                <p>A steady current <i class="v">I</i> flows between <i class="v">E</i> and <i class="v">F</i>, and a magnetic field <i class="v">B</i> is applied perpendicular to the slab. The Lorentz force deflects the carriers in the direction perpendicular to both the current and the field.</p>
+                <p>One edge of the slab collects positive charge and the other collects negative charge, so a voltage appears between <i class="v">M</i> and <i class="v">N</i>: <span class="tex" data-f="UH"></span>。</p>
+            </div>
+            <div class="dcard">
+                <h4 style="color:var(--teal)">② Steady state: two forces balance</h4>
+                <p>The accumulated charge produces a transverse electric field:</p>
+                <div class="fm tex" data-f="d2"></div>
+                <p>Once current and voltage are steady, the electric force on a carrier balances the Lorentz force:</p>
+                <div class="fm tex" data-f="d1"></div>
+                <div class="fm tex" data-f="d3"></div>
+            </div>
+            <div class="dcard">
+                <h4 style="color:var(--blue)">③ Drift speed from the current</h4>
+                <p>Let the carrier density be <i class="v">n</i>, the charge <i class="v">q</i>, and the slab width <i class="v">b</i> and thickness <i class="v">d</i>. The microscopic expression for the current is:</p>
+                <div class="fm tex" data-f="d4"></div>
+                <p>So <span class="tex" data-f="vs"></span> = <i class="v">I</i> / (<i class="v">nqbd</i>)。</p>
+            </div>
+            <div class="dcard">
+                <h4 style="color:var(--amber)">④ Hall voltage</h4>
+                <p>Substitute the speed into <span class="tex" data-f="d3"></span>; <i class="v">b</i> cancels:</p>
+                <div class="fm tex" data-f="d5"></div>
+                <p>The Hall voltage is proportional to <i class="v">B</i> and <i class="v">I</i> and inversely proportional to the thickness <i class="v">d</i>. The thinner the slab, the larger the voltage.</p>
+            </div>
+            <div class="dcard">
+                <h4 style="color:var(--pink)">⑤ Hall coefficient and applications</h4>
+                <p>Define</p>
+                <div class="fm tex" data-f="d6"></div>
+                <div class="fm tex" data-f="d7"></div>
+                <p>Hall sensors measure magnetic fields and rotation speed. They are found in bicycle speedometers, computer cooling fans and tape-drive motors. Each time the wheel turns once, a magnet passes the sensor and produces one voltage pulse.</p>
+            </div>
+            <div class="dcard">
+                <h4 style="color:var(--ink)">⑥ Which end is at higher potential</h4>
+                <p>First use the left-hand rule (the force on a negative charge is opposite to the direction the fingers point) to find which side the carriers move to, then check whether that side collects positive or negative charge.</p>
+                <table class="dtable">
+                    <tr><th>Carrier</th><th>B into page</th><th>B out of page</th></tr>
+                    <tr><td>Positive</td><td>M is higher</td><td>N is higher</td></tr>
+                    <tr><td>Negative</td><td>N is higher</td><td>M is higher</td></tr>
+                </table>
+                <p>(In every case the current runs from <i class="v">E</i> to <i class="v">F</i>, with <i class="v">M</i> on top and <i class="v">N</i> below.)</p>
+            </div>
+        </div>
+    </div>
+</dialog>
+
+<script src="js/formulas.js?v=20261030b"></script>
+<script src="js/typeset.js?v=20261030b"></script>
+<script src="js/main.js?v=20261030b"></script>
+</body>
+</html>

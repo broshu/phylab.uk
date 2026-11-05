@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <script>if(location.protocol==='http:'&&/(^|\.)phylab\.uk$/.test(location.hostname))location.replace('https:'+location.href.slice(5));</script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Can a Force Change Suddenly?</title>
+  <link rel="stylesheet" href="/assets/theme.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">Force · Sudden Change</p>
+      <h1>Can a Force Change Suddenly? Rigid Objects, Springs and Friction</h1>
+      <p class="lede">Drag the ball, the force scale or an atom and watch how the deformation and the force respond. Whether a force can change suddenly depends on whether the deformation that produces it can change in an instant.</p>
+    </div>
+    <a class="home-button" href="/labs/" aria-label="Return to Labs" title="Labs"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9.5 21v-6h5v6"/></svg></a>
+  </header>
+
+  <main class="app">
+    <section class="panel controls-panel">
+      <div class="mode-tabs four" role="group" aria-label="Demonstration">
+        <button class="mode-button active" type="button" data-mode="rigid">Rigid object<small>Steel wire and ball</small></button>
+        <button class="mode-button" type="button" data-mode="spring">Spring<small>Spring and ball</small></button>
+        <button class="mode-button" type="button" data-mode="friction">Friction<small>Scale pulling a block</small></button>
+        <button class="mode-button" type="button" data-mode="micro">Microscopic view<small>Atoms and contact points</small></button>
+      </div>
+
+      <div class="sub-tabs" id="microTabs" role="group" aria-label="Microscopic view" hidden>
+        <button class="sub-button active" type="button" data-view="chain">Atomic chain<small>Rigid object</small></button>
+        <button class="sub-button" type="button" data-view="coil">Coiled wire<small>Spring</small></button>
+        <button class="sub-button" type="button" data-view="contacts">Contact points<small>Friction</small></button>
+      </div>
+
+      <div class="control-block">
+        <div class="block-heading">
+          <h2>Controls</h2>
+          <span class="status-pill neutral" id="statusPill">At rest</span>
+        </div>
+        <p class="hint-text strong" id="dragHint">Hold the ball, pull it down, then let go.</p>
+        <div class="button-row">
+          <button class="primary-button" id="actionA" type="button">Pull to 40 N, then release</button>
+          <button class="secondary-button" id="actionB" type="button">Release</button>
+        </div>
+        <button class="secondary-button" id="resetButton" type="button">Reset</button>
+      </div>
+
+      <div class="control-block">
+        <div class="block-heading">
+          <h2>Observation</h2>
+          <span class="status-pill neutral" id="speedPill">Normal speed</span>
+        </div>
+        <label class="slider-row">
+          <span>Playback speed</span>
+          <input id="speedInput" type="range" min="0" max="3" step="1" value="0">
+          <strong id="speedValue">×1</strong>
+        </label>
+        <button class="secondary-button" id="pauseButton" type="button">Pause</button>
+        <label class="check-row" id="autoSlowRow"><input id="autoSlow" type="checkbox" checked><span id="autoSlowText">Slow down automatically when sliding starts</span></label>
+        <p class="hint-text">Shortcuts: <kbd>1</kbd>–<kbd>4</kbd> switch demos, <kbd>Space</kbd> pause, <kbd>R</kbd> reset, <kbd>S</kbd> change playback speed</p>
+      </div>
+
+      <div class="metrics">
+        <div class="metric"><span id="m1Label">Stretch</span><strong id="m1Value">—</strong></div>
+        <div class="metric"><span id="m2Label">Elastic force</span><strong id="m2Value">—</strong></div>
+        <div class="metric"><span id="m3Label">Pull by hand</span><strong id="m3Value">—</strong></div>
+        <div class="metric"><span id="m4Label">Acceleration</span><strong id="m4Value">—</strong></div>
+        <div class="metric verdict"><span>What just happened</span><strong id="verdictMetric">Drag or press a button to start.</strong></div>
+      </div>
+    </section>
+
+    <section class="stage-panel">
+      <div class="stage-header">
+        <div>
+          <h2 id="stageTitle">Rigid object · steel wire holding a ball</h2>
+          <p id="stageSubtitle">The wire deforms very little, so the picture magnifies it 2000 times.</p>
+        </div>
+        <div class="legend" id="legend"></div>
+      </div>
+      <canvas id="stageCanvas" aria-label="Demonstration view, draggable"></canvas>
+      <div class="readout-strip">
+        <span id="timeReadout">t = 0</span>
+        <span id="narrative">Hold the ball and pull it down.</span>
+      </div>
+    </section>
+
+    <section class="panel graphs-panel">
+      <div class="graph-card">
+        <div class="stage-header">
+          <div>
+            <h2 id="graphTitle">Force over time</h2>
+            <p id="graphNote">A vertical segment means the force changed in a very short time.</p>
+          </div>
+          <div class="legend" id="graphLegend"></div>
+        </div>
+        <canvas id="graphCanvas" aria-label="Graph of force against time"></canvas>
+      </div>
+    </section>
+
+    <section class="panel explanation-panel">
+      <h2>Key ideas</h2>
+      <div class="concept-grid">
+        <div>
+          <h3><span class="tag rigid">1</span>Rigid objects: the elastic force can change suddenly</h3>
+          <p>Strings, rods, wires and table tops obey F = kx just like springs, but with a very large k: a steel wire 1 m long and 1 mm in diameter has k ≈ 1.6×10⁵ N/m. A 30 N change in force needs the wire to stretch or shrink by only about 0.2 mm, and the ball covers that tiny distance in a few milliseconds. Compared with the process we are studying (a fraction of a second) this is negligible, so we say the force “can change suddenly”.</p>
+        </div>
+        <div>
+          <h3><span class="tag spring">2</span>Springs: the elastic force cannot change suddenly</h3>
+          <p>A spring has a small k (50 N/m here), so changing the force by 30 N means stretching or compressing it by 60 cm. The ends of a spring are attached to objects with mass, and moving them 60 cm takes time. So at the instant another force changes suddenly, the spring’s deformation has no time to change, its force stays the same, and the acceleration of the object jumps. If the spring itself is cut, or one end is attached to nothing, its force vanishes immediately.</p>
+        </div>
+        <div>
+          <h3><span class="tag friction">3</span>Friction: three kinds of sudden change</h3>
+          <p>Static friction comes from tiny elastic deformations of the contact points, so like a rigid object it can change suddenly with the pull (in both size and direction). When the pull exceeds the maximum static friction, the contact points break in bulk, the object slides, and the friction jumps to the smaller sliding friction (static → sliding). When the object stops, it jumps back to static friction (sliding → static).</p>
+        </div>
+      </div>
+      <div class="concept-grid two">
+        <div>
+          <h3>The microscopic picture</h3>
+          <p>Elastic force comes from tiny changes in the spacing between atoms. In a rigid solid a change of only a few parts per thousand gives a large force, and the change spreads at the speed of sound (about 5×10³ m/s in steel), so it crosses a 1 m wire in about 0.2 ms. In the wire of a spring the deformation between atoms is just as small; it is the coiled shape that magnifies it into an extension of tens of centimetres. Two rubbing surfaces touch only at a few bumps. While sliding, the contact points keep breaking and re-forming with uneven deformation, so sliding friction is smaller than the maximum static friction.</p>
+        </div>
+        <div>
+          <h3>What “suddenly” means, and the models used</h3>
+          <p>“Suddenly” means the force changes in a time much shorter than the process being studied. It does not mean it takes no time: slow the playback to ×1/1000 and the elastic force of a rigid object also changes continuously. The model uses g = 10 m/s², a 1 kg ball, a maximum static friction of 5 N and a sliding friction of 3.5 N (10 : 7). The atomic chain and the contact points are one-dimensional sketches whose orders of magnitude are estimated for iron and ordinary surfaces.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/physics.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
