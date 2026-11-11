@@ -8,11 +8,15 @@ Single source of truth:
 The order in the JSON is the display order everywhere; the home page shows
 the first `home_count` items and the "All N ..." link counts every item.
 
+Each lab keeps `screenshot.png` as its source picture. The cards show a much
+lighter `screenshot.webp` made from it here (needs Pillow: pip3 install pillow).
+A lab without a WebP copy still works: its card falls back to the PNG.
+
 Usage:
-  python3 scripts/build_index.py           # rewrite the HTML files
+  python3 scripts/build_index.py           # rewrite the HTML files, refresh WebP previews
   python3 scripts/build_index.py --check   # exit 1 if any HTML is out of date
 """
-import html, json, os, re, sys
+import hashlib, html, json, os, re, sys
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 esc = lambda s: html.escape(s, quote=True)
@@ -29,13 +33,47 @@ def check_files(items, base, path_of):
         raise SystemExit(f"{base}: missing files: " + ", ".join(missing))
 
 
+# ---- lab previews: screenshot.png (source) -> screenshot.webp (shown on cards) ----
+def make_previews(labs):
+    """Write a WebP copy of every screenshot that is missing or older than its PNG."""
+    todo = []
+    for lab in labs:
+        png = os.path.join(ROOT, "labs", lab["slug"], "screenshot.png")
+        webp = png[:-4] + ".webp"
+        if not os.path.exists(webp) or os.path.getmtime(png) > os.path.getmtime(webp):
+            todo.append((lab["slug"], png, webp))
+    if not todo:
+        return []
+    try:
+        from PIL import Image
+    except ImportError:
+        print("Pillow is not installed (pip3 install pillow); these cards keep the PNG: "
+              + ", ".join(slug for slug, _, _ in todo))
+        return []
+    for _, png, webp in todo:
+        with Image.open(png) as im:
+            im.convert("RGB").save(webp, "WEBP", quality=85, method=6)
+    return [f"labs/{slug}/screenshot.webp" for slug, _, _ in todo]
+
+
+def preview(slug):
+    """Card image for a lab: the WebP copy when present, tagged with the PNG's
+    hash so a replaced screenshot refreshes browser caches and fails --check
+    until this script has been run again."""
+    folder = os.path.join(ROOT, "labs", slug)
+    with open(os.path.join(folder, "screenshot.png"), "rb") as f:
+        tag = hashlib.sha1(f.read()).hexdigest()[:8]
+    name = "screenshot.webp" if os.path.exists(os.path.join(folder, "screenshot.webp")) else "screenshot.png"
+    return f"{slug}/{name}?v={tag}"
+
+
 # ---- card templates (one per page, matching each page's existing markup) ----
 def lab_page_card(lab):
     badge = f'\n        <span class="badge">{esc(lab["badge"])}</span>' if lab.get("badge") else ""
     t = esc(lab["title"])
     return (f'      <a class="block" href="/labs/{lab["slug"]}/">{badge}\n'
             f'        <h2>{t}</h2>\n'
-            f'        <img src="{lab["slug"]}/screenshot.png" alt="{t} preview" loading="lazy">\n'
+            f'        <img src="{preview(lab["slug"])}" alt="{t} preview" loading="lazy" decoding="async">\n'
             f'      </a>\n')
 
 
@@ -47,14 +85,14 @@ def lab_group_card(group):
     return (f'      <a class="block group" href="/labs/{group["slug"]}/">\n'
             f'        <span class="badge">{n} labs</span>\n'
             f'        <h2>{t}</h2>\n'
-            f'        <img src="{cover}/screenshot.png" alt="{t} preview" loading="lazy">\n'
+            f'        <img src="{preview(cover)}" alt="{t} preview" loading="lazy" decoding="async">\n'
             f'      </a>\n')
 
 
 def lab_home_card(lab):
     badge = f'<span class="badge">{esc(lab["badge"])}</span>' if lab.get("badge") else ""
     cls = "tile rel" if badge else "tile"
-    return (f'        <a class="{cls}" href="/labs/{lab["slug"]}/">{badge}<img src="/labs/{lab["slug"]}/screenshot.png" alt="" loading="lazy">'
+    return (f'        <a class="{cls}" href="/labs/{lab["slug"]}/">{badge}<img src="/labs/{preview(lab["slug"])}" alt="" loading="lazy" decoding="async">'
             f'<div class="t"><h3>{esc(lab["title"])}</h3></div></a>\n')
 
 
@@ -107,6 +145,7 @@ def main(check):
     check_files(every, "labs", lambda i: f'{i["slug"]}/screenshot.png')
     check_files(S, "lessons", lambda i: i["file"])
     check_files(S, "lessons", lambda i: f'thumbs/{i["slug"]}.jpg')
+    made = [] if check else make_previews(every)
 
     jobs = {
         "labs/index.html": [("labs", "".join(lab_group_card(i) if "labs" in i else lab_page_card(i) for i in L))],
@@ -151,7 +190,7 @@ def main(check):
             raise SystemExit("Out of date (run python3 scripts/build_index.py): " + ", ".join(stale))
         print("Labs and lessons indexes are up to date.")
     else:
-        print("Updated: " + ", ".join(stale) if stale else "Nothing to change.")
+        print("Updated: " + ", ".join(stale + made) if stale or made else "Nothing to change.")
 
 
 if __name__ == "__main__":

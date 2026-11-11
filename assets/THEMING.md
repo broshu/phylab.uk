@@ -13,3 +13,7 @@ Printed AR markers require black ink on white paper. Their fixed palette and the
 Frame Sequencer is shipped as a compiled app. Its UI theme is supplied by `labs/frame-sequencer/assets/theme-overrides.css`, loaded after the compiled stylesheet. If the app is rebuilt and utility classes change, check those overrides again.
 
 Check both system schemes, focus and selected states, native select menus, mobile widths, and a live switch of the system scheme. Existing fixed-palette diagrams and source images can remain light inside a themed frame.
+
+## Fonts
+
+Pages that use the site typefaces load `/assets/fonts.css` before `theme.css`. It serves Inter and Cormorant Garamond (variable woff2 files in `/assets/fonts/`) from this site, so no page waits on Google Fonts. Do not add `fonts.googleapis.com` links back.
