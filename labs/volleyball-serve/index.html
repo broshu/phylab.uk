@@ -10,12 +10,9 @@
     <link rel="stylesheet" href="/assets/theme.css">
     <link rel="stylesheet" href="css/style.css?v=20260926-1">
     <!-- KaTeX must be available before the module renders the first coach
-         message. The local asset is a fallback for offline development. -->
-    <link
-        rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/katex@0.18.4/dist/katex.min.css"
-        onerror="this.onerror=null;this.href='node_modules/katex/dist/katex.min.css'"
-    >
+         message. It is served from vendor/katex (0.18.4) so the lab does not
+         depend on a third-party CDN in class. -->
+    <link rel="stylesheet" href="vendor/katex/katex.min.css">
 </head>
 <body>
     <header class="top-bar">
@@ -50,11 +47,7 @@
         <section class="panel coach-panel" id="coach"></section>
     </main>
 
-    <script
-        defer
-        src="https://cdn.jsdelivr.net/npm/katex@0.18.4/dist/katex.min.js"
-        onerror="this.onerror=null;this.src='node_modules/katex/dist/katex.min.js'"
-    ></script>
+    <script defer src="vendor/katex/katex.min.js"></script>
     <script type="module" src="js/main.js?v=20260926-1"></script>
 </body>
 </html>
