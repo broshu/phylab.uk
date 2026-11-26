@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex" />
+<title>Page not found — PhyLab</title>
+<link rel="stylesheet" href="/assets/fonts.css" />
+<link rel="stylesheet" href="/assets/theme.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Inter", sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 48px 24px;
+    -webkit-font-smoothing: antialiased;
+  }
+  body::before {
+    content: "";
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(circle at 20% 15%, var(--site-tint-green), transparent 45%),
+      radial-gradient(circle at 85% 80%, var(--site-tint-accent), transparent 50%);
+    pointer-events: none; z-index: 0;
+  }
+  .wrap { position: relative; z-index: 1; max-width: 560px; text-align: center; }
+  h1 {
+    font-family: "Cormorant Garamond", serif;
+    font-size: clamp(2.2rem, 5vw, 3.4rem);
+    font-weight: 600; letter-spacing: .5px;
+    margin-bottom: 18px;
+  }
+  p { line-height: 1.7; color: var(--muted, var(--ink)); margin-bottom: 28px; }
+  nav { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  nav a {
+    padding: 9px 18px; border: 1px solid var(--line); border-radius: 999px;
+    background: var(--card); color: var(--ink); text-decoration: none; font-size: .95rem;
+  }
+  nav a:hover { border-color: var(--ink); }
+</style>
+</head>
+<body>
+  <main class="wrap">
+    <h1>Page not found</h1>
+    <p>This page may have moved or no longer exists.</p>
+    <nav>
+      <a href="/">Home</a>
+      <a href="/labs/">Labs</a>
+      <a href="/lessons/">Lessons</a>
+      <a href="/research/">Research</a>
+    </nav>
+  </main>
+</body>
+</html>

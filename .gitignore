@@ -12,3 +12,6 @@ Claude outputs/
 
 # Literature candidate and review scratch files
 /work/
+
+# Cloudflare build output
+/_site/

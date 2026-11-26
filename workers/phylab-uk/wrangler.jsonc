@@ -1,0 +1,20 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  // phylab.uk 本站。网页来自本仓库（构建到 _site），由 Cloudflare 直接发布；
+  // preview.phylab.uk、debate-api.phylab.uk 等是各自的 Worker，不经过这里。
+  "name": "phylab-uk",
+  "main": "src/index.js",
+  "compatibility_date": "2026-11-01",
+  "workers_dev": true,
+  "preview_urls": false,
+  "assets": {
+    "directory": "../../_site",
+    "binding": "ASSETS",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page",
+    // 每个请求先经过 Worker，以便把 www.phylab.uk 跳到 phylab.uk（免费额度每天 10 万次，足够）
+    "run_worker_first": true
+  },
+  // 切换前先只在 workers.dev 测试网址上线，检查无误后再加 phylab.uk/* 和 www.phylab.uk/* 路由。
+  "observability": { "enabled": true }
+}
