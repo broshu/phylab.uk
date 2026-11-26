@@ -15,6 +15,9 @@
     // 每个请求先经过 Worker，以便把 www.phylab.uk 跳到 phylab.uk（免费额度每天 10 万次，足够）
     "run_worker_first": true
   },
-  // 切换前先只在 workers.dev 测试网址上线，检查无误后再加 phylab.uk/* 和 www.phylab.uk/* 路由。
+  "routes": [
+    { "pattern": "phylab.uk/*", "zone_name": "phylab.uk" },
+    { "pattern": "www.phylab.uk/*", "zone_name": "phylab.uk" }
+  ],
   "observability": { "enabled": true }
 }
